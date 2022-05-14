@@ -1,0 +1,27 @@
+{
+  "description": "Gateway policy",
+  "zone": {
+    "inet": {
+      "iface": "eth0"
+    },
+    "loc": {
+      "iface": "eth1"
+    }
+  },
+  "policy": [
+    {
+      "in": "_fw",
+      "action": "accept"
+    },
+    {
+      "in": "loc",
+      "out": "inet",
+      "action": "accept"
+    }
+  ],
+  "snat": [
+    {
+      "out": "inet"
+    }
+  ]
+}

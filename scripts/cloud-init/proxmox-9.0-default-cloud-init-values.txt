@@ -1,0 +1,32 @@
+# qm cloudinit dump 20001 user
+#cloud-config
+hostname: clone-test1
+manage_etc_hosts: true
+fqdn: clone-test1
+user: user
+ssh_authorized_keys:
+  - ssh-ed25519 AAAA... ed25519-replace-me
+chpasswd:
+  expire: False
+users:
+  - default
+package_upgrade: true
+
+# qm cloudinit dump 20001 meta
+instance-id: 7082918ec341d6b770322065646cf1d78b6f9226
+
+# qm cloudinit dump 20001 network
+version: 1
+config:
+    - type: physical
+      name: eth0
+      mac_address: 'bc:24:11:2f:3a:8d'
+      subnets:
+      - type: dhcp4
+      - type: ipv6_slaac
+    - type: nameserver
+      address:
+      - '192.168.0.1'
+      - '192.168.0.2'
+      search:
+      - 'search.domain.com'

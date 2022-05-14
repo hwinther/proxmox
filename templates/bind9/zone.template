@@ -1,0 +1,11 @@
+$TTL 1d
+$ORIGIN example.com.
+@         IN      SOA   ns1.example.com. hostmaster.example.com. (
+                                2023080800 ; serial number
+                                12h        ; refresh
+                                15m        ; update retry
+                                3w         ; expiry
+                                2h         ; minimum
+                                )
+           IN      NS      ns1.example.com.
+ns1        IN      A       192.168.254.2
