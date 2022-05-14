@@ -1,0 +1,15 @@
+[submodule "tools/btop"]
+	path = tools/btop
+	url = https://github.com/aristocratos/btop.git
+[submodule "tools/tty0tty"]
+	path = tools/tty0tty
+	url = https://github.com/lcgamboa/tty0tty.git
+[submodule "tools/atduck"]
+	path = tools/atduck
+	url = https://github.com/nandhp/atduck.git
+[submodule "tools/WaybackProxy"]
+	path = tools/WaybackProxy
+	url = https://github.com/richardg867/WaybackProxy.git
+[submodule "tools/tcpser"]
+	path = tools/tcpser
+	url = https://github.com/go4retro/tcpser

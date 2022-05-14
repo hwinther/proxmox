@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/tools/WaybackProxy" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/tools/atduck" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/tools/btop" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/tools/tcpser" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/tools/tty0tty" vcs="Git" />
+  </component>
+</project>

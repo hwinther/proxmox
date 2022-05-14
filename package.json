@@ -1,0 +1,30 @@
+{
+  "name": "proxmox",
+  "version": "0.1.0",
+  "description": "proxmox admin scripts",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "python-check": "npm run python-coverage && npm run python-flake8 && npm run python-genbadges",
+    "python-coverage": "coverage erase && coverage run manage.py test -t ./ && coverage report && coverage html && coverage xml",
+    "python-flake8": "flake8 --exit-zero --format=html --htmldir ./reports/flake8 --statistics --tee --output-file ./reports/flake8/flake8stats.txt ddnsadmin iptablesadmin ircstatus networkadmin serverstatus tservice",
+    "python-genbadges": "genbadge tests -v -o reports/junit/junit-badge.svg && genbadge coverage -v -o reports/coverage/coverage-badge.svg && genbadge flake8 -v -o reports/flake8/flake8-badge.svg"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hwinther/proxmox.git"
+  },
+  "keywords": [],
+  "author": "Hans Christian Winther-Sørensen",
+  "license": "GPLv3",
+  "bugs": {
+    "url": "https://github.com/hwinther/proxmox/issues"
+  },
+  "homepage": "https://github.com/hwinther/proxmox#readme",
+  "devDependencies": {
+    "prettier": "^3.0.2"
+  },
+  "dependencies": {
+  }
+}

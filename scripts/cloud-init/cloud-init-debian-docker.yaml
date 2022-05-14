@@ -1,0 +1,44 @@
+#cloud-config
+hostname: debian-docker-test
+manage_etc_hosts: true
+package_upgrade: true
+package_reboot_if_required: true
+locale: en_US.UTF-8
+timezone: Europe/Oslo
+# ssh:
+#   install-server: true
+#   allow-pw: true
+#   disable_root: false
+#   ssh_quiet_keygen: true
+#   allow_public_ssh_keys: true
+# runcmd:
+# - sed -i 's/[#]*PermitRootLogin yes/PermitRootLogin prohibit-password/g' /etc/ssh/sshd_config
+# - sed -i 's/[#]*PasswordAuthentication yes/PasswordAuthentication no/g' /etc/ssh/sshd_config
+# - sed -i 's/#HostKey \/etc\/ssh\/ssh_host_ed25519_key/HostKey \/etc\/ssh\/ssh_host_ed25519_key/g' /etc/ssh/sshd_config
+#- systemctl reload ssh
+# write_files:
+# - path: /etc/ssh/sshd_config
+#   content: |
+#     Port 2222
+#     X11Forwarding no
+#     AllowAgentForwarding no
+#     AllowUsers user
+packages:
+- ssh
+- qemu-guest-agent
+- docker.io
+- docker-compose
+- git
+- fail2ban
+- ufw
+- apt-transport-https
+- ca-certificates
+- curl
+- gnupg-agent
+- software-properties-common
+
+runcmd:
+- ufw default deny incoming
+- ufw default allow outgoing
+- ufw allow 2222/tcp
+- ufw enable

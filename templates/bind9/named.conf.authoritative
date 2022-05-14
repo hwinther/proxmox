@@ -1,0 +1,43 @@
+acl "trusted" {
+     1.2.3.0/24;
+     localhost;
+     localnets;
+};
+
+options {
+        directory "/var/bind";
+
+        // Configure the IPs to listen on here.
+        listen-on { 127.0.0.1; 1.2.3.2; };
+        listen-on-v6 { none; };
+
+        // If you want to allow only specific hosts to use the DNS server:
+        allow-query { trusted; };
+
+        // Specify a list of IPs/masks to allow zone transfers to here.
+        allow-transfer { none; };
+
+        pid-file "/var/run/named/named.pid";
+
+        allow-recursion { trusted; };
+        recursion yes;
+
+        //========================================================================
+        // If BIND logs error messages about the root key being expired,
+        // you will need to update your keys.  See https://www.isc.org/bind-keys
+        //========================================================================
+        dnssec-validation auto;
+
+        // If your ISP provided one or more IP addresses for stable
+        // nameservers, you probably want to use them as forwarders.
+        // Uncomment the following block, and insert the addresses replacing
+        // the all-0's placeholder.
+        // forwarders {
+        //         8.8.8.8;
+        // };
+};
+
+include "/etc/bind/named.keys.conf";
+include "/etc/bind/named.zones.forward.conf";
+include "/etc/bind/named.zones.master.conf";
+include "/etc/bind/named.zones.slave.conf";

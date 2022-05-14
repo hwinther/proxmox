@@ -1,0 +1,60 @@
+Section "Files"
+    RgbPath     "/usr/X11R6/lib/X11/rgb"
+    FontPath    "/usr/X11R6/lib/X11/fonts/TrueType"
+    FontPath   "unix/:7100"
+EndSection
+
+Section "ServerFlags"
+    # Uncomment this to disable the <Crtl><Alt><BS> server abort sequence
+    # This allows clients to receive this key event.
+    #DontZap
+    # Uncomment this to disable the <Crtl><Alt><KP_+>/<KP_-> mode switching
+    # sequences.  This allows clients to receive these key events.
+    #DontZoom
+EndSection
+
+Section "Keyboard"
+    Protocol    "Standard"
+    AutoRepeat  500 5
+    # Specify which keyboard LEDs can be user-controlled (eg, with xset(1))
+    #Xleds      1 2 3
+    LeftAlt        Meta
+    RightAlt        Meta
+    ScrollLock      Compose
+    RightCtl        Control
+    XkbKeycodes     "xfree86"
+    XkbTypes        "default"
+    XkbCompat       "default"
+    XkbSymbols      "us(pc101)"
+    XkbGeometry     "pc"
+    XkbRules        "xfree86"
+    XkbModel        "pc101"
+    XkbLayout       "no"
+EndSection
+
+Section "Pointer"
+    Protocol    "PS/2"
+    Device      "/dev/mouse"
+    ZAxisMapping 4 5
+EndSection
+
+Section "Monitor"
+    Identifier  "My Monitor"
+    VendorName  "Unknown"
+    ModelName   "Unknown"
+EndSection
+
+Section "Device"
+    Identifier  "My Video Card"
+    VendorName  "Unknown"
+    BoardName   "Unknown"
+EndSection
+
+Section "Screen"
+    Driver      "FBDev"
+    Device      "My Video Card"
+    Monitor     "My Monitor"
+    Subsection "Display"
+        Modes "default"
+    EndSubsection
+EndSection
