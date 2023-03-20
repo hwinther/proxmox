@@ -1,0 +1,59 @@
+[project]
+name = "proxmox"
+version = "0.1.0"
+description = "proxmox scripts"
+authors = [
+    { name = "Hans Christian Winther-Sørensen", email = "hc@wsh.no" }
+]
+license = { file = "LICENSE" }
+readme = "README.md"
+requires-python = ">=3.8"
+
+keywords = ["proxmox", "automation", "virtualization", "linux", "administration"]
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Intended Audience :: System Administrators",
+]
+
+dependencies = [
+    "dnspython==2.2.1"
+]
+
+[build-system]
+requires = ["flit_core >=3.7.1,<4"]
+build-backend = "flit_core.buildapi"
+
+[project.optional-dependencies]
+dev = [
+    "coverage==7.2.1",
+    "unittest-xml-reporting==3.2.0",
+    "flake8==6.0.0",
+    "flake8-html==0.4.3",
+    "genbadge[all]==1.1.0"
+]
+
+[project.urls]
+homepage = "https://github.com/hwinther/proxmox"
+documentation = "https://github.com/hwinther/proxmox"
+repository = "https://github.com/hwinther/proxmox"
+
+[tool.setuptools.packages.find]
+where = ["."]  # list of folders that contain the packages (["."] by default)
+include = ["scripts*"]  # package names should match these glob patterns (["*"] by default)
+exclude = ["proxmox.tests*"]  # exclude packages matching these glob patterns (empty by default)
+namespaces = true  # to disable scanning PEP 420 namespaces (true by default)
+
+[tool.black]
+line-length = 120
+target-version = ['py38', 'py39', 'py310', 'py311']
+include = '\.pyi?$'
+skip-string-normalization = true
+preview = true
