@@ -76,16 +76,27 @@ def purge_container(container_id):
     os_exec(f'(pct stop {container_id}; pct destroy {container_id}); echo 0', shell=True)
 
 
-def generate_net_argument(interface_id, vlan_tag=None, ip4=None, ip6=None):
+def generate_net_argument(interface_id, vlan_tag=None, ip4=None, gw4=None, ip6=None, gw6=None, firewall=True):
     vlan_arg = ''
     if vlan_tag is not None:
         vlan_arg = f'tag={vlan_tag},'
+
     if ip4 is None:
         ip4 = 'dhcp'
+    gw4_arg = ''
+    if gw4 is not None:
+        gw4_arg = f',gw={gw4}'
+
     if ip6 is None:
         ip6 = 'auto'
-    return f'--net{interface_id} name=eth{interface_id},bridge={network_bridge},ip={ip4},ip6={ip6},' \
-           f'{vlan_arg}firewall=1,type=veth'
+    gw6_arg = ''
+    if gw6 is not None:
+        gw6_arg = f',gw={gw6}'
+
+    firewall_arg = '1' if firewall else '0'
+
+    return f'--net{interface_id} name=eth{interface_id},bridge={network_bridge},' \
+           f'ip={ip4}{gw4_arg},ip6={ip6}{gw6_arg},{vlan_arg}firewall={firewall_arg},type=veth'
 
 
 def create_container(container_id, container_name, container_image_path, network_interfaces):
@@ -97,7 +108,10 @@ def create_container(container_id, container_name, container_image_path, network
         network_arguments.append(generate_net_argument(network_id,
                                                        network_interface.vlan_tag,
                                                        network_interface.ip4,
-                                                       network_interface.ip6))
+                                                       network_interface.gw4,
+                                                       network_interface.ip6,
+                                                       network_interface.gw6,
+                                                       network_interface.firewall))
         network_id += 1
 
     cmd = f'pct create {container_id} {container_image_path} --hostname {container_name}' \
@@ -197,15 +211,45 @@ def install_dhcpd(container_id, subnet):
     rc_service(container_id, 'dhcpd', 'start')
 
 
+def install_gateway_nat(container_id):
+    apk_add(container_id, 'ip6tables')
+    apk_add(container_id, 'awall')
+
+    rc_update(container_id, 'iptables', 'add')
+    rc_update(container_id, 'ip6tables', 'add')
+
+    # /etc/awall/optional/ - inactive config folder
+
+    awall_policy_temp_path = '/tmp/gateway-nat-policy.json'
+    dhcpd_conf = open('../templates/awall/gateway-nat-policy.json', 'r').read()
+    open(awall_policy_temp_path, 'w').write(dhcpd_conf)
+    push_file(container_id, '/etc/awall/optional/gateway-nat-policy.json', awall_policy_temp_path)
+
+    # Enable and activate firewall rules
+    pct_console_shell(container_id, "awall enable gateway-nat-policy && awall activate -f")
+
+    # Enable routing via sysctl, in the future perhaps also enable ipv6 forwarding?
+    pct_console_shell(container_id, "sysctl -w net.ipv4.ip_forward=1")
+
+    rc_service(container_id, 'iptables', 'start')
+    rc_service(container_id, 'ip6tables', 'start')
+
+
 class NetworkInterface:
     vlan_tag = None
     ip4 = None
+    gw4 = None
     ip6 = None
+    gw6 = None
+    firewall = True
 
-    def __init__(self, vlan_tag=None, ip4=None, ip6=None):
+    def __init__(self, vlan_tag=None, ip4=None, gw4=None, ip6=None, gw6=None, firewall=True):
         self.vlan_tag = vlan_tag
         self.ip4 = ip4
+        self.gw4 = gw4
         self.ip6 = ip6
+        self.gw6 = gw6
+        self.firewall = firewall
 
 
 def main():
@@ -213,25 +257,34 @@ def main():
     # TODO: translate image names not just for local storage?
     image_path = f'/var/lib/vz/template/cache/{alpine_newest_image_name}'
 
-    # Create DHCP server
+    # Create NAT gateway
     cid = 600
     purge_container(cid)
-    create_container(cid, 'dhcp-test', image_path, [NetworkInterface(vlan_tag=5),
-                                                    NetworkInterface(vlan_tag=100, ip4='10.100.0.1/24')])
+    create_container(cid, 'gateway-test', image_path, [NetworkInterface(vlan_tag=5),
+                                                       NetworkInterface(vlan_tag=100, ip4='10.100.0.1/24')])
     update_container(cid)
     print(get_ip(cid, 0))
     print(get_ip(cid, 1))
+    install_gateway_nat(cid)
+
+    # Create DHCP server
+    cid = 601
+    purge_container(cid)
+    create_container(cid, 'dhcp-test', image_path, [NetworkInterface(vlan_tag=100,
+                                                                     ip4='10.100.0.2/24',
+                                                                     gw4='10.100.0.1')])
+    update_container(cid)
+    print(get_ip(cid, 0))
     install_dhcpd(cid, '10.100.0')
 
     # Create test client that uses the previously created DHCP server to acquire an IP
-    cid = 601
+    cid = 602
     purge_container(cid)
-    create_container(cid, 'ct-test', image_path, [NetworkInterface(vlan_tag=100)])
-    # update_container(cid)
-    time.sleep(1)
+    create_container(cid, 'client-test', image_path, [NetworkInterface(vlan_tag=100)])
+    update_container(cid)
+    # time.sleep(1)
     print(get_ip(cid, 0))
     print(pct_console_shell(cid, 'uname -a'))
-    print(pct_console_shell(cid, 'uptime'))
 
 
 if __name__ == '__main__':
