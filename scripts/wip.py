@@ -184,7 +184,7 @@ def pct_console_shell(container_id, container_command):
     return os_exec(f'echo "{container_command}" | pct console {container_id}', shell=True)
 
 
-def install_dhcpd(container_id, subnet):
+def install_isc_dhcpd(container_id, subnet):
     apk_add(container_id, 'dhcp-server-vanilla')
     rc_update(container_id, 'dhcpd', 'add')
 
@@ -235,6 +235,24 @@ def install_gateway_nat(container_id):
     rc_service(container_id, 'ip6tables', 'start')
 
 
+def install_bind_dns(container_id, subnet):
+    apk_add(container_id, 'bind')
+    rc_update(container_id, 'named', 'add')
+
+    # /etc/bind - config
+    # /var/bind - zones/db
+    #   sub directories dyn|pri|sec for specific zone types
+    # /run/named - state/pid
+
+    named_conf_temp_path = '/tmp/named.conf'
+    named_conf = open('../templates/bind9/named.conf.recursive', 'r').read()
+    named_conf = named_conf.replace('1.2.3', subnet)
+    open(named_conf_temp_path, 'w').write(named_conf)
+    push_file(container_id, '/etc/bind/named.conf', named_conf_temp_path)
+
+    rc_service(container_id, 'named', 'start')
+
+
 class NetworkInterface:
     vlan_tag = None
     ip4 = None
@@ -258,7 +276,7 @@ def main():
     image_path = f'/var/lib/vz/template/cache/{alpine_newest_image_name}'
 
     # Create NAT gateway
-    cid = 600
+    cid = 601
     purge_container(cid)
     create_container(cid, 'gateway-test', image_path, [NetworkInterface(vlan_tag=5),
                                                        NetworkInterface(vlan_tag=100, ip4='10.100.0.1/24')])
@@ -267,18 +285,28 @@ def main():
     print(get_ip(cid, 1))
     install_gateway_nat(cid)
 
+    # Create DNS server
+    cid = 602
+    purge_container(cid)
+    create_container(cid, 'dns-test', image_path, [NetworkInterface(vlan_tag=100,
+                                                                    ip4='10.100.0.2/24',
+                                                                    gw4='10.100.0.1')])
+    update_container(cid)
+    print(get_ip(cid, 0))
+    install_bind_dns(cid, '10.100.0')
+
     # Create DHCP server
-    cid = 601
+    cid = 603
     purge_container(cid)
     create_container(cid, 'dhcp-test', image_path, [NetworkInterface(vlan_tag=100,
-                                                                     ip4='10.100.0.2/24',
+                                                                     ip4='10.100.0.3/24',
                                                                      gw4='10.100.0.1')])
     update_container(cid)
     print(get_ip(cid, 0))
-    install_dhcpd(cid, '10.100.0')
+    install_isc_dhcpd(cid, '10.100.0')
 
     # Create test client that uses the previously created DHCP server to acquire an IP
-    cid = 602
+    cid = 604
     purge_container(cid)
     create_container(cid, 'client-test', image_path, [NetworkInterface(vlan_tag=100)])
     update_container(cid)
