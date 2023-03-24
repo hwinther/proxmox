@@ -18,7 +18,9 @@ def generate_random_password(length):
 storage = 'local'
 # container_root_password = lambda: 'static_and_less_safe_password'
 container_root_password = lambda: generate_random_password(32)
-container_ssh_authorized_key = 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGzYkv5+lko9E5Tpc3wHg1ZDm4DZDo/ahtljV3xfiHhf ed25519-key-20171113'
+# noinspection SpellCheckingInspection
+container_ssh_authorized_key = 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGzYkv5+lko9E5Tpc3wHg1ZDm4DZDo/ahtljV3xfiHhf' \
+                               ' ed25519-key-20171113'
 container_ssh_authorized_key_filename = '/tmp/container_ssh_authorized_key'
 network_bridge = 'vmbr0'
 # TODO: VLAN support
@@ -104,7 +106,7 @@ def create_container(container_id, container_name, container_image_path, network
           f' --unprivileged 1 --pool {resource_pool} --ssh-public-keys {container_ssh_authorized_key_filename}' \
           f' --ostype alpine --password="ROOT_PASSWORD" --cmode shell --cores {cpu_cores} --start 1 ' \
           + ' '.join(network_arguments)
-    # f' --mp0 volume={storage}:0.01,mp=/etc/testconfig,backup=1,ro=0,shared=0'
+    # f' --mp0 volume={storage}:0.01,mp=/etc/test,backup=1,ro=0,shared=0'
     # TODO: implement storage configuration
     env = os.environ.copy()
     ct_root_pw = container_root_password()
@@ -116,13 +118,13 @@ def create_container(container_id, container_name, container_image_path, network
 
 
 def update_container(container_id):
-    print(os_exec(f'echo "apk update && apk version" | pct console {container_id}', shell=True))
-    print(os_exec(f'echo "apk upgrade" | pct console {container_id}', shell=True))
+    print(pct_console_shell(container_id, f"apk update && apk version"))
+    print(pct_console_shell(container_id, f"apk upgrade"))
 
 
 def get_ip(container_id, interface_id):
     # TODO: use generic "ip a" parse method from library here
-    ip_output = os_exec(f'echo "ip a show eth{interface_id}" | pct console {container_id}', shell=True)
+    ip_output = pct_console_shell(container_id, f"ip a show eth{interface_id}")
     ip4 = None
     ip6 = None
     for line in ip_output.split('\n'):
@@ -134,34 +136,38 @@ def get_ip(container_id, interface_id):
 
 
 def apk_add(container_id, package_name):
-    os_exec(f'echo "apk add {package_name}" | pct console {container_id}', shell=True)
+    return pct_console_shell(container_id, f"apk add {package_name}")
     # TODO: verify installation, also check if installed first?
 
 
 def rc_update(container_id, service_name, operation):
-    os_exec(f'echo "rc-update {operation} {service_name}" | pct console {container_id}', shell=True)
+    return pct_console_shell(container_id, f"rc-update {operation} {service_name}")
     # TODO: verify service change, check if it exists first?
 
 
 def rc_service(container_id, service_name, operation):
-    os_exec(f'echo "rc-service {service_name} {operation}" | pct console {container_id}', shell=True)
+    return pct_console_shell(container_id, f"rc-service {service_name} {operation}")
     # TODO: verify service status, check if it exists first?
 
 
 def push_file(container_id, container_file_path, local_file_path):
-    os_exec(f'pct push {container_id} {local_file_path} {container_file_path}')
+    return os_exec(f'pct push {container_id} {local_file_path} {container_file_path}')
 
 
 def add_net(container_id, interface_id, vlan_tag=None, ip4=None, ip6=None):
-    os_exec(f'pct set {container_id} {generate_net_argument(interface_id, vlan_tag, ip4, ip6)}')
+    return os_exec(f'pct set {container_id} {generate_net_argument(interface_id, vlan_tag, ip4, ip6)}')
 
 
 def remove_net(container_id, interface_id):
-    os_exec(f'pct set {container_id} --delete net{interface_id}')
+    return os_exec(f'pct set {container_id} --delete net{interface_id}')
 
 
 def if_restart(container_id, interface_id):
-    os_exec(f'echo "ifdown eth{interface_id}; ifup eth{interface_id}" | pct console {container_id}', shell=True)
+    return pct_console_shell(container_id, f"ifdown eth{interface_id}; ifup eth{interface_id}")
+
+
+def pct_console_shell(container_id, container_command):
+    return os_exec(f'echo "{container_command}" | pct console {container_id}', shell=True)
 
 
 def install_dhcpd(container_id, subnet):
@@ -207,9 +213,6 @@ def main():
     # TODO: translate image names not just for local storage?
     image_path = f'/var/lib/vz/template/cache/{alpine_newest_image_name}'
 
-    # Rework this into specific methods:
-    # os_exec(f'echo "uname -a && ip a && uptime" | pct console {container_id}', shell=True)
-
     # Create DHCP server
     cid = 600
     purge_container(cid)
@@ -227,6 +230,8 @@ def main():
     # update_container(cid)
     time.sleep(1)
     print(get_ip(cid, 0))
+    print(pct_console_shell(cid, 'uname -a'))
+    print(pct_console_shell(cid, 'uptime'))
 
 
 if __name__ == '__main__':
