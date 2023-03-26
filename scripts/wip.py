@@ -2,7 +2,6 @@ import os
 import subprocess
 import secrets
 import string
-import time
 
 
 def generate_random_password(length):
@@ -15,7 +14,8 @@ def generate_random_password(length):
 
 # TODO: move config to separate file and only have sample in repo
 # PVE storage, local, local_zfs
-storage = 'local'
+template_storage = 'local'
+container_storage = 'local_zfs'
 # container_root_password = lambda: 'static_and_less_safe_password'
 container_root_password = lambda: generate_random_password(32)
 # noinspection SpellCheckingInspection
@@ -60,13 +60,13 @@ def update_lxc_templates():
     if verbose:
         print(f'Newest alpine image: {alpine_newest}')
 
-    alpine_newest_exists = os_exec(f'pveam list {storage}').find(alpine_newest) != -1
+    alpine_newest_exists = os_exec(f'pveam list {template_storage}').find(alpine_newest) != -1
     if alpine_newest_exists:
         if verbose:
-            print(f'Storage "{storage}" contains the image already.')
+            print(f'Storage "{template_storage}" contains the image already.')
     else:
-        print(f'Downloading newest alpine image to storage "{storage}"')
-        os_exec(f'pveam download {storage} {alpine_newest}')
+        print(f'Downloading newest alpine image to storage "{template_storage}"')
+        os_exec(f'pveam download {template_storage} {alpine_newest}')
 
     return alpine_newest
 
@@ -116,12 +116,14 @@ def create_container(container_id, container_name, container_image_path, network
 
     cmd = f'pct create {container_id} {container_image_path} --hostname {container_name}' \
           f' --memory {memory} --swap {swap}' \
-          f' --storage {storage} --rootfs local:0.1' \
+          f' --rootfs {container_storage}:0.1,shared=0' \
           f' --unprivileged 1 --pool {resource_pool} --ssh-public-keys {container_ssh_authorized_key_filename}' \
           f' --ostype alpine --password="ROOT_PASSWORD" --cmode shell --cores {cpu_cores} --start 1 ' \
           + ' '.join(network_arguments)
-    # f' --mp0 volume={storage}:0.01,mp=/etc/test,backup=1,ro=0,shared=0'
-    # TODO: implement storage configuration
+
+    # TODO: implement storage configuration:
+    # f' --mp0 volume={container_storage}:0.01,mp=/etc/test,backup=1,ro=0,shared=0'
+
     env = os.environ.copy()
     ct_root_pw = container_root_password()
     env['ROOT_PASSWORD'] = ct_root_pw
@@ -272,13 +274,13 @@ class NetworkInterface:
 
 def main():
     alpine_newest_image_name = update_lxc_templates()
-    # TODO: translate image names not just for local storage?
+    # TODO: translate image names not just for local (template_)storage?
     image_path = f'/var/lib/vz/template/cache/{alpine_newest_image_name}'
 
     # Create NAT gateway
     cid = 601
     purge_container(cid)
-    create_container(cid, 'gateway-test', image_path, [NetworkInterface(vlan_tag=5),
+    create_container(cid, 'gateway-test', image_path, [NetworkInterface(),
                                                        NetworkInterface(vlan_tag=100, ip4='10.100.0.1/24')])
     update_container(cid)
     print(get_ip(cid, 0))
