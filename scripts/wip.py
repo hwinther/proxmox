@@ -22,12 +22,11 @@ container_root_password = lambda: generate_random_password(32)
 container_ssh_authorized_key = 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGzYkv5+lko9E5Tpc3wHg1ZDm4DZDo/ahtljV3xfiHhf' \
                                ' ed25519-key-20171113'
 container_ssh_authorized_key_filename = '/tmp/container_ssh_authorized_key'
-network_bridge = 'vmbr0'
-# TODO: VLAN support
-resource_pool = 'Testing'
-cpu_cores = 2
-memory = 128
-swap = 128
+network_bridge_default = 'vmbr0'
+resource_pool_default = 'Testing'
+cpu_cores_default = 2
+memory_default = 128
+swap_default = 128
 verbose = False
 
 
@@ -76,10 +75,15 @@ def purge_container(container_id):
     os_exec(f'(pct stop {container_id}; pct destroy {container_id}); echo 0', shell=True)
 
 
-def generate_net_argument(interface_id, vlan_tag=None, ip4=None, gw4=None, ip6=None, gw6=None, firewall=True):
+def generate_net_argument(interface_id, vlan_tag=None, firewall=True, bridge=None,
+                          ip4=None, gw4=None, ip6=None, gw6=None):
     vlan_arg = ''
     if vlan_tag is not None:
         vlan_arg = f'tag={vlan_tag},'
+
+    firewall_arg = '1' if firewall else '0'
+
+    bridge_arg = network_bridge_default if bridge is None else bridge
 
     if ip4 is None:
         ip4 = 'dhcp'
@@ -93,32 +97,50 @@ def generate_net_argument(interface_id, vlan_tag=None, ip4=None, gw4=None, ip6=N
     if gw6 is not None:
         gw6_arg = f',gw={gw6}'
 
-    firewall_arg = '1' if firewall else '0'
-
-    return f'--net{interface_id} name=eth{interface_id},bridge={network_bridge},' \
+    return f'--net{interface_id} name=eth{interface_id},bridge={bridge_arg},' \
            f'ip={ip4}{gw4_arg},ip6={ip6}{gw6_arg},{vlan_arg}firewall={firewall_arg},type=veth'
 
 
-def create_container(container_id, container_name, container_image_path, network_interfaces):
+def create_container(container_id, container_name, container_image_path, network_interfaces,
+                     resource_pool=None, memory=None, swap=None, cpu_cores=None,
+                     unprivileged=None, cmode=None, start=None, startup=None):
+    if resource_pool is None:
+        resource_pool = resource_pool_default
+    if memory is None:
+        memory = memory_default
+    if swap is None:
+        swap = swap_default
+    if cpu_cores is None:
+        cpu_cores = cpu_cores_default
+    if unprivileged is None:
+        unprivileged = 1
+    if cmode is None:
+        cmode = "shell"
+    if start is None:
+        start = 1
+    if startup is None:
+        startup = 0
+
     open(container_ssh_authorized_key_filename, 'w').write(container_ssh_authorized_key)
 
     network_arguments = []
     network_id = 0
     for network_interface in network_interfaces:
         network_arguments.append(generate_net_argument(network_id,
-                                                       network_interface.vlan_tag,
-                                                       network_interface.ip4,
-                                                       network_interface.gw4,
-                                                       network_interface.ip6,
-                                                       network_interface.gw6,
-                                                       network_interface.firewall))
+                                                       vlan_tag=network_interface.vlan_tag,
+                                                       firewall=network_interface.firewall,
+                                                       bridge=network_interface.bridge,
+                                                       ip4=network_interface.ip4,
+                                                       gw4=network_interface.gw4,
+                                                       ip6=network_interface.ip6,
+                                                       gw6=network_interface.gw6))
         network_id += 1
 
-    cmd = f'pct create {container_id} {container_image_path} --hostname {container_name}' \
-          f' --memory {memory} --swap {swap}' \
-          f' --rootfs {container_storage}:0.1,shared=0' \
-          f' --unprivileged 1 --pool {resource_pool} --ssh-public-keys {container_ssh_authorized_key_filename}' \
-          f' --ostype alpine --password="ROOT_PASSWORD" --cmode shell --cores {cpu_cores} --start 1 ' \
+    cmd = f'pct create {container_id} {container_image_path} --ostype alpine --hostname {container_name}' \
+          f' --password="ROOT_PASSWORD" --ssh-public-keys {container_ssh_authorized_key_filename}' \
+          f' --cores {cpu_cores} --memory {memory} --swap {swap}' \
+          f' --pool {resource_pool} --rootfs {container_storage}:0.1,shared=0' \
+          f' --unprivileged {unprivileged} --cmode {cmode} --start {start} --startup {startup} ' \
           + ' '.join(network_arguments)
 
     # TODO: implement storage configuration:
@@ -257,19 +279,21 @@ def install_bind_dns(container_id, subnet):
 
 class NetworkInterface:
     vlan_tag = None
+    firewall = True
+    bridge = None
     ip4 = None
     gw4 = None
     ip6 = None
     gw6 = None
-    firewall = True
 
-    def __init__(self, vlan_tag=None, ip4=None, gw4=None, ip6=None, gw6=None, firewall=True):
+    def __init__(self, vlan_tag=None, firewall=True, bridge=None, ip4=None, gw4=None, ip6=None, gw6=None):
         self.vlan_tag = vlan_tag
+        self.firewall = firewall
+        self.bridge = bridge
         self.ip4 = ip4
         self.gw4 = gw4
         self.ip6 = ip6
         self.gw6 = gw6
-        self.firewall = firewall
 
 
 def main():
@@ -281,7 +305,8 @@ def main():
     cid = 601
     purge_container(cid)
     create_container(cid, 'gateway-test', image_path, [NetworkInterface(),
-                                                       NetworkInterface(vlan_tag=100, ip4='10.100.0.1/24')])
+                                                       NetworkInterface(vlan_tag=100, ip4='10.100.0.1/24')],
+                     startup=1)
     update_container(cid)
     print(get_ip(cid, 0))
     print(get_ip(cid, 1))
@@ -292,7 +317,7 @@ def main():
     purge_container(cid)
     create_container(cid, 'dns-test', image_path, [NetworkInterface(vlan_tag=100,
                                                                     ip4='10.100.0.2/24',
-                                                                    gw4='10.100.0.1')])
+                                                                    gw4='10.100.0.1')], startup=1)
     update_container(cid)
     print(get_ip(cid, 0))
     install_bind_dns(cid, '10.100.0')
@@ -302,7 +327,7 @@ def main():
     purge_container(cid)
     create_container(cid, 'dhcp-test', image_path, [NetworkInterface(vlan_tag=100,
                                                                      ip4='10.100.0.3/24',
-                                                                     gw4='10.100.0.1')])
+                                                                     gw4='10.100.0.1')], startup=1)
     update_container(cid)
     print(get_ip(cid, 0))
     install_isc_dhcpd(cid, '10.100.0')
@@ -310,7 +335,7 @@ def main():
     # Create test client that uses the previously created DHCP server to acquire an IP
     cid = 604
     purge_container(cid)
-    create_container(cid, 'client-test', image_path, [NetworkInterface(vlan_tag=100)])
+    create_container(cid, 'client-test', image_path, [NetworkInterface(vlan_tag=100)], startup=1)
     update_container(cid)
     # time.sleep(1)
     print(get_ip(cid, 0))
