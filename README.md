@@ -59,3 +59,7 @@ pct push 300 /tmp/file.cfg /etc/testconfig/file.cfg
 # pull file from ct
 pct pull 300 /etc/testconfig/file.cfg /tmp/file.cfg
 ```
+
+## TODO
+
+- Try to inject UI via /usr/share/pve-manager

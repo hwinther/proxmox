@@ -156,8 +156,16 @@ def create_container(container_id, container_name, container_image_path, network
 
 
 def update_container(container_id):
-    print(pct_console_shell(container_id, f"apk update && apk version"))
-    print(pct_console_shell(container_id, f"apk upgrade"))
+    pct_console_shell(container_id, f"apk update && apk version")
+    for i in range(0, 3):
+        try:
+            pct_console_shell(container_id, f"apk upgrade")
+            break
+        except subprocess.CalledProcessError as exception:
+            if exception.stderr.find(b'temporary error (try again later)') != -1:
+                print(f'Temporary error in "apk upgrade", retry #{i+1}')
+            else:
+                raise
 
 
 def get_ip(container_id, interface_id):
