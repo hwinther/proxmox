@@ -9,27 +9,49 @@ class Config:
 
     def __init__(self):
         self.config = configparser.ConfigParser()
-        self.config.read('default.ini')
+        self.config.read('config.ini')
 
-        self.verbose = self.config[self.config.default_section].getboolean('Verbose')
+        default = self.config[self.config.default_section]
+        self.verbose = default.getboolean('verbose')  # default: False
+        if self.verbose is None:
+            self.verbose = False
 
         # PVE storage, local, local_zfs
-        self.template_storage = 'local'
-        self.container_storage = 'local_zfs'
+        self.template_storage = default.get('template_storage')  # default: local
+        if self.template_storage is None:
+            raise ValueError('template_storage was not configured')
+        self.container_storage = default.get('container_storage')  # default: local_zfs
+        if self.container_storage is None:
+            raise ValueError('container_storage was not configured')
 
         # container_root_password = lambda: 'static_and_less_safe_password'
         self.container_root_password = lambda: generate_random_password(32)
 
         # noinspection SpellCheckingInspection
-        self.container_ssh_authorized_key = 'ssh-ed25519 ' \
-                                            'AAAAC3NzaC1lZDI1NTE5AAAAIGzYkv5+lko9E5Tpc3wHg1ZDm4DZDo/ahtljV3xfiHhf ' \
-                                            'ed25519-key-20171113'
+        self.container_ssh_authorized_key = default.get('container_ssh_authorized_key')  # default: ed25519-key-20171113
+        if self.container_ssh_authorized_key is None:
+            raise ValueError('container_ssh_authorized_key was not configured')
         self.container_ssh_authorized_key_filename = '/tmp/container_ssh_authorized_key'
-        self.network_bridge_default = 'vmbr0'
-        self.resource_pool_default = 'Testing'
-        self.cpu_cores_default = 2
-        self.memory_default = 128
-        self.swap_default = 128
+
+        self.network_bridge_default = default.get('network_bridge_default')  # default: vmbr0
+        if self.network_bridge_default is None:
+            raise ValueError('network_bridge_default was not configured')
+
+        self.resource_pool_default = default.get('resource_pool_default')  # default: Testing
+        if self.resource_pool_default is None:
+            raise ValueError('resource_pool_default was not configured')
+
+        self.cpu_cores_default = default.getint('cpu_cores_default')  # default: 2
+        if self.cpu_cores_default is None:
+            raise ValueError('cpu_cores_default was not configured')
+
+        self.memory_default = default.getint('memory_default')  # default: 128
+        if self.memory_default is None:
+            raise ValueError('memory_default was not configured')
+
+        self.swap_default = default.getint('swap_default')  # default: 128
+        if self.swap_default is None:
+            raise ValueError('swap_default was not configured')
 
 
 config = Config()
