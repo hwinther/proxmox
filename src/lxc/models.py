@@ -1,26 +1,30 @@
+from ipaddress import IPv4Address, IPv4Interface, IPv4Network, IPv6Address, IPv6Interface, ip_address, ip_interface, \
+    ip_network
 from typing import Sequence, Union
-from ipaddress import IPv4Address, IPv6Address, IPv4Network, ip_network, ip_address
 
 
 class NetworkInterface:
     vlan_tag: int = None
     firewall: bool = None
     bridge: str = None
-    ip4: str = None
-    gw4: str = None
-    ip6: str = None
-    gw6: str = None
+    ip4: IPv4Interface = None
+    gw4: IPv4Address = None
+    ip6: IPv6Interface = None
+    gw6: IPv6Address = None
 
     def __init__(self, vlan_tag: int = None, firewall: bool = True, bridge: str = None,
                  ip4: str = None, gw4: str = None, ip6: str = None, gw6: str = None):
-        # TODO: replace ip4/ip6 with ipaddress.ip_address
         self.vlan_tag = vlan_tag
         self.firewall = firewall
         self.bridge = bridge
-        self.ip4 = ip4
-        self.gw4 = gw4
-        self.ip6 = ip6
-        self.gw6 = gw6
+        if ip4 is not None:
+            self.ip4 = ip_interface(ip4)
+        if gw4 is not None:
+            self.gw4 = ip_address(gw4)
+        if ip6 is not None:
+            self.ip6 = ip_interface(ip6)
+        if gw6 is not None:
+            self.gw6 = ip_address(gw6)
 
 
 class Subnet:

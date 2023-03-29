@@ -2,10 +2,21 @@ import configparser
 import secrets
 import string
 import subprocess
+from typing import Callable
 
 
 class Config:
-    verbose = None
+    verbose: bool = None
+    template_storage: str = None
+    container_storage: str = None
+    container_root_password: Callable[[], str] = None
+    container_ssh_authorized_key: str = None
+    container_ssh_authorized_key_filename: str = None
+    network_bridge_default: str = None
+    resource_pool_default: str = None
+    cpu_cores_default: int = None
+    memory_default: int = None
+    swap_default: int = None
 
     def __init__(self):
         self.config = configparser.ConfigParser()
@@ -57,7 +68,7 @@ class Config:
 config = Config()
 
 
-def generate_random_password(length):
+def generate_random_password(length: int):
     alphabet = string.ascii_letters + string.digits  # + string.punctuation
     password = ''
     for i in range(length):

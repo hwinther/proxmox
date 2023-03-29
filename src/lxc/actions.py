@@ -1,5 +1,8 @@
 import os
-from src.common.common import os_exec, config
+from typing import Sequence
+
+from src.common.common import config, os_exec
+from src.lxc.models import NetworkInterface
 
 
 def update_lxc_templates():
@@ -24,33 +27,47 @@ def update_lxc_templates():
     return alpine_newest
 
 
-def push_file(container_id, container_file_path, local_file_path):
+def push_file(container_id: int, container_file_path: str, local_file_path: str):
     return os_exec(f'pct push {container_id} {local_file_path} {container_file_path}')
 
 
-def add_net(container_id, interface_id, vlan_tag=None, ip4=None, ip6=None):
+def add_net(container_id: int, interface_id: int, vlan_tag: int = None, ip4: str = None, ip6: str = None):
     return os_exec(f'pct set {container_id} {generate_net_argument(interface_id, vlan_tag, ip4, ip6)}')
 
 
-def remove_net(container_id, interface_id):
+def remove_net(container_id: int, interface_id: int):
     return os_exec(f'pct set {container_id} --delete net{interface_id}')
 
 
-def if_restart(container_id, interface_id):
+def if_restart(container_id: int, interface_id: int):
     return pct_console_shell(container_id, f"ifdown eth{interface_id}; ifup eth{interface_id}")
 
 
-def pct_console_shell(container_id, container_command):
+def pct_console_shell(container_id: int, container_command: str):
     return os_exec(f'echo "{container_command}" | pct console {container_id}', shell=True)
 
 
-def purge_container(container_id):
+def purge_container(container_id: int):
     # TODO: check pct list to see if id exists, then use configured option to determine if we're overwriting it or not
     os_exec(f'(pct stop {container_id}; pct destroy {container_id}); echo 0', shell=True)
 
 
-def generate_net_argument(interface_id, vlan_tag=None, firewall=True, bridge=None,
-                          ip4=None, gw4=None, ip6=None, gw6=None):
+def generate_net_argument(interface_id: int, network_interface: NetworkInterface = None,
+                          vlan_tag: int = None, firewall: bool = True, bridge: str = None,
+                          ip4: str = None, gw4: str = None, ip6: str = None, gw6: str = None):
+    if network_interface is not None:
+        vlan_tag = network_interface.vlan_tag
+        firewall = network_interface.firewall
+        bridge = network_interface.bridge
+        if network_interface.ip4 is not None:
+            ip4 = str(network_interface.ip4)
+        if network_interface.gw4 is not None:
+            gw4 = str(network_interface.gw4)
+        if network_interface.ip6 is not None:
+            ip6 = str(network_interface.ip6)
+        if network_interface.gw6 is not None:
+            gw6 = str(network_interface.gw6)
+
     vlan_arg = ''
     if vlan_tag is not None:
         vlan_arg = f'tag={vlan_tag},'
@@ -75,7 +92,8 @@ def generate_net_argument(interface_id, vlan_tag=None, firewall=True, bridge=Non
            f'ip={ip4}{gw4_arg},ip6={ip6}{gw6_arg},{vlan_arg}firewall={firewall_arg},type=veth'
 
 
-def create_container(container_id, container_name, container_image_path, network_interfaces,
+def create_container(container_id: int, container_name: str, container_image_path: str,
+                     network_interfaces: Sequence[NetworkInterface],
                      resource_pool=None, memory=None, swap=None, cpu_cores=None,
                      unprivileged=None, cmode=None, start=None, startup=None):
     if resource_pool is None:
@@ -100,14 +118,7 @@ def create_container(container_id, container_name, container_image_path, network
     network_arguments = []
     network_id = 0
     for network_interface in network_interfaces:
-        network_arguments.append(generate_net_argument(network_id,
-                                                       vlan_tag=network_interface.vlan_tag,
-                                                       firewall=network_interface.firewall,
-                                                       bridge=network_interface.bridge,
-                                                       ip4=network_interface.ip4,
-                                                       gw4=network_interface.gw4,
-                                                       ip6=network_interface.ip6,
-                                                       gw6=network_interface.gw6))
+        network_arguments.append(generate_net_argument(network_id, network_interface=network_interface))
         network_id += 1
 
     cmd = f'pct create {container_id} {container_image_path} --ostype alpine --hostname {container_name}' \
