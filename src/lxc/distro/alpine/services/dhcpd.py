@@ -1,7 +1,8 @@
 from typing import Sequence
-from src.lxc.actions import push_file
-from src.lxc.distro.alpine.actions import apk_add, rc_update, rc_service
+
 import src.lxc.models
+from src.lxc.actions import push_file
+from src.lxc.distro.alpine.actions import apk_add, rc_service, rc_update
 
 
 def install_isc_dhcpd(container_id: int,
@@ -68,4 +69,3 @@ def install_isc_dhcpd(container_id: int,
     push_file(container_id, '/etc/dhcp/dhcpd.devices.conf', devices_temp_path)
 
     rc_service(container_id, 'dhcpd', 'start')
-    

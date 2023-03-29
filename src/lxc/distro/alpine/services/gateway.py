@@ -1,5 +1,5 @@
-from src.lxc.actions import push_file, pct_console_shell
-from src.lxc.distro.alpine.actions import apk_add, rc_update, rc_service
+from src.lxc.actions import pct_console_shell, push_file
+from src.lxc.distro.alpine.actions import apk_add, rc_service, rc_update
 
 
 def install_gateway_nat(container_id):

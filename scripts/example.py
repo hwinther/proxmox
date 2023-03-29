@@ -1,9 +1,9 @@
-from src.lxc.actions import update_lxc_templates, purge_container, create_container, pct_console_shell
-from src.lxc.distro.alpine.actions import update_container, get_ip
+from src.lxc.actions import create_container, pct_console_shell, purge_container, update_lxc_templates
+from src.lxc.distro.alpine.actions import get_ip, update_container
 from src.lxc.distro.alpine.services.bind import install_bind_dns
 from src.lxc.distro.alpine.services.dhcpd import install_isc_dhcpd
 from src.lxc.distro.alpine.services.gateway import install_gateway_nat
-from src.lxc.models import NetworkInterface
+from src.lxc.models import NetworkInterface, Subnet
 
 
 def main():
@@ -35,12 +35,21 @@ def main():
     # Create DHCP server
     cid = 603
     purge_container(cid)
+    # TODO: create_container should return a container instance
     create_container(cid, 'dhcp-test', image_path, [NetworkInterface(vlan_tag=100,
                                                                      ip4='10.100.0.3/24',
                                                                      gw4='10.100.0.1')], startup=1)
     update_container(cid)
     print(get_ip(cid, 0))
-    install_isc_dhcpd(cid, '10.100.0')
+    install_isc_dhcpd(cid,
+                      [Subnet(network='10.100.0.0/24',
+                              range_start=100,
+                              range_end=200,
+                              router='10.100.0.1',
+                              domain_name='test.lan',
+                              # domain_name_servers=['10.100.0.2'])], # TODO: reference dns container's IP here
+                              domain_name_servers=['10.100.0.2'])],
+                      [])
 
     # Create test client that uses the previously created DHCP server to acquire an IP
     cid = 604

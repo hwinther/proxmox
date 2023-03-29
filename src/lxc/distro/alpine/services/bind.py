@@ -1,5 +1,5 @@
 from src.lxc.actions import push_file
-from src.lxc.distro.alpine.actions import apk_add, rc_update, rc_service
+from src.lxc.distro.alpine.actions import apk_add, rc_service, rc_update
 
 
 def install_bind_dns(container_id, subnet):

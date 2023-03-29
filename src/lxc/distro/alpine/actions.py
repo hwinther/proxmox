@@ -1,4 +1,5 @@
 import subprocess
+
 from src.lxc.actions import pct_console_shell
 
 
@@ -10,7 +11,7 @@ def update_container(container_id):
             break
         except subprocess.CalledProcessError as exception:
             if exception.stderr.find(b'temporary error (try again later)') != -1:
-                print(f'Temporary error in "apk upgrade", retry #{i+1}')
+                print(f'Temporary error in "apk upgrade", retry #{i + 1}')
             else:
                 raise
 
