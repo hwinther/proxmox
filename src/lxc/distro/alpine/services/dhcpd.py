@@ -1,16 +1,15 @@
 from typing import Sequence
 
+import src.lxc.distro.alpine.actions
 import src.lxc.models
-from src.lxc.actions import push_file
-from src.lxc.distro.alpine.actions import apk_add, rc_service, rc_update
 
 
-def install_isc_dhcpd(container_id: int,
+def install_isc_dhcpd(container: src.lxc.distro.alpine.actions.AlpineContainer,
                       ip4_subnets: Sequence[src.lxc.models.Subnet],
                       ip4_devices: Sequence[src.lxc.models.Device]):
     """
     Install, configure and start ISC DHCP daemon
-    @param container_id: Container/LXC ID
+    @param container: Container/LXC instance
     @param ip4_subnets: Subnet definitions
     @param ip4_devices: Device definitions
     """
@@ -18,13 +17,13 @@ def install_isc_dhcpd(container_id: int,
     # /var/lib/dhcp - leases/db
     # /run/dhcp - state/pid
 
-    apk_add(container_id, 'dhcp-server-vanilla')
-    rc_update(container_id, 'dhcpd', 'add')
+    container.apk_add('dhcp-server-vanilla')
+    container.rc_update('dhcpd', 'add')
 
     dhcpd_conf_temp_path = '/tmp/dhcpd.conf'
     dhcpd_conf = open('../templates/isc-dhcp-server/dhcpd.conf', 'r').read()
     open(dhcpd_conf_temp_path, 'w').write(dhcpd_conf)
-    push_file(container_id, '/etc/dhcp/dhcpd.conf', dhcpd_conf_temp_path)
+    container.push_file('/etc/dhcp/dhcpd.conf', dhcpd_conf_temp_path)
 
     subnets_temp_path = '/tmp/dhcpd.subnets.conf'
     subnets_template_conf = open('../templates/isc-dhcp-server/dhcpd.subnets.conf', 'r').read()
@@ -54,7 +53,7 @@ def install_isc_dhcpd(container_id: int,
                                                   'option ntp-servers')
         subnet_configs.append(subnet_config)
     open(subnets_temp_path, 'w').write('\n'.join(subnet_configs))
-    push_file(container_id, '/etc/dhcp/dhcpd.subnets.conf', subnets_temp_path)
+    container.push_file('/etc/dhcp/dhcpd.subnets.conf', subnets_temp_path)
 
     devices_temp_path = '/tmp/dhcpd.devices.conf'
     devices_template_conf = open('../templates/isc-dhcp-server/dhcpd.devices.conf', 'r').read()
@@ -66,6 +65,6 @@ def install_isc_dhcpd(container_id: int,
         device_config = device_config.replace('1.2.3.4', str(ip4_device.fixed_address))
         device_configs.append(device_config)
     open(devices_temp_path, 'w').write('\n'.join(device_configs))
-    push_file(container_id, '/etc/dhcp/dhcpd.devices.conf', devices_temp_path)
+    container.push_file('/etc/dhcp/dhcpd.devices.conf', devices_temp_path)
 
-    rc_service(container_id, 'dhcpd', 'start')
+    container.rc_service('dhcpd', 'start')

@@ -1,20 +1,19 @@
-from src.lxc.actions import push_file
-from src.lxc.distro.alpine.actions import apk_add, rc_service, rc_update
+import src.lxc.distro.alpine.actions
 
 
-def install_bind_dns(container_id, subnet):
-    apk_add(container_id, 'bind')
-    rc_update(container_id, 'named', 'add')
-
+def install_bind_dns(container: src.lxc.distro.alpine.actions.AlpineContainer, subnet: str):
     # /etc/bind - config
     # /var/bind - zones/db
     #   sub directories dyn|pri|sec for specific zone types
     # /run/named - state/pid
 
+    container.apk_add('bind')
+    container.rc_update('named', 'add')
+
     named_conf_temp_path = '/tmp/named.conf'
     named_conf = open('../templates/bind9/named.conf.recursive', 'r').read()
     named_conf = named_conf.replace('1.2.3', subnet)
     open(named_conf_temp_path, 'w').write(named_conf)
-    push_file(container_id, '/etc/bind/named.conf', named_conf_temp_path)
+    container.push_file('/etc/bind/named.conf', named_conf_temp_path)
 
-    rc_service(container_id, 'named', 'start')
+    container.rc_service('named', 'start')

@@ -27,31 +27,6 @@ def update_lxc_templates():
     return alpine_newest
 
 
-def push_file(container_id: int, container_file_path: str, local_file_path: str):
-    return os_exec(f'pct push {container_id} {local_file_path} {container_file_path}')
-
-
-def add_net(container_id: int, interface_id: int, vlan_tag: int = None, ip4: str = None, ip6: str = None):
-    return os_exec(f'pct set {container_id} {generate_net_argument(interface_id, vlan_tag, ip4, ip6)}')
-
-
-def remove_net(container_id: int, interface_id: int):
-    return os_exec(f'pct set {container_id} --delete net{interface_id}')
-
-
-def if_restart(container_id: int, interface_id: int):
-    return pct_console_shell(container_id, f"ifdown eth{interface_id}; ifup eth{interface_id}")
-
-
-def pct_console_shell(container_id: int, container_command: str):
-    return os_exec(f'echo "{container_command}" | pct console {container_id}', shell=True)
-
-
-def purge_container(container_id: int):
-    # TODO: check pct list to see if id exists, then use configured option to determine if we're overwriting it or not
-    os_exec(f'(pct stop {container_id}; pct destroy {container_id}); echo 0', shell=True)
-
-
 def generate_net_argument(interface_id: int, network_interface: NetworkInterface = None,
                           vlan_tag: int = None, firewall: bool = True, bridge: str = None,
                           ip4: str = None, gw4: str = None, ip6: str = None, gw6: str = None):
@@ -92,49 +67,79 @@ def generate_net_argument(interface_id: int, network_interface: NetworkInterface
            f'ip={ip4}{gw4_arg},ip6={ip6}{gw6_arg},{vlan_arg}firewall={firewall_arg},type=veth'
 
 
-def create_container(container_id: int, container_name: str, container_image_path: str,
-                     network_interfaces: Sequence[NetworkInterface],
-                     resource_pool=None, memory=None, swap=None, cpu_cores=None,
-                     unprivileged=None, cmode=None, start=None, startup=None):
-    if resource_pool is None:
-        resource_pool = config.resource_pool_default
-    if memory is None:
-        memory = config.memory_default
-    if swap is None:
-        swap = config.swap_default
-    if cpu_cores is None:
-        cpu_cores = config.cpu_cores_default
-    if unprivileged is None:
-        unprivileged = 1
-    if cmode is None:
-        cmode = "shell"
-    if start is None:
-        start = 1
-    if startup is None:
-        startup = 0
+class Container:
+    id: int = None
 
-    open(config.container_ssh_authorized_key_filename, 'w').write(config.container_ssh_authorized_key)
+    def __init__(self, container_id: int):
+        self.id = container_id
 
-    network_arguments = []
-    network_id = 0
-    for network_interface in network_interfaces:
-        network_arguments.append(generate_net_argument(network_id, network_interface=network_interface))
-        network_id += 1
+    def push_file(self, container_file_path: str, local_file_path: str):
+        return os_exec(f'pct push {self.id} {local_file_path} {container_file_path}')
 
-    cmd = f'pct create {container_id} {container_image_path} --ostype alpine --hostname {container_name}' \
-          f' --password="ROOT_PASSWORD" --ssh-public-keys {config.container_ssh_authorized_key_filename}' \
-          f' --cores {cpu_cores} --memory {memory} --swap {swap}' \
-          f' --pool {resource_pool} --rootfs {config.container_storage}:0.1,shared=0' \
-          f' --unprivileged {unprivileged} --cmode {cmode} --start {start} --startup {startup} ' \
-          + ' '.join(network_arguments)
+    def add_net(self, interface_id: int, vlan_tag: int = None, ip4: str = None, ip6: str = None):
+        return os_exec(f'pct set {self.id} {generate_net_argument(interface_id, vlan_tag=vlan_tag, ip4=ip4, ip6=ip6)}')
 
-    # TODO: implement storage configuration:
-    # f' --mp0 volume={container_storage}:0.01,mp=/etc/test,backup=1,ro=0,shared=0'
+    def remove_net(self, interface_id: int):
+        return os_exec(f'pct set {self.id} --delete net{interface_id}')
 
-    env = os.environ.copy()
-    ct_root_pw = config.container_root_password()
-    env['ROOT_PASSWORD'] = ct_root_pw
+    def if_restart(self, interface_id: int):
+        return self.pct_console_shell(f"ifdown eth{interface_id}; ifup eth{interface_id}")
 
-    os_exec(cmd, env)
-    # TODO: verify that it runs
-    print(f'Container {container_name} ({container_id}) is ready with root password: {ct_root_pw}')
+    def pct_console_shell(self, container_command: str):
+        return os_exec(f'echo "{container_command}" | pct console {self.id}', shell=True)
+
+    def purge_container(self):
+        # TODO: check pct list to see if id exists, then use configured option to determine
+        #  if we're overwriting it or not
+        os_exec(f'(pct stop {self.id}; pct destroy {self.id}); echo 0', shell=True)
+
+    def create_container(self, container_name: str, container_image_path: str,
+                         network_interfaces: Sequence[NetworkInterface],
+                         resource_pool=None, memory=None, swap=None, cpu_cores=None,
+                         unprivileged=None, cmode=None, start=None, startup=None):
+        #
+        # TODO: rework this to a factory constructor with override in AlpineContainer?
+        #
+        if resource_pool is None:
+            resource_pool = config.resource_pool_default
+        if memory is None:
+            memory = config.memory_default
+        if swap is None:
+            swap = config.swap_default
+        if cpu_cores is None:
+            cpu_cores = config.cpu_cores_default
+        if unprivileged is None:
+            unprivileged = 1
+        if cmode is None:
+            cmode = "shell"
+        if start is None:
+            start = 1
+        if startup is None:
+            startup = 0
+
+        open(config.container_ssh_authorized_key_filename, 'w').write(config.container_ssh_authorized_key)
+
+        network_arguments = []
+        network_id = 0
+        for network_interface in network_interfaces:
+            network_arguments.append(generate_net_argument(network_id, network_interface=network_interface))
+            network_id += 1
+
+        cmd = f'pct create {self.id} {container_image_path} --ostype alpine --hostname {container_name}' \
+              f' --password="ROOT_PASSWORD" --ssh-public-keys {config.container_ssh_authorized_key_filename}' \
+              f' --cores {cpu_cores} --memory {memory} --swap {swap}' \
+              f' --pool {resource_pool} --rootfs {config.container_storage}:0.1,shared=0' \
+              f' --unprivileged {unprivileged} --cmode {cmode} --start {start} --startup {startup} ' \
+              + ' '.join(network_arguments)
+
+        # TODO: implement storage configuration:
+        # f' --mp0 volume={container_storage}:0.01,mp=/etc/test,backup=1,ro=0,shared=0'
+
+        env = os.environ.copy()
+        ct_root_pw = config.container_root_password()
+        env['ROOT_PASSWORD'] = ct_root_pw
+
+        os_exec(cmd, env)
+        # TODO: verify that it runs
+        print(f'Container {container_name} ({self.id}) is ready with root password: {ct_root_pw}')
+    
