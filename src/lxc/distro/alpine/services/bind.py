@@ -127,6 +127,8 @@ def install_bind_dns_authoritative(container: src.lxc.distro.alpine.actions.Alpi
 
     zone_template = open('../templates/bind9/zone.template', 'r').read()
     zone_temp_path = '/tmp/named.zone.tmp'
+    if master_zones is None:
+        master_zones = []
     for master_zone in master_zones:
         zone = zone_template
         zone = zone.replace('example.com', master_zone.domain_name)

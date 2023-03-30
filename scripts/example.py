@@ -1,6 +1,7 @@
 from src.lxc.actions import update_lxc_templates
 from src.lxc.distro.alpine.actions import AlpineContainer
-from src.lxc.distro.alpine.services.bind import MasterZone, install_bind_dns_authoritative, install_bind_dns_recursive
+from src.lxc.distro.alpine.services.bind import MasterZone, SlaveZone, install_bind_dns_authoritative, \
+    install_bind_dns_recursive
 from src.lxc.distro.alpine.services.dhcpd import install_isc_dhcpd
 from src.lxc.distro.alpine.services.gateway import install_gateway_nat
 from src.lxc.models import NetworkInterface, Subnet
@@ -13,18 +14,36 @@ def main():
 
     dns_master = AlpineContainer(605)
     dns_master.purge_container()
-    dns_master.create_container('dns-test2',
+    dns_master.create_container('dns-test-master',
                                 image_path,
+                                # TODO: would be great if NetworkInterface could detect likely IP conflicts
                                 [NetworkInterface(vlan_tag=100,
-                                                  ip4='10.100.0.3/24',
+                                                  ip4='10.100.0.5/24',
                                                   gw4='10.100.0.1')],
                                 onboot=1)
     dns_master.update_container()
     print(dns_master.get_ip(0))
+
+    dns_slave = AlpineContainer(606)
+    dns_slave.purge_container()
+    dns_slave.create_container('dns-test-slave',
+                               image_path,
+                               [NetworkInterface(vlan_tag=100,
+                                                 ip4='10.100.0.6/24',
+                                                 gw4='10.100.0.1')],
+                               onboot=1)
+    dns_slave.update_container()
+    print(dns_slave.get_ip(0))
+
     install_bind_dns_authoritative(dns_master,
                                    dns_master.network_interfaces[0],
-                                   master_zones=[MasterZone(domain_name='test.lan', slaves=[])])
-    
+                                   master_zones=[MasterZone(domain_name='test.lan',
+                                                            slaves=[dns_slave.network_interfaces[0].ip4.ip])])
+    install_bind_dns_authoritative(dns_slave,
+                                   dns_slave.network_interfaces[0],
+                                   slave_zones=[SlaveZone(domain_name='test.lan',
+                                                          masters=[dns_master.network_interfaces[0].ip4.ip])])
+
     return
 
     # Create NAT gateway
