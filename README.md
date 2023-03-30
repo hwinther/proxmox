@@ -59,24 +59,3 @@ pct push 300 /tmp/file.cfg /etc/testconfig/file.cfg
 # pull file from ct
 pct pull 300 /etc/testconfig/file.cfg /tmp/file.cfg
 ```
-
-## TODO
-
-- Try to inject UI via /usr/share/pve-manager
-- Support creating the following LXC services:
-    - unifi
-    - acme-dns
-    - nginx
-    - ircd for the lulz?
-    - minecraft server
-    - podman or k3s
-    - samba (domain name resolver and shares)
-    - postfix
-    - wireguard
-    - nextcloud
-    - mariadb
-    - transmission
-    - jellyfin
-    - influxdb https://github.com/woahbase/alpine-influxdb
-    - graphite
-    - grafana
