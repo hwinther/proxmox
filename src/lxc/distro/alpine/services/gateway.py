@@ -19,7 +19,8 @@ def install_gateway_nat(container: src.lxc.distro.alpine.actions.AlpineContainer
     container.pct_console_shell("awall enable gateway-nat-policy && awall activate -f")
 
     # Enable routing via sysctl, in the future perhaps also enable ipv6 forwarding?
-    container.pct_console_shell("sysctl -w net.ipv4.ip_forward=1")
+    container.pct_console_shell("echo \"net.ipv4.ip_forward=1\" >> /etc/sysctl.conf")
+    container.pct_console_shell("sysctl -p")
 
     container.rc_service('iptables', 'start')
     container.rc_service('ip6tables', 'start')
