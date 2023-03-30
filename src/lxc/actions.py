@@ -1,5 +1,5 @@
 import os
-from typing import Sequence
+from typing import List, Sequence
 
 from src.common.common import config, os_exec
 from src.lxc.models import NetworkInterface
@@ -69,9 +69,11 @@ def generate_net_argument(interface_id: int, network_interface: NetworkInterface
 
 class Container:
     id: int = None
+    network_interfaces: List[NetworkInterface] = None
 
     def __init__(self, container_id: int):
         self.id = container_id
+        self.network_interfaces = []
 
     def push_file(self, container_file_path: str, local_file_path: str):
         return os_exec(f'pct push {self.id} {local_file_path} {container_file_path}')
@@ -96,7 +98,7 @@ class Container:
     def create_container(self, container_name: str, container_image_path: str,
                          network_interfaces: Sequence[NetworkInterface],
                          resource_pool=None, memory=None, swap=None, cpu_cores=None,
-                         unprivileged=None, cmode=None, start=None, startup=None):
+                         unprivileged=None, cmode=None, start=None, onboot=None):
         #
         # TODO: rework this to a factory constructor with override in AlpineContainer?
         #
@@ -114,8 +116,8 @@ class Container:
             cmode = "shell"
         if start is None:
             start = 1
-        if startup is None:
-            startup = 0
+        if onboot is None:
+            onboot = 0
 
         open(config.container_ssh_authorized_key_filename, 'w').write(config.container_ssh_authorized_key)
 
@@ -123,13 +125,14 @@ class Container:
         network_id = 0
         for network_interface in network_interfaces:
             network_arguments.append(generate_net_argument(network_id, network_interface=network_interface))
+            self.network_interfaces.append(network_interface)
             network_id += 1
 
         cmd = f'pct create {self.id} {container_image_path} --ostype alpine --hostname {container_name}' \
               f' --password="ROOT_PASSWORD" --ssh-public-keys {config.container_ssh_authorized_key_filename}' \
               f' --cores {cpu_cores} --memory {memory} --swap {swap}' \
               f' --pool {resource_pool} --rootfs {config.container_storage}:0.1,shared=0' \
-              f' --unprivileged {unprivileged} --cmode {cmode} --start {start} --startup {startup} ' \
+              f' --unprivileged {unprivileged} --cmode {cmode} --start {start} --onboot {onboot} ' \
               + ' '.join(network_arguments)
 
         # TODO: implement storage configuration:
@@ -142,4 +145,3 @@ class Container:
         os_exec(cmd, env)
         # TODO: verify that it runs
         print(f'Container {container_name} ({self.id}) is ready with root password: {ct_root_pw}')
-    

@@ -16,7 +16,7 @@ def main():
     nat_gateway.purge_container()
     nat_gateway.create_container('gateway-test', image_path, [NetworkInterface(),
                                                               NetworkInterface(vlan_tag=100, ip4='10.100.0.1/24')],
-                                 startup=1)
+                                 onboot=1)
     nat_gateway.update_container()
     # TODO: rewrite to interface instance? from NetworkInterfaces that were specified in create_container
     print(nat_gateway.get_ip(0))
@@ -28,7 +28,7 @@ def main():
     dns_server.purge_container()
     dns_server.create_container('dns-test', image_path, [NetworkInterface(vlan_tag=100,
                                                                           ip4='10.100.0.2/24',
-                                                                          gw4='10.100.0.1')], startup=1)
+                                                                          gw4='10.100.0.1')], onboot=1)
     dns_server.update_container()
     print(dns_server.get_ip(0))
     install_bind_dns(dns_server, '10.100.0')
@@ -36,26 +36,24 @@ def main():
     # Create DHCP server
     dhcp_server = AlpineContainer(603)
     dhcp_server.purge_container()
-    # TODO: create_container should return a container instance
     dhcp_server.create_container('dhcp-test', image_path, [NetworkInterface(vlan_tag=100,
                                                                             ip4='10.100.0.3/24',
-                                                                            gw4='10.100.0.1')], startup=1)
+                                                                            gw4='10.100.0.1')], onboot=1)
     dhcp_server.update_container()
     print(dhcp_server.get_ip(0))
     install_isc_dhcpd(dhcp_server,
                       [Subnet(network='10.100.0.0/24',
                               range_start=100,
                               range_end=200,
-                              router='10.100.0.1',
+                              router=str(nat_gateway.network_interfaces[1].ip4.ip),
                               domain_name='test.lan',
-                              # domain_name_servers=['10.100.0.2'])], # TODO: reference dns container's IP here
-                              domain_name_servers=['10.100.0.2'])],
+                              domain_name_servers=[str(dns_server.network_interfaces[0].ip4.ip)])],
                       [])
 
     # Create test client that uses the previously created DHCP server to acquire an IP
     client = AlpineContainer(604)
     client.purge_container()
-    client.create_container('client-test', image_path, [NetworkInterface(vlan_tag=100)], startup=1)
+    client.create_container('client-test', image_path, [NetworkInterface(vlan_tag=100)], onboot=1)
     client.update_container()
     # time.sleep(1)
     print(client.get_ip(0))
