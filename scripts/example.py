@@ -12,39 +12,11 @@ def main():
     # TODO: translate image names not just for local (template_)storage?
     image_path = f'/var/lib/vz/template/cache/{alpine_newest_image_name}'
 
-    dns_master = AlpineContainer(605)
-    dns_master.purge_container()
-    dns_master.create_container('dns-test-master',
-                                image_path,
-                                # TODO: would be great if NetworkInterface could detect likely IP conflicts
-                                [NetworkInterface(vlan_tag=100,
-                                                  ip4='10.100.0.5/24',
-                                                  gw4='10.100.0.1')],
-                                onboot=1)
-    dns_master.update_container()
-    print(dns_master.get_ip(0))
-
-    dns_slave = AlpineContainer(606)
-    dns_slave.purge_container()
-    dns_slave.create_container('dns-test-slave',
-                               image_path,
-                               [NetworkInterface(vlan_tag=100,
-                                                 ip4='10.100.0.6/24',
-                                                 gw4='10.100.0.1')],
-                               onboot=1)
-    dns_slave.update_container()
-    print(dns_slave.get_ip(0))
-
-    install_bind_dns_authoritative(dns_master,
-                                   dns_master.network_interfaces[0],
-                                   master_zones=[MasterZone(domain_name='test.lan',
-                                                            slaves=[dns_slave.network_interfaces[0].ip4.ip])])
-    install_bind_dns_authoritative(dns_slave,
-                                   dns_slave.network_interfaces[0],
-                                   slave_zones=[SlaveZone(domain_name='test.lan',
-                                                          masters=[dns_master.network_interfaces[0].ip4.ip])])
-
-    return
+    # for i in range(601, 607):
+    #     print(i)
+    #     Container.purge_container_by_id(i)
+    #
+    # return
 
     # Create NAT gateway
     nat_gateway = AlpineContainer(601)
@@ -105,6 +77,42 @@ def main():
     # time.sleep(1)
     print(client.get_ip(0))
     print(client.pct_console_shell('uname -a'))
+
+    # dns_master_and_slave(image_path)
+
+
+def dns_master_and_slave(image_path):
+    dns_master = AlpineContainer(605)
+    dns_master.purge_container()
+    dns_master.create_container('dns-test-master',
+                                image_path,
+                                # TODO: would be great if NetworkInterface could detect likely IP conflicts
+                                [NetworkInterface(vlan_tag=100,
+                                                  ip4='10.100.0.5/24',
+                                                  gw4='10.100.0.1')],
+                                onboot=1)
+    dns_master.update_container()
+    print(dns_master.get_ip(0))
+
+    dns_slave = AlpineContainer(606)
+    dns_slave.purge_container()
+    dns_slave.create_container('dns-test-slave',
+                               image_path,
+                               [NetworkInterface(vlan_tag=100,
+                                                 ip4='10.100.0.6/24',
+                                                 gw4='10.100.0.1')],
+                               onboot=1)
+    dns_slave.update_container()
+    print(dns_slave.get_ip(0))
+
+    install_bind_dns_authoritative(dns_master,
+                                   dns_master.network_interfaces[0],
+                                   master_zones=[MasterZone(domain_name='test.lan',
+                                                            slaves=[dns_slave.network_interfaces[0].ip4.ip])])
+    install_bind_dns_authoritative(dns_slave,
+                                   dns_slave.network_interfaces[0],
+                                   slave_zones=[SlaveZone(domain_name='test.lan',
+                                                          masters=[dns_master.network_interfaces[0].ip4.ip])])
 
 
 if __name__ == '__main__':

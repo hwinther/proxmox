@@ -90,10 +90,14 @@ class Container:
     def pct_console_shell(self, container_command: str):
         return os_exec(f'echo "{container_command}" | pct console {self.id}', shell=True)
 
-    def purge_container(self):
+    @staticmethod
+    def purge_container_by_id(container_id: int):
         # TODO: check pct list to see if id exists, then use configured option to determine
         #  if we're overwriting it or not
-        os_exec(f'(pct stop {self.id}; pct destroy {self.id}); echo 0', shell=True)
+        os_exec(f'(pct stop {container_id}; pct destroy {container_id}); echo 0', shell=True)
+
+    def purge_container(self):
+        self.purge_container_by_id(self.id)
 
     def create_container(self, container_name: str, container_image_path: str,
                          network_interfaces: Sequence[NetworkInterface],
