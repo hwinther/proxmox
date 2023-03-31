@@ -1,9 +1,8 @@
 from src.lxc.actions import update_lxc_templates
 from src.lxc.distro.alpine.actions import AlpineContainer
-from src.lxc.distro.alpine.services.bind import MasterZone, SlaveZone, install_bind_dns_authoritative, \
-    install_bind_dns_recursive
-from src.lxc.distro.alpine.services.dhcpd import install_isc_dhcpd
-from src.lxc.distro.alpine.services.gateway import install_gateway_nat
+from src.lxc.distro.alpine.services.bind import BindService, MasterZone, SlaveZone
+from src.lxc.distro.alpine.services.dhcpd import DhcpService
+from src.lxc.distro.alpine.services.gateway import GatewayService
 from src.lxc.models import NetworkInterface, Subnet
 
 
@@ -31,7 +30,8 @@ def main():
     # TODO: rewrite to interface instance? from NetworkInterfaces that were specified in create_container
     print(nat_gateway.get_ip(0))
     print(nat_gateway.get_ip(1))
-    install_gateway_nat(nat_gateway)
+    gateway_service = GatewayService(nat_gateway, 'gateway for internal lan')
+    gateway_service.install()
 
     # Create DNS server
     dns_server = AlpineContainer(602)
@@ -44,7 +44,8 @@ def main():
                                 onboot=1)
     dns_server.update_container()
     print(dns_server.get_ip(0))
-    install_bind_dns_recursive(dns_server, dns_server.network_interfaces[0])
+    dns_service = BindService(dns_server, 'dns recursive resolver')
+    dns_service.install_bind_dns_recursive(dns_server.network_interfaces[0])
 
     # Create DHCP server
     dhcp_server = AlpineContainer(603)
@@ -57,14 +58,14 @@ def main():
                                  onboot=1)
     dhcp_server.update_container()
     print(dhcp_server.get_ip(0))
-    install_isc_dhcpd(dhcp_server,
-                      [Subnet(network='10.100.0.0/24',
-                              range_start=100,
-                              range_end=200,
-                              router=str(nat_gateway.network_interfaces[1].ip4.ip),
-                              domain_name='test.lan',
-                              domain_name_servers=[str(dns_server.network_interfaces[0].ip4.ip)])],
-                      [])
+    dhcp_service = DhcpService(dhcp_server, 'isc dhcpd service')
+    dhcp_service.install([Subnet(network='10.100.0.0/24',
+                                 range_start=100,
+                                 range_end=200,
+                                 router=str(nat_gateway.network_interfaces[1].ip4.ip),
+                                 domain_name='test.lan',
+                                 domain_name_servers=[str(dns_server.network_interfaces[0].ip4.ip)])],
+                         [])
 
     # Create test client that uses the previously created DHCP server to acquire an IP
     client = AlpineContainer(604)
@@ -105,14 +106,18 @@ def dns_master_and_slave(image_path):
     dns_slave.update_container()
     print(dns_slave.get_ip(0))
 
-    install_bind_dns_authoritative(dns_master,
-                                   dns_master.network_interfaces[0],
-                                   master_zones=[MasterZone(domain_name='test.lan',
-                                                            slaves=[dns_slave.network_interfaces[0].ip4.ip])])
-    install_bind_dns_authoritative(dns_slave,
-                                   dns_slave.network_interfaces[0],
-                                   slave_zones=[SlaveZone(domain_name='test.lan',
-                                                          masters=[dns_master.network_interfaces[0].ip4.ip])])
+    dns_master_service = BindService(dns_master, 'dns master')
+    dns_master_service.install_bind_dns_authoritative(dns_master,
+                                                      dns_master.network_interfaces[0],
+                                                      master_zones=[MasterZone(domain_name='test.lan',
+                                                                               slaves=[dns_slave.network_interfaces[
+                                                                                           0].ip4.ip])])
+    dns_slave_service = BindService(dns_slave, 'dns slave')
+    dns_slave_service.install_bind_dns_authoritative(dns_slave,
+                                                     dns_slave.network_interfaces[0],
+                                                     slave_zones=[SlaveZone(domain_name='test.lan',
+                                                                            masters=[dns_master.network_interfaces[
+                                                                                         0].ip4.ip])])
 
 
 if __name__ == '__main__':

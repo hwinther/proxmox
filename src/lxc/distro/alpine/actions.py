@@ -1,9 +1,20 @@
 import subprocess
+from typing import List
 
 import src.lxc.actions
 
 
+class AlpineService(src.lxc.actions.Service):
+    container: "AlpineContainer" = None
+
+    def __init__(self, container: "AlpineContainer", name: str):
+        super().__init__(container, name)
+        self.container.services.append(self)
+
+
 class AlpineContainer(src.lxc.actions.Container):
+    services: List[AlpineService] = None
+
     def update_container(self):
         self.pct_console_shell(f"apk update && apk version")
         for i in range(0, 3):

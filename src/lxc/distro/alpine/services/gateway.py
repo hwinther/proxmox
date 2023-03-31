@@ -1,26 +1,34 @@
 import src.lxc.distro.alpine.actions
+from lxc.distro.alpine.service import AlpineService
 
 
-def install_gateway_nat(container: src.lxc.distro.alpine.actions.AlpineContainer):
-    # /etc/awall/optional/ - inactive config folder
+class GatewayService(AlpineService):
+    """
+    /etc/awall/optional/ - inactive config folder
+    """
+    container: src.lxc.distro.alpine.actions.AlpineContainer = None
 
-    container.apk_add('ip6tables')
-    container.apk_add('awall')
+    def __init__(self, container: src.lxc.distro.alpine.actions.AlpineContainer, name: str):
+        super().__init__(container, name)
 
-    container.rc_update('iptables', 'add')
-    container.rc_update('ip6tables', 'add')
+    def install(self):
+        self.container.apk_add('ip6tables')
+        self.container.apk_add('awall')
 
-    awall_policy_temp_path = '/tmp/gateway-nat-policy.json'
-    dhcpd_conf = open('../templates/awall/gateway-nat-policy.json', 'r').read()
-    open(awall_policy_temp_path, 'w').write(dhcpd_conf)
-    container.push_file('/etc/awall/optional/gateway-nat-policy.json', awall_policy_temp_path)
+        self.container.rc_update('iptables', 'add')
+        self.container.rc_update('ip6tables', 'add')
 
-    # Enable and activate firewall rules
-    container.pct_console_shell("awall enable gateway-nat-policy && awall activate -f")
+        awall_policy_temp_path = '/tmp/gateway-nat-policy.json'
+        dhcpd_conf = open('../templates/awall/gateway-nat-policy.json', 'r').read()
+        open(awall_policy_temp_path, 'w').write(dhcpd_conf)
+        self.container.push_file('/etc/awall/optional/gateway-nat-policy.json', awall_policy_temp_path)
 
-    # Enable routing via sysctl, in the future perhaps also enable ipv6 forwarding?
-    container.pct_console_shell("echo \"net.ipv4.ip_forward=1\" >> /etc/sysctl.conf")
-    container.pct_console_shell("sysctl -p")
+        # Enable and activate firewall rules
+        self.container.pct_console_shell("awall enable gateway-nat-policy && awall activate -f")
 
-    container.rc_service('iptables', 'start')
-    container.rc_service('ip6tables', 'start')
+        # Enable routing via sysctl, in the future perhaps also enable ipv6 forwarding?
+        self.container.pct_console_shell("echo \"net.ipv4.ip_forward=1\" >> /etc/sysctl.conf")
+        self.container.pct_console_shell("sysctl -p")
+
+        self.container.rc_service('iptables', 'start')
+        self.container.rc_service('ip6tables', 'start')

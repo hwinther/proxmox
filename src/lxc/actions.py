@@ -67,13 +67,36 @@ def generate_net_argument(interface_id: int, network_interface: NetworkInterface
            f'ip={ip4}{gw4_arg},ip6={ip6}{gw6_arg},{vlan_arg}firewall={firewall_arg},type=veth'
 
 
+class Service:
+    container: "Container" = None
+    name: str = None
+
+    def __init__(self, container: "Container", name: str):
+        self.container = container
+        self.name = name
+
+    def install(self, **kwargs):
+        raise NotImplementedError('install was not implemented')
+
+    def uninstall(self, **kwargs):
+        raise NotImplementedError('uninstall was not implemented')
+
+    def start(self, **kwargs):
+        raise NotImplementedError('start was not implemented')
+
+    def stop(self, **kwargs):
+        raise NotImplementedError('stop was not implemented')
+
+
 class Container:
     id: int = None
     network_interfaces: List[NetworkInterface] = None
+    services: List[Service] = None
 
     def __init__(self, container_id: int):
         self.id = container_id
         self.network_interfaces = []
+        self.services = []
 
     def push_file(self, container_file_path: str, local_file_path: str):
         return os_exec(f'pct push {self.id} {local_file_path} {container_file_path}')
