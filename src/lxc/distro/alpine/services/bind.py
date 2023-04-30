@@ -1,7 +1,7 @@
 from ipaddress import IPv4Address
 from typing import Sequence
 
-from lxc.distro.alpine.service import AlpineService
+from lxc.distro.alpine.actions import AlpineService
 from lxc.models import NetworkInterface
 
 

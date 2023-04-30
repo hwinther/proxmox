@@ -1,5 +1,5 @@
 import src.lxc.distro.alpine.actions
-from lxc.distro.alpine.service import AlpineService
+from lxc.distro.alpine.actions import AlpineService
 
 
 class GatewayService(AlpineService):

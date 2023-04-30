@@ -2,7 +2,7 @@ from typing import Sequence
 
 import src.lxc.distro.alpine.actions
 import src.lxc.models
-from lxc.distro.alpine.service import AlpineService
+from lxc.distro.alpine.actions import AlpineService
 
 
 class DhcpService(AlpineService):
