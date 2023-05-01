@@ -1,8 +1,8 @@
 import os
 from typing import List, Sequence
 
-from src.common.common import config, os_exec
-from src.lxc.models import NetworkInterface
+from common.common import config, os_exec
+from lxc.models import NetworkInterface
 
 
 def update_lxc_templates():

@@ -107,14 +107,12 @@ def dns_master_and_slave(image_path):
     print(dns_slave.get_ip(0))
 
     dns_master_service = BindService(dns_master, 'dns master')
-    dns_master_service.install_bind_dns_authoritative(dns_master,
-                                                      dns_master.network_interfaces[0],
+    dns_master_service.install_bind_dns_authoritative(dns_master.network_interfaces[0],
                                                       master_zones=[MasterZone(domain_name='test.lan',
                                                                                slaves=[dns_slave.network_interfaces[
                                                                                            0].ip4.ip])])
     dns_slave_service = BindService(dns_slave, 'dns slave')
-    dns_slave_service.install_bind_dns_authoritative(dns_slave,
-                                                     dns_slave.network_interfaces[0],
+    dns_slave_service.install_bind_dns_authoritative(dns_slave.network_interfaces[0],
                                                      slave_zones=[SlaveZone(domain_name='test.lan',
                                                                             masters=[dns_master.network_interfaces[
                                                                                          0].ip4.ip])])

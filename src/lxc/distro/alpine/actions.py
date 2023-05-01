@@ -1,10 +1,10 @@
 import subprocess
 from typing import List
 
-import src.lxc.actions
+import lxc.actions
 
 
-class AlpineService(src.lxc.actions.Service):
+class AlpineService(lxc.actions.Service):
     container: "AlpineContainer" = None
 
     def __init__(self, container: "AlpineContainer", name: str):
@@ -12,7 +12,7 @@ class AlpineService(src.lxc.actions.Service):
         self.container.services.append(self)
 
 
-class AlpineContainer(src.lxc.actions.Container):
+class AlpineContainer(lxc.actions.Container):
     services: List[AlpineService] = None
 
     def update_container(self):

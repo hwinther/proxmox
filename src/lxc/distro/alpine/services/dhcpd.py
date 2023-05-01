@@ -1,11 +1,10 @@
 from typing import Sequence
 
-import src.lxc.distro.alpine.actions
-import src.lxc.models
-from lxc.distro.alpine.actions import AlpineService
+import lxc.distro.alpine.actions
+import lxc.models
 
 
-class DhcpService(AlpineService):
+class DhcpService(lxc.distro.alpine.actions.AlpineService):
     """
     /etc/dhcp - config
     /var/lib/dhcp - leases/db
@@ -13,8 +12,8 @@ class DhcpService(AlpineService):
     """
 
     def install(self,
-                ip4_subnets: Sequence[src.lxc.models.Subnet],
-                ip4_devices: Sequence[src.lxc.models.Device]):
+                ip4_subnets: Sequence[lxc.models.Subnet],
+                ip4_devices: Sequence[lxc.models.Device]):
         """
         Install, configure and start ISC DHCP daemon
         @param ip4_subnets: Subnet definitions

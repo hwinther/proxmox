@@ -1,14 +1,13 @@
-import src.lxc.distro.alpine.actions
-from lxc.distro.alpine.actions import AlpineService
+import lxc.distro.alpine.actions
 
 
-class GatewayService(AlpineService):
+class GatewayService(lxc.distro.alpine.actions.AlpineService):
     """
     /etc/awall/optional/ - inactive config folder
     """
-    container: src.lxc.distro.alpine.actions.AlpineContainer = None
+    container: lxc.distro.alpine.actions.AlpineContainer = None
 
-    def __init__(self, container: src.lxc.distro.alpine.actions.AlpineContainer, name: str):
+    def __init__(self, container: lxc.distro.alpine.actions.AlpineContainer, name: str):
         super().__init__(container, name)
 
     def install(self):
