@@ -3,6 +3,7 @@ from src.lxc.distro.alpine.actions import AlpineContainer
 from src.lxc.distro.alpine.services.bind import BindService, MasterZone, SlaveZone
 from src.lxc.distro.alpine.services.dhcpd import DhcpService
 from src.lxc.distro.alpine.services.gateway import GatewayService
+from src.lxc.distro.alpine.services.transmission import TransmissionService
 from src.lxc.models import NetworkInterface, Subnet
 
 
@@ -78,6 +79,19 @@ def main():
     # time.sleep(1)
     print(client.get_ip(0))
     print(client.pct_console_shell('uname -a'))
+
+    # Create transmission container
+    transmission_server = AlpineContainer(605)
+    transmission_server.purge_container()
+    transmission_server.create_container('transmission-test',
+                                         image_path,
+                                         # [NetworkInterface(vlan_tag=100)],
+                                         [NetworkInterface()],
+                                         onboot=1)
+    transmission_server.update_container()
+    print(transmission_server.get_ip(0))
+    transmission_service = TransmissionService(transmission_server, 'transmission service')
+    transmission_service.install()
 
     # dns_master_and_slave(image_path)
 
