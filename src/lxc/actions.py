@@ -108,7 +108,10 @@ class Container:
         return os_exec(f'pct set {self.id} --delete net{interface_id}')
 
     def if_restart(self, interface_id: int):
-        return self.pct_console_shell(f"ifdown eth{interface_id}; ifup eth{interface_id}")
+        return self.pct_console_shell(f'ifdown eth{interface_id}; ifup eth{interface_id}')
+
+    def append_file(self, file_path, text_line):
+        return self.pct_console_shell(f'echo "{text_line}" >> {file_path}')
 
     def pct_console_shell(self, container_command: str):
         return os_exec(f'echo "{container_command}" | pct console {self.id}', shell=True)
@@ -125,7 +128,8 @@ class Container:
     def create_container(self, container_name: str, container_image_path: str,
                          network_interfaces: Sequence[NetworkInterface],
                          resource_pool=None, memory=None, swap=None, cpu_cores=None,
-                         unprivileged=None, cmode=None, start=None, onboot=None):
+                         unprivileged=None, cmode=None, start=None, onboot=None,
+                         feature_mount=None, feature_nesting=None):
         #
         # TODO: rework this to a factory constructor with override in AlpineContainer?
         #
@@ -155,12 +159,22 @@ class Container:
             self.network_interfaces.append(network_interface)
             network_id += 1
 
+        features = []
+        if feature_mount is not None:
+            features.append(f'mount={feature_mount}')
+        if feature_nesting is not None:
+            features.append(f'nesting={feature_nesting}')
+        feature_set = ''
+        if len(features) != 0:
+            feature_set = '--features ' + ','.join(features)
+
         cmd = f'pct create {self.id} {container_image_path} --ostype alpine --hostname {container_name}' \
               f' --password="ROOT_PASSWORD" --ssh-public-keys {config.container_ssh_authorized_key_filename}' \
               f' --cores {cpu_cores} --memory {memory} --swap {swap}' \
               f' --pool {resource_pool} --rootfs {config.container_storage}:0.1,shared=0' \
-              f' --unprivileged {unprivileged} --cmode {cmode} --start {start} --onboot {onboot} ' \
-              + ' '.join(network_arguments)
+              f' --unprivileged {unprivileged} --cmode {cmode} --start {start} --onboot {onboot}' \
+              f' {feature_set}' \
+              + ' ' + ' '.join(network_arguments)
 
         # TODO: implement storage configuration:
         # f' --mp0 volume={container_storage}:0.01,mp=/etc/test,backup=1,ro=0,shared=0'
