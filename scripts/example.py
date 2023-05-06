@@ -29,7 +29,9 @@ def main():
     transmission_server.create_container('transmission-test',
                                          image_path,
                                          # [NetworkInterface(vlan_tag=100)],
-                                         [NetworkInterface(ip4='10.20.1.249/24', gw4='10.20.1.254')],
+                                         [NetworkInterface(mac='C2:25:0C:61:BF:4C',
+                                                           ip4='10.20.1.249/24',
+                                                           gw4='10.20.1.254')],
                                          onboot=1, unprivileged=0, feature_mount='nfs', feature_nesting=0)
     transmission_server.update_container()
     print(transmission_server.get_ip(0))
@@ -42,6 +44,9 @@ def main():
     print(transmission_server.pct_console_shell('ls -la /mnt/Videos'))
 
     # to persist reboot:
+    print(transmission_server.rc_update('local', 'add'))
+    print(transmission_server.pct_console_shell(
+        'echo "mount -a" > /etc/local.d/mount.start && chmod +x /etc/local.d/mount.start'))
     # rc-update add local default
     # echo "mount -a" > /etc/local.d/mount.start
     # chmod +x /etc/local.d/mount.start

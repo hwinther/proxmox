@@ -28,12 +28,13 @@ def update_lxc_templates():
 
 
 def generate_net_argument(interface_id: int, network_interface: NetworkInterface = None,
-                          vlan_tag: int = None, firewall: bool = True, bridge: str = None,
+                          vlan_tag: int = None, firewall: bool = True, bridge: str = None, mac: str = None,
                           ip4: str = None, gw4: str = None, ip6: str = None, gw6: str = None):
     if network_interface is not None:
         vlan_tag = network_interface.vlan_tag
         firewall = network_interface.firewall
         bridge = network_interface.bridge
+        mac = network_interface.mac
         if network_interface.ip4 is not None:
             ip4 = str(network_interface.ip4)
         if network_interface.gw4 is not None:
@@ -51,6 +52,8 @@ def generate_net_argument(interface_id: int, network_interface: NetworkInterface
 
     bridge_arg = config.network_bridge_default if bridge is None else bridge
 
+    mac_arg = '' if mac is None else f'hwaddr={mac},'
+    
     if ip4 is None:
         ip4 = 'dhcp'
     gw4_arg = ''
@@ -63,7 +66,7 @@ def generate_net_argument(interface_id: int, network_interface: NetworkInterface
     if gw6 is not None:
         gw6_arg = f',gw={gw6}'
 
-    return f'--net{interface_id} name=eth{interface_id},bridge={bridge_arg},' \
+    return f'--net{interface_id} name=eth{interface_id},bridge={bridge_arg},{mac_arg}' \
            f'ip={ip4}{gw4_arg},ip6={ip6}{gw6_arg},{vlan_arg}firewall={firewall_arg},type=veth'
 
 

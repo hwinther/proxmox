@@ -7,16 +7,18 @@ class NetworkInterface:
     vlan_tag: int = None
     firewall: bool = None
     bridge: str = None
+    mac: str = None
     ip4: IPv4Interface = None
     gw4: IPv4Address = None
     ip6: IPv6Interface = None
     gw6: IPv6Address = None
 
-    def __init__(self, vlan_tag: int = None, firewall: bool = True, bridge: str = None,
+    def __init__(self, vlan_tag: int = None, firewall: bool = True, bridge: str = None, mac: str = None,
                  ip4: str = None, gw4: str = None, ip6: str = None, gw6: str = None):
         self.vlan_tag = vlan_tag
         self.firewall = firewall
         self.bridge = bridge
+        self.mac = mac
         if ip4 is not None:
             self.ip4 = ip_interface(ip4)
         if gw4 is not None:
