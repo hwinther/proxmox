@@ -6,6 +6,11 @@ import lxc.distro.alpine.actions
 class TransmissionService(lxc.distro.alpine.actions.AlpineService):
     """
     Config /var/lib/transmission/config/settings.json
+    https://github.com/transmission/transmission/blob/main/docs/Headless-Usage.md
+    Should firewall also:
+    https://wiki.alpinelinux.org/wiki/How-To_Alpine_Wall#Example_firewall_using_Shorewall
+    https://github.com/alpinelinux/awall
+    https://www.zsiegel.com/2022/01/13/configuring-alpine-linux-firewall-with-docker
     """
     container: lxc.distro.alpine.actions.AlpineContainer = None
 
