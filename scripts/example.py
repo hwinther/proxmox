@@ -4,6 +4,7 @@ from src.lxc.distro.alpine.services.bind import BindService, MasterZone, SlaveZo
 from src.lxc.distro.alpine.services.dhcpd import DhcpService
 from src.lxc.distro.alpine.services.gateway import GatewayService
 from src.lxc.distro.alpine.services.nfs import NfsService
+from src.lxc.distro.alpine.services.samba import SambaService
 from src.lxc.models import NetworkInterface, Subnet
 
 
@@ -21,10 +22,10 @@ def main():
     #
     # return
 
-    test_network(image_path)
+    # test_network(image_path)
     # dns_master_and_slave(image_path)
-    # test_new_services(image_path)
-    check_existing_containers()
+    test_new_services(image_path)
+    # check_existing_containers()
 
 
 def check_existing_containers():
@@ -41,7 +42,7 @@ def check_existing_containers():
     print(f'Found {len(containers)} active containers')
 
     for container in containers:
-        print(container.pct_console_shell('cat /etc/alpine-release && uname -a'))
+        print(container.pct_console_shell('cat /etc/alpine-release && uname -a').strip())
         print(f'Updates available for {container.lxc_config.hostname}? {container.updates_available()}')
 
 
@@ -146,6 +147,22 @@ def dns_master_and_slave(image_path):
 
 
 def test_new_services(image_path):
+    # Create samba server
+    samba_server = AlpineContainer(606)
+    samba_server.purge_container()
+    samba_server.create_container('samba-test',
+                                  image_path,
+                                  [NetworkInterface(mac='C2:25:0C:61:BF:F1',
+                                                    ip4='10.20.1.248/24',
+                                                    gw4='10.20.1.254')],
+                                  onboot=1)
+    samba_server.update_container()
+    print(samba_server.get_ip(0))
+    samba_service = SambaService(samba_server, 'samba/smb service')
+    samba_service.install()
+
+    return
+
     # Create transmission container
     transmission_server = AlpineContainer(605)
     transmission_server.purge_container()
