@@ -1,3 +1,4 @@
+from src.lxc.actions import Container
 from src.lxc.distro.alpine.actions import AlpineContainer
 from src.lxc.distro.alpine.services.bind import BindService, MasterZone, SlaveZone
 from src.lxc.distro.alpine.services.dhcpd import DhcpService
@@ -12,7 +13,7 @@ def main():
     # TODO: translate image names not just for local (template_)storage?
     # image_path = f'/var/lib/vz/template/cache/{alpine_newest_image_name}'
     # TODO: improve lazy caching
-    image_path = '/var/lib/vz/template/cache/alpine-3.17-default_20221129_amd64.tar.xz'
+    image_path = '/var/lib/vz/template/cache/alpine-3.18-default_20230607_amd64.tar.xz'
 
     # for i in range(601, 607):
     #     print(i)
@@ -20,39 +21,28 @@ def main():
     #
     # return
 
-    # test_network(image_path)
+    test_network(image_path)
     # dns_master_and_slave(image_path)
+    # test_new_services(image_path)
+    check_existing_containers()
 
-    # Create transmission container
-    transmission_server = AlpineContainer(605)
-    transmission_server.purge_container()
-    transmission_server.create_container('transmission-test',
-                                         image_path,
-                                         # [NetworkInterface(vlan_tag=100)],
-                                         [NetworkInterface(mac='C2:25:0C:61:BF:4C',
-                                                           ip4='10.20.1.249/24',
-                                                           gw4='10.20.1.254')],
-                                         onboot=1, unprivileged=0, feature_mount='nfs', feature_nesting=0)
-    transmission_server.update_container()
-    print(transmission_server.get_ip(0))
-    # print(transmission_server.pct_console_shell('ping -c 1 10.20.1.28'))
-    nfs_service = NfsService(transmission_server, 'nfs support service')
-    nfs_service.install()
-    transmission_server.append_file('/etc/fstab', '10.20.1.28:/mnt/primary/Videos /mnt/Videos nfs defaults 0 0')
-    print(transmission_server.pct_console_shell('mkdir /mnt/Videos'))
-    print(transmission_server.pct_console_shell('mount -a'))
-    print(transmission_server.pct_console_shell('ls -la /mnt/Videos'))
 
-    # to persist reboot:
-    print(transmission_server.rc_update('local', 'add'))
-    print(transmission_server.pct_console_shell(
-        'echo "mount -a" > /etc/local.d/mount.start && chmod +x /etc/local.d/mount.start'))
-    # rc-update add local default
-    # echo "mount -a" > /etc/local.d/mount.start
-    # chmod +x /etc/local.d/mount.start
+def check_existing_containers():
+    containers = []
+    # for i in range(601, 605):
+    #     containers.append(AlpineContainer(i))
+    active_configs = Container.pct_list()
+    for lxc_config in active_configs:
+        if lxc_config.ostype == 'alpine':
+            containers.append(AlpineContainer(lxc_config=lxc_config))
+        else:
+            print(f'Unhandled ostype {lxc_config.ostype} for node {lxc_config.hostname}')
 
-    # transmission_service = TransmissionService(transmission_server, 'transmission service')
-    # transmission_service.install()
+    print(f'Found {len(containers)} active containers')
+
+    for container in containers:
+        print(container.pct_console_shell('cat /etc/alpine-release && uname -a'))
+        print(f'Updates available for {container.lxc_config.hostname}? {container.updates_available()}')
 
 
 def test_network(image_path):
@@ -153,6 +143,39 @@ def dns_master_and_slave(image_path):
                                                      slave_zones=[SlaveZone(domain_name='test.lan',
                                                                             masters=[dns_master.network_interfaces[
                                                                                          0].ip4.ip])])
+
+
+def test_new_services(image_path):
+    # Create transmission container
+    transmission_server = AlpineContainer(605)
+    transmission_server.purge_container()
+    transmission_server.create_container('transmission-test',
+                                         image_path,
+                                         # [NetworkInterface(vlan_tag=100)],
+                                         [NetworkInterface(mac='C2:25:0C:61:BF:4C',
+                                                           ip4='10.20.1.249/24',
+                                                           gw4='10.20.1.254')],
+                                         onboot=1, unprivileged=0, feature_mount='nfs', feature_nesting=0)
+    transmission_server.update_container()
+    print(transmission_server.get_ip(0))
+    # print(transmission_server.pct_console_shell('ping -c 1 10.20.1.28'))
+    nfs_service = NfsService(transmission_server, 'nfs support service')
+    nfs_service.install()
+    transmission_server.append_file('/etc/fstab', '10.20.1.28:/mnt/primary/Videos /mnt/Videos nfs defaults 0 0')
+    print(transmission_server.pct_console_shell('mkdir /mnt/Videos'))
+    print(transmission_server.pct_console_shell('mount -a'))
+    print(transmission_server.pct_console_shell('ls -la /mnt/Videos'))
+
+    # to persist reboot:
+    print(transmission_server.rc_update('local', 'add'))
+    print(transmission_server.pct_console_shell(
+        'echo "mount -a" > /etc/local.d/mount.start && chmod +x /etc/local.d/mount.start'))
+    # rc-update add local default
+    # echo "mount -a" > /etc/local.d/mount.start
+    # chmod +x /etc/local.d/mount.start
+
+    # transmission_service = TransmissionService(transmission_server, 'transmission service')
+    # transmission_service.install()
 
 
 if __name__ == '__main__':

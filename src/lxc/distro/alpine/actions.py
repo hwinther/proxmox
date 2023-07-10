@@ -16,7 +16,9 @@ class AlpineContainer(lxc.actions.Container):
     services: List[AlpineService] = None
 
     def update_container(self):
-        self.pct_console_shell(f"apk update && apk version")
+        if not self.updates_available():
+            return
+
         for i in range(0, 3):
             try:
                 self.pct_console_shell(f"apk upgrade")
@@ -26,6 +28,11 @@ class AlpineContainer(lxc.actions.Container):
                     print(f'Temporary error in "apk upgrade", retry #{i + 1}')
                 else:
                     raise
+
+    def updates_available(self):
+        updates = self.apk_update_version()
+        updates_lines = list(filter(None, updates.split('Available:\n', 1)[1].split('\n')))
+        return len(updates_lines) != 0
 
     def get_ip(self, interface_id):
         # TODO: use generic "ip a" parse method from library here
@@ -42,6 +49,9 @@ class AlpineContainer(lxc.actions.Container):
     def apk_add(self, package_name):
         # TODO: verify installation, also check if installed first?
         return self.pct_console_shell(f"apk add {package_name}")
+
+    def apk_update_version(self):
+        return self.pct_console_shell(f"apk update && apk version")
 
     def rc_update(self, service_name, operation):
         # TODO: verify service change, check if it exists first?

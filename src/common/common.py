@@ -1,4 +1,5 @@
 import configparser
+import json
 import secrets
 import string
 import subprocess
@@ -65,6 +66,183 @@ class Config:
             raise ValueError('swap_default was not configured')
 
 
+class LxcConfig:
+    lxc_node: 'LxcNode' = None
+    arch = None
+    cmode = None
+    cores = None
+    description = None
+    digest = None
+    features = None
+    hostname = None
+    lxc = None
+    memory = None
+    mp0 = None
+    mp1 = None
+    mp2 = None
+    mp3 = None
+    mp4 = None
+    mp5 = None
+    mp6 = None
+    mp7 = None
+    mp8 = None
+    mp9 = None
+    net0 = None
+    net1 = None
+    net2 = None
+    net3 = None
+    net4 = None
+    net5 = None
+    net6 = None
+    net7 = None
+    net8 = None
+    net9 = None
+    onboot = None
+    ostype = None
+    rootfs = None
+    swap = None
+    unprivileged = None
+
+    # noinspection PyShadowingBuiltins
+    def __init__(self, lxc_node, arch, cores, digest, hostname, memory, ostype, rootfs, swap,
+                 description=None, features=None, lxc=None, unprivileged=None,
+                 cmode=None, onboot=None, startup=None,
+                 mp0=None, mp1=None, mp2=None, mp3=None, mp4=None, mp5=None, mp6=None, mp7=None, mp8=None, mp9=None,
+                 net0=None, net1=None, net2=None, net3=None, net4=None,
+                 net5=None, net6=None, net7=None, net8=None, net9=None):
+        self.lxc_node = lxc_node
+        self.arch = arch
+        self.cmode = cmode
+        self.cores = cores
+        self.description = description
+        self.digest = digest
+        self.features = features
+        self.hostname = hostname
+        self.lxc = lxc
+        self.memory = memory
+        self.onboot = onboot
+        self.ostype = ostype
+        self.rootfs = rootfs
+        self.startup = startup
+        self.swap = swap
+        self.unprivileged = unprivileged
+        self.mp0 = mp0
+        self.mp1 = mp1
+        self.mp2 = mp2
+        self.mp3 = mp3
+        self.mp4 = mp4
+        self.mp5 = mp5
+        self.mp6 = mp6
+        self.mp7 = mp7
+        self.mp8 = mp8
+        self.mp9 = mp9
+        self.net0 = net0
+        self.net1 = net1
+        self.net2 = net2
+        self.net3 = net3
+        self.net4 = net4
+        self.net5 = net5
+        self.net6 = net6
+        self.net7 = net7
+        self.net8 = net8
+        self.net9 = net9
+
+    def __str__(self):
+        return f'{self.hostname} of type {self.ostype}'
+
+
+class LxcNode:
+    pve_node = None
+    vmid = None
+    cpu = None
+    cpus = None
+    disk = None
+    diskread = None
+    diskwrite = None
+    maxdisk = None
+    maxmem = None
+    maxswap = None
+    mem = None
+    name = None
+    netin = None
+    netout = None
+    pid = None
+    status = None
+    swap = None
+    type = None
+    uptime = None
+
+    # noinspection PyShadowingBuiltins
+    def __init__(self, pve_node, vmid, cpu, cpus, disk, diskread, diskwrite, maxdisk, maxmem, maxswap, mem, name,
+                 netin, netout, status, swap, type, uptime, pid=None):
+        self.pve_node = pve_node
+        self.vmid = vmid
+        self.cpu = cpu
+        self.cpus = cpus
+        self.disk = disk
+        self.diskread = diskread
+        self.diskwrite = diskwrite
+        self.maxdisk = maxdisk
+        self.maxmem = maxmem
+        self.maxswap = maxswap
+        self.mem = mem
+        self.name = name
+        self.netin = netin
+        self.netout = netout
+        self.pid = pid
+        self.status = status
+        self.swap = swap
+        self.type = type
+        self.uptime = uptime
+
+    def __str__(self):
+        return f'{self.vmid} of type {self.type} with status {self.status}'
+
+    def get_lxc_config(self):
+        return LxcConfig(lxc_node=self, **json.loads(
+            os_exec(f'pvesh get nodes/{self.pve_node.node}/lxc/{self.vmid}/config --output-format=json')))
+
+
+class PveNode:
+    id = None
+    cpu = None
+    disk = None
+    level = None
+    maxcpu = None
+    maxdisk = None
+    maxmem = None
+    mem = None
+    node = None
+    ssl_fingerprint = None
+    status = None
+    type = None
+    uptime = None
+
+    # noinspection PyShadowingBuiltins
+    def __init__(self, id, node, ssl_fingerprint, status, type, cpu=None, disk=None, level=None, maxcpu=None,
+                 maxdisk=None, maxmem=None, mem=None, uptime=None):
+        self.id = id
+        self.cpu = cpu
+        self.disk = disk
+        self.level = level
+        self.maxcpu = maxcpu
+        self.maxdisk = maxdisk
+        self.maxmem = maxmem
+        self.mem = mem
+        self.node = node
+        self.ssl_fingerprint = ssl_fingerprint
+        self.status = status
+        self.type = type
+        self.uptime = uptime
+
+    def __str__(self):
+        return f'{self.node} of type {self.type} with status {self.status}'
+
+    def get_lxc_nodes(self):
+        return [LxcNode(pve_node=self, **node) for node in
+                json.loads(os_exec(f'pvesh get nodes/{self.node}/lxc --output-format=json'))]
+
+
 config = Config()
 
 
@@ -92,3 +270,7 @@ def os_exec(cmd, env=None, **kwargs):
     if config.verbose and stdout != '':
         print(f'stdout: {stdout}')
     return stdout
+
+
+def pvesh_get_pve_nodes():
+    return [PveNode(**node) for node in json.loads(os_exec('pvesh get nodes --output-format=json'))]

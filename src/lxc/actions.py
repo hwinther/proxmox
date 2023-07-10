@@ -1,7 +1,8 @@
 import os
+import platform
 from typing import List, Sequence
 
-from common.common import config, os_exec
+from common.common import LxcConfig, config, os_exec, pvesh_get_pve_nodes
 from lxc.models import NetworkInterface
 
 
@@ -53,7 +54,7 @@ def generate_net_argument(interface_id: int, network_interface: NetworkInterface
     bridge_arg = config.network_bridge_default if bridge is None else bridge
 
     mac_arg = '' if mac is None else f'hwaddr={mac},'
-    
+
     if ip4 is None:
         ip4 = 'dhcp'
     gw4_arg = ''
@@ -95,9 +96,17 @@ class Container:
     id: int = None
     network_interfaces: List[NetworkInterface] = None
     services: List[Service] = None
+    lxc_config: LxcConfig = None
 
-    def __init__(self, container_id: int):
-        self.id = container_id
+    def __init__(self, container_id: int = None, lxc_config: LxcConfig = None):
+        if container_id is not None:
+            self.id = container_id
+        elif lxc_config is not None:
+            self.id = lxc_config.lxc_node.vmid
+            self.lxc_config = lxc_config
+        else:
+            raise ValueError("container_id or lxc_config must be specified")
+
         self.network_interfaces = []
         self.services = []
 
@@ -118,6 +127,37 @@ class Container:
 
     def pct_console_shell(self, container_command: str):
         return os_exec(f'echo "{container_command}" | pct console {self.id}', shell=True)
+
+    @staticmethod
+    def pct_list():
+        # Rather than parsing pct list and pct config output, we can use pvesh and get more details
+        # pct_list = os_exec('pct list').split('\n')
+        active_configs = []
+        pve_nodes = pvesh_get_pve_nodes()
+        for pve_node in pve_nodes:
+            if pve_node.status != 'online':
+                continue
+
+            # TODO: add support for remote running pct commands via ssh or pvesh?
+            # Until then, we will ignore remote PVE nodes
+            if pve_node.node != platform.node():
+                continue
+
+            # print(str(pve_node))
+
+            lxc_nodes = pve_node.get_lxc_nodes()
+            for lxc_node in lxc_nodes:
+                if lxc_node.status != 'running':
+                    continue
+
+                # print(str(lxc_node))
+
+                lxc_config = lxc_node.get_lxc_config()
+                # print(str(lxc_config))
+
+                active_configs.append(lxc_config)
+
+        return active_configs
 
     @staticmethod
     def purge_container_by_id(container_id: int):
@@ -169,14 +209,14 @@ class Container:
             features.append(f'nesting={feature_nesting}')
         feature_set = ''
         if len(features) != 0:
-            feature_set = '--features ' + ','.join(features)
+            feature_set = ' --features ' + ','.join(features)
 
         cmd = f'pct create {self.id} {container_image_path} --ostype alpine --hostname {container_name}' \
               f' --password="ROOT_PASSWORD" --ssh-public-keys {config.container_ssh_authorized_key_filename}' \
               f' --cores {cpu_cores} --memory {memory} --swap {swap}' \
               f' --pool {resource_pool} --rootfs {config.container_storage}:0.1,shared=0' \
               f' --unprivileged {unprivileged} --cmode {cmode} --start {start} --onboot {onboot}' \
-              f' {feature_set}' \
+              f'{feature_set}' \
               + ' ' + ' '.join(network_arguments)
 
         # TODO: implement storage configuration:
