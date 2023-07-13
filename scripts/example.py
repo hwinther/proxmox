@@ -4,7 +4,7 @@ from src.lxc.distro.alpine.services.bind import BindService, MasterZone, SlaveZo
 from src.lxc.distro.alpine.services.dhcpd import DhcpService
 from src.lxc.distro.alpine.services.gateway import GatewayService
 from src.lxc.distro.alpine.services.nfs import NfsService
-from src.lxc.distro.alpine.services.samba import SAMBA_SHARE_HOMES, SambaService
+from src.lxc.distro.alpine.services.samba import SAMBA_SHARE_HOMES, SambaClient, SambaService
 from src.lxc.models import NetworkInterface, Subnet
 
 
@@ -24,7 +24,8 @@ def main():
 
     # test_network(image_path)
     # dns_master_and_slave(image_path)
-    test_new_services(image_path)
+    samba_server_and_client(image_path)
+    # test_new_services(image_path)
     # check_existing_containers()
 
 
@@ -146,7 +147,7 @@ def dns_master_and_slave(image_path):
                                                                                          0].ip4.ip])])
 
 
-def test_new_services(image_path):
+def samba_server_and_client(image_path):
     # Create samba server
     samba_server = AlpineContainer(606)
     samba_server.purge_container()
@@ -159,16 +160,30 @@ def test_new_services(image_path):
     samba_server.update_container()
     print(samba_server.get_ip(0))
     samba_service = SambaService(samba_server, 'samba/smb service')
-    samba_service.install(ws=True, mdns=True, domain_master=False, ntlm_support=True, ldap_config=None,
+    samba_service.install(ws=True, mdns=True, domain_master=True, ntlm_support=True, ldap_config=None,
                           shares=[SAMBA_SHARE_HOMES])
 
     print(samba_server.pct_console_shell('testparm -s'))
     print(samba_server.pct_console_shell("adduser test; echo 'test:Password1' | chpasswd"))
     print(samba_server.pct_console_shell("echo -ne 'Password1\nPassword1\n' | smbpasswd -a -s test"))
+
     # TODO: verify connectivity via samba client
+    samba_client = AlpineContainer(607)
+    samba_client.purge_container()
+    samba_client.create_container('samba-test2',
+                                  image_path,
+                                  [NetworkInterface(mac='C2:25:0C:61:BF:F2',
+                                                    ip4='10.20.1.247/24',
+                                                    gw4='10.20.1.254')],
+                                  onboot=1)
+    samba_client.update_container()
+    print(samba_client.get_ip(0))
+    samba_client_service = SambaClient(samba_client, 'samba/smb client service')
+    samba_client_service.install(wins_server=str(samba_server.network_interfaces[0].ip4.ip))
+    print(samba_client.pct_console_shell('smbclient -U test%Password1 -c ls //samba-test/test'))
 
-    return
 
+def test_new_services(image_path):
     # Create transmission container
     transmission_server = AlpineContainer(605)
     transmission_server.purge_container()

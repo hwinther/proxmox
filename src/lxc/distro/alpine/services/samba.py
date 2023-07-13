@@ -83,7 +83,9 @@ class SambaService(lxc.distro.alpine.actions.AlpineService):
         ws - https://en.wikipedia.org/wiki/WS-Discovery
         mdns - https://en.wikipedia.org/wiki/Multicast_DNS
         domain_master - Enable netbios name master role for the interfaces it listens on
+        ntlm_support - Enables support for LANMAN/NT4
         ldap_config - LDAP configuration such as suffix and auth server hostname
+        shares - List of shares
         """
 
         # Samba comes with nmbd which makes the shares visible for smb1 clients (such as older versions of windows)
@@ -165,3 +167,25 @@ ldap passwd sync = yes
 
         if mdns:
             self.container.rc_service('avahi-daemon', 'start')
+
+
+class SambaClient(lxc.distro.alpine.actions.AlpineService):
+    """
+    Config /etc/samba/smb.conf
+    """
+    container: lxc.distro.alpine.actions.AlpineContainer = None
+
+    def __init__(self, container: lxc.distro.alpine.actions.AlpineContainer, name: str):
+        super().__init__(container, name)
+
+    def install(self, wins_server: str = None):
+        self.container.apk_add('samba-client')
+
+        config_temp_path = '/tmp/smb.conf'
+        config_content = open('../templates/samba/smb.conf', 'r').read()
+
+        if wins_server:
+            config_content = config_content.replace(';   wins server = w.x.y.z', f'   wins server = {wins_server}')
+
+        open(config_temp_path, 'w').write(config_content)
+        self.container.push_file('/etc/samba/smb.conf', config_temp_path)
