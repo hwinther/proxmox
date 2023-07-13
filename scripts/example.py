@@ -4,7 +4,7 @@ from src.lxc.distro.alpine.services.bind import BindService, MasterZone, SlaveZo
 from src.lxc.distro.alpine.services.dhcpd import DhcpService
 from src.lxc.distro.alpine.services.gateway import GatewayService
 from src.lxc.distro.alpine.services.nfs import NfsService
-from src.lxc.distro.alpine.services.samba import SambaService
+from src.lxc.distro.alpine.services.samba import SAMBA_SHARE_HOMES, SambaService
 from src.lxc.models import NetworkInterface, Subnet
 
 
@@ -159,7 +159,8 @@ def test_new_services(image_path):
     samba_server.update_container()
     print(samba_server.get_ip(0))
     samba_service = SambaService(samba_server, 'samba/smb service')
-    samba_service.install()
+    samba_service.install(ws=True, mdns=True, domain_master=True, ntlm_support=True, ldap_config=None,
+                          shares=[SAMBA_SHARE_HOMES])
 
     return
 
