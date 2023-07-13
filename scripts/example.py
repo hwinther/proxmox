@@ -159,8 +159,13 @@ def test_new_services(image_path):
     samba_server.update_container()
     print(samba_server.get_ip(0))
     samba_service = SambaService(samba_server, 'samba/smb service')
-    samba_service.install(ws=True, mdns=True, domain_master=True, ntlm_support=True, ldap_config=None,
+    samba_service.install(ws=True, mdns=True, domain_master=False, ntlm_support=True, ldap_config=None,
                           shares=[SAMBA_SHARE_HOMES])
+
+    print(samba_server.pct_console_shell('testparm -s'))
+    print(samba_server.pct_console_shell("adduser test; echo 'test:Password1' | chpasswd"))
+    print(samba_server.pct_console_shell("echo -ne 'Password1\nPassword1\n' | smbpasswd -a -s test"))
+    # TODO: verify connectivity via samba client
 
     return
 

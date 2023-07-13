@@ -87,7 +87,8 @@ class SambaService(lxc.distro.alpine.actions.AlpineService):
         """
 
         # Samba comes with nmbd which makes the shares visible for smb1 clients (such as older versions of windows)
-        self.container.apk_add('samba-server')
+        # TODO: samba-common-tools contains testparm which we can use to verify the configuration
+        self.container.apk_add('samba-server samba-common-tools')
         self.container.rc_update('samba', 'add')
 
         if ws:
