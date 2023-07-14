@@ -19,6 +19,11 @@ class Config:
     memory_default: int = None
     swap_default: int = None
 
+    # muacme settings
+    acme_email: str = None
+    ddns_server: str = None
+    ddns_tsig_key: str = None
+
     def __init__(self):
         self.config = configparser.ConfigParser()
         self.config.read('config.ini')
@@ -64,6 +69,17 @@ class Config:
         self.swap_default = default.getint('swap_default')  # default: 128
         if self.swap_default is None:
             raise ValueError('swap_default was not configured')
+
+        # muacme settings TODO: move muacme settings to separate section and disable functionality if missing
+        self.acme_email = default.get('acme_email')
+        if self.acme_email is None:
+            raise ValueError('acme_email was not configured')
+        self.ddns_server = default.get('ddns_server')
+        if self.ddns_server is None:
+            raise ValueError('ddns_server was not configured')
+        self.ddns_tsig_key = default.get('ddns_tsig_key')
+        if self.ddns_tsig_key is None:
+            raise ValueError('ddns_tsig_key was not configured')
 
 
 class LxcConfig:

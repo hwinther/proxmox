@@ -1,3 +1,5 @@
+from lxc.distro.alpine.services.muacme import AcmeService
+from src.common.common import config
 from src.lxc.actions import Container
 from src.lxc.distro.alpine.actions import AlpineContainer
 from src.lxc.distro.alpine.services.bind import BindService, MasterZone, SlaveZone
@@ -27,6 +29,10 @@ def main():
     samba_server_and_client(image_path)
     # test_new_services(image_path)
     # check_existing_containers()
+
+    # v TODO: add acme support
+    # TODO: add smart mail relay config
+    # TODO: add remote log server config
 
 
 def check_existing_containers():
@@ -159,11 +165,15 @@ def samba_server_and_client(image_path):
                                   onboot=1)
     samba_server.update_container()
     print(samba_server.get_ip(0))
+    acme_service = AcmeService(samba_server, '(mu)acme service')
+    acme_service.install(acme_email=config.acme_email,
+                         ddns_server=config.ddns_server,
+                         ddns_tsig_key=config.ddns_tsig_key)
+    acme_service.issue('samba-test.digitalobscurity.org')
     samba_service = SambaService(samba_server, 'samba/smb service')
     samba_service.install(ws=True, mdns=True, domain_master=True, ntlm_support=True, ldap_config=None,
                           shares=[SAMBA_SHARE_HOMES])
 
-    print(samba_server.pct_console_shell('testparm -s'))
     print(samba_server.pct_console_shell("adduser test; echo 'test:Password1' | chpasswd"))
     print(samba_server.pct_console_shell("echo -ne 'Password1\nPassword1\n' | smbpasswd -a -s test"))
 
