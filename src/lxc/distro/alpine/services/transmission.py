@@ -33,6 +33,8 @@ class TransmissionService(lxc.distro.alpine.actions.AlpineService):
         # TODO: configure whitelist, username and password for API
         config_content = open('../templates/transmission/settings.json', 'r').read()
         open(config_temp_path, 'w').write(config_content)
+        self.container.pct_console_shell(
+            'mv /var/lib/transmission/config/settings.json /var/lib/transmission/config/settings.json.example')
         self.container.push_file('/var/lib/transmission/config/settings.json', config_temp_path)
 
         self.container.rc_service('transmission-daemon', 'start')

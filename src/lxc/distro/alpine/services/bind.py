@@ -135,4 +135,6 @@ class BindService(AlpineService):
                                '/etc/bind/named.zones.slave.conf',
                                slave_zones)
 
+        self.container.pct_console_shell('named-checkconf')  # verify config file(s)
+        # TODO: use named-checkzone to also verify zones?
         self.start_bind()

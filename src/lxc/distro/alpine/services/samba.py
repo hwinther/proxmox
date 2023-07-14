@@ -70,6 +70,7 @@ SAMBA_SHARE_HOMES = SambaShare(name='homes', path='', comment='Home Directories'
 class SambaService(lxc.distro.alpine.actions.AlpineService):
     """
     Config /etc/samba/smb.conf
+    Doc https://www.samba.org/samba/docs/current/man-html/smbclient.1.html
     """
     container: lxc.distro.alpine.actions.AlpineContainer = None
 
@@ -151,6 +152,7 @@ ldap passwd sync = yes
             config_content += share.generate_config_section()
 
         open(config_temp_path, 'w').write(config_content)
+        self.container.pct_console_shell('mv /etc/samba/smb.conf /etc/samba/smb.conf.example')
         self.container.push_file('/etc/samba/smb.conf', config_temp_path)
 
         if mdns:
@@ -160,6 +162,7 @@ ldap passwd sync = yes
             open(config_temp_path, 'w').write(config_content)
             self.container.push_file('/etc/avahi/services/smb.service', config_temp_path)
 
+        self.container.pct_console_shell('testparm -s')  # verify config file(s)
         self.container.rc_service('samba', 'start')
 
         if ws:
@@ -181,6 +184,7 @@ class SambaClient(lxc.distro.alpine.actions.AlpineService):
     def install(self, wins_server: str = None):
         self.container.apk_add('samba-client')
 
+        # TODO: check if config has created by our samba service before overwriting it
         config_temp_path = '/tmp/smb.conf'
         config_content = open('../templates/samba/smb.conf', 'r').read()
 
