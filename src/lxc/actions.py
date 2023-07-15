@@ -1,5 +1,6 @@
 import os
 import platform
+import tempfile
 from typing import List, Sequence
 
 from common.common import LxcConfig, config, os_exec, pvesh_get_pve_nodes
@@ -112,6 +113,18 @@ class Container:
 
     def push_file(self, container_file_path: str, local_file_path: str):
         return os_exec(f'pct push {self.id} {local_file_path} {container_file_path}')
+
+    def push_file_from_template(self, container_file_path: str, template_file_path: str, **kwargs):
+        with tempfile.NamedTemporaryFile() as temporary_file:
+            template = open(template_file_path, 'r', encoding='utf-8').read()
+            for key, value in kwargs.items():
+                if config.verbose:
+                    print(f'replacing "{key}" with "{value}" in template data from {template_file_path}')
+                template = template.replace(key, value)
+            temporary_file.write(template.encode('utf-8'))
+            temporary_file.flush()
+            return_value = self.push_file(container_file_path, temporary_file.name)
+            return return_value
 
     def add_net(self, interface_id: int, vlan_tag: int = None, ip4: str = None, ip6: str = None):
         return os_exec(f'pct set {self.id} {generate_net_argument(interface_id, vlan_tag=vlan_tag, ip4=ip4, ip6=ip6)}')
