@@ -11,25 +11,22 @@ class AcmeService(lxc.distro.alpine.actions.AlpineService):
     def __init__(self, container: lxc.distro.alpine.actions.AlpineContainer, name: str):
         super().__init__(container, name)
 
-    def install(self, acme_email: str, ddns_server: str, ddns_tsig_key: str):
+    def install(self, acme_email: str, ddns_server: str, ddns_tsig_key: str, staging: bool = True):
         self.container.apk_add('muacme knot-utils')
 
-        config_temp_path = '/tmp/muacme.conf'
-        config_content = open('../templates/muacme/muacme.conf', 'r').read()
-
-        config_content = config_content.replace('CONFIG_DDNS_KEY', ddns_tsig_key)
-        config_content = config_content.replace('CONFIG_DDNS_SERVER', ddns_server)
-
-        open(config_temp_path, 'w').write(config_content)
         self.container.pct_console_shell(
             'mv /etc/muacme/muacme.conf /etc/muacme/muacme.conf.example')
-        self.container.push_file('/etc/muacme/muacme.conf', config_temp_path)
+        self.container.push_file_from_template(container_file_path='/etc/muacme/muacme.conf',
+                                               template_file_path='../templates/muacme/muacme.conf',
+                                               CONFIG_DDNS_KEY=ddns_tsig_key, CONFIG_DDNS_SERVER=ddns_server)
 
         # weekly renewal cron script
         self.container.push_file('/etc/periodic/weekly/muacme-renew-all', '../templates/muacme/muacme-renew-all')
 
         # register acme user with specified email address
-        self.container.pct_console_shell(f'uacme -v -c /etc/ssl/uacme -y -s new {acme_email}')
+        staging_opt = 's' if staging else ''
+        self.container.pct_console_shell(f'uacme -vy{staging_opt} -c /etc/ssl/uacme new {acme_email}')
 
-    def issue(self, dns_name):
-        self.container.pct_console_shell(f'muacme issue -v -s {dns_name}')
+    def issue(self, dns_name, staging: bool = True):
+        staging_opt = 's' if staging else ''
+        self.container.pct_console_shell(f'muacme issue -v{staging_opt} {dns_name}')

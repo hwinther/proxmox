@@ -11,16 +11,12 @@ class GatewayService(lxc.distro.alpine.actions.AlpineService):
         super().__init__(container, name)
 
     def install(self):
-        self.container.apk_add('ip6tables')
-        self.container.apk_add('awall')
-
+        self.container.apk_add('ip6tables awall')
         self.container.rc_update('iptables', 'add')
         self.container.rc_update('ip6tables', 'add')
 
-        awall_policy_temp_path = '/tmp/gateway-nat-policy.json'
-        dhcpd_conf = open('../templates/awall/gateway-nat-policy.json', 'r').read()
-        open(awall_policy_temp_path, 'w').write(dhcpd_conf)
-        self.container.push_file('/etc/awall/optional/gateway-nat-policy.json', awall_policy_temp_path)
+        self.container.push_file_from_template(container_file_path='/etc/awall/optional/gateway-nat-policy.json',
+                                               template_file_path='../templates/awall/gateway-nat-policy.json')
 
         # Enable and activate firewall rules
         self.container.pct_console_shell("awall enable gateway-nat-policy && awall activate -f")

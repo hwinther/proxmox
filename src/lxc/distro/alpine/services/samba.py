@@ -151,8 +151,9 @@ ldap passwd sync = yes
         for share in shares:
             config_content += share.generate_config_section()
 
-        open(config_temp_path, 'w').write(config_content)
         self.container.pct_console_shell('mv /etc/samba/smb.conf /etc/samba/smb.conf.example')
+        open(config_temp_path, 'w').write(config_content)
+
         self.container.push_file('/etc/samba/smb.conf', config_temp_path)
 
         if mdns:
@@ -185,6 +186,7 @@ class SambaClient(lxc.distro.alpine.actions.AlpineService):
         self.container.apk_add('samba-client')
 
         # TODO: check if config has created by our samba service before overwriting it
+        self.container.pct_console_shell('mv /etc/samba/smb.conf /etc/samba/smb.conf.example')
         config_temp_path = '/tmp/smb.conf'
         config_content = open('../templates/samba/smb.conf', 'r').read()
 

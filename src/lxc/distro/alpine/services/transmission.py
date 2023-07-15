@@ -18,9 +18,7 @@ class TransmissionService(lxc.distro.alpine.actions.AlpineService):
         super().__init__(container, name)
 
     def install(self):
-        self.container.apk_add('transmission-daemon')
-        self.container.apk_add('transmission-cli')
-
+        self.container.apk_add('transmission-daemon transmission-cli')
         self.container.rc_update('transmission-daemon', 'add')
 
         # TODO: firewall policy?
@@ -29,12 +27,11 @@ class TransmissionService(lxc.distro.alpine.actions.AlpineService):
         self.container.rc_service('transmission-daemon', 'start')
         self.container.rc_service('transmission-daemon', 'stop')
 
-        config_temp_path = '/tmp/settings.json'
-        # TODO: configure whitelist, username and password for API
-        config_content = open('../templates/transmission/settings.json', 'r').read()
-        open(config_temp_path, 'w').write(config_content)
         self.container.pct_console_shell(
             'mv /var/lib/transmission/config/settings.json /var/lib/transmission/config/settings.json.example')
-        self.container.push_file('/var/lib/transmission/config/settings.json', config_temp_path)
+
+        # TODO: configure whitelist, username and password for API
+        self.container.push_file_from_template(container_file_path='/var/lib/transmission/config/settings.json',
+                                               template_file_path='../templates/transmission/settings.json')
 
         self.container.rc_service('transmission-daemon', 'start')

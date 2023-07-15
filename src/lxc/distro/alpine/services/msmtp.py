@@ -15,15 +15,11 @@ class SmtpService(lxc.distro.alpine.actions.AlpineService):
         self.container.apk_add('msmtp')
         self.container.rc_update('msmtp', 'add')
 
-        config_temp_path = '/tmp/msmtprc'
-        config_content = open('../templates/msmtp/msmtprc', 'r').read()
-
-        config_content = config_content.replace('MAIL_HOST', mail_host)
-        config_content = config_content.replace('MAIL_FROM_HOST', mail_from_host)
-        config_content = config_content.replace('MAIL_FROM_NAME', mail_from_name)
-
-        open(config_temp_path, 'w').write(config_content)
-        self.container.push_file('/etc/msmtprc', config_temp_path)
+        self.container.push_file_from_template(container_file_path='/etc/msmtprc',
+                                               template_file_path='../templates/msmtp/msmtprc',
+                                               MAIL_HOST=mail_host,
+                                               MAIL_FROM_HOST=mail_from_host,
+                                               MAIL_FROM_NAME=mail_from_name)
 
         self.container.rc_service('msmtp', 'start')
 
