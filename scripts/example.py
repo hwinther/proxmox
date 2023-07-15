@@ -7,7 +7,7 @@ from src.lxc.distro.alpine.actions import AlpineContainer
 from src.lxc.distro.alpine.services.bind import BindService, MasterZone, SlaveZone
 from src.lxc.distro.alpine.services.dhcpd import DhcpService
 from src.lxc.distro.alpine.services.gateway import GatewayService
-from src.lxc.distro.alpine.services.nfs import NfsService
+from src.lxc.distro.alpine.services.nfs import NfsClient
 from src.lxc.distro.alpine.services.samba import SAMBA_SHARE_HOMES, SambaClient, SambaService
 from src.lxc.models import NetworkInterface, Subnet
 
@@ -26,7 +26,7 @@ def main():
     #
     # return
 
-    test_network(image_path)
+    # test_network(image_path)
     # dns_master_and_slave(image_path)
     # samba_server_and_client(image_path)
     test_new_services(image_path)
@@ -219,21 +219,11 @@ def test_new_services(image_path):
     transmission_server.update_container()
     print(transmission_server.get_ip(0))
 
-    nfs_service = NfsService(transmission_server, 'nfs support service')
-    nfs_service.install()
-
-    transmission_server.append_file('/etc/fstab', '10.20.1.28:/mnt/primary/Videos /mnt/Videos nfs defaults 0 0')
-    print(transmission_server.pct_console_shell('mkdir /mnt/Videos'))
-    print(transmission_server.pct_console_shell('mount -a'))
+    nfs_client = NfsClient(transmission_server, 'nfs support service')
+    nfs_client.install()
+    nfs_client.add_mount(local_path='/mnt/Videos', remote_path='10.20.1.28:/mnt/primary/Videos')
     print(transmission_server.pct_console_shell('ls -la /mnt/Videos'))
-
-    # to persist reboot:
-    print(transmission_server.rc_update('local', 'add'))
-    print(transmission_server.pct_console_shell(
-        'echo "mount -a" > /etc/local.d/mount.start && chmod +x /etc/local.d/mount.start'))
-    # rc-update add local default
-    # echo "mount -a" > /etc/local.d/mount.start
-    # chmod +x /etc/local.d/mount.start
+    nfs_client.mount_persist_reboot()
 
     transmission_service = TransmissionService(transmission_server, 'transmission service')
     transmission_service.install(download_directory='/mnt/Videos/Downloads', rpc_whitelist='10.20.1.*')
