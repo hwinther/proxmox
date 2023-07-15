@@ -31,8 +31,6 @@ def main():
     # test_new_services(image_path)
     # check_existing_containers()
 
-    # TODO: add remote log server config
-
 
 def check_existing_containers():
     containers = []
@@ -193,8 +191,14 @@ def samba_server_and_client(image_path):
                                   onboot=1)
     samba_client.update_container()
     print(samba_client.get_ip(0))
+
+    # configure busybox syslogd to log both locally and to a remote host
+    samba_client.pct_console_shell("echo 'SYSLOGD_OPTS=\\\"-t -LR 10.20.1.20:1234\\\"' > /etc/conf.d/syslog")
+    samba_client.rc_service('syslog', 'restart')
+
     samba_client_service = SambaClient(samba_client, 'samba/smb client service')
     samba_client_service.install(wins_server=str(samba_server.network_interfaces[0].ip4.ip))
+
     print(samba_client.pct_console_shell('smbclient -U test%Password1 -c ls //samba-test/test'))
 
 
