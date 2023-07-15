@@ -169,7 +169,7 @@ def samba_server_and_client(image_path):
     acme_service.install(acme_email=config.acme_email,
                          ddns_server=config.ddns_server,
                          ddns_tsig_key=config.ddns_tsig_key)
-    acme_service.issue('samba-test.digitalobscurity.org')
+    acme_service.issue('samba-test.test.wsh.no')
     samba_service = SambaService(samba_server, 'samba/smb service')
     samba_service.install(ws=True, mdns=True, domain_master=True, ntlm_support=True, ldap_config=None,
                           shares=[SAMBA_SHARE_HOMES])
