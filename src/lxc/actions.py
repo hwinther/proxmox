@@ -176,7 +176,9 @@ class Container:
     def purge_container_by_id(container_id: int):
         # TODO: check pct list to see if id exists, then use configured option to determine
         #  if we're overwriting it or not
-        os_exec(f'(pct stop {container_id}; pct destroy {container_id}); echo 0', shell=True)
+        # os_exec(f'(pct shutdown {container_id}; pct stop {container_id}; pct destroy {container_id}); echo 0',
+        os_exec(f'(pct shutdown {container_id}; pct destroy {container_id}); echo 0',
+                shell=True)
 
     def purge_container(self):
         self.purge_container_by_id(self.id)

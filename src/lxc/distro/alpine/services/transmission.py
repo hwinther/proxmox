@@ -17,7 +17,7 @@ class TransmissionService(lxc.distro.alpine.actions.AlpineService):
     def __init__(self, container: lxc.distro.alpine.actions.AlpineContainer, name: str):
         super().__init__(container, name)
 
-    def install(self):
+    def install(self, download_directory: str, rpc_whitelist: str):
         self.container.apk_add('transmission-daemon transmission-cli')
         self.container.rc_update('transmission-daemon', 'add')
 
@@ -32,6 +32,8 @@ class TransmissionService(lxc.distro.alpine.actions.AlpineService):
 
         # TODO: configure whitelist, username and password for API
         self.container.push_file_from_template(container_file_path='/var/lib/transmission/config/settings.json',
-                                               template_file_path='../templates/transmission/settings.json')
+                                               template_file_path='../templates/transmission/settings.json',
+                                               DOWNLOAD_DIRECTORY=download_directory,
+                                               RPC_WHITELIST=rpc_whitelist)
 
         self.container.rc_service('transmission-daemon', 'start')

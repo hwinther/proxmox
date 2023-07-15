@@ -1,5 +1,6 @@
 from lxc.distro.alpine.services.msmtp import SmtpService
 from lxc.distro.alpine.services.muacme import AcmeService
+from lxc.distro.alpine.services.transmission import TransmissionService
 from src.common.common import config
 from src.lxc.actions import Container
 from src.lxc.distro.alpine.actions import AlpineContainer
@@ -25,10 +26,10 @@ def main():
     #
     # return
 
-    # test_network(image_path)
+    test_network(image_path)
     # dns_master_and_slave(image_path)
-    samba_server_and_client(image_path)
-    # test_new_services(image_path)
+    # samba_server_and_client(image_path)
+    test_new_services(image_path)
     # check_existing_containers()
 
 
@@ -168,10 +169,12 @@ def samba_server_and_client(image_path):
     smtp_service.test('hc@wsh.no')
 
     acme_service = AcmeService(samba_server, '(mu)acme service')
+    # use staging=False for production usage/to get valid SSL
     acme_service.install(acme_email=config.acme_email,
                          ddns_server=config.ddns_server,
-                         ddns_tsig_key=config.ddns_tsig_key)
-    acme_service.issue('samba-test.test.wsh.no')
+                         ddns_tsig_key=config.ddns_tsig_key,
+                         staging=True)
+    acme_service.issue('samba-test.test.wsh.no', staging=True)
 
     samba_service = SambaService(samba_server, 'samba/smb service')
     samba_service.install(ws=True, mdns=True, domain_master=True, ntlm_support=True, ldap_config=None,
@@ -215,9 +218,10 @@ def test_new_services(image_path):
                                          onboot=1, unprivileged=0, feature_mount='nfs', feature_nesting=0)
     transmission_server.update_container()
     print(transmission_server.get_ip(0))
-    # print(transmission_server.pct_console_shell('ping -c 1 10.20.1.28'))
+
     nfs_service = NfsService(transmission_server, 'nfs support service')
     nfs_service.install()
+
     transmission_server.append_file('/etc/fstab', '10.20.1.28:/mnt/primary/Videos /mnt/Videos nfs defaults 0 0')
     print(transmission_server.pct_console_shell('mkdir /mnt/Videos'))
     print(transmission_server.pct_console_shell('mount -a'))
@@ -231,8 +235,8 @@ def test_new_services(image_path):
     # echo "mount -a" > /etc/local.d/mount.start
     # chmod +x /etc/local.d/mount.start
 
-    # transmission_service = TransmissionService(transmission_server, 'transmission service')
-    # transmission_service.install()
+    transmission_service = TransmissionService(transmission_server, 'transmission service')
+    transmission_service.install(download_directory='/mnt/Videos/Downloads', rpc_whitelist='10.20.1.*')
 
 
 if __name__ == '__main__':
