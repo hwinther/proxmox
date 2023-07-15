@@ -1,3 +1,4 @@
+from lxc.distro.alpine.services.msmtp import SmtpService
 from lxc.distro.alpine.services.muacme import AcmeService
 from src.common.common import config
 from src.lxc.actions import Container
@@ -30,8 +31,6 @@ def main():
     # test_new_services(image_path)
     # check_existing_containers()
 
-    # v TODO: add acme support
-    # TODO: add smart mail relay config
     # TODO: add remote log server config
 
 
@@ -165,11 +164,17 @@ def samba_server_and_client(image_path):
                                   onboot=1)
     samba_server.update_container()
     print(samba_server.get_ip(0))
+
+    smtp_service = SmtpService(samba_server, '(m)smtp service')
+    smtp_service.install(mail_host='mail.oh.wsh.no', mail_from_host='test.wsh.no', mail_from_name='Samba test')
+    smtp_service.test('hc@wsh.no')
+
     acme_service = AcmeService(samba_server, '(mu)acme service')
     acme_service.install(acme_email=config.acme_email,
                          ddns_server=config.ddns_server,
                          ddns_tsig_key=config.ddns_tsig_key)
     acme_service.issue('samba-test.test.wsh.no')
+
     samba_service = SambaService(samba_server, 'samba/smb service')
     samba_service.install(ws=True, mdns=True, domain_master=True, ntlm_support=True, ldap_config=None,
                           shares=[SAMBA_SHARE_HOMES])

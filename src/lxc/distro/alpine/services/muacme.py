@@ -11,7 +11,7 @@ class AcmeService(lxc.distro.alpine.actions.AlpineService):
     def __init__(self, container: lxc.distro.alpine.actions.AlpineContainer, name: str):
         super().__init__(container, name)
 
-    def install(self, acme_email: str = None, ddns_server: str = None, ddns_tsig_key: str = None):
+    def install(self, acme_email: str, ddns_server: str, ddns_tsig_key: str):
         self.container.apk_add('muacme knot-utils')
 
         config_temp_path = '/tmp/muacme.conf'
