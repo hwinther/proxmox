@@ -185,9 +185,9 @@ class Container:
 
     def create_container(self, container_name: str, container_image_path: str,
                          network_interfaces: Sequence[NetworkInterface],
-                         resource_pool=None, memory=None, swap=None, cpu_cores=None,
-                         unprivileged=None, cmode=None, start=None, onboot=None,
-                         feature_mount=None, feature_nesting=None):
+                         resource_pool: str = None, memory: int = None, swap: int = None, cpu_cores: int = None,
+                         unprivileged: int = None, cmode: str = None, start: int = None, onboot: int = None,
+                         feature_mount: str = None, feature_nesting: int = None, rootfs_size: str = None):
         #
         # TODO: rework this to a factory constructor with override in AlpineContainer?
         #
@@ -226,10 +226,13 @@ class Container:
         if len(features) != 0:
             feature_set = ' --features ' + ','.join(features)
 
+        if rootfs_size is None:
+            rootfs_size = '0.1'  # 100MB
+
         cmd = f'pct create {self.id} {container_image_path} --ostype alpine --hostname {container_name}' \
               f' --password="ROOT_PASSWORD" --ssh-public-keys {config.container_ssh_authorized_key_filename}' \
               f' --cores {cpu_cores} --memory {memory} --swap {swap}' \
-              f' --pool {resource_pool} --rootfs {config.container_storage}:0.1,shared=0' \
+              f' --pool {resource_pool} --rootfs {config.container_storage}:{rootfs_size},shared=0' \
               f' --unprivileged {unprivileged} --cmode {cmode} --start {start} --onboot {onboot}' \
               f'{feature_set}' \
               + ' ' + ' '.join(network_arguments)
