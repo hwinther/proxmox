@@ -37,7 +37,6 @@ def main():
 
     # TODO: add NFS server/share to test platform, use this in jellyfin and transmission config
 
-    # TODO: finish jellyfin setup with nginx
     # TODO: finish unifi setup (also with nginx for ssl?)
     # TODO: add IP/MAC uniqueness checks to avoid conflicts.. either within scope of VLAN or globally?
 

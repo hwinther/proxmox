@@ -3,7 +3,8 @@ import lxc.distro.alpine.actions
 
 class NginxService(lxc.distro.alpine.actions.AlpineService):
     """
-    Config xx
+    Config /etc/nginx/http.d/*
+    Jellyfin config based on https://jellyfin.org/docs/general/networking/nginx/
     """
     container: lxc.distro.alpine.actions.AlpineContainer = None
 
