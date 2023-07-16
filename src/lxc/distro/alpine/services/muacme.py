@@ -1,4 +1,5 @@
 import lxc.distro.alpine.actions
+from common.common import config
 
 
 class AcmeService(lxc.distro.alpine.actions.AlpineService):
@@ -24,9 +25,16 @@ class AcmeService(lxc.distro.alpine.actions.AlpineService):
         self.container.push_file('/etc/periodic/weekly/muacme-renew-all', '../templates/muacme/muacme-renew-all')
 
         # register acme user with specified email address
-        staging_opt = 's' if staging else ''
-        self.container.pct_console_shell(f'uacme -vy{staging_opt} -c /etc/ssl/uacme new {acme_email}')
+        verbose_opt = ' -v' if config.verbose else ''
+        staging_opt = ' -s' if staging else ''
+        self.container.pct_console_shell(f'uacme -y{verbose_opt}{staging_opt} -c /etc/ssl/uacme new {acme_email}')
 
-    def issue(self, domain_name, staging: bool = True):
-        staging_opt = 's' if staging else ''
-        self.container.pct_console_shell(f'muacme issue -v{staging_opt} {domain_name}')
+    def issue(self, domain_name: str, staging: bool = True):
+        verbose_opt = ' -v' if config.verbose else ''
+        staging_opt = ' -s' if staging else ''
+        self.container.pct_console_shell(f'muacme issue{verbose_opt}{staging_opt} {domain_name}')
+
+    def ddns_add(self, ddns_server: str, ddns_tsig_key: str, ddns_zone: str, domain_name: str, ip: str):
+        self.container.pct_console_shell(
+            f"echo -e 'server {ddns_server}\nzone {ddns_zone}\nupdate add {domain_name} 3600 IN A {ip}\nsend\n'"
+            f" | knsupdate -y {ddns_tsig_key}")

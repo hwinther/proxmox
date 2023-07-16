@@ -1,6 +1,7 @@
 from lxc.distro.alpine.services.jellyfin import JellyfinService
 from lxc.distro.alpine.services.msmtp import SmtpService
 from lxc.distro.alpine.services.muacme import AcmeService
+from lxc.distro.alpine.services.nginx import NginxService
 from lxc.distro.alpine.services.transmission import TransmissionService
 from src.common.common import config
 from src.lxc.actions import Container
@@ -271,6 +272,25 @@ def jellyfin(image_path):
 
     # you have to manually configure it via web ui afterwards on http://10.20.1.246:8096
     # TODO: add nginx and muacme
+    domain_name = 'jellyfin-test.test.wsh.no'
+    zone = 'test.wsh.no'
+    staging = False  # use staging=False for production usage/to get valid SSL
+
+    acme_service = AcmeService(jellyfin_server, '(mu)acme service')
+    acme_service.install(acme_email=config.acme_email,
+                         ddns_server=config.ddns_server,
+                         ddns_tsig_key=config.ddns_tsig_key,
+                         staging=staging)
+    acme_service.issue(domain_name=domain_name, staging=staging)
+    acme_service.ddns_add(ddns_server=config.ddns_server,
+                          ddns_tsig_key=config.ddns_tsig_key,
+                          ddns_zone=zone,
+                          domain_name=domain_name,
+                          ip=str(jellyfin_server.network_interfaces[0].ip4.ip))
+
+    nginx_service = NginxService(jellyfin_server, 'nginx service')
+    nginx_service.install(domain_name=domain_name)
+
     print(jellyfin_server.pct_console_shell('netstat -anp'))
 
 

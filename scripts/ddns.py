@@ -2,6 +2,7 @@
 import os
 import sys
 import urllib.request
+
 import dns.resolver
 
 """
@@ -28,7 +29,7 @@ zone_name = 'wsh.no'
 # Postfix here if using subdomain
 domain_name = 'dynamic.oh'
 nsserver = '167.172.166.129'
-# Set to False to avoid crontab sending emails when nothing is changed
+# Set False to avoid crontab sending emails when nothing is changed
 verbose = False
 
 # No need to edit after this line
@@ -48,7 +49,7 @@ try:
 except dns.resolver.NXDOMAIN:
     answer = None
 
-if answer != None:
+if answer is not None:
     resolved_ip = answer.rrset[0].to_text()
     if resolved_ip == ip:
         if verbose:
