@@ -27,6 +27,6 @@ class AcmeService(lxc.distro.alpine.actions.AlpineService):
         staging_opt = 's' if staging else ''
         self.container.pct_console_shell(f'uacme -vy{staging_opt} -c /etc/ssl/uacme new {acme_email}')
 
-    def issue(self, dns_name, staging: bool = True):
+    def issue(self, domain_name, staging: bool = True):
         staging_opt = 's' if staging else ''
-        self.container.pct_console_shell(f'muacme issue -v{staging_opt} {dns_name}')
+        self.container.pct_console_shell(f'muacme issue -v{staging_opt} {domain_name}')
