@@ -1,5 +1,3 @@
-import time
-
 import lxc.distro.alpine.actions
 
 
