@@ -281,11 +281,12 @@ def jellyfin(image_path):
                          ddns_tsig_key=config.ddns_tsig_key,
                          staging=staging)
     acme_service.issue(domain_name=domain_name, staging=staging)
-    acme_service.ddns_add(ddns_server=config.ddns_server,
-                          ddns_tsig_key=config.ddns_tsig_key,
-                          ddns_zone=zone,
-                          domain_name=domain_name,
-                          ip=str(jellyfin_server.network_interfaces[0].ip4.ip))
+    acme_service.ddns_update(operation='add',
+                             ddns_server=config.ddns_server,
+                             ddns_tsig_key=config.ddns_tsig_key,
+                             ddns_zone=zone,
+                             domain_name=domain_name,
+                             ip=str(jellyfin_server.network_interfaces[0].ip4.ip))
 
     nginx_service = NginxService(jellyfin_server, 'nginx service')
     nginx_service.install(domain_name=domain_name)

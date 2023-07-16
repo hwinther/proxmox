@@ -32,9 +32,20 @@ class AcmeService(lxc.distro.alpine.actions.AlpineService):
     def issue(self, domain_name: str, staging: bool = True):
         verbose_opt = ' -v' if config.verbose else ''
         staging_opt = ' -s' if staging else ''
-        self.container.pct_console_shell(f'muacme issue{verbose_opt}{staging_opt} {domain_name}')
+        return self.container.pct_console_shell(f'muacme issue{verbose_opt}{staging_opt} {domain_name}')
 
-    def ddns_add(self, ddns_server: str, ddns_tsig_key: str, ddns_zone: str, domain_name: str, ip: str):
-        self.container.pct_console_shell(
-            f"echo -e 'server {ddns_server}\nzone {ddns_zone}\nupdate add {domain_name} 3600 IN A {ip}\nsend\n'"
+    def ddns_update(self, operation: str, ddns_server: str, ddns_tsig_key: str, ddns_zone: str, domain_name: str,
+                    ip: str):
+        """
+        Perform DDNS record update via knsupdate
+        @param operation: add or del
+        @param ddns_server: ns hostname or ip
+        @param ddns_tsig_key: tsig key in the format 'algo:keyname:secret'
+        @param ddns_zone: ns zone name
+        @param domain_name: domain name
+        @param ip: ip(v4) value
+        @return: command output
+        """
+        return self.container.pct_console_shell(
+            f"echo -e 'server {ddns_server}\nzone {ddns_zone}\nupdate {operation} {domain_name} 3600 IN A {ip}\nsend\n'"
             f" | knsupdate -y {ddns_tsig_key}")
