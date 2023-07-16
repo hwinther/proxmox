@@ -3,7 +3,8 @@ import lxc.distro.alpine.actions
 
 class JellyfinService(lxc.distro.alpine.actions.AlpineService):
     """
-    TODO
+    config: /etc/conf.d/jellyfin
+    https://jellyfin.org/docs/general/installation/linux/#alpine-linux
     """
     container: lxc.distro.alpine.actions.AlpineContainer = None
 
@@ -11,4 +12,10 @@ class JellyfinService(lxc.distro.alpine.actions.AlpineService):
         super().__init__(container, name)
 
     def install(self):
-        pass
+        self.container.apk_add('jellyfin jellyfin-web')
+        self.container.rc_update('jellyfin', 'add')
+
+        # enable the web ui (it is disabled by default)
+        self.container.pct_console_shell("sed -i 's/--nowebclient//' /etc/conf.d/jellyfin")
+
+        self.container.rc_service('jellyfin', 'start')

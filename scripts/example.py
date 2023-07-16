@@ -1,3 +1,4 @@
+from lxc.distro.alpine.services.jellyfin import JellyfinService
 from lxc.distro.alpine.services.msmtp import SmtpService
 from lxc.distro.alpine.services.muacme import AcmeService
 from lxc.distro.alpine.services.transmission import TransmissionService
@@ -29,8 +30,20 @@ def main():
     # test_network(image_path)
     # dns_master_and_slave(image_path)
     # samba_server_and_client(image_path)
-    test_new_services(image_path)
+    # transmission(image_path)
+    jellyfin(image_path)
     # check_existing_containers()
+
+    # TODO: add NFS server/share to test platform, use this in jellyfin and transmission config
+
+    # TODO: finish jellyfin setup with nginx
+    # TODO: finish unifi setup (also with nginx for ssl?)
+    # TODO: add IP/MAC uniqueness checks to avoid conflicts.. either within scope of VLAN or globally?
+
+    # TODO: add ldap server support
+    # TODO: add ldap client support
+    # TODO: add sssd client config for ldap
+    # TODO: krb5 support?
 
 
 def check_existing_containers():
@@ -205,7 +218,7 @@ def samba_server_and_client(image_path):
     print(samba_client.pct_console_shell('smbclient -U test%Password1 -c ls //samba-test/test'))
 
 
-def test_new_services(image_path):
+def transmission(image_path):
     # Create transmission container
     transmission_server = AlpineContainer(605)
     transmission_server.purge_container()
@@ -227,6 +240,38 @@ def test_new_services(image_path):
 
     transmission_service = TransmissionService(transmission_server, 'transmission service')
     transmission_service.install(download_directory='/mnt/Videos/Downloads', rpc_whitelist='10.20.1.*')
+
+    # TODO: add feed.py to cron ++
+    # TODO: perhaps use post trigger in transmission to move files?
+
+
+def jellyfin(image_path):
+    # Create jellyfin container
+    jellyfin_server = AlpineContainer(608)
+    jellyfin_server.purge_container()
+    jellyfin_server.create_container('jellyfin-test',
+                                     image_path,
+                                     # [NetworkInterface(vlan_tag=100)],
+                                     [NetworkInterface(mac='C2:25:0C:61:BF:4D',
+                                                       ip4='10.20.1.246/24',
+                                                       gw4='10.20.1.254')],
+                                     onboot=1, unprivileged=0, feature_mount='nfs', feature_nesting=0,
+                                     rootfs_size='1', memory=1024)
+    jellyfin_server.update_container()
+    print(jellyfin_server.get_ip(0))
+
+    nfs_client = NfsClient(jellyfin_server, 'nfs support service')
+    nfs_client.install()
+    nfs_client.add_mount(local_path='/mnt/Videos', remote_path='10.20.1.28:/mnt/primary/Videos')
+    print(jellyfin_server.pct_console_shell('ls -la /mnt/Videos'))
+    nfs_client.mount_persist_reboot()
+
+    jellyfin_service = JellyfinService(jellyfin_server, 'jellyfin service')
+    jellyfin_service.install()
+
+    # you have to manually configure it via web ui afterwards on http://10.20.1.246:8096
+    # TODO: add nginx and muacme
+    print(jellyfin_server.pct_console_shell('netstat -anp'))
 
 
 if __name__ == '__main__':
