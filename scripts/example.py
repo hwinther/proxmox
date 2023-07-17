@@ -9,7 +9,7 @@ from src.lxc.distro.alpine.actions import AlpineContainer
 from src.lxc.distro.alpine.services.bind import BindService, MasterZone, SlaveZone
 from src.lxc.distro.alpine.services.dhcpd import DhcpService
 from src.lxc.distro.alpine.services.gateway import GatewayService
-from src.lxc.distro.alpine.services.nfs import NfsClient
+from src.lxc.distro.alpine.services.nfs import NfsClient, NfsServer
 from src.lxc.distro.alpine.services.samba import SAMBA_SHARE_HOMES, SambaClient, SambaService
 from src.lxc.models import NetworkInterface, Subnet
 
@@ -31,13 +31,14 @@ def main():
     # test_network(image_path)
     # dns_master_and_slave(image_path)
     # samba_server_and_client(image_path)
+    nfs_server_and_client(image_path)
     # transmission(image_path)
-    jellyfin(image_path)
+    # jellyfin(image_path)
     # check_existing_containers()
 
     # TODO: add NFS server/share to test platform, use this in jellyfin and transmission config
-
     # TODO: finish unifi setup (also with nginx for ssl?)
+    # TODO: add nginx/tighttpd? support for ddnsadmin deployment
     # TODO: add IP/MAC uniqueness checks to avoid conflicts.. either within scope of VLAN or globally?
 
     # TODO: add ldap server support
@@ -218,6 +219,50 @@ def samba_server_and_client(image_path):
     print(samba_client.pct_console_shell('smbclient -U test%Password1 -c ls //samba-test/test'))
 
 
+def nfs_server_and_client(image_path):
+    # Create nfs server container
+    nfs_server = AlpineContainer(609)
+    nfs_server.purge_container()
+    nfs_server.create_container('nfs-test',
+                                image_path,
+                                # [NetworkInterface(vlan_tag=100)],
+                                [NetworkInterface(mac='C2:25:0C:61:B1:01',
+                                                  ip4='10.20.1.245/24',
+                                                  gw4='10.20.1.254')],
+                                onboot=1,
+                                # unprivileged=0,
+                                # feature_mount='nfs',
+                                # feature_nesting=0,
+                                )
+    nfs_server.update_container()
+    print(nfs_server.get_ip(0))
+
+    nfs_service = NfsServer(nfs_server, 'nfs daemon service')
+    nfs_service.install()
+
+    nfs_service.add_export(nfs_path='/tmp', access_line='10.20.1.0/24(ro)')
+    nfs_service.container.append_file('/tmp/testfile.txt', 'test content')
+
+    # Create nfs client container
+    nfs_client = AlpineContainer(610)
+    nfs_client.purge_container()
+    nfs_client.create_container('nfs-test2',
+                                image_path,
+                                # [NetworkInterface(vlan_tag=100)],
+                                [NetworkInterface(mac='C2:25:0C:61:B1:02',
+                                                  ip4='10.20.1.244/24',
+                                                  gw4='10.20.1.254')],
+                                onboot=1, unprivileged=0, feature_mount='nfs', feature_nesting=0)
+    nfs_client.update_container()
+    print(nfs_client.get_ip(0))
+
+    nfs_client_service = NfsClient(nfs_client, 'nfs support service')
+    nfs_client_service.install()
+    nfs_client_service.add_mount(local_path='/mnt/test', remote_path='10.20.1.245:/tmp', options='nolock')
+    print(nfs_client.pct_console_shell('ls -la /mnt/test'))
+    nfs_client_service.mount_persist_reboot()
+
+
 def transmission(image_path):
     # Create transmission container
     transmission_server = AlpineContainer(605)
@@ -281,6 +326,7 @@ def jellyfin(image_path):
                          ddns_tsig_key=config.ddns_tsig_key,
                          staging=staging)
     acme_service.issue(domain_name=domain_name, staging=staging)
+    # TODO: we add the name, but it is never removed later on
     acme_service.ddns_update(operation='add',
                              ddns_server=config.ddns_server,
                              ddns_tsig_key=config.ddns_tsig_key,

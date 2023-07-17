@@ -136,7 +136,7 @@ class Container:
         return self.pct_console_shell(f'ifdown eth{interface_id}; ifup eth{interface_id}')
 
     def append_file(self, file_path, text_line):
-        return self.pct_console_shell(f'echo "{text_line}" >> {file_path}')
+        return self.pct_console_shell(f"echo '{text_line}' >> {file_path}")
 
     def pct_console_shell(self, container_command: str):
         return os_exec(f'echo "{container_command}" | pct console {self.id}', shell=True)
