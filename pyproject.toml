@@ -24,7 +24,7 @@ classifiers = [
 ]
 
 dependencies = [
-    "dnspython==2.2.1"
+    "dnspython==2.4.2"
 ]
 
 [build-system]
