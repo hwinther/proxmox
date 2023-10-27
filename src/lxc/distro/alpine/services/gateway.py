@@ -24,6 +24,7 @@ class GatewayService(lxc.distro.alpine.actions.AlpineService):
         # Enable routing via sysctl, in the future perhaps also enable ipv6 forwarding?
         self.container.pct_console_shell("echo \"net.ipv4.ip_forward=1\" >> /etc/sysctl.conf")
         self.container.pct_console_shell("sysctl -p")
+        self.container.rc_update('sysctl', 'add')
 
         self.container.rc_service('iptables', 'start')
         self.container.rc_service('ip6tables', 'start')
