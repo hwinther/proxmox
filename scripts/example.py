@@ -15,12 +15,12 @@ from src.lxc.models import NetworkInterface, Subnet
 
 
 def main():
-    # from lxc.actions import update_lxc_templates
-    # alpine_newest_image_name = update_lxc_templates()
+    from lxc.actions import update_lxc_templates
+    alpine_newest_image_name = update_lxc_templates()
     # TODO: translate image names not just for local (template_)storage?
-    # image_path = f'/var/lib/vz/template/cache/{alpine_newest_image_name}'
+    image_path = f'/var/lib/vz/template/cache/{alpine_newest_image_name}'
     # TODO: improve lazy caching
-    image_path = '/var/lib/vz/template/cache/alpine-3.18-default_20230607_amd64.tar.xz'
+    # image_path = '/var/lib/vz/template/cache/alpine-3.18-default_20230607_amd64.tar.xz'
 
     # for i in range(601, 607):
     #     print(i)
@@ -31,9 +31,9 @@ def main():
     # test_network(image_path)
     # dns_master_and_slave(image_path)
     # samba_server_and_client(image_path)
-    nfs_server_and_client(image_path)
+    # nfs_server_and_client(image_path)
     # transmission(image_path)
-    # jellyfin(image_path)
+    jellyfin(image_path)
     # check_existing_containers()
 
     # TODO: add NFS server/share to test platform, use this in jellyfin and transmission config
