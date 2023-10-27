@@ -153,7 +153,10 @@ class Container:
 
             # TODO: add support for remote running pct commands via ssh or pvesh?
             # Until then, we will ignore remote PVE nodes
-            if pve_node.node != platform.node():
+            if config.remote:
+                if pve_node.node != config.remote_host:
+                    continue
+            elif pve_node.node != platform.node():
                 continue
 
             # print(str(pve_node))

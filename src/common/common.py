@@ -24,6 +24,10 @@ class Config:
     ddns_server: str = None
     ddns_tsig_key: str = None
 
+    # remote node
+    remote: bool = None
+    remote_host: str = None
+
     def __init__(self):
         self.config = configparser.ConfigParser()
         self.config.read('config.ini')
@@ -80,6 +84,14 @@ class Config:
         self.ddns_tsig_key = default.get('ddns_tsig_key')
         if self.ddns_tsig_key is None:
             raise ValueError('ddns_tsig_key was not configured')
+
+        # remote node
+        self.remote = default.getboolean('remote')
+        if self.remote is None:
+            raise ValueError('remote was not configured')
+        self.remote_host = default.get('remote_host')
+        if self.remote_host is None:
+            raise ValueError('remote_host was not configured')
 
 
 class LxcConfig:
@@ -216,7 +228,8 @@ class LxcNode:
 
     def get_lxc_config(self):
         return LxcConfig(lxc_node=self, **json.loads(
-            os_exec(f'pvesh get nodes/{self.pve_node.node}/lxc/{self.vmid}/config --output-format=json')))
+            os_exec(f'pvesh get nodes/{self.pve_node.node}/lxc/{self.vmid}/config --output-format=json',
+                    local_override=True)))
 
 
 class PveNode:
@@ -256,7 +269,7 @@ class PveNode:
 
     def get_lxc_nodes(self):
         return [LxcNode(pve_node=self, **node) for node in
-                json.loads(os_exec(f'pvesh get nodes/{self.node}/lxc --output-format=json'))]
+                json.loads(os_exec(f'pvesh get nodes/{self.node}/lxc --output-format=json', local_override=True))]
 
 
 config = Config()
@@ -270,10 +283,19 @@ def generate_random_password(length: int):
     return password
 
 
-def os_exec(cmd, env=None, **kwargs):
+def os_exec(cmd, env=None, local_override: bool = False, **kwargs):
     if config.verbose:
         print(f'executing: {cmd}')
-    if 'shell' in kwargs:
+    if config.remote and not local_override:
+        import shlex
+        cmds = shlex.split(f'ssh {config.remote_host} {shlex.quote(cmd)}')
+        if 'shell' in kwargs:
+            kwargs['shell'] = False
+            if config.verbose:
+                print('disabled shell flag')
+        if config.verbose:
+            print(f'updated cmd: {cmds}')
+    elif 'shell' in kwargs:
         cmds = cmd
     else:
         cmds = cmd.split(' ')
@@ -289,4 +311,5 @@ def os_exec(cmd, env=None, **kwargs):
 
 
 def pvesh_get_pve_nodes():
-    return [PveNode(**node) for node in json.loads(os_exec('pvesh get nodes --output-format=json'))]
+    return [PveNode(**node) for node in
+            json.loads(os_exec('pvesh get nodes --output-format=json', local_override=True))]
