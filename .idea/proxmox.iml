@@ -12,4 +12,7 @@
     <option name="format" value="EPYTEXT" />
     <option name="myDocStringFormat" value="Epytext" />
   </component>
+  <component name="SonarLintModuleSettings">
+    <option name="uniqueId" value="b9e60ed2-f820-4b93-8f63-435d57290cb2" />
+  </component>
 </module>
