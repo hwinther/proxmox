@@ -32,7 +32,7 @@ class AlpineContainer(lxc.actions.Container):
     def updates_available(self):
         updates = self.apk_update_version()
         updates_lines = list(filter(None, updates.split('Available:\n', 1)[1].split('\n')))
-        return len(updates_lines) != 0
+        return updates_lines
 
     def get_ip(self, interface_id):
         # TODO: use generic "ip a" parse method from library here
@@ -51,6 +51,7 @@ class AlpineContainer(lxc.actions.Container):
         return self.pct_console_shell(f"apk add {package_name}")
 
     def apk_update_version(self):
+        # TODO: apk update also times out sometimes
         return self.pct_console_shell(f"apk update && apk version")
 
     def rc_update(self, service_name, operation):

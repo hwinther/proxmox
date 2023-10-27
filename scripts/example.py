@@ -15,26 +15,26 @@ from src.lxc.models import NetworkInterface, Subnet
 
 
 def main():
-    from lxc.actions import update_lxc_templates
-    alpine_newest_image_name = update_lxc_templates()
+    # from lxc.actions import update_lxc_templates
+    # alpine_newest_image_name = update_lxc_templates()
     # TODO: translate image names not just for local (template_)storage?
-    image_path = f'/var/lib/vz/template/cache/{alpine_newest_image_name}'
+    # image_path = f'/var/lib/vz/template/cache/{alpine_newest_image_name}'
     # TODO: improve lazy caching
-    # image_path = '/var/lib/vz/template/cache/alpine-3.18-default_20230607_amd64.tar.xz'
+    image_path = '/var/lib/vz/template/cache/alpine-3.18-default_20230607_amd64.tar.xz'
+    alpine_version = image_path.split('alpine-')[1].split('-')[0]
 
-    # for i in range(601, 607):
-    #     print(i)
+    # for i in range(601, 612):
+    #     print(f'Purging {i}')
     #     Container.purge_container_by_id(i)
-    #
-    # return
 
     # test_network(image_path)
     # dns_master_and_slave(image_path)
     # samba_server_and_client(image_path)
     # nfs_server_and_client(image_path)
     # transmission(image_path)
-    jellyfin(image_path)
-    # check_existing_containers()
+    # jellyfin(image_path)
+
+    check_existing_containers(alpine_version, update=False)
 
     # TODO: add NFS server/share to test platform, use this in jellyfin and transmission config
     # TODO: finish unifi setup (also with nginx for ssl?)
@@ -47,7 +47,7 @@ def main():
     # TODO: krb5 support?
 
 
-def check_existing_containers():
+def check_existing_containers(alpine_version: str, update: bool = False):
     containers = []
     # for i in range(601, 605):
     #     containers.append(AlpineContainer(i))
@@ -56,16 +56,31 @@ def check_existing_containers():
         if lxc_config.ostype == 'alpine':
             containers.append(AlpineContainer(lxc_config=lxc_config))
         else:
-            print(f'Unhandled ostype {lxc_config.ostype} for node {lxc_config.hostname}')
+            print(f'\033[31mUnhandled ostype {lxc_config.ostype} for node {lxc_config.hostname}\033[0m')
 
-    print(f'Found {len(containers)} active containers')
+    print(f'\033[93mFound: \033[92m{len(containers)}\033[93m active containers\033[0m')
 
     for container in containers:
-        print(container.pct_console_shell('cat /etc/alpine-release && uname -a').strip())
-        print(f'Updates available for {container.lxc_config.hostname}? {container.updates_available()}')
+        prefix = f'\033[35m[\033[96m{container.id}\033[35m] '
+        release: str = container.pct_console_shell("cat /etc/alpine-release").strip()
+        color = release.startswith(alpine_version) and '\033[32m(newest)' or '\033[31m(outdated)'
+        print(f'{prefix}\033[93mAlpine: \033[95m{release} {color}\033[0m')
+        uname = container.pct_console_shell("uname -a").strip()
+        print(f'{prefix}\033[93mUname:  \033[95m{uname}\033[0m')
+
+        updates_available = container.updates_available()
+        color = len(updates_available) == 0 and '\033[32m' or '\033[31m'
+        amount = len(updates_available)
+        print(f'{prefix}\033[93mUpdates available for \033[94m{container.lxc_config.hostname}: {color}{amount}\033[0m')
+
+        if not update or not updates_available:
+            continue
+
+        print(f'{prefix}\033[91mUpdating..\033[0m')
+        container.update_container()
 
 
-def test_network(image_path):
+def test_network(image_path: str):
     # Create NAT gateway
     nat_gateway = AlpineContainer(601)
     nat_gateway.purge_container()
@@ -129,7 +144,7 @@ def test_network(image_path):
     print(client.pct_console_shell('uname -a'))
 
 
-def dns_master_and_slave(image_path):
+def dns_master_and_slave(image_path: str):
     dns_master = AlpineContainer(605)
     dns_master.purge_container()
     dns_master.create_container('dns-test-master',
@@ -165,7 +180,7 @@ def dns_master_and_slave(image_path):
                                                                                          0].ip4.ip])])
 
 
-def samba_server_and_client(image_path):
+def samba_server_and_client(image_path: str):
     # Create samba server
     samba_server = AlpineContainer(606)
     samba_server.purge_container()
@@ -219,7 +234,7 @@ def samba_server_and_client(image_path):
     print(samba_client.pct_console_shell('smbclient -U test%Password1 -c ls //samba-test/test'))
 
 
-def nfs_server_and_client(image_path):
+def nfs_server_and_client(image_path: str):
     # Create nfs server container
     nfs_server = AlpineContainer(609)
     nfs_server.purge_container()
@@ -263,7 +278,7 @@ def nfs_server_and_client(image_path):
     nfs_client_service.mount_persist_reboot()
 
 
-def transmission(image_path):
+def transmission(image_path: str):
     # Create transmission container
     transmission_server = AlpineContainer(605)
     transmission_server.purge_container()
@@ -290,7 +305,7 @@ def transmission(image_path):
     # TODO: perhaps use post trigger in transmission to move files?
 
 
-def jellyfin(image_path):
+def jellyfin(image_path: str):
     # Create jellyfin container
     jellyfin_server = AlpineContainer(608)
     jellyfin_server.purge_container()
