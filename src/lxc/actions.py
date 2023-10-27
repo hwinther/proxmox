@@ -141,6 +141,9 @@ class Container:
     def pct_console_shell(self, container_command: str):
         return os_exec(f'echo "{container_command}" | pct console {self.id}', shell=True)
 
+    def pct_get_os_version(self):
+        raise NotImplementedError("pct_get_os_version was not implemented")
+
     @staticmethod
     def pct_list():
         # Rather than parsing pct list and pct config output, we can use pvesh and get more details

@@ -3,6 +3,7 @@ from lxc.distro.alpine.services.msmtp import SmtpService
 from lxc.distro.alpine.services.muacme import AcmeService
 from lxc.distro.alpine.services.nginx import NginxService
 from lxc.distro.alpine.services.transmission import TransmissionService
+from lxc.distro.debian.actions import DebianContainer
 from src.common.common import config
 from src.lxc.actions import Container
 from src.lxc.distro.alpine.actions import AlpineContainer
@@ -20,8 +21,10 @@ def main():
     # TODO: translate image names not just for local (template_)storage?
     # image_path = f'/var/lib/vz/template/cache/{alpine_newest_image_name}'
     # TODO: improve lazy caching
-    image_path = '/var/lib/vz/template/cache/alpine-3.18-default_20230607_amd64.tar.xz'
-    alpine_version = image_path.split('alpine-')[1].split('-')[0]
+    alpine_image_path = '/var/lib/vz/template/cache/alpine-3.18-default_20230607_amd64.tar.xz'
+    alpine_version = alpine_image_path.split('alpine-')[1].split('-')[0]
+    debian_image_path = '/var/lib/vz/template/cache/debian-12-standard_12.2-1_amd64.tar.zst'
+    debian_version = debian_image_path.split('-standard_')[1].split('-')[0]
 
     # for i in range(601, 612):
     #     print(f'Purging {i}')
@@ -34,7 +37,7 @@ def main():
     # transmission(image_path)
     # jellyfin(image_path)
 
-    check_existing_containers(alpine_version, update=False)
+    check_existing_containers(alpine_version, debian_version, update=True)
 
     # TODO: add NFS server/share to test platform, use this in jellyfin and transmission config
     # TODO: finish unifi setup (also with nginx for ssl?)
@@ -47,7 +50,7 @@ def main():
     # TODO: krb5 support?
 
 
-def check_existing_containers(alpine_version: str, update: bool = False):
+def check_existing_containers(alpine_version: str, debian_version: str, update: bool = False):
     containers = []
     # for i in range(601, 605):
     #     containers.append(AlpineContainer(i))
@@ -55,6 +58,8 @@ def check_existing_containers(alpine_version: str, update: bool = False):
     for lxc_config in active_configs:
         if lxc_config.ostype == 'alpine':
             containers.append(AlpineContainer(lxc_config=lxc_config))
+        elif lxc_config.ostype == 'debian':
+            containers.append(DebianContainer(lxc_config=lxc_config))
         else:
             print(f'\033[31mUnhandled ostype {lxc_config.ostype} for node {lxc_config.hostname}\033[0m')
 
@@ -62,11 +67,22 @@ def check_existing_containers(alpine_version: str, update: bool = False):
 
     for container in containers:
         prefix = f'\033[35m[\033[96m{container.id}\033[35m] '
-        release: str = container.pct_console_shell("cat /etc/alpine-release").strip()
-        color = release.startswith(alpine_version) and '\033[32m(newest)' or '\033[31m(outdated)'
-        print(f'{prefix}\033[93mAlpine: \033[95m{release} {color}\033[0m')
+        release: str = container.pct_get_os_version()
+
+        if isinstance(container, AlpineContainer):
+            distro = 'Alpine'
+            color = release.startswith(
+                alpine_version) and '\033[32m(newest)' or f'\033[31m(outdated, newest is {alpine_version})'
+        elif isinstance(container, DebianContainer):
+            distro = 'Debian'
+            color = release.startswith(
+                debian_version) and '\033[32m(newest)' or f'\033[31m(outdated, newest is {debian_version})'
+        else:
+            raise NotImplementedError("Unknown container type")
+
+        print(f'{prefix}\033[93m{distro}: \033[95m{release} {color}\033[0m')
         uname = container.pct_console_shell("uname -a").strip()
-        print(f'{prefix}\033[93mUname:  \033[95m{uname}\033[0m')
+        print(f'{prefix}\033[93mUname: \033[95m{uname}\033[0m')
 
         updates_available = container.updates_available()
         color = len(updates_available) == 0 and '\033[32m' or '\033[31m'

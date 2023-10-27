@@ -61,3 +61,6 @@ class AlpineContainer(lxc.actions.Container):
     def rc_service(self, service_name, operation):
         # TODO: verify service status, check if it exists first?
         return self.pct_console_shell(f"rc-service {service_name} {operation}")
+
+    def pct_get_os_version(self):
+        return self.pct_console_shell('cat /etc/alpine-release').strip()
