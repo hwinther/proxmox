@@ -16,14 +16,18 @@ from src.lxc.models import NetworkInterface, Subnet
 
 
 def main():
-    # from lxc.actions import update_lxc_templates
-    # alpine_newest_image_name = update_lxc_templates()
+    from lxc.actions import update_lxc_templates
+    alpine_newest_image_name, debian_newest_image_name = update_lxc_templates()
+
     # TODO: translate image names not just for local (template_)storage?
-    # image_path = f'/var/lib/vz/template/cache/{alpine_newest_image_name}'
+    alpine_image_path = f'/var/lib/vz/template/cache/{alpine_newest_image_name}'
+    debian_image_path = f'/var/lib/vz/template/cache/{debian_newest_image_name}'
+
     # TODO: improve lazy caching
-    alpine_image_path = '/var/lib/vz/template/cache/alpine-3.18-default_20230607_amd64.tar.xz'
+    # alpine_image_path = '/var/lib/vz/template/cache/alpine-3.18-default_20230607_amd64.tar.xz'
+    # debian_image_path = '/var/lib/vz/template/cache/debian-12-standard_12.2-1_amd64.tar.zst'
+
     alpine_version = alpine_image_path.split('alpine-')[1].split('-')[0]
-    debian_image_path = '/var/lib/vz/template/cache/debian-12-standard_12.2-1_amd64.tar.zst'
     debian_version = debian_image_path.split('-standard_')[1].split('-')[0]
 
     # for i in range(601, 612):
@@ -37,7 +41,7 @@ def main():
     # transmission(image_path)
     # jellyfin(image_path)
 
-    check_existing_containers(alpine_version, debian_version, update=True)
+    # check_existing_containers(alpine_version, debian_version, update=False)
 
     # TODO: add NFS server/share to test platform, use this in jellyfin and transmission config
     # TODO: finish unifi setup (also with nginx for ssl?)

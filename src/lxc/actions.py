@@ -12,21 +12,33 @@ def update_lxc_templates():
     os_exec('pveam update')
 
     alpine_newest = None
+    debian_newest = None
     for line in os_exec('pveam available --section system').split('\n'):
-        if line.find('alpine-3') != -1:
+        if line.find('alpine-') != -1:
             alpine_newest = line.replace('system', '').strip()
+        elif line.find('debian-') != -1:
+            debian_newest = line.replace('system', '').strip()
     if config.verbose:
         print(f'Newest alpine image: {alpine_newest}')
+        print(f'Newest debian image: {debian_newest}')
 
     alpine_newest_exists = os_exec(f'pveam list {config.template_storage}').find(alpine_newest) != -1
     if alpine_newest_exists:
         if config.verbose:
-            print(f'Storage "{config.template_storage}" contains the image already.')
+            print(f'Storage "{config.template_storage}" contains the alpine image already.')
     else:
         print(f'Downloading newest alpine image to storage "{config.template_storage}"')
         os_exec(f'pveam download {config.template_storage} {alpine_newest}')
 
-    return alpine_newest
+    debian_newest_exists = os_exec(f'pveam list {config.template_storage}').find(debian_newest) != -1
+    if debian_newest_exists:
+        if config.verbose:
+            print(f'Storage "{config.template_storage}" contains the debian image already.')
+    else:
+        print(f'Downloading newest debian image to storage "{config.template_storage}"')
+        os_exec(f'pveam download {config.template_storage} {debian_newest}')
+
+    return alpine_newest, debian_newest
 
 
 def generate_net_argument(interface_id: int, network_interface: NetworkInterface = None,
