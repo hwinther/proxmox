@@ -1,6 +1,8 @@
-# proxmox
+# Proxmox Virtual Environment - IAC and notes
 
-## Floppy drives
+## Building image files for mounting to VM
+
+### Floppy drives
 
 Combine multiple floppy images to one:
 
@@ -23,7 +25,7 @@ mkfs.msdos -C /tmp/combined.img 1440
 mkfs.msdos -C /tmp/combined.img 5760 -n HCW
 ```
 
-## ISO / CDROM images
+### ISO / CDROM images
 
 ```bash
 # Create default ISO layout and character set, typically smallest common denominator (8 char length, caps insensitive?)
@@ -59,3 +61,65 @@ pct push 300 /tmp/file.cfg /etc/testconfig/file.cfg
 # pull file from ct
 pct pull 300 /etc/testconfig/file.cfg /tmp/file.cfg
 ```
+
+## QEMU old OS guide
+
+To emulate an old operating system you usually have to choose an older cpu such as pentium2 with single socket and core,
+the i440fx machine + SeaBIOS, default controller with IDE drive(s) and relatively small disks and RAM - typically max
+32GB/512MB.
+The network card can be Realtek RTL8139 in most cases, but some systems may require ne2k_pci - see an example below.
+
+### Old linux XF86Config
+
+*Working steps for local or vnc based desktop on RedHat 5.2 as of 28.11.2023*
+
+If you select the CIRRUS chipset during install it should autodetect most of the options [1],
+if not choose "Cirrus Logic GD544x".
+You can also add one or more serial ports as either a backup console or network interface.
+
+*PVE VM configuration*
+
+```yaml
+vga: cirrus,memory=8
+net0: ne2k_pci=00:11:22:33:44:55,bridge=vmbr0
+```
+
+```bash
+# To (re)configure X in a similar fashion to the original installer (easier) then run
+Xconfigurator
+
+# The more old fashioned graphical configuration provided by XF86 can be launched with
+XF86Setup
+```
+
+*If the X server starts but the display freezes then try adding these options to the Device section [1]*
+
+```
+Section "Device"
+   ...
+   Option "no_bitblt"
+   Option "noaccel"
+   Option "sw_cursor"
+```
+
+#### Links
+
+- [Red Hat Linux 5.2 with XFCE 2.4.0](https://imgur.com/a/VGECyoI)
+- [RH dual boot and laptop config](http://redgrittybrick.org/libretto.html)
+- [Corel Linux in QEMU](https://forum.eaasi.cloud/t/corel-linux-in-qemu/64/1) [1]
+
+### Old BSD
+
+TODO
+
+#### Links
+
+- https://blog.burghardt.pl/2009/03/freebsd-with-xorg-on-qemu/
+
+### MS DOS 6, Windows 3.x
+
+TODO: list relevant contents of DOS iso
+
+### Windows 95/98
+
+TODO: List relevant contents of DOS iso
