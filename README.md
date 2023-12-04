@@ -71,10 +71,8 @@ The network card can be Realtek RTL8139 in most cases, but some systems may requ
 
 *Links*
 
-- [Overview of display devices](https://www.kraxel.org/blog/2019/09/display-devices-in-qemu/)
-- TODO: it might be outdated, perhaps make a summary that is specific to this goal here
-- [QEMU 3dfx](https://github.com/kjliew/qemu-3dfx)
-- [Build DJGPP](https://github.com/andrewwutw/build-djgpp)
+- [Overview of QEMU display devices](https://www.kraxel.org/blog/2019/09/display-devices-in-qemu/)
+- [Overview of QEMU network devices](https://en.wikibooks.org/wiki/QEMU/Devices/Network)
 
 ### Old linux XF86Config
 
@@ -124,21 +122,27 @@ to configure this*
 bp
 If you updated the /etc/lilo.conf file in the previous step, remember to run lilo afterward.
 
-| Color | 640x480 | 800x600 | 1024x768 | 1280x1024 |
-|-------|--------:|--------:|---------:|----------:|
-| 256   |   0x301 |   0x303 |    0x305 |     0x307 |
-| 32k   |   0x310 |   0x313 |    0x316 |     0x319 |
-| 64k   |   0x311 |   0x314 |    0x317 |     0x31A |
-| 16M   |   0x312 |   0x315 |    0x318 |     0x31B |
+| Color    | 640x480 | 800x600 | 1024x768 | 1280x1024 | 1600x1200 |
+|----------|--------:|--------:|---------:|----------:|----------:|
+| 8 / 256  |   0x301 |   0x303 |    0x305 |     0x307 |     0x31C |
+| 15 / 32k |   0x310 |   0x313 |    0x316 |     0x319 |     0x31D |
+| 16 / 64k |   0x311 |   0x314 |    0x317 |     0x31A |     0x31E |
+| 24 / 16M |   0x312 |   0x315 |    0x318 |     0x31B |     0x31F |
 
-| Color | 640x480 | 800x600 | 1024x768 | 1280x1024 |
-|-------|--------:|--------:|---------:|----------:|
-| 256   |     769 |     771 |      773 |       775 |
-| 32k   |     784 |     787 |      790 |       793 |
-| 64k   |     785 |     788 |      791 |       794 |
-| 16M   |     786 |     789 |      792 |       795 |
+Older lilo versions can't convert the hexadecimal representation and must be configured with decimal values, so here is
+the same table with decimal values:
 
-Add vga=775 to the root section to enable framebuffer and set the console resolution to 1280x1024.
+| Color    | 640x480 | 800x600 | 1024x768 | 1280x1024 | 1600x1200 |
+|----------|--------:|--------:|---------:|----------:|----------:|
+| 8 / 256  |     769 |     771 |      773 |       775 |       796 |
+| 15 / 32k |     784 |     787 |      790 |       793 |       797 |
+| 16 / 64k |     785 |     788 |      791 |       794 |       798 |
+| 24 / 16M |     786 |     789 |      792 |       795 |       799 |
+
+*256 = 8 bits, 32k = 15 bits, 65k = 16 bits, 16M = 24 bits, 32bits is not typically used, but it would mask out the
+extra 8 bits and fit the bus width better. 15 bit is not supported by XF86_FBDev*
+
+Add `vga=775` to the root section to enable framebuffer and set the console resolution to 1280x1024.
 Run lilo afterward to update the config.
 
 On most systems the /usr/bin/X11R6/bin/X will be symlinked to the appropriate XF86_Server binary, but on RedHat this is
@@ -147,17 +151,51 @@ You will want to update this if SVGA or some other driver has already been selec
 you'll need to configure additional parameters and not just use startx to launch X11.
 `cd /etc/X11 && rm -f X && ln -s ../../usr/X11R6/bin/XF86_FBDev X`
 
+You can use the template in `templates/x11/XF86Config-3-FBDev` to get started with XF86-FBDev, it will use the
+resolution set at boot, but you have to specify the bit depth if it doesn't match the default (8),
+e.g. `startx -- -bpp 16`
+
+If you for whatever reason spend a lot of time to compile kernel 2.2.x into a 2.0.x system, you will need to reuse the
+kernel include folder in the XF86 include path, it should suffice to symlink e.g.
+/usr/src/kernel-2.2.26-custom/include/{linux,video} to /usr/src/redhat/BUILD/XFree86-3.3.3.1/xc/exports/include/.
+You will also need to create the devices manually as that is normally done by the RPM or similar installer:
+
+```bash
+mknod /dev/fb0 c 29 0
+mknod /dev/fb1 c 29 32
+mknod /dev/fb2 c 29 64
+...
+mknod /dev/fb7 c 29 224
+```
+
+The amount of devices that are currently active can be found via `cat /proc/fb`
+
+And create the xserver pam.d file if it does not exist:
+
+```bash
+cat > /etc/pam.d/xserver
+#%PAM-1.0
+auth       sufficient   /lib/security/pam_rootok.so
+auth       required     /lib/security/pam_console.so
+account    required     /lib/security/pam_permit.so
+```
+
 If you want to add a serial console in lilo.conf then it should look something like
 this: `append="console=ttyS1,19200n8 console=tty1"`, you should also add the following line to
 /etc/inittab: `S0:23:respawn:/sbin/mingetty -h -L ttyS0 19200 vt100`
 
-TODO: cleanup
+TODO: test VMware SVGA device in RedHat 7.0
+TODO: try out an alternative, remote X to
+windows: http://www.straightrunning.com/XmingNotes/
+and configuration details from https://unix.stackexchange.com/questions/407022/trying-to-run-an-old-version-of-redhat
 
+- [Kernel vesafb documentation](https://www.kernel.org/doc/Documentation/fb/vesafb.txt)
+- [Kernel SVGA documentation which covers the vga boot flag](https://www.kernel.org/doc/Documentation/svga.txt)
+- [XF86Config demystified](http://coffeenix.net/doc/misc/xconfig/#bpp)
 - Vga modes https://www.linuxquestions.org/questions/debian-26/lilo-vga-modes-152575-print/
-- Copy XF86_FB from http://ftp.xfree86.org/pub/XFree86/3.3.6/binaries/Linux-ix86-glibc20/Servers/ to use FB as device
-- https://forums.virtualbox.org/viewtopic.php?t=77226
-- https://student.dei.uc.pt/~nemanuel/Documentation/FBD/
-- QEMU network list https://en.wikibooks.org/wiki/QEMU/Devices/Network
+- [XFree86 3.3.6 FBDev server download](http://ftp.xfree86.org/pub/XFree86/3.3.6/binaries/Linux-ix86-glibc20/Servers/)
+- [Forum thread related to RedHat graphics settings in QEMU](https://forums.virtualbox.org/viewtopic.php?t=77226)
+- [FBDev/fb guide](https://student.dei.uc.pt/~nemanuel/Documentation/FBD/)
 - [Linux kernel 2.2 VESA FB documentation](https://www.kernel.org/doc/Documentation/fb/vesafb.txt) [1]
 
 ### Linux 2.0 and 2.2 network driver
@@ -191,8 +229,8 @@ The -bp option specifies that only the preparation section (%prep) of the specif
 
 #### Links
 
-- [Red Hat Linux 5.2 with XFCE 2.4.0](https://imgur.com/a/VGECyoI)
-- [RH dual boot and laptop config](http://redgrittybrick.org/libretto.html)
+- [RedHat Linux 5.2 with XFCE 2.4.0](https://imgur.com/a/VGECyoI)
+- [RedHat dual boot and laptop config](http://redgrittybrick.org/libretto.html)
 - [Corel Linux in QEMU](https://forum.eaasi.cloud/t/corel-linux-in-qemu/64/1) [1]
 - [Caldera OpenLinux 13 on QEMU](https://gekk.info/blog/main/installing-caldera-openlinux-13-on-qemu.html)
 - [Slackware 3.5](https://virtuallyfun.com/2010/05/12/slackware-3-5/)
@@ -200,6 +238,7 @@ The -bp option specifies that only the preparation section (%prep) of the specif
 - [XConfig documentation](http://coffeenix.net/doc/misc/xconfig/)
 - [CentOS rebuild source RPM](https://wiki.centos.org/HowTos(2f)RebuildSRPM.html) [1]
 - [RedHat installing the driver (source RPM)](https://www.ing.iac.es/~docs/external/realport/rp-linux-conf-install-driver-rpm.html) [2]
+- [Linux kernel repository and tgz download](https://kernel.googlesource.com/pub/scm/linux/kernel/git/history/history/+/refs/tags/2.2.0)
 
 ### Old BSD
 
