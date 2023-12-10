@@ -22,7 +22,17 @@ Create new floppy image:
 mkfs.msdos -C /tmp/combined.img 1440
 
 # Extended floppy size, adjust to fit the data in combination folder, with floppy name HCW
-mkfs.msdos -C /tmp/combined.img 5760 -n HCW
+mkfs.msdos -C /tmp/combined.img 5760 -n TEST
+mount -o loop /tmp/combined.img /mnt/tmpflp
+copy file1 file2 file3 /mnt/tmpflp/
+umount /mnt/tmpflp
+```
+
+QEMU monitor commands:
+
+```
+# mount new image as floppy0 (A:)
+change floppy0 /tmp/Disk1.img
 ```
 
 ### ISO / CDROM images
@@ -35,6 +45,7 @@ mkisofs -o win31-inst.iso /root/win31-iso/
 mkisofs -iso-level 4 -o win95_games.iso win95_games
 
 mkisofs -l -o dos_drivers.iso dosdrivers/
+mkisofs -l -o dos_games.iso dos_games/
 ```
 
 ## LXC creation
@@ -258,6 +269,51 @@ Install chipset drivers first to have other devices detected (TODO)
 Enable DMA for all IDE devices (hd and cdrom) in their properties in device manager
 
 TODO: List relevant contents of DOS iso
+
+Before installing, either use
+patch9x (`-drive file=/var/lib/vz/template/iso/patcher9x-0.8.50-boot.img,if=floppy,index=0 -boot a`) on the installation
+media
+or reduce host cpu frequency
+via `cpupower frequency-set -u 1G`.
+
+To install Windows 98 SE add the boot floppy image and the cdrom iso file:
+
+```
+args: -drive file=/var/lib/vz/template/iso/Windows_98_Second_Edition_Boot.img,if=floppy,index=0 -boot a
+ide1: local:iso/EN_WIN98SE_115_OEM_WPLUS.ISO,media=cdrom,size=632374K
+
+scsi0: local-lvm:vm-900-disk-0,size=4G
+scsihw: lsi
+```
+
+And then run fdisk and format to create your new system volume:
+
+TODO: script the whole thing in two bat files, stage0 and stage1 to automate the process
+
+```shell
+fdisk
+
+(or one liner)
+
+fdisk /fprmt
+fdisk 1 /pri:4095
+```
+
+Then copy over the win98 files to the newly formatted volume and add the win9x display++ drivers from dosdrivers.iso to
+the same folder so that they can be detected and installed without selecting a path later.
+There is also a script that will make the installation mostly unattended in this folder.
+Launch setup with the /nm (ignore hardware demand) and /pj (force use of ACPI/PnP)
+
+```shell
+d:\win98\format C:
+set PATH=%PATH%;d:\tools\oldmsdos
+xcopy32 /E d:\win98\ c:\win98\
+
+c:
+cd win98
+xcopy32 e:\win9x\vmdisp9x\*.*
+setup /nm /pj
+```
 
 #### Links
 
