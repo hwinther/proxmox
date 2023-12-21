@@ -130,12 +130,15 @@ class LxcConfig:
     rootfs = None
     swap = None
     unprivileged = None
+    startup = None
+    parent = None
 
     # noinspection PyShadowingBuiltins
     def __init__(self, lxc_node, arch, cores, digest, hostname, memory, ostype, rootfs, swap,
                  description=None, features=None, lxc=None, unprivileged=None,
-                 cmode=None, onboot=None, startup=None,
-                 mp0=None, mp1=None, mp2=None, mp3=None, mp4=None, mp5=None, mp6=None, mp7=None, mp8=None, mp9=None,
+                 cmode=None, onboot=None, startup=None, parent=None,
+                 mp0=None, mp1=None, mp2=None, mp3=None, mp4=None, mp5=None,
+                 mp6=None, mp7=None, mp8=None, mp9=None,
                  net0=None, net1=None, net2=None, net3=None, net4=None,
                  net5=None, net6=None, net7=None, net8=None, net9=None):
         self.lxc_node = lxc_node
@@ -152,6 +155,7 @@ class LxcConfig:
         self.ostype = ostype
         self.rootfs = rootfs
         self.startup = startup
+        self.parent = parent
         self.swap = swap
         self.unprivileged = unprivileged
         self.mp0 = mp0
