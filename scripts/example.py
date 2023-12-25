@@ -30,9 +30,9 @@ def main():
     alpine_version = alpine_image_path.split('alpine-')[1].split('-')[0]
     debian_version = debian_image_path.split('-standard_')[1].split('-')[0]
 
-    # for i in range(601, 612):
-    #     print(f'Purging {i}')
-    #     Container.purge_container_by_id(i)
+    for i in range(601, 612):
+        print(f'Purging {i}')
+        # Container.purge_container_by_id(i)
 
     # test_network(image_path)
     # dns_master_and_slave(image_path)
@@ -41,7 +41,7 @@ def main():
     # transmission(image_path)
     # jellyfin(image_path)
 
-    # check_existing_containers(alpine_version, debian_version, update=False)
+    check_existing_containers(alpine_version, debian_version, update=False)
 
     # TODO: add NFS server/share to test platform, use this in jellyfin and transmission config
     # TODO: finish unifi setup (also with nginx for ssl?)
@@ -52,6 +52,41 @@ def main():
     # TODO: add ldap client support
     # TODO: add sssd client config for ldap
     # TODO: krb5 support?
+
+
+# Borrowed from https://www.geeksforgeeks.org/compare-two-version-numbers/
+# Method to compare two versions.
+# Return 1 if v2 is smaller,
+# -1 if v1 is smaller,
+# 0 if equal
+def version_compare(v1, v2):
+    # This will split both the versions by '.'
+    arr1 = v1.split(".")
+    arr2 = v2.split(".")
+    n = len(arr1)
+    m = len(arr2)
+
+    # converts to integer from string
+    arr1 = [int(i) for i in arr1]
+    arr2 = [int(i) for i in arr2]
+
+    # compares which list is bigger and fills
+    # smaller list with zero (for unequal delimiters)
+    if n > m:
+        for i in range(m, n):
+            arr2.append(0)
+    elif m > n:
+        for i in range(n, m):
+            arr1.append(0)
+
+    # returns 1 if version 1 is bigger and -1 if
+    # version 2 is bigger and 0 if equal
+    for i in range(len(arr1)):
+        if arr1[i] > arr2[i]:
+            return 1
+        elif arr2[i] > arr1[i]:
+            return -1
+    return 0
 
 
 def check_existing_containers(alpine_version: str, debian_version: str, update: bool = False):
@@ -75,16 +110,16 @@ def check_existing_containers(alpine_version: str, debian_version: str, update: 
 
         if isinstance(container, AlpineContainer):
             distro = 'Alpine'
-            color = release.startswith(
-                alpine_version) and '\033[32m(newest)' or f'\033[31m(outdated, newest is {alpine_version})'
+            color = version_compare(alpine_version,
+                                    release) <= 0 and '\033[32m(newest)' or f'\033[31m(outdated, newest is {alpine_version})'
         elif isinstance(container, DebianContainer):
             distro = 'Debian'
-            color = release.startswith(
-                debian_version) and '\033[32m(newest)' or f'\033[31m(outdated, newest is {debian_version})'
+            color = version_compare(debian_version,
+                                    release) <= 0 and '\033[32m(newest)' or f'\033[31m(outdated, newest is {debian_version})'
         else:
             raise NotImplementedError("Unknown container type")
 
-        print(f'{prefix}\033[93m{distro}: \033[95m{release} {color}\033[0m')
+        print(f'\n{prefix}\033[93m{distro}: \033[95m{release} {color}\033[0m')
         uname = container.pct_console_shell("uname -a").strip()
         print(f'{prefix}\033[93mUname: \033[95m{uname}\033[0m')
 
