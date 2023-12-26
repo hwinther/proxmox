@@ -91,6 +91,7 @@ class Modem(object):
     dial_proxy: SocketReceiveProxy | None = None
     echo: bool = None
     verbose: bool = None
+    quiet: bool = None
     phonebook: dict[str, str] = {}
 
     def __init__(self, connection: socket):
@@ -101,12 +102,18 @@ class Modem(object):
         self.relay = False  # relay data mode to dial_target
         self.echo = False
         self.verbose = False
+        self.quiet = False
         self.phonebook['5551000'] = 'bbs.fozztexx.com:23'
         self.phonebook['5551001'] = 'particlesbbs.dyndns.org:6400'
         self.phonebook['5559000'] = '10.20.1.210:2323'
 
     def recv(self, buf_size: int):
         data = self.connection.recv(buf_size)
+        if data == b'':
+            print('empty')
+            self.end_dial()
+            return
+            
         print('<- Received data:', repr(data))
         if self.echo:
             self.connection.sendall(data)
@@ -135,7 +142,12 @@ class Modem(object):
             if packet is None:
                 break
 
-            cmd = packet.decode()
+            try:
+                cmd = packet.decode()
+            except UnicodeDecodeError:
+                print('UnicodeDecodeError, discarding packet input')
+                continue
+
             print('Handling:', repr(cmd))
 
             if cmd == 'AT':
@@ -148,10 +160,11 @@ class Modem(object):
                 print(f'Modem reset (noop)')
                 self.send_ok()
             elif cmd.startswith('ATDT'):
-                self.dial_target = cmd[4:]
+                self.dial_target = cmd[4:].strip()
                 print(f'Dialing: {self.dial_target}')
                 self.send('RING')
                 if self.dial_target in self.phonebook:
+                    self.end_dial()  # in case there are lingering objects, try to clean them up first
                     print('Connecting to', self.phonebook[self.dial_target])
                     self.dial_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     host, port = self.phonebook[self.dial_target].split(':')
@@ -170,33 +183,42 @@ class Modem(object):
                     self.send('BUSY')
             elif cmd.startswith('AT'):
                 # command set parse loop, expect letters to possibly be followed by a single digit
-                i = 2
-                for c in cmd[2:].upper():
-                    if c.isalpha():
-                        d = 0 if len(cmd) < i or not cmd[i + 1].isdigit() else int(cmd[i + 1])
-                        print('AT c=%s d=%d' % (c, d))
-                        # TODO: move ATDT handler here?
-                        # if c == 'D'
-                        if c == 'E':
-                            # 1 = echo / 0 = no echo
-                            self.echo = d == 1
-                            print('echo', 'on' if self.echo else 'off')
-                        elif c == 'V':
-                            # verbose, 0 = numeric result codes, 1 = english result codes
-                            self.verbose = d == 1
-                            print('verbose', 'on' if self.verbose else 'off')
-                        elif c == 'I':
-                            # inquiry, information or interrogation 0-9
-                            if d == 0:
-                                self.send('PROXMOX-AT-PY')
-                            else:
-                                self.send('ERROR')
-                        else:
-                            print('!! Unhandled AT command c=%s d=%d' % (c, d))
-                    i += 1
+                self.command_parse(cmd[2:])
                 self.send_ok()
             else:
                 print('!! Unknown command:', repr(cmd))
+
+    def command_parse(self, cmd):
+        i = 0
+        for c in cmd.upper():
+            if c == ' ':
+                pass
+            elif c.isalpha():
+                d = 0 if len(cmd) > i or not cmd[i + 1].isdigit() else int(cmd[i + 1])
+                print('AT c=%s d=%d' % (c, d))
+                # TODO: move ATDT handler here?
+                # if c == 'D'
+                if c == 'E':
+                    # 1 = echo / 0 = no echo
+                    self.echo = d == 1
+                    print('echo', 'on' if self.echo else 'off')
+                elif c == 'I':
+                    # inquiry, information or interrogation 0-9
+                    if d == 0:
+                        self.send('PROXMOX-AT-PY')
+                    else:
+                        self.send('ERROR')
+                elif c == 'Q':
+                    # 1 = quiet mode / 0 = quiet mode off
+                    self.quiet = d == 1
+                    print('quiet mode', 'on' if self.quiet else 'off')
+                elif c == 'V':
+                    # verbose, 0 = numeric result codes, 1 = english result codes
+                    self.verbose = d == 1
+                    print('verbose', 'on' if self.verbose else 'off')
+                else:
+                    print('!! Unhandled AT command c=%s d=%d' % (c, d))
+            i += 1
 
     def send_ok(self):
         self.send('OK')
@@ -240,7 +262,7 @@ def main():
                     modem_client.recv(1024)
             except KeyboardInterrupt:
                 print('Exiting')
-                modem_client.close()
+                modem_client.end_dial()
                 break
             except OSError:
                 print('Caught OSError', sys.exc_info()[0])
