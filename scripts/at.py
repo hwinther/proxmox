@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import os
 import socket
 import sys
+import threading
 
 
 class Buffer(object):
@@ -63,17 +66,44 @@ class Buffer(object):
         return None
 
 
+class SocketReceiveProxy(threading.Thread):
+    def __init__(self, receive_socket: socket.socket, send_socket: socket.socket):
+        super().__init__()
+        self.receive_socket = receive_socket
+        self.send_socket = send_socket
+
+    def run(self):
+        while True:
+            data = self.receive_socket.recv(1024)
+            if data == b'':
+                # disconnected
+                break
+            print('Forwarding data:', repr(data))
+            self.send_socket.sendall(data)
+
+
 class Modem(object):
     connection: socket.socket = None
+    buffer: Buffer = None
+    relay: bool = None
+    dial_target: str = None
+    dial_socket: socket.socket | None = None
+    dial_proxy: SocketReceiveProxy | None = None
+    echo: bool = None
+    verbose: bool = None
+    phonebook: dict[str, str] = {}
 
     def __init__(self, connection: socket):
         self.connection = connection
         self.buffer = Buffer(end_chars=b'\r')
+
         # Modem states
-        self.dial_target = ''
         self.relay = False  # relay data mode to dial_target
         self.echo = False
         self.verbose = False
+        self.phonebook['5551000'] = 'bbs.fozztexx.com:23'
+        self.phonebook['5551001'] = 'particlesbbs.dyndns.org:6400'
+        self.phonebook['5559000'] = '10.20.1.210:2323'
 
     def recv(self, buf_size: int):
         data = self.connection.recv(buf_size)
@@ -82,14 +112,21 @@ class Modem(object):
             self.connection.sendall(data)
 
         if data == b'+++':
-            # modem break, will not be followed by \r so it should skip the packet buffer
-            # TODO: break proxy connection here?
+            # modem command mode, should not break connection
+            # it will not be followed by \r so it should skip the packet buffer
             self.send_ok()
             self.relay = False
             return
 
         if self.relay:
-            print('In relay mode')
+            print('In relay mode with %s (%s)' % (self.dial_target, self.dial_socket))
+            if self.dial_socket is not None:
+                try:
+                    self.dial_socket.sendall(data)
+                except socket.error:
+                    print('Remote socket probably closed')
+                    self.end_dial()
+                    self.relay = False
             return
 
         self.buffer.parse(data)
@@ -105,15 +142,32 @@ class Modem(object):
                 self.send_ok()
             elif cmd == 'ATH':
                 print(f'Hang up from: {self.dial_target}')
-                self.send_ok()
+                self.end_dial()
+                self.send('NO CARRIER')
             elif cmd == 'ATZ':
                 print(f'Modem reset (noop)')
                 self.send_ok()
             elif cmd.startswith('ATDT'):
                 self.dial_target = cmd[4:]
                 print(f'Dialing: {self.dial_target}')
-                self.connection.sendall('RING\r'.encode())
-                self.relay = True
+                self.send('RING')
+                if self.dial_target in self.phonebook:
+                    print('Connecting to', self.phonebook[self.dial_target])
+                    self.dial_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    host, port = self.phonebook[self.dial_target].split(':')
+                    port = int(port)
+                    self.dial_socket.connect((host, port))
+                    self.dial_proxy = SocketReceiveProxy(self.dial_socket, self.connection)
+                    self.send_ok()
+                    print('Starting dial_proxy')
+                    self.dial_proxy.start()
+                    self.relay = True
+                elif self.dial_target == '12345678':
+                    print('No phone book entry, test/empty relay')
+                    self.send_ok()
+                    self.relay = True
+                else:
+                    self.send('BUSY')
             elif cmd.startswith('AT'):
                 # command set parse loop, expect letters to possibly be followed by a single digit
                 i = 2
@@ -131,6 +185,12 @@ class Modem(object):
                             # verbose, 0 = numeric result codes, 1 = english result codes
                             self.verbose = d == 1
                             print('verbose', 'on' if self.verbose else 'off')
+                        elif c == 'I':
+                            # inquiry, information or interrogation 0-9
+                            if d == 0:
+                                self.send('PROXMOX-AT-PY')
+                            else:
+                                self.send('ERROR')
                         else:
                             print('!! Unhandled AT command c=%s d=%d' % (c, d))
                     i += 1
@@ -139,8 +199,19 @@ class Modem(object):
                 print('!! Unknown command:', repr(cmd))
 
     def send_ok(self):
-        print('-> Sending OK')
-        self.connection.sendall('OK\r'.encode())
+        self.send('OK')
+
+    def send(self, data):
+        print(f'-> Sending: {data}')
+        self.connection.sendall(f'{data}\r'.encode())
+
+    def end_dial(self):
+        if self.dial_proxy is not None:
+            self.dial_proxy.join(0.1)
+            self.dial_proxy = None
+        if self.dial_proxy is not None:
+            self.dial_socket.close()
+            self.dial_socket = None
 
 
 def main():
@@ -169,6 +240,7 @@ def main():
                     modem_client.recv(1024)
             except KeyboardInterrupt:
                 print('Exiting')
+                modem_client.close()
                 break
             except OSError:
                 print('Caught OSError', sys.exc_info()[0])
