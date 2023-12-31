@@ -321,6 +321,17 @@ setup /nm /pj
 - [QEMU MESA/GL/#Dfx glide pass-through](https://github.com/kjliew/qemu-3dfx)
 - [Build DJGPP](https://github.com/andrewwutw/build-djgpp)
 
+### OS/2 Warp 4
+
+Warp 4.0 installation stopped at the final installation floppy due to an unknown issue.
+Warp 4.52 installs from bootable iso with IDE disk and cdrom, and spice with attached audio drivers (sb16, adlib and pc speaker).
+With cirrus-vga over VNC (and audio over VNC once that is available in free clients), higher resolutions should be possible.
+
+#### Links
+
+- [SciTech display doctor](https://forums.virtualbox.org/viewtopic.php?t=82709)
+- [Drivers and firefox install](https://lantian.pub/en/article/modify-computer/os2-warp-firefox.lantian/)
+
 ### Wayback browsing
 
 #### Links
