@@ -30,7 +30,7 @@ umount /mnt/tmpflp
 
 QEMU monitor commands:
 
-```
+```bash
 # mount new image as floppy0 (A:)
 change floppy0 /tmp/Disk1.img
 ```
@@ -110,7 +110,7 @@ XF86Setup
 
 *If the X server starts but the display freezes then try adding these options to the Device section [1]*
 
-```
+```conf
 Section "Device"
    ...
    Option "no_bitblt"
@@ -225,7 +225,7 @@ There have been changes to how this process works over the years,
 so I had to do some digging to find the old (pre centos and RHEL) examples.
 Before rpmbuild [1], you install the src.rpm and then prepare the build to extract and patch the source files:
 
-```
+```conf
 Install the source code in the SOURCES directory used by RPM (/usr/src/redhat/SOURCES) with this command:
   rpm -ivv realport-version-revision.src.rpm
 This command also copies the specification file (/usr/src/redhat/SPECS/realport-version.spec) to the SPECS directory.
@@ -245,7 +245,7 @@ The -bp option specifies that only the preparation section (%prep) of the specif
 - [Corel Linux in QEMU](https://forum.eaasi.cloud/t/corel-linux-in-qemu/64/1) [1]
 - [Caldera OpenLinux 13 on QEMU](https://gekk.info/blog/main/installing-caldera-openlinux-13-on-qemu.html)
 - [Slackware 3.5](https://virtuallyfun.com/2010/05/12/slackware-3-5/)
-    - [Configuration file was copied and stored](templates/x11/XF86Config-Slackware3.5-VGA16)
+- [Configuration file was copied and stored](templates/x11/XF86Config-Slackware3.5-VGA16)
 - [XConfig documentation](http://coffeenix.net/doc/misc/xconfig/)
 - [CentOS rebuild source RPM](https://wiki.centos.org/HowTos(2f)RebuildSRPM.html) [1]
 - [RedHat installing the driver (source RPM)](https://www.ing.iac.es/~docs/external/realport/rp-linux-conf-install-driver-rpm.html) [2]
@@ -331,6 +331,79 @@ With cirrus-vga over VNC (and audio over VNC once that is available in free clie
 
 - [SciTech display doctor](https://forums.virtualbox.org/viewtopic.php?t=82709)
 - [Drivers and firefox install](https://lantian.pub/en/article/modify-computer/os2-warp-firefox.lantian/)
+
+### Solaris 2.x
+
+qemu-system-sparc is 32 bit and supports the SS-5 machine with typically sub 200mhz cpus and max 512 mb ram
+qemu-system-sparc64 supports - TODO
+
+OpenBios exists for both platforms and will simplify configuring boot on the command line, here are some configuration examples:
+
+xxx TODO
+
+Alternatively there are BIOS'es that have been dumped from EPROM which can be found in the SPARC BIOS collection [1]:
+
+| Image name | System name |
+| ---------- | ----------- |
+| cpu10.bin | x |
+| cpu24.bin | x |
+| ipc.bin | SPARCstation IPC |
+| lx.bin | SPARCstation LX |
+| lx564.bin | SPARCstation LX |
+| ross225r.bin | x |
+| ss10_v2.25_rom | SPARCstation 10 |
+| ss20_v2.25_rom | SPARCstation 20 |
+| ss4.bin | SPARCstation 4 |
+| ss5-170.bin | SPARCstation 5 |
+| ss5.bin | SPARCstation 5 |
+| ss600mp.bin | SPARCserver 600MP |
+| voyager.bin | SPARCstation Voyager |
+
+An example of using SPARCstation 5 BIOS:
+
+```bash
+# SPARCstation 5 expects the disk to be scsi target 3 and cdrom to be scsi target 6, and have max 256MB ram and a single CPU.
+# To properly emulate a SUN cdrom we use a physical block size of 512.
+qemu-system-sparc \
+ -drive file=disk0.raw,if=none,id=drive-scsi0,format=raw,cache=none,aio=io_uring,detect-zeroes=on \
+ -device scsi-hd,scsi-id=3,drive=drive-scsi0,id=scsi0 \
+ -drive file=sun-solaris-8-0101-installation-sparc.iso,if=none,id=drive-scsi1,media=cdrom,aio=io_uring \
+ -device scsi-cd,scsi-id=6,drive=drive-scsi1,id=scsi1,physical_block_size=512 \
+ -machine accel=tcg,type=SS-5 -cpu "TI SuperSparc 60" \
+ -m 256 \
+ -vga cg3 -g 1024x768x8 -monitor stdio \
+ -bios ss5.bin
+
+# If graphical install fails, you can switch the -vga line with the following to install the OS over serial terminal:
+# -nographic -vga none -serial mon:stdio \
+
+# Use 'sendkey stop-a' in monitor if it goes into a boot retry loop
+# Use probe-scsi to verify the scsi ids or devalias to see device aliases in the nvrom
+
+# Type 'boot cdrom:d' to boot the d partition of the cdrom iso
+
+# If cdrom installation fails, you can try again via boot disk3:b
+
+# Type 'boot sd()' to boot the first partition of the primary disk
+```
+
+Tips:
+
+- Use monitor and sendkey to break if you're stuck trying to boot from network for instance: `sendkey stop-a`
+- Serial terminal seems to conflict with sendkey stop-a, but if you disconnect the network interface the BIOS might skip network boot and go to the prompt.
+
+#### Links
+
+- [SPARC BIOS collection](https://github.com/hwinther/sparc/tree/additional-images-from-itomato-NeXTSPARC) [1]
+- [Ongoing issue related to trap 0x29 data access error with S5](https://gitlab.com/qemu-project/qemu/-/issues/2017)
+- [Wikipedia overview of SPARCstation variants](https://en.wikipedia.org/wiki/SPARCstation)
+- [NetInstall solaris from linux server](https://www.cs.toronto.edu/~cvs/unix/Solaris-Linux-NetInstall.html)
+- [How to use floppy disks with solaris](https://people.cs.rutgers.edu/~watrous/floppies-under-solaris.html)
+- [Solaris 2.6 SPARC on QEMU guide](https://learn.adafruit.com/build-your-own-sparc-with-qemu-and-solaris/create-a-disk-image)
+- [Oracle booting and shutting down Solaris systems](https://docs.oracle.com/cd/E37838_01/html/E60978/gkkvd.html)
+- [Working with Openboot](https://tldp.org/HOWTO/SPARC-HOWTO-14.html)
+- [Installing NetBSD on SPARC](https://cdn.netbsd.org/pub/NetBSD/NetBSD-9.2/sparc/INSTALL.html)
+- [Potential solution to cd boot crash via reformatting ISO as disk](https://forum.winworldpc.com/discussion/12876/stupid-solaris-2-3-2-5-1-installation-problems-question)
 
 ### Wayback browsing
 
