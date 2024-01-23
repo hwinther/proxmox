@@ -379,6 +379,7 @@ qemu-system-sparc \
 
 # Use 'sendkey stop-a' in monitor if it goes into a boot retry loop
 # Use probe-scsi to verify the scsi ids or devalias to see device aliases in the nvrom
+# Use module-info to see cpu and bus speeds
 
 # Type 'boot cdrom:d' to boot the d partition of the cdrom iso
 
@@ -391,6 +392,8 @@ Tips:
 
 - Use monitor and sendkey to break if you're stuck trying to boot from network for instance: `sendkey stop-a`
 - Serial terminal seems to conflict with sendkey stop-a, but if you disconnect the network interface the BIOS might skip network boot and go to the prompt.
+- An 8GB virtual disk can be formatted with the following parameters; type 18, data cylinders 16200, alternative cylinders 2, physical cylinders 16202, heads 16, data sectors 60, rpm 3600, disk type name Qemu8G, everything else default
+- Otherwise use a 2GB, 2.1GB or 3GB vm disk and use the SUN1.3, SUN2.1G or SUN2.9G disk layout, respectively.
 
 #### Links
 
@@ -404,6 +407,12 @@ Tips:
 - [Working with Openboot](https://tldp.org/HOWTO/SPARC-HOWTO-14.html)
 - [Installing NetBSD on SPARC](https://cdn.netbsd.org/pub/NetBSD/NetBSD-9.2/sparc/INSTALL.html)
 - [Potential solution to cd boot crash via reformatting ISO as disk](https://forum.winworldpc.com/discussion/12876/stupid-solaris-2-3-2-5-1-installation-problems-question)
+- [Disk size calculator](http://www.csgnetwork.com/mediasizecalc.html)
+- [Wayback machine - Sun solaris format guide](https://web.archive.org/web/20080228035934/http://www.sun.com/bigadmin/content/submitted/format_utility.jsp)
+- [Formatting disks for Solaris](https://virtuallyfun.com/2010/10/03/formatting-disks-for-solaris/)
+- [Running Solaris 2.6 under QEMU on Mint](https://astr0baby.wordpress.com/2018/09/22/running-solaris-2-6-sparc-on-qemu-system-sparc-in-linux-x86_64-mint-19/)
+- [SunOS 4.1.4 SPARC on QEMU](http://defcon.no/sysadm/playing-with-sunos-4-1-4-on-qemu/)
+- [Running SunOS 4 in QEMU with X11 forwarding](https://john-millikin.com/running-sunos-4-in-qemu-sparc)
 
 ### Wayback browsing
 
