@@ -278,7 +278,7 @@ via `cpupower frequency-set -u 1G`.
 
 To install Windows 98 SE add the boot floppy image and the cdrom iso file:
 
-```
+```conf
 args: -drive file=/var/lib/vz/template/iso/Windows_98_Second_Edition_Boot.img,if=floppy,index=0 -boot a
 ide1: local:iso/EN_WIN98SE_115_OEM_WPLUS.ISO,media=cdrom,size=632374K
 
@@ -395,11 +395,29 @@ Tips:
 - An 8GB virtual disk can be formatted with the following parameters; type 18, data cylinders 16200, alternative cylinders 2, physical cylinders 16202, heads 16, data sectors 60, rpm 3600, disk type name Qemu8G, everything else default
 - Otherwise use a 2GB, 2.1GB or 3GB vm disk and use the SUN1.3, SUN2.1G or SUN2.9G disk layout, respectively.
 
+```bash
+# sparc64 support seems to be pretty limited, in order to boot from cdrom you either have to use the "-boot d" argument or type "boot cdrom:f" in the OpenBIOS prompt.
+
+# Create a raw disk image first, then the machine can be started with the following:
+ISO=/var/lib/vz/templates/iso/NetBSD-9.3-sparc64.iso
+sudo /usr/bin/qemu-system-sparc64 -drive file=hd.raw,if=none,id=drive-ide0-0-1,format=raw,cache=none -device ide-hd,bus=ide.0,unit=0,drive=drive-ide0-0-1,id=ide0-0-1 -serial pty -monitor stdio -boot c -machine sun4u -netdev type=tap,id=net0,ifname=tap0,script=no,downscript=no -device sunhme,mac=BC:24:11:47:EA:AA,netdev=net0,bus=pciB -cdrom $ISO -nographic
+
+# ne2k_pci can be used instead of sunhme, but it will be limited to 10mbps and it might be less stable
+
+# Then open the serial terminal in another window, e.g.:
+miniterm -D /dev/pts/8
+
+# Attaching the network interface manually (it should be configured via a script), can be done like this:
+ovs-vsctl add-port vmbr0 tap0
+ip link tap0 up
+```
+
 #### Links
 
+- [Official QEMU SPARC platform documentation](https://wiki.qemu.org/Documentation/Platforms/SPARC)
+- [Wikipedia overview of SPARCstation variants](https://en.wikipedia.org/wiki/SPARCstation)
 - [SPARC BIOS collection](https://github.com/hwinther/sparc/tree/additional-images-from-itomato-NeXTSPARC) [1]
 - [Ongoing issue related to trap 0x29 data access error with S5](https://gitlab.com/qemu-project/qemu/-/issues/2017)
-- [Wikipedia overview of SPARCstation variants](https://en.wikipedia.org/wiki/SPARCstation)
 - [NetInstall solaris from linux server](https://www.cs.toronto.edu/~cvs/unix/Solaris-Linux-NetInstall.html)
 - [How to use floppy disks with solaris](https://people.cs.rutgers.edu/~watrous/floppies-under-solaris.html)
 - [Solaris 2.6 SPARC on QEMU guide](https://learn.adafruit.com/build-your-own-sparc-with-qemu-and-solaris/create-a-disk-image)
