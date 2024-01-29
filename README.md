@@ -394,6 +394,10 @@ Tips:
 - Serial terminal seems to conflict with sendkey stop-a, but if you disconnect the network interface the BIOS might skip network boot and go to the prompt.
 - An 8GB virtual disk can be formatted with the following parameters; type 18, data cylinders 16200, alternative cylinders 2, physical cylinders 16202, heads 16, data sectors 60, rpm 3600, disk type name Qemu8G, everything else default
 - Otherwise use a 2GB, 2.1GB or 3GB vm disk and use the SUN1.3, SUN2.1G or SUN2.9G disk layout, respectively.
+- Solaris 2.4/2.5 (and probably older) need the cdrom to be identified as a scsi-hd in order to boot the installation environment from it. You can change -device scsi-cd to scsi-nd and add readonly=true to the drive parameter.
+- The Solaris 2.5 installer will spend a long time without any output but it should finish eventually.
+- Solaris 2.x should be fine with 3GB, but solaris 8 needs over 3GB so use the 8G template. Solaris 9, 10 and 11 probably need even more if every package is to be installed.
+- TODO: add template raw disk 3G + 8G to repo
 
 ```bash
 # sparc64 support seems to be pretty limited, in order to boot from cdrom you either have to use the "-boot d" argument or type "boot cdrom:f" in the OpenBIOS prompt.
