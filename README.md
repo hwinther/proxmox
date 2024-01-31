@@ -332,7 +332,7 @@ With cirrus-vga over VNC (and audio over VNC once that is available in free clie
 - [SciTech display doctor](https://forums.virtualbox.org/viewtopic.php?t=82709)
 - [Drivers and firefox install](https://lantian.pub/en/article/modify-computer/os2-warp-firefox.lantian/)
 
-### Solaris 2.x
+### Solaris 2.x on SPARC
 
 qemu-system-sparc is 32 bit and supports the SS-5 machine with typically sub 200mhz cpus and max 512 mb ram
 qemu-system-sparc64 supports - TODO
@@ -388,7 +388,7 @@ qemu-system-sparc \
 # Type 'boot sd()' to boot the first partition of the primary disk
 ```
 
-Tips:
+#### Tips
 
 - Use monitor and sendkey to break if you're stuck trying to boot from network for instance: `sendkey stop-a`
 - Serial terminal seems to conflict with sendkey stop-a, but if you disconnect the network interface the BIOS might skip network boot and go to the prompt.
@@ -398,6 +398,12 @@ Tips:
 - The Solaris 2.5 installer will spend a long time without any output but it should finish eventually.
 - Solaris 2.x should be fine with 3GB, but solaris 8 needs over 3GB so use the 8G template. Solaris 9, 10 and 11 probably need even more if every package is to be installed.
 - TODO: add template raw disk 3G + 8G to repo
+
+#### Sun/Oracle installation guides
+
+- [Solaris 2.4](https://docs.oracle.com/cd/E19457-01/801-6610/801-6610.pdf)
+
+#### SPARC 64
 
 ```bash
 # sparc64 support seems to be pretty limited, in order to boot from cdrom you either have to use the "-boot d" argument or type "boot cdrom:f" in the OpenBIOS prompt.
@@ -435,6 +441,8 @@ ip link tap0 up
 - [Running Solaris 2.6 under QEMU on Mint](https://astr0baby.wordpress.com/2018/09/22/running-solaris-2-6-sparc-on-qemu-system-sparc-in-linux-x86_64-mint-19/)
 - [SunOS 4.1.4 SPARC on QEMU](http://defcon.no/sysadm/playing-with-sunos-4-1-4-on-qemu/)
 - [Running SunOS 4 in QEMU with X11 forwarding](https://john-millikin.com/running-sunos-4-in-qemu-sparc)
+- [Build your own sparc with qemu and solaris](https://learn.adafruit.com/build-your-own-sparc-with-qemu-and-solaris/install-solaris-part-2)
+- [SunOS 4.1 device addressing thread](https://qemu-discuss.nongnu.narkive.com/qDJ6e4WX/qemu-system-sparc-what-would-i-need-to-change-to-add-functionality-to-save-the-nvram-content)
 
 ### Wayback browsing
 
