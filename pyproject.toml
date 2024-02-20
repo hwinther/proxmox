@@ -35,7 +35,7 @@ build-backend = "flit_core.buildapi"
 dev = [
     "coverage==7.3.0",
     "unittest-xml-reporting==3.2.0",
-    "flake8==6.0.0",
+    "flake8==6.1.0",
     "flake8-html==0.4.3",
     "genbadge[all]==1.1.0"
 ]
