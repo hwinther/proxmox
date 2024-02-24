@@ -263,6 +263,34 @@ TODO
 
 TODO: list relevant contents of DOS iso
 
+### Memory tips
+
+Use checkit or scandma? to check memory allocation/usage
+Use mem /a/c to see the overview
+
+#### Links
+
+- [MS-DOS 6.22 optimized config example](https://www.vogons.org/viewtopic.php?t=39252)
+- [MSDOS tips and tricks](https://www.mdgx.com/31.htm)
+- [Smartdrv alternatives](https://www.vogons.org/viewtopic.php?t=19354)
+- [MSDOS binary patching](https://www.kennedysoftware.ie/products.htm#td)
+- [UIDE](https://www.ibiblio.org/pub/micro/pc-stuff/freedos/files/distributions/1.2/repos/pkg-html/uide.html)
+- [UIDE doc](https://home.mnet-online.de/willybilly/fdhelp-internet/en/hhstndrd/base/uide.htm)
+- [shsucd (mscdex replacement)](http://adoxa.altervista.org/shsucdx/)
+- [shsucdx](http://optimizr.dyndns.org/dos/shsucdx.html)
+- [xmgr/xdvd2](http://optimizr.dyndns.org/dos/drivers.html)
+- [partitioning of config.sys and autoexec.bat](http://www.abandonia.com/vbullet/showthread.php?t=6991)
+- [partitioning of config](https://forum.vcfed.org/index.php?threads/ansi-sys-causes-system-to-hang.79278/)
+- [partitioning #2](https://www.philscomputerlab.com/ms-dos-starter-pack.html)
+- [msdos memory tips](https://www.mdgx.com/mem6.htm)
+- [msdos switches tips](https://www.mdgx.com/last4.htm#SWS)
+- [configuration notes for dos w98se and iso bios](https://flaterco.com/kb/DOS_W98SE_general.html)
+- [msdos resource downloads](http://manmrk.net/tutorials/DOS/msdos.htm)
+- [more utilities downloads](http://annex.retroarchive.org/cdrom/smsw-vol3/UTILS/index.html)
+- [DOS ipx networking](https://www.vogons.org/viewtopic.php?t=64789)
+- [guide on msdos ram structure](https://virtuallyfun.com/2021/08/03/conventional-ram-aka-that-old-foe/)
+- [blog post of various virtualized windows installs - very useful and detailed](https://www.gekk.info/articles/dosapps.html#Windows_1.0)
+
 ### Windows 95/98
 
 Install chipset drivers first to have other devices detected (TODO)
@@ -443,6 +471,7 @@ ip link tap0 up
 - [Running SunOS 4 in QEMU with X11 forwarding](https://john-millikin.com/running-sunos-4-in-qemu-sparc)
 - [Build your own sparc with qemu and solaris](https://learn.adafruit.com/build-your-own-sparc-with-qemu-and-solaris/install-solaris-part-2)
 - [SunOS 4.1 device addressing thread](https://qemu-discuss.nongnu.narkive.com/qDJ6e4WX/qemu-system-sparc-what-would-i-need-to-change-to-add-functionality-to-save-the-nvram-content)
+- [Driver information/experiences](http://pci.unsupported.info/)
 
 ### Wayback browsing
 
@@ -450,3 +479,11 @@ ip link tap0 up
 
 - [Wayback Proxy](https://github.com/richardg867/WaybackProxy)
 - [Protoweb](https://protoweb.org/wiki/servers/)
+
+## Dialup ISP emulation
+
+### Links
+
+- [Hayes AT command set (overview)](https://en.wikipedia.org/wiki/Hayes_AT_command_set)
+- [Hayes AT command set (more details)](https://www.activexperts.com/serial-port-component/at/hayes/#ATSETPART1)
+- [(when using unix socket to connect serial) how to find which process is connected](https://unix.stackexchange.com/questions/16300/whos-got-the-other-end-of-this-unix-socketpair)
