@@ -83,6 +83,9 @@ echo $HOSTNAME | mail hc@wsh.no
 ```bash
 # Get IPv6 address from ISP dhcp with prefix delegation
 dhclient -v -6 -P wan
+# Or to debug
+sysctl -w net.ipv6.conf.all.forwarding=1
+dhclient -v -6 -P -R --prefix-len-hint 60 wan
 
 # Disable IPv6 🥹
 nano /etc/sysctl.conf
