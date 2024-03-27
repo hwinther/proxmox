@@ -426,6 +426,7 @@ qemu-system-sparc \
 - The Solaris 2.5 installer will spend a long time without any output but it should finish eventually.
 - Solaris 2.x should be fine with 3GB, but solaris 8 needs over 3GB so use the 8G template. Solaris 9, 10 and 11 probably need even more if every package is to be installed.
 - TODO: add template raw disk 3G + 8G to repo
+- Solaris 9 can install from a dvd iso, but ss5.bin does not seem to work, use OpenBIOS32 instead
 
 #### Sun/Oracle installation guides
 
