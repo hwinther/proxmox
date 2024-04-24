@@ -33,7 +33,7 @@ build-backend = "flit_core.buildapi"
 
 [project.optional-dependencies]
 dev = [
-    "coverage==7.3.0",
+    "coverage==7.5.0",
     "unittest-xml-reporting==3.2.0",
     "flake8==6.1.0",
     "flake8-html==0.4.3",
