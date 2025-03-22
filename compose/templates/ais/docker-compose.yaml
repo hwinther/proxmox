@@ -1,0 +1,43 @@
+services:
+  ais-catcher:
+    build:
+      context: ais-catcher
+      args:
+        - ARCH=${ARCH}
+      # x-bake:
+      #   platforms:
+      #     - linux/amd64
+      #     - linux/arm64
+    image: opensky-wsh
+    container_name: ais-catcher
+    restart: always
+    devices:
+      - "/dev/bus/usb:/dev/bus/usb"
+    device_cgroup_rules:
+      - "c 189:* rwm"
+    # volumes:
+    #   - "./ais-catcher-plugins:/usr/share/aiscatcher/my-plugins"
+    tmpfs:
+      - /run:exec,size=256M
+      - /tmp:size=128M
+      - /var/log:size=32M
+    environment:
+      DEVICE_INDEX: ${AIS_DEVICE_INDEX}
+      BIASTEE: ${AIS_BIASTEE}
+      LAT: ${LAT}
+      LON: ${LON}
+      STATION_NAME: ${STATION_NAME}
+      STATION_URL: ${STATION_URL}
+      # AIS_CATCHER_PORT: 8100
+    labels:
+      - "traefik.http.services.public_web.loadbalancer.server.port=8100"
+
+    # healthcheck:
+    #   test: curl -f http://localhost:8100 --output /tmp/healthcheck.out || exit 1
+    #   interval: 60s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 5s
+    #entrypoint: bash
+    #command: apt-get -y install curl && /usr/local/bin/AIS-catcher
+   

@@ -1,0 +1,4 @@
+services:
+  ais-catcher:
+    labels:
+      - "traefik.http.services.public_web.loadbalancer.server.port=8100"

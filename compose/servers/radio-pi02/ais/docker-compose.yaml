@@ -1,0 +1,4 @@
+include:
+  - path:
+      - ../../../templates/ais/docker-compose.yaml
+      - override.yaml
