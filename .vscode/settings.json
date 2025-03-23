@@ -2,13 +2,32 @@
   "files.autoSave": "onWindowChange",
   "editor.formatOnSave": true,
   "cSpell.words": [
+    "adsbexchange",
+    "ADSBX",
     "aiscatcher",
     "BIASTEE",
     "Buildx",
+    "esac",
+    "execlineb",
+    "HEYWHATSTHAT",
     "hwinther",
     "jvde",
+    "Jxpf",
+    "MLAT",
+    "noarch",
+    "noninteractive",
     "opencontainers",
+    "OPENSKY",
+    "PIAWARE",
+    "pipefail",
+    "procps",
+    "PTRACKS",
+    "rtlsdr",
+    "SKYAWARE",
+    "socat",
+    "Sørensen",
     "tmpfs",
-    "traefik"
+    "traefik",
+    "Winther"
   ]
 }

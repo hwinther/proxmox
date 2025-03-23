@@ -6,10 +6,22 @@ RUN apt-get update && \
     apt-get -y full-upgrade
 
 FROM base AS runtime
+ARG TARGETPLATFORM
+ARG TARGETARCH
+ARG TARGETVARIANT
+RUN echo ${TARGETPLATFORM} > /srv/target.platform && \
+    echo ${TARGETARCH} > /srv/target.arch && \
+    echo ${TARGETVARIANT} > /srv/target.variant
 RUN apt-get -y install curl gettext-base nano net-tools procps socat wget xz-utils && \
     apt-get clean
 ENV S6_OVERLAY_VERSION="3.2.0.2"
-ARG ARCH="x86_64"
+RUN case "$TARGETARCH" in \
+    amd64) ARCH="x86_64" ;; \
+    arm64) ARCH="aarch64" ;; \
+    *) echo "Unsupported TARGETARCH: $TARGETARCH" && exit 1 ;; \
+    esac && \
+    echo "ARCH=$ARCH" >> /etc/environment
+ENV ARCH=${ARCH}
 ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz /tmp
 ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-${ARCH}.tar.xz /tmp
 RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz && \
