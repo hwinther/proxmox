@@ -26,7 +26,7 @@ jobs:
           fetch-depth: 0
 
       - name: Build and push docker image
-        uses: ./.github/actions/docker/push.yaml
+        uses: ./.github/actions/docker
         with:
           package_name: ${{ env.PACKAGE_NAME }}
           package_description: ${{ env.PACKAGE_DESCRIPTION }}
@@ -36,7 +36,7 @@ jobs:
           # push_condition: ${{ github.event_name != 'pull_request' }}
 
       # - name: Calculate Container Metadata
-      #   id: meta#
+      #   id: meta
       #   uses: docker/metadata-action@v5
       #   with:
       #     images: ghcr.io/${{ github.repository }}/${{ env.PACKAGE_NAME }}
