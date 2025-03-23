@@ -1,0 +1,19 @@
+workflow:
+  - changed-files:
+      - any-glob-to-any-file: ".github/workflows/*"
+
+github:
+  - changed-files:
+      - any-glob-to-any-file: ".github/*"
+
+documentation:
+  - changed-files:
+      - any-glob-to-any-file: ["docs/*", "**/*.md"]
+
+docker:
+  - changed-files:
+      - any-glob-to-any-file: ["**/Dockerfile", "**/docker-compose.yml"]
+
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file: ["src/**/*.lock.json", "src/**/yarn.lock"]
