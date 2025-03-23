@@ -6,6 +6,13 @@ services:
     deploy:
       replicas: 0
 
+  sdr-base-bullseye:
+    build:
+      context: ../sdr-base/bullseye-build
+    image: ${DOCKER_REGISTRY}sdr-base-wsh:bullseye
+    deploy:
+      replicas: 0
+
   dump1090-fa:
     build:
       context: dump1090-fa
