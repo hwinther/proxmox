@@ -5,6 +5,15 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 COPY --chmod=755 start-ais-catcher.sh /srv/start-ais-catcher.sh
 COPY ais-catcher-plugins /usr/share/aiscatcher/my-plugins
+ARG TARGETPLATFORM
+ARG TARGETARCH
+ARG TARGETVARIANT
+RUN printf "I'm building for TARGETPLATFORM=${TARGETPLATFORM}" >/srv/target \
+    && printf ", TARGETARCH=${TARGETARCH}" >>/srv/target \
+    && printf ", TARGETVARIANT=${TARGETVARIANT} \n" >>/srv/target \
+    && printf "With uname -s : ">>/srv/target && uname -s >>/srv/target \
+    && printf "and  uname -m : ">>/srv/target && uname -m >>/srv/target
+RUN echo ${TARGETPLATFORM} > /srv/targetplatform
 
 ENV AIS_CATCHER_PORT="8100"
 ENV STATION_NAME="AIS-Catcher"
