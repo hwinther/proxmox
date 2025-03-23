@@ -1,0 +1,37 @@
+name: Publish docker image
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main", "feat/ais-package"]
+    paths:
+      - ".github/workflows/build-ais-catcher.yaml"
+      - "compose/templates/ais/ais-catcher"
+
+permissions:
+  packages: write
+
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  PACKAGE_NAME: ais-catcher-wsh
+  PACKAGE_DESCRIPTION: "AIS catcher for WSH"
+  PACKAGE_VENDOR: WSH
+  WORKING_DIRECTORY: compose/templates/ais/ais-catcher
+
+jobs:
+  publish-docker-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build and push docker image
+        uses: ./.github/actions/docker
+        with:
+          package_name: ${{ env.PACKAGE_NAME }}
+          package_description: ${{ env.PACKAGE_DESCRIPTION }}
+          package_vendor: ${{ env.PACKAGE_VENDOR }}
+          working_directory: ${{ env.WORKING_DIRECTORY }}
+          push_condition: true
+          # push_condition: ${{ github.event_name != 'pull_request' }}
