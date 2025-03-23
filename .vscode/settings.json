@@ -1,4 +1,14 @@
 {
-    "files.autoSave": "onWindowChange",
-    "editor.formatOnSave": true
+  "files.autoSave": "onWindowChange",
+  "editor.formatOnSave": true,
+  "cSpell.words": [
+    "aiscatcher",
+    "BIASTEE",
+    "Buildx",
+    "hwinther",
+    "jvde",
+    "opencontainers",
+    "tmpfs",
+    "traefik"
+  ]
 }

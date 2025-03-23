@@ -5,6 +5,12 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 COPY --chmod=755 start-ais-catcher.sh /srv/start-ais-catcher.sh
 COPY ais-catcher-plugins /usr/share/aiscatcher/my-plugins
+ARG TARGETPLATFORM
+ARG TARGETARCH
+ARG TARGETVARIANT
+RUN echo ${TARGETPLATFORM} > /srv/target.platform && \
+    echo ${TARGETARCH} > /srv/target.arch && \
+    echo ${TARGETVARIANT} > /srv/target.variant
 
 ENV AIS_CATCHER_PORT="8100"
 ENV STATION_NAME="AIS-Catcher"
