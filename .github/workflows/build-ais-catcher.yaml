@@ -6,7 +6,7 @@ on:
     branches: ["main", "feat/ais-package"]
     paths:
       - ".github/workflows/build-ais-catcher.yaml"
-      - "compose/templates/ais/ais-catcher"
+      - "compose/templates/ais/ais-catcher/**"
 
 permissions:
   packages: write

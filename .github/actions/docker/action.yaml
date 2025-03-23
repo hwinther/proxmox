@@ -41,8 +41,8 @@ runs:
           type=edge,branch=main
           type=ref,event=tag
           type=ref,event=branch
-          # set latest tag for default branch
-          type=raw,value=latest,enable={{is_default_branch}}
+          # set latest tag for default branch if tag has not been provided
+          type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' && inputs.tag == '' }}
           type=raw,value=${{ inputs.tag }},enable=${{ inputs.tag && 'true' || 'false' }}
         labels: |
           org.opencontainers.image.title=${{ inputs.package_name }}
