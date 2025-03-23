@@ -67,6 +67,7 @@ RUN mkdir build && \
     cmake ../ && \
     make && \
     make install && \
-    ldconfig
+    ldconfig && \
+    rm -rf /src/rtl-sdr
 
 ENTRYPOINT [ "bash" ]
