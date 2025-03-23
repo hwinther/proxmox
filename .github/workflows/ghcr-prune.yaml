@@ -6,7 +6,7 @@ on:
       package-name:
         description: "Package name"
         required: true
-        default: ais-catcher-wsh
+        default: proxmox/ais-catcher-wsh
       versions-to-keep:
         description: "Number of versions to keep, if not set all untagged versions will be removed"
         required: false
