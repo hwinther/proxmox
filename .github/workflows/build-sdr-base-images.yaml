@@ -33,7 +33,7 @@ jobs:
         uses: ./.github/actions/docker
         with:
           package_name: ${{ env.PACKAGE_NAME }}
-          package_description: ${{ env.PACKAGE_DESCRIPTION }} (for ${{ matrix.debian_release }})
+          package_description: "${{ env.PACKAGE_DESCRIPTION }} (for ${{ matrix.debian_release }})"
           package_vendor: ${{ env.PACKAGE_VENDOR }}
           working_directory: ${{ env.WORKING_DIRECTORY }}/${{ matrix.debian_release }}-build
           push_condition: ${{ github.event_name != 'pull_request' }}
