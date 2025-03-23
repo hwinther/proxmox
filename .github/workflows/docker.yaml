@@ -47,7 +47,8 @@ jobs:
         with:
           context: "compose/templates/ais/ais-catcher"
           platforms: linux/amd64, linux/arm64, linux/arm64/v8
-          # push: ${{ github.event_name != 'pull_request' }}
+          push: true
+          #push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
