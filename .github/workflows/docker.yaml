@@ -12,6 +12,7 @@ permissions:
   packages: write
 
 env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   PACKAGE_NAME: ais-catcher-wsh
   PACKAGE_DESCRIPTION: "AIS catcher for WSH"
   PACKAGE_VENDOR: WSH
