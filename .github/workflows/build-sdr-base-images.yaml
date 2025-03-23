@@ -14,7 +14,7 @@ permissions:
 env:
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   PACKAGE_NAME: sdr-base-build
-  PACKAGE_DESCRIPTION: "SDR base build image for WSH, includes rtl-sdr, build-essential, and other tools"
+  PACKAGE_DESCRIPTION: "SDR base build image for WSH"
   PACKAGE_VENDOR: WSH
   WORKING_DIRECTORY: compose/templates/sdr-base
 
