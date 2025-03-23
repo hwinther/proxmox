@@ -21,6 +21,7 @@ env:
 jobs:
   publish-docker-image:
     strategy:
+      fail-fast: false
       matrix:
         debian_release: ["bookworm", "bullseye"]
     runs-on: ubuntu-latest
