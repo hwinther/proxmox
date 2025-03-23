@@ -1,5 +1,4 @@
 FROM ghcr.io/jvde-github/ais-catcher:v0.61 AS base
-LABEL org.opencontainers.image.description DESCRIPTION="AIS-Catcher with WSH patches"
 RUN apt-get update && \
     apt-get install -y curl nano wget && \
     apt-get clean && \

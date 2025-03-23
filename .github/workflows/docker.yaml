@@ -9,8 +9,13 @@ on:
       - "compose/templates/ais/ais-catcher"
 
 permissions:
-  # for ghcr.io (docker registry):
   packages: write
+
+env:
+  PACKAGE_NAME: ais-catcher-wsh
+  PACKAGE_DESCRIPTION: "AIS catcher for WSH"
+  PACKAGE_VENDOR: WSH
+  WORKING_DIRECTORY: compose/templates/ais/ais-catcher
 
 jobs:
   publish-docker-image:
@@ -24,11 +29,15 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}/ais-test
+          images: ghcr.io/${{ github.repository }}/${{ env.PACKAGE_NAME }}
           tags: |
             type=edge,branch=main
             type=ref,event=tag
             type=ref,event=branch
+          labels: |
+            org.opencontainers.image.title=${{ env.PACKAGE_NAME }}
+            org.opencontainers.image.description=${{ env.PACKAGE_DESCRIPTION }}
+            org.opencontainers.image.vendor=${{ env.PACKAGE_VENDOR }}
 
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v3
@@ -46,18 +55,9 @@ jobs:
       - name: Build and Push Images
         uses: docker/build-push-action@v5
         with:
-          context: "compose/templates/ais/ais-catcher"
+          context: ${{ env.WORKING_DIRECTORY }}
           platforms: linux/amd64, linux/arm64
           push: true
           #push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-
-      # - name: Build the docker image
-      #   run: |
-      #     tag=ghcr.io/hwinther/wsh-pve/pve-build:12
-      #     tag_latest=ghcr.io/hwinther/wsh-pve/pve-build:latest
-      #     echo tag=$tag tag_latest=$tag_latest
-      #     docker build . -t $tag -t $tag_latest -f build.Dockerfile
-      #     docker push $tag
-      #     docker push $tag_latest
