@@ -1,0 +1,28 @@
+name: Docker repository pruning
+
+on:
+  workflow_dispatch:
+    inputs:
+      package-name:
+        description: "Package name"
+        required: true
+        default: ais-catcher-wsh
+      versions-to-keep:
+        description: "Number of versions to keep, if not set all untagged versions will be removed"
+        required: false
+        default: -1
+        type: number
+
+permissions:
+  packages: write
+
+jobs:
+  prune-images:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/delete-package-versions@v5
+        with:
+          package-name: ${{ inputs.package-name }}
+          package-type: container
+          min-versions-to-keep: ${{ inputs.versions-to-keep || 0 }}
+          delete-only-untagged-versions: ${{ inputs.versions-to-keep && false || true }}
