@@ -1,4 +1,5 @@
 FROM ghcr.io/jvde-github/ais-catcher:v0.61 AS base
+LABEL org.opencontainers.image.description DESCRIPTION="AIS-Catcher with WSH patches"
 RUN apt-get update && \
     apt-get install -y curl nano wget && \
     apt-get clean && \
@@ -8,12 +9,9 @@ COPY ais-catcher-plugins /usr/share/aiscatcher/my-plugins
 ARG TARGETPLATFORM
 ARG TARGETARCH
 ARG TARGETVARIANT
-RUN printf "I'm building for TARGETPLATFORM=${TARGETPLATFORM}" >/srv/target \
-    && printf ", TARGETARCH=${TARGETARCH}" >>/srv/target \
-    && printf ", TARGETVARIANT=${TARGETVARIANT} \n" >>/srv/target \
-    && printf "With uname -s : ">>/srv/target && uname -s >>/srv/target \
-    && printf "and  uname -m : ">>/srv/target && uname -m >>/srv/target
-RUN echo ${TARGETPLATFORM} > /srv/targetplatform
+RUN echo ${TARGETPLATFORM} > /srv/target.platform && \
+    echo ${TARGETARCH} > /srv/target.arch && \
+    echo ${TARGETVARIANT} > /srv/target.variant
 
 ENV AIS_CATCHER_PORT="8100"
 ENV STATION_NAME="AIS-Catcher"
