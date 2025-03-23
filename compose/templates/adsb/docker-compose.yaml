@@ -1,8 +1,8 @@
 services:
   sdr-base:
     build:
-      context: ../sdr-base
-    image: ${DOCKER_REGISTRY}sdr-base-wsh
+      context: ../sdr-base/bookworm-build
+    image: ${DOCKER_REGISTRY}sdr-base-wsh:bookworm
     deploy:
       replicas: 0
 
