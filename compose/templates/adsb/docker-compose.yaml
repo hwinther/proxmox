@@ -1,12 +1,8 @@
 services:
   sdr-base:
     build:
-      context: sdr-base
+      context: ../sdr-base
     image: ${DOCKER_REGISTRY}sdr-base-wsh
-    volumes:
-      - /dev/bus/usb:/dev/bus/usb
-    device_cgroup_rules:
-      - "c 189:* rwm"
     deploy:
       replicas: 0
 
