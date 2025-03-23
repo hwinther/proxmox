@@ -1,23 +1,22 @@
 services:
   sdr-base:
     build:
-      context: sdr-base
-      args:
-        - ARCH=${ARCH}
-    image: sdr-base-wsh
-    volumes:
-      - /dev/bus/usb:/dev/bus/usb
-    device_cgroup_rules:
-      - "c 189:* rwm"
+      context: ../sdr-base/bookworm-build
+    image: ${DOCKER_REGISTRY}sdr-base-wsh:bookworm
+    deploy:
+      replicas: 0
+
+  sdr-base-bullseye:
+    build:
+      context: ../sdr-base/bullseye-build
+    image: ${DOCKER_REGISTRY}sdr-base-wsh:bullseye
     deploy:
       replicas: 0
 
   dump1090-fa:
     build:
       context: dump1090-fa
-      args:
-        - ARCH=${ARCH}
-    image: dump1090-fa-wsh
+    image: ${DOCKER_REGISTRY}dump1090-fa-wsh
     container_name: dump1090-fa
     volumes:
       - dump1090-fa-data:/run/dump1090-fa
@@ -37,9 +36,7 @@ services:
   tar1090:
     build:
       context: tar1090
-      args:
-        - ARCH=${ARCH}
-    image: tar1090-wsh
+    image: ${DOCKER_REGISTRY}tar1090-wsh
     container_name: tar1090
     depends_on:
       dump1090-fa:
@@ -57,9 +54,7 @@ services:
   piaware:
     build:
       context: piaware
-      args:
-        - ARCH=${ARCH}
-    image: piaware-wsh
+    image: ${DOCKER_REGISTRY}piaware-wsh
     container_name: piaware
     ports:
       - 8803:80
@@ -83,9 +78,7 @@ services:
   fr24:
     build:
       context: fr24
-      args:
-        - ARCH=${ARCH}
-    image: fr24-wsh
+    image: ${DOCKER_REGISTRY}fr24-wsh
     container_name: fr24
     depends_on:
       dump1090-fa:
@@ -100,9 +93,7 @@ services:
   adsbexchange:
     build:
       context: adsbexchange
-      args:
-        - ARCH=${ARCH}
-    image: adsbexchange-wsh
+    image: ${DOCKER_REGISTRY}adsbexchange-wsh
     container_name: adsbexchange
     depends_on:
       dump1090-fa:
@@ -122,9 +113,7 @@ services:
   opensky:
     build:
       context: opensky
-      args:
-        - ARCH=${ARCH}
-    image: opensky-wsh
+    image: ${DOCKER_REGISTRY}opensky-wsh
     container_name: opensky
     depends_on:
       dump1090-fa:

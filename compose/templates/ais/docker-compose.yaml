@@ -2,12 +2,6 @@ services:
   ais-catcher:
     build:
       context: ais-catcher
-      # args:
-      #   - ARCH=${ARCH}
-      # x-bake:
-      #   platforms:
-      #     - linux/amd64
-      #     - linux/arm64
     image: ${DOCKER_REGISTRY}ais-catcher-wsh
     container_name: ais-catcher
     restart: always

@@ -1,4 +1,8 @@
 FROM ghcr.io/jvde-github/ais-catcher:v0.61 AS base
+LABEL maintainer="Hans Christian Winther-Sørensen <docker@wsh.no>"
+ENV DEBIAN_FRONTEND=noninteractive
+SHELL ["/bin/bash", "-x", "-o", "pipefail", "-c"]
+
 RUN apt-get update && \
     apt-get install -y curl nano wget && \
     apt-get clean && \

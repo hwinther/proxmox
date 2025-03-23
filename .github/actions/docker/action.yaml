@@ -25,6 +25,9 @@ inputs:
     required: false
     description: Condition to push the image
     default: ${{ github.event_name != 'pull_request' }}
+  tag:
+    required: false
+    description: Additional tag to apply to the image
 
 runs:
   using: "composite"
@@ -38,8 +41,9 @@ runs:
           type=edge,branch=main
           type=ref,event=tag
           type=ref,event=branch
-          # set latest tag for default branch
-          type=raw,value=latest,enable={{is_default_branch}}
+          # set latest tag for default branch if tag has not been provided
+          type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' && inputs.tag == '' }}
+          type=raw,value=${{ inputs.tag }},enable=${{ github.ref == 'refs/heads/main' && inputs.tag != '' }}
         labels: |
           org.opencontainers.image.title=${{ inputs.package_name }}
           org.opencontainers.image.description=${{ inputs.package_description }}
