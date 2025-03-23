@@ -21,9 +21,9 @@ RUN case "${TARGETARCH}" in \
     arm64) ARCH="aarch64" ;; \
     *) echo "Unsupported TARGETARCH: $TARGETARCH" && exit 1 ;; \
     esac && \
-    wget "https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-${ARCH}.tar.xz" /tmp && \
+    wget https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-${ARCH}.tar.xz /tmp && \
     tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz && \
-    tar -C / -Jxpf "/tmp/s6-overlay-${ARCH}.tar.xz" && \
+    tar -C / -Jxpf /tmp/s6-overlay-${ARCH}.tar.xz && \
     rm -f /tmp/*.tar.xz
 
 FROM runtime AS install-build-deps
