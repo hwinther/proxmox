@@ -28,6 +28,7 @@ jobs:
           tags: |
             type=edge,branch=main
             type=ref,event=tag
+            type=ref,event=branch
 
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v3
