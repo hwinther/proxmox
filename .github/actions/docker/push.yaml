@@ -1,0 +1,66 @@
+name: "Docker build and push"
+description: "Build and push docker image to registry"
+branding:
+  icon: server
+  color: black
+
+inputs:
+  package_name:
+    required: true
+    description: Short form of package name
+  package_description:
+    required: true
+    description: A longer description of the package
+  package_vendor:
+    required: true
+    description: Vendor name
+  working_directory:
+    required: true
+    description: Working directory path, where the Dockerfile is located
+  platforms:
+    required: false
+    description: Platforms to build for
+    default: "linux/amd64, linux/arm64"
+  push_condition:
+    required: false
+    description: Condition to push the image
+    default: ${{ github.event_name != 'pull_request' }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Calculate Container Metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ghcr.io/${{ github.repository }}/${{ inputs.package_name }}
+        tags: |
+          type=edge,branch=main
+          type=ref,event=tag
+          type=ref,event=branch
+        labels: |
+          org.opencontainers.image.title=${{ inputs.package_name }}
+          org.opencontainers.image.description=${{ inputs.package_description }}
+          org.opencontainers.image.vendor=${{ inputs.package_vendor }}
+
+    - name: Setup QEMU
+      uses: docker/setup-qemu-action@v3
+
+    - name: Setup Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build and Push Images
+      uses: docker/build-push-action@v5
+      with:
+        context: ${{ inputs.working_directory }}
+        platforms: ${{ inputs.platforms }}
+        push: ${{ inputs.push_condition }}
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
