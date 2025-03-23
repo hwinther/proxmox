@@ -33,5 +33,5 @@ jobs:
           package_description: ${{ env.PACKAGE_DESCRIPTION }}
           package_vendor: ${{ env.PACKAGE_VENDOR }}
           working_directory: ${{ env.WORKING_DIRECTORY }}
-          push_condition: true
-          # push_condition: ${{ github.event_name != 'pull_request' }}
+          # push_condition: true
+          push_condition: ${{ github.event_name != 'pull_request' }}
