@@ -13,7 +13,6 @@ permissions:
 
 env:
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  PACKAGE_NAME: sdr-base-build
   PACKAGE_VENDOR: WSH
   WORKING_DIRECTORY: compose/templates/sdr-base
 
@@ -32,7 +31,7 @@ jobs:
       - name: Build and push runtime docker image
         uses: ./.github/actions/docker
         with:
-          package_name: ${{ env.PACKAGE_NAME }}
+          package_name: sdr-base-wsh
           package_description: "WSH SDR base runtime image (for ${{ matrix.debian_release }})"
           package_vendor: ${{ env.PACKAGE_VENDOR }}
           working_directory: ${{ env.WORKING_DIRECTORY }}/${{ matrix.debian_release }}
@@ -42,7 +41,7 @@ jobs:
       - name: Build and push build docker image
         uses: ./.github/actions/docker
         with:
-          package_name: ${{ env.PACKAGE_NAME }}
+          package_name: sdr-build-wsh
           package_description: "WSH SDR base build image (for ${{ matrix.debian_release }})"
           package_vendor: ${{ env.PACKAGE_VENDOR }}
           working_directory: ${{ env.WORKING_DIRECTORY }}/${{ matrix.debian_release }}/build
