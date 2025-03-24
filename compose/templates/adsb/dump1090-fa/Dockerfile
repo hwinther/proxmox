@@ -17,9 +17,9 @@ COPY --from=build-dump1090-fa /opt/packages /opt/packages
 RUN apt -y install /opt/packages/*.deb && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
-COPY --from=build /usr/local/bin/ /usr/local/bin/
-COPY --from=build /usr/local/include/ /usr/local/include/
-COPY --from=build /usr/local/lib/ /usr/local/lib/
+COPY --from=build-dump1090-fa /usr/local/bin/ /usr/local/bin/
+COPY --from=build-dump1090-fa /usr/local/include/ /usr/local/include/
+COPY --from=build-dump1090-fa /usr/local/lib/ /usr/local/lib/
 
 FROM install AS optimize
 RUN mkdir -p /opt/dump1090-fa
