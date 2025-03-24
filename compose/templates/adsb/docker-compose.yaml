@@ -1,15 +1,33 @@
 services:
-  sdr-base:
+  sdr-runtime-base:
     build:
-      context: ../sdr-base/bookworm-build
+      context: ../sdr-base/bookworm
+      args:
+        - DOCKER_REGISTRY=${DOCKER_REGISTRY}
     image: ${DOCKER_REGISTRY}sdr-base-wsh:bookworm
     deploy:
       replicas: 0
 
-  sdr-base-bullseye:
+  sdr-build-base:
     build:
-      context: ../sdr-base/bullseye-build
+      context: ../sdr-base/bookworm/build
+      args:
+        - DOCKER_REGISTRY=${DOCKER_REGISTRY}
+    image: ${DOCKER_REGISTRY}sdr-build-wsh:bookworm
+    deploy:
+      replicas: 0
+
+  sdr-runtime-base-bullseye:
+    build:
+      context: ../sdr-base/bullseye
     image: ${DOCKER_REGISTRY}sdr-base-wsh:bullseye
+    deploy:
+      replicas: 0
+
+  sdr-build-base-bullseye:
+    build:
+      context: ../sdr-base/bullseye/build
+    image: ${DOCKER_REGISTRY}sdr-build-wsh:bullseye
     deploy:
       replicas: 0
 
