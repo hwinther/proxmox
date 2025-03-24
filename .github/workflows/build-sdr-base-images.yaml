@@ -3,7 +3,7 @@ name: Publish sdr-base docker images
 on:
   workflow_dispatch:
   push:
-    branches: ["main", "feat/update-adsb"]
+    branches: ["main", "feat/add-runtime-images"]
     paths:
       - ".github/workflows/build-sdr-base-images.yaml"
       - "compose/templates/sdr-base/**"
@@ -14,7 +14,6 @@ permissions:
 env:
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   PACKAGE_NAME: sdr-base-build
-  PACKAGE_DESCRIPTION: "SDR base build image for WSH"
   PACKAGE_VENDOR: WSH
   WORKING_DIRECTORY: compose/templates/sdr-base
 
@@ -30,12 +29,22 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Build and push docker image
+      - name: Build and push runtime docker image
         uses: ./.github/actions/docker
         with:
           package_name: ${{ env.PACKAGE_NAME }}
-          package_description: "${{ env.PACKAGE_DESCRIPTION }} (for ${{ matrix.debian_release }})"
+          package_description: "WSH SDR base runtime image (for ${{ matrix.debian_release }})"
           package_vendor: ${{ env.PACKAGE_VENDOR }}
-          working_directory: ${{ env.WORKING_DIRECTORY }}/${{ matrix.debian_release }}-build
+          working_directory: ${{ env.WORKING_DIRECTORY }}/${{ matrix.debian_release }}
+          push_condition: ${{ github.event_name != 'pull_request' }}
+          tag: ${{ matrix.debian_release }}
+
+      - name: Build and push build docker image
+        uses: ./.github/actions/docker
+        with:
+          package_name: ${{ env.PACKAGE_NAME }}
+          package_description: "WSH SDR base build image (for ${{ matrix.debian_release }})"
+          package_vendor: ${{ env.PACKAGE_VENDOR }}
+          working_directory: ${{ env.WORKING_DIRECTORY }}/${{ matrix.debian_release }}/build
           push_condition: ${{ github.event_name != 'pull_request' }}
           tag: ${{ matrix.debian_release }}
