@@ -2,8 +2,6 @@ services:
   sdr-runtime-base:
     build:
       context: ../sdr-base/bookworm
-      args:
-        - DOCKER_REGISTRY=${DOCKER_REGISTRY}
     image: ${DOCKER_REGISTRY}sdr-base-wsh:bookworm
     deploy:
       replicas: 0
@@ -27,6 +25,8 @@ services:
   sdr-build-base-bullseye:
     build:
       context: ../sdr-base/bullseye/build
+      args:
+        - DOCKER_REGISTRY=${DOCKER_REGISTRY}
     image: ${DOCKER_REGISTRY}sdr-build-wsh:bullseye
     deploy:
       replicas: 0
