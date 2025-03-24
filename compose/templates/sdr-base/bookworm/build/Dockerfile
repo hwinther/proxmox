@@ -5,7 +5,17 @@ SHELL ["/bin/bash", "-x", "-o", "pipefail", "-c"]
 RUN apt-get update && \
     apt-get -y full-upgrade
 
-FROM base AS install-build-deps
+FROM base AS runtime
+ARG TARGETPLATFORM
+ARG TARGETARCH
+ARG TARGETVARIANT
+RUN echo ${TARGETPLATFORM} > /srv/target.platform && \
+    echo ${TARGETARCH} > /srv/target.arch && \
+    echo ${TARGETVARIANT} > /srv/target.variant && \
+    apt-get -y install curl gettext-base nano net-tools procps socat wget xz-utils && \
+    apt-get clean
+
+FROM runtime AS install-build-deps
 RUN apt-get -y install \
     autoconf \
     build-essential \
