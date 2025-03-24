@@ -1,8 +1,9 @@
-ARG DOCKER_REGISTRY
-FROM ${DOCKER_REGISTRY}sdr-base-wsh:bullseye AS base
+FROM debian:bullseye AS base
 LABEL maintainer="Hans Christian Winther-Sørensen <docker@wsh.no>"
 ENV DEBIAN_FRONTEND=noninteractive
 SHELL ["/bin/bash", "-x", "-o", "pipefail", "-c"]
+RUN apt-get update && \
+    apt-get -y full-upgrade
 
 FROM base AS install-build-deps
 RUN apt-get -y install \

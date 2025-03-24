@@ -9,8 +9,6 @@ services:
   sdr-build:
     build:
       context: ../sdr-base/bookworm/build
-      args:
-        - DOCKER_REGISTRY=${DOCKER_REGISTRY}
     image: ${DOCKER_REGISTRY}sdr-build-wsh:bookworm
     deploy:
       replicas: 0
@@ -25,8 +23,6 @@ services:
   sdr-build-bullseye:
     build:
       context: ../sdr-base/bullseye/build
-      args:
-        - DOCKER_REGISTRY=${DOCKER_REGISTRY}
     image: ${DOCKER_REGISTRY}sdr-build-wsh:bullseye
     deploy:
       replicas: 0
