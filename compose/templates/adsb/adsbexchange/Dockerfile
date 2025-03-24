@@ -1,10 +1,8 @@
 ARG DOCKER_REGISTRY=ghcr.io/hwinther/proxmox/
-FROM ${DOCKER_REGISTRY}sdr-build-wsh:bookworm AS base
-LABEL maintainer="Hans Christian Winther-Sørensen <docker@wsh.no>"
-ENV DEBIAN_FRONTEND=noninteractive
-SHELL ["/bin/bash", "-x", "-o", "pipefail", "-c"]
+FROM ${DOCKER_REGISTRY}sdr-base-wsh:bookworm AS runtime
+FROM ${DOCKER_REGISTRY}sdr-build-wsh:bookworm AS build
 
-FROM base AS build-adsbexchange
+FROM build AS build-adsbexchange
 
 COPY <<EOF /etc/default/adsbexchange
 INPUT="127.0.0.1:30005"
