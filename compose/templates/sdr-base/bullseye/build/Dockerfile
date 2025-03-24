@@ -1,3 +1,4 @@
+ARG DOCKER_REGISTRY
 FROM ${DOCKER_REGISTRY}sdr-base-wsh:bullseye AS base
 LABEL maintainer="Hans Christian Winther-Sørensen <docker@wsh.no>"
 ENV DEBIAN_FRONTEND=noninteractive
