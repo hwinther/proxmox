@@ -12,8 +12,9 @@ services:
     device_cgroup_rules:
       - "c 189:* rwm"
     tmpfs:
+      - /run:exec,size=8M
       - /tmp:size=8M
-      - /var/log:size=8M
+      - /var/log:size=16M
     ports:
       - 8801:80
     environment:
@@ -35,8 +36,9 @@ services:
       dump1090-fa:
         condition: service_healthy
     tmpfs:
+      - /run:exec,size=8M
       - /tmp:size=8M
-      - /var/log:size=8M
+      - /var/log:size=16M
     ports:
       - 8802:80
     volumes:
@@ -60,8 +62,9 @@ services:
       dump1090-fa:
         condition: service_healthy
     tmpfs:
+      - /run:exec,size=8M
       - /tmp:size=8M
-      - /var/log:size=8M
+      - /var/log:size=16M
     environment:
       LAT: ${LAT}
       LON: ${LON}
@@ -87,8 +90,9 @@ services:
       dump1090-fa:
         condition: service_healthy
     tmpfs:
+      - /run:exec,size=8M
       - /tmp:size=8M
-      - /var/log:size=8M
+      - /var/log:size=16M
     environment:
       FR24_KEY: ${FR24_KEY}
       # RECEIVER_TYPE: avr-tcp
@@ -107,8 +111,9 @@ services:
       dump1090-fa:
         condition: service_healthy
     tmpfs:
+      - /run:exec,size=8M
       - /tmp:size=8M
-      - /var/log:size=8M
+      - /var/log:size=16M
     # volumes:
     #   - dump1090-fa-data:/run/dump1090-fa
     environment:
@@ -132,8 +137,9 @@ services:
       dump1090-fa:
         condition: service_healthy
     tmpfs:
+      - /run:exec,size=8M
       - /tmp:size=8M
-      - /var/log:size=8M
+      - /var/log:size=16M
     environment:
       LAT: ${LAT}
       LON: ${LON}
