@@ -1,4 +1,4 @@
-FROM debian:bookworm AS base
+FROM debian:bullseye AS base
 LABEL maintainer="Hans Christian Winther-Sørensen <docker@wsh.no>"
 ENV DEBIAN_FRONTEND=noninteractive
 SHELL ["/bin/bash", "-x", "-o", "pipefail", "-c"]
@@ -47,16 +47,16 @@ RUN apt-get -y install \
     tcl8.6-dev && \
     apt-get clean
 
-FROM install-build-deps AS build-rtl-sdr
-WORKDIR /src
-RUN git clone https://github.com/osmocom/rtl-sdr.git
-WORKDIR /src/rtl-sdr
-RUN mkdir build && \
-    cd build && \
-    cmake ../ && \
-    make && \
-    make install && \
-    ldconfig && \
-    rm -rf /src/rtl-sdr
+# FROM install-build-deps AS build-rtl-sdr
+# WORKDIR /src
+# RUN git clone https://github.com/osmocom/rtl-sdr.git
+# WORKDIR /src/rtl-sdr
+# RUN mkdir build && \
+#     cd build && \
+#     cmake ../ && \
+#     make && \
+#     make install && \
+#     ldconfig && \
+#     rm -rf /src/rtl-sdr
 
 ENTRYPOINT [ "bash" ]

@@ -1,4 +1,4 @@
-FROM debian:bookworm AS base
+FROM debian:bookworm-slim AS base
 LABEL maintainer="Hans Christian Winther-Sørensen <docker@wsh.no>"
 ENV DEBIAN_FRONTEND=noninteractive
 SHELL ["/bin/bash", "-x", "-o", "pipefail", "-c"]
