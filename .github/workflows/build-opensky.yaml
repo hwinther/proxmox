@@ -5,7 +5,7 @@ on:
   push:
     branches: ["main"]
     paths:
-      - ".github/workflows/adsb/build-opensky.yaml"
+      - ".github/workflows/build-opensky.yaml"
       - "compose/templates/adsb/opensky/**"
 
 permissions:

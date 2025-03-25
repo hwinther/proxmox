@@ -5,7 +5,7 @@ on:
   push:
     branches: ["main"]
     paths:
-      - ".github/workflows/adsb/build-dump1090-fa.yaml"
+      - ".github/workflows/build-dump1090-fa.yaml"
       - "compose/templates/adsb/dump1090-fa/**"
 
 permissions:

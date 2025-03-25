@@ -5,7 +5,7 @@ on:
   push:
     branches: ["main"]
     paths:
-      - ".github/workflows/adsb/build-piaware.yaml"
+      - ".github/workflows/build-piaware.yaml"
       - "compose/templates/adsb/piaware/**"
 
 permissions:
