@@ -1,22 +1,22 @@
-name: Publish adsbexchange docker image
+name: Publish dump1090-fa docker image
 
 on:
   workflow_dispatch:
   push:
     branches: ["main"]
     paths:
-      - ".github/workflows/adsb/build-adsbexchange.yaml"
-      - "compose/templates/adsb/adsbexchange/**"
+      - ".github/workflows/adsb/build-dump1090-fa.yaml"
+      - "compose/templates/adsb/dump1090-fa/**"
 
 permissions:
   packages: write
 
 env:
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  PACKAGE_NAME: adsbexchange-wsh
+  PACKAGE_NAME: dump1090-fa-wsh
   PACKAGE_DESCRIPTION: "ADSB Exchange feeder for WSH"
   PACKAGE_VENDOR: WSH
-  WORKING_DIRECTORY: compose/templates/adsb/adsbexchange
+  WORKING_DIRECTORY: compose/templates/adsb/dump1090-fa
 
 jobs:
   publish-docker-image:
