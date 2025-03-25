@@ -12,9 +12,9 @@ services:
     device_cgroup_rules:
       - "c 189:* rwm"
     tmpfs:
-      - /run:exec,size=8M
+      #- /run:exec,size=8M
       - /tmp:size=8M
-      - /var/log:size=16M
+      - /var/log/lighttpd:size=16M
     ports:
       - 8801:80
     environment:
@@ -36,9 +36,9 @@ services:
       dump1090-fa:
         condition: service_healthy
     tmpfs:
-      - /run:exec,size=8M
+      #- /run:exec,size=8M
       - /tmp:size=8M
-      - /var/log:size=16M
+      - /var/log/nginx:size=16M
     ports:
       - 8802:80
     volumes:
@@ -62,9 +62,9 @@ services:
       dump1090-fa:
         condition: service_healthy
     tmpfs:
-      - /run:exec,size=8M
+      #- /run:exec,size=8M
       - /tmp:size=8M
-      - /var/log:size=16M
+      - /var/log/lighttpd:size=16M
     environment:
       LAT: ${LAT}
       LON: ${LON}
@@ -90,7 +90,7 @@ services:
       dump1090-fa:
         condition: service_healthy
     tmpfs:
-      - /run:exec,size=8M
+      #- /run:exec,size=8M
       - /tmp:size=8M
       - /var/log:size=16M
     environment:
@@ -111,7 +111,7 @@ services:
       dump1090-fa:
         condition: service_healthy
     tmpfs:
-      - /run:exec,size=8M
+      #- /run:exec,size=8M
       - /tmp:size=8M
       - /var/log:size=16M
     # volumes:
@@ -137,7 +137,7 @@ services:
       dump1090-fa:
         condition: service_healthy
     tmpfs:
-      - /run:exec,size=8M
+      #- /run:exec,size=8M
       - /tmp:size=8M
       - /var/log:size=16M
     environment:
