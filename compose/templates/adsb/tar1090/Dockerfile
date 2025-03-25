@@ -1,5 +1,20 @@
-ARG DOCKER_REGISTRY=ghcr.io/hwinther/proxmox/
-FROM ${DOCKER_REGISTRY}sdr-base-wsh:bookworm AS runtime
+FROM debian:bookworm AS base
+LABEL maintainer="Hans Christian Winther-Sørensen <docker@wsh.no>"
+ENV DEBIAN_FRONTEND=noninteractive
+SHELL ["/bin/bash", "-x", "-o", "pipefail", "-c"]
+RUN apt-get update && \
+    apt-get -y full-upgrade
+
+FROM base AS runtime
+RUN apt-get -y install curl gettext-base nano net-tools procps socat wget xz-utils && \
+    apt-get clean
+ENV S6_OVERLAY_VERSION="3.2.0.2"
+ARG ARCH="x86_64"
+ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz /tmp
+ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-${ARCH}.tar.xz /tmp
+RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz && \
+    tar -C / -Jxpf /tmp/s6-overlay-${ARCH}.tar.xz && \
+    rm -f /tmp/*.tar.xz
 
 FROM runtime AS install-dump1090-fa
 COPY tar1090-build-data /run/dump1090-fa

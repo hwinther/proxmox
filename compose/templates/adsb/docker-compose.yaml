@@ -30,8 +30,6 @@ services:
   dump1090-fa:
     build:
       context: dump1090-fa
-      args:
-        DOCKER_REGISTRY: ${DOCKER_REGISTRY}
     image: ${DOCKER_REGISTRY}dump1090-fa-wsh
     container_name: dump1090-fa
     volumes:
@@ -52,8 +50,6 @@ services:
   tar1090:
     build:
       context: tar1090
-      args:
-        DOCKER_REGISTRY: ${DOCKER_REGISTRY}
     image: ${DOCKER_REGISTRY}tar1090-wsh
     container_name: tar1090
     depends_on:
@@ -72,8 +68,6 @@ services:
   piaware:
     build:
       context: piaware
-      args:
-        DOCKER_REGISTRY: ${DOCKER_REGISTRY}
     image: ${DOCKER_REGISTRY}piaware-wsh
     container_name: piaware
     ports:
@@ -98,8 +92,6 @@ services:
   fr24:
     build:
       context: fr24
-      args:
-        DOCKER_REGISTRY: ${DOCKER_REGISTRY}
     image: ${DOCKER_REGISTRY}fr24-wsh
     container_name: fr24
     depends_on:
@@ -115,8 +107,6 @@ services:
   adsbexchange:
     build:
       context: adsbexchange
-      args:
-        DOCKER_REGISTRY: ${DOCKER_REGISTRY}
     image: ${DOCKER_REGISTRY}adsbexchange-wsh
     container_name: adsbexchange
     depends_on:
@@ -137,8 +127,6 @@ services:
   opensky:
     build:
       context: opensky
-      args:
-        DOCKER_REGISTRY: ${DOCKER_REGISTRY}
     image: ${DOCKER_REGISTRY}opensky-wsh
     container_name: opensky
     depends_on:
