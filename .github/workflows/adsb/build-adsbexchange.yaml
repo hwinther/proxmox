@@ -1,4 +1,4 @@
-name: Publish ais-catcher docker image
+name: Publish adsbexchange docker image
 
 on:
   workflow_dispatch:
