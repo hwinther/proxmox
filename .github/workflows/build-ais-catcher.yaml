@@ -34,3 +34,4 @@ jobs:
           package_vendor: ${{ env.PACKAGE_VENDOR }}
           working_directory: ${{ env.WORKING_DIRECTORY }}
           push_condition: ${{ github.event_name != 'pull_request' }}
+          latest_tag_enabled: "true"
