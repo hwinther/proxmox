@@ -1,29 +1,43 @@
 services:
   sdr-base:
     build:
-      context: ../sdr-base/bookworm
+      context: ../sdr-base/bookworm/base-image
     image: ${DOCKER_REGISTRY}sdr-base-wsh:bookworm
     deploy:
       replicas: 0
 
   sdr-build:
     build:
-      context: ../sdr-base/bookworm/build
+      context: ../sdr-base/bookworm/build-image
     image: ${DOCKER_REGISTRY}sdr-build-wsh:bookworm
     deploy:
       replicas: 0
 
   sdr-base-bullseye:
     build:
-      context: ../sdr-base/bullseye
+      context: ../sdr-base/bullseye/base-image
     image: ${DOCKER_REGISTRY}sdr-base-wsh:bullseye
     deploy:
       replicas: 0
 
   sdr-build-bullseye:
     build:
-      context: ../sdr-base/bullseye/build
+      context: ../sdr-base/bullseye/build-image
     image: ${DOCKER_REGISTRY}sdr-build-wsh:bullseye
+    deploy:
+      replicas: 0
+
+  sdr-base-buster:
+    build:
+      context: ../sdr-base/buster/base-image
+    image: ${DOCKER_REGISTRY}sdr-base-wsh:buster
+    deploy:
+      replicas: 0
+
+  sdr-build-buster:
+    build:
+      context: ../sdr-base/buster/build-image
+    image: ${DOCKER_REGISTRY}sdr-build-wsh:buster
     deploy:
       replicas: 0
 
