@@ -1,47 +1,11 @@
-FROM debian:buster AS base
-LABEL maintainer="Hans Christian Winther-Sørensen <docker@wsh.no>"
-ENV DEBIAN_FRONTEND=noninteractive
-SHELL ["/bin/bash", "-x", "-o", "pipefail", "-c"]
-RUN apt-get update && \
-    apt-get -y full-upgrade
+ARG DOCKER_REGISTRY=ghcr.io/hwinther/proxmox/
+FROM ${DOCKER_REGISTRY}sdr-base-wsh:buster AS runtime
+FROM ${DOCKER_REGISTRY}sdr-build-wsh:buster AS build
 
-FROM base AS runtime
-RUN apt-get -y install curl gettext-base nano net-tools procps socat wget xz-utils && \
-    apt-get clean
-ENV S6_OVERLAY_VERSION="3.2.0.2"
-ARG ARCH="x86_64"
-ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz /tmp
-ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-${ARCH}.tar.xz /tmp
-RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz && \
-    tar -C / -Jxpf /tmp/s6-overlay-${ARCH}.tar.xz && \
-    rm -f /tmp/*.tar.xz
-
-FROM runtime AS install-build-deps
+FROM build AS install-build-deps
 RUN apt-get -y install \
-    autoconf \
-    autoconf-archive \
-    build-essential \
-    cmake \
-    debhelper \
-    devscripts \
     dh-exec \
-    dh-systemd \
-    fakeroot \
-    git \
-    libbladerf-dev \
-    libboost-filesystem-dev \
-    libboost-program-options-dev \
-    libboost-regex-dev \
-    libboost-system-dev \
-    libhackrf-dev \
-    liblimesuite-dev \
-    libncurses5-dev \
-    librtlsdr-dev \
-    libusb-dev \
-    libz-dev \
-    openssl \
-    patchelf \
-    pkg-config && \
+    dh-systemd && \
     apt-get clean
 
 FROM install-build-deps AS build-opensky
