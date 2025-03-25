@@ -32,6 +32,10 @@ inputs:
     required: false
     description: Enable edge tag for default branch
     default: "false"
+  branch_tag_enabled:
+    required: false
+    description: Enable branch tag
+    default: "false"
   latest_tag_enabled:
     required: false
     description: Enable latest tag for default branch
@@ -47,7 +51,7 @@ runs:
         images: ghcr.io/${{ github.repository }}/${{ inputs.package_name }}
         tags: |
           type=edge,branch=main,enable=${{ github.ref == 'refs/heads/main' && inputs.edge_tag_enabled == 'true' }}
-          type=ref,event=tag
+          type=ref,event=tag,enable=${{ inputs.branch_tag_enabled == 'true' && github.event_name == 'pull_request' }}
           type=ref,event=branch
           # set latest tag for default branch if tag has not been provided
           type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' && inputs.latest_tag_enabled == 'true' }}
