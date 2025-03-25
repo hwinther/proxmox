@@ -11,6 +11,9 @@ services:
       - /dev/bus/usb:/dev/bus/usb
     device_cgroup_rules:
       - "c 189:* rwm"
+    tmpfs:
+      - /tmp:size=8M
+      - /var/log:size=8M
     ports:
       - 8801:80
     environment:
@@ -31,6 +34,9 @@ services:
     depends_on:
       dump1090-fa:
         condition: service_healthy
+    tmpfs:
+      - /tmp:size=8M
+      - /var/log:size=8M
     ports:
       - 8802:80
     volumes:
@@ -53,6 +59,9 @@ services:
     depends_on:
       dump1090-fa:
         condition: service_healthy
+    tmpfs:
+      - /tmp:size=8M
+      - /var/log:size=8M
     environment:
       LAT: ${LAT}
       LON: ${LON}
@@ -77,6 +86,9 @@ services:
     depends_on:
       dump1090-fa:
         condition: service_healthy
+    tmpfs:
+      - /tmp:size=8M
+      - /var/log:size=8M
     environment:
       FR24_KEY: ${FR24_KEY}
       # RECEIVER_TYPE: avr-tcp
@@ -94,6 +106,9 @@ services:
     depends_on:
       dump1090-fa:
         condition: service_healthy
+    tmpfs:
+      - /tmp:size=8M
+      - /var/log:size=8M
     # volumes:
     #   - dump1090-fa-data:/run/dump1090-fa
     environment:
@@ -116,6 +131,9 @@ services:
     depends_on:
       dump1090-fa:
         condition: service_healthy
+    tmpfs:
+      - /tmp:size=8M
+      - /var/log:size=8M
     environment:
       LAT: ${LAT}
       LON: ${LON}
