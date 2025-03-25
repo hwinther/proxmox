@@ -3,20 +3,20 @@ name: Publish ais-catcher docker image
 on:
   workflow_dispatch:
   push:
-    branches: ["main", "feat/ais-package"]
+    branches: ["main", "fix/compose-file-paths"]
     paths:
-      - ".github/workflows/build-ais-catcher.yaml"
-      - "compose/templates/ais/ais-catcher/**"
+      - ".github/workflows/adsb/build-adsbexchange.yaml"
+      - "compose/templates/adsb/adsbexchange/**"
 
 permissions:
   packages: write
 
 env:
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  PACKAGE_NAME: ais-catcher-wsh
-  PACKAGE_DESCRIPTION: "AIS catcher for WSH"
+  PACKAGE_NAME: adsbexchange-wsh
+  PACKAGE_DESCRIPTION: "ADSB Exchange feeder for WSH"
   PACKAGE_VENDOR: WSH
-  WORKING_DIRECTORY: compose/templates/ais/ais-catcher
+  WORKING_DIRECTORY: compose/templates/adsb/adsbexchange
 
 jobs:
   publish-docker-image:

@@ -22,7 +22,9 @@ RUN mkdir /tmp/fr24feed && \
     else \
     echo "Unsupported architecture: $ARCH" && exit 1; \
     fi && \
-    /opt/fr24feed/fr24feed --version
+    /opt/fr24feed/fr24feed --version && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 FROM install-flightradar24 AS final
 COPY --chmod=755 start-fr24feed.sh /srv/start-fr24feed.sh

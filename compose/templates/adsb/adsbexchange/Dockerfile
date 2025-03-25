@@ -53,7 +53,8 @@ RUN mkdir -p /usr/local/share/adsbexchange && \
 
 FROM runtime AS install-adsbexchange
 RUN apt-get -y install libncurses6 && \
-    apt-get clean
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 COPY --from=build-adsbexchange /usr/local/share/adsbexchange /usr/local/share/adsbexchange
 
 FROM install-adsbexchange AS final
