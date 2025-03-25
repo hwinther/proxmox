@@ -7,7 +7,8 @@ RUN apt-get -y install \
     autoconf-archive \
     dh-exec \
     dh-systemd && \
-    apt-get clean
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 FROM install-build-deps AS build-opensky
 WORKDIR /src
