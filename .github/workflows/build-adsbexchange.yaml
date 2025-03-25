@@ -5,7 +5,7 @@ on:
   push:
     branches: ["main"]
     paths:
-      - ".github/workflows/adsb/build-adsbexchange.yaml"
+      - ".github/workflows/build-adsbexchange.yaml"
       - "compose/templates/adsb/adsbexchange/**"
 
 permissions:

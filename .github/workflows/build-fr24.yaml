@@ -5,7 +5,7 @@ on:
   push:
     branches: ["main"]
     paths:
-      - ".github/workflows/adsb/build-fr24.yaml"
+      - ".github/workflows/build-fr24.yaml"
       - "compose/templates/adsb/fr24/**"
 
 permissions:
