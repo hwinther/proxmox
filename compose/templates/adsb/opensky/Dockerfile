@@ -4,6 +4,7 @@ FROM ${DOCKER_REGISTRY}sdr-build-wsh:buster AS build
 
 FROM build AS install-build-deps
 RUN apt-get -y install \
+    autoconf-archive \
     dh-exec \
     dh-systemd && \
     apt-get clean
