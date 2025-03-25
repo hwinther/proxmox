@@ -38,12 +38,6 @@ RUN apt-get -y install \
     openssl \
     patchelf \
     pkg-config \
-    python3-build \
-    python3-dev \
-    python3-pip \
-    python3-setuptools \
-    python3-venv \
-    python3-wheel \
     tcl8.6-dev && \
     apt-get clean
 
