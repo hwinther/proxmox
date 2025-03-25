@@ -1,0 +1,37 @@
+name: Publish tar1090 docker image
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/adsb/build-tar1090.yaml"
+      - "compose/templates/adsb/tar1090/**"
+
+permissions:
+  packages: write
+
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  PACKAGE_NAME: tar1090-wsh
+  PACKAGE_DESCRIPTION: "ADSB Exchange feeder for WSH"
+  PACKAGE_VENDOR: WSH
+  WORKING_DIRECTORY: compose/templates/adsb/tar1090
+
+jobs:
+  publish-docker-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build and push docker image
+        uses: ./.github/actions/docker
+        with:
+          package_name: ${{ env.PACKAGE_NAME }}
+          package_description: ${{ env.PACKAGE_DESCRIPTION }}
+          package_vendor: ${{ env.PACKAGE_VENDOR }}
+          working_directory: ${{ env.WORKING_DIRECTORY }}
+          push_condition: ${{ github.event_name != 'pull_request' }}
+          latest_tag_enabled: "true"
