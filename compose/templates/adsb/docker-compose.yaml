@@ -14,7 +14,7 @@ services:
     tmpfs:
       #- /run:exec,size=8M
       - /tmp:size=8M
-      - /var/log/lighttpd:size=16M
+      - /var/log/lighttpd:size=16M,mode=777
     ports:
       - 8801:80
     environment:
@@ -38,7 +38,7 @@ services:
     tmpfs:
       #- /run:exec,size=8M
       - /tmp:size=8M
-      - /var/log/nginx:size=16M
+      - /var/log/nginx:size=16M,mode=777
     ports:
       - 8802:80
     volumes:
@@ -64,7 +64,7 @@ services:
     tmpfs:
       #- /run:exec,size=8M
       - /tmp:size=8M
-      - /var/log/lighttpd:size=16M
+      - /var/log/lighttpd:size=16M,mode=777
     environment:
       LAT: ${LAT}
       LON: ${LON}
