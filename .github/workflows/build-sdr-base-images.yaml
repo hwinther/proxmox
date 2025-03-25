@@ -21,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        debian_release: ["bookworm", "bullseye"]
+        debian_release: ["bookworm", "bullseye", "buster"]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -34,7 +34,7 @@ jobs:
           package_name: sdr-base-wsh
           package_description: "WSH SDR base runtime image (for ${{ matrix.debian_release }})"
           package_vendor: ${{ env.PACKAGE_VENDOR }}
-          working_directory: ${{ env.WORKING_DIRECTORY }}/${{ matrix.debian_release }}
+          working_directory: ${{ env.WORKING_DIRECTORY }}/${{ matrix.debian_release }}/base-image
           push_condition: ${{ github.event_name != 'pull_request' }}
           tag: ${{ matrix.debian_release }}
 
@@ -44,6 +44,6 @@ jobs:
           package_name: sdr-build-wsh
           package_description: "WSH SDR base build image (for ${{ matrix.debian_release }})"
           package_vendor: ${{ env.PACKAGE_VENDOR }}
-          working_directory: ${{ env.WORKING_DIRECTORY }}/${{ matrix.debian_release }}/build
+          working_directory: ${{ env.WORKING_DIRECTORY }}/${{ matrix.debian_release }}/build-image
           push_condition: ${{ github.event_name != 'pull_request' }}
           tag: ${{ matrix.debian_release }}
