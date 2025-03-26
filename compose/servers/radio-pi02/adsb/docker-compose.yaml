@@ -1,0 +1,107 @@
+services:
+  dump1090-fa:
+    image: ${DOCKER_REGISTRY}dump1090-fa-wsh
+    container_name: dump1090-fa
+    volumes:
+      - dump1090-fa-data:/run/dump1090-fa
+      - /dev/bus/usb:/dev/bus/usb
+    device_cgroup_rules:
+      - "c 189:* rwm"
+    ports:
+      - 8801:80
+    environment:
+      DEVICE_TYPE: rtlsdr
+      DEVICE_INDEX: 00001090
+      LAT: ${LAT}
+      LON: ${LON}
+      EXTRA_ARGS: --quiet
+    restart: always
+
+  tar1090:
+    image: ${DOCKER_REGISTRY}tar1090-wsh
+    container_name: tar1090
+    depends_on:
+      dump1090-fa:
+        condition: service_healthy
+    ports:
+      - 8802:80
+    volumes:
+      - dump1090-fa-data:/run/dump1090-fa
+    environment:
+      AISCATCHER_SERVER: ${AISCATCHER_SERVER}
+      AISCATCHER_REFRESH: 15
+      HEYWHATSTHAT_ID: ${HEYWHATSTHAT_ID}
+    restart: always
+
+  piaware:
+    image: ${DOCKER_REGISTRY}piaware-wsh
+    container_name: piaware
+    ports:
+      - 8803:80
+    depends_on:
+      dump1090-fa:
+        condition: service_healthy
+    environment:
+      LAT: ${LAT}
+      LON: ${LON}
+      FEEDER_ID: ${PIAWARE_FEEDER_ID}
+      RECEIVER_HOST: localhost
+      # RECEIVER_TYPE: other
+      # RECEIVER_HOST: dump1090-fa
+      # RECEIVER_PORT: 30005
+      # MLAT_BEAST_HOST: dump1090-fa
+      # MLAT_BEAST_PORT: 30104
+      SKYAWARE_URL: ${SKYAWARE_URL}
+      # DEBUG: true
+    restart: always
+
+  fr24:
+    image: ${DOCKER_REGISTRY}fr24-wsh
+    container_name: fr24
+    depends_on:
+      dump1090-fa:
+        condition: service_healthy
+    environment:
+      FR24_KEY: ${FR24_KEY}
+      # RECEIVER_TYPE: avr-tcp
+      # RECEIVER_HOST: dump1090-fa
+      # RECEIVER_PORT: 30002
+    restart: always
+
+  adsbexchange:
+    image: ${DOCKER_REGISTRY}adsbexchange-wsh
+    container_name: adsbexchange
+    depends_on:
+      dump1090-fa:
+        condition: service_healthy
+    # volumes:
+    #   - dump1090-fa-data:/run/dump1090-fa
+    environment:
+      LAT: ${LAT}
+      LON: ${LON}
+      # RECEIVER_HOST: dump1090-fa
+      # RECEIVER_PORT: 30005
+      # MLAT_BEAST_HOST: dump1090-fa
+      # MLAT_BEAST_PORT: 30104
+      ADSBX_UUID: ${ADSBX_UUID}
+    restart: always
+
+  opensky:
+    image: ${DOCKER_REGISTRY}opensky-wsh
+    container_name: opensky
+    depends_on:
+      dump1090-fa:
+        condition: service_healthy
+    environment:
+      LAT: ${LAT}
+      LON: ${LON}
+      ALT: ${ALT}
+      OPENSKY_USERNAME: ${OPENSKY_USERNAME}
+      OPENSKY_SERIAL: ${OPENSKY_SERIAL}
+      # RECEIVER_HOST: dump1090-fa
+      # RECEIVER_PORT: 30005
+      # OPENSKY_DEVICE_TYPE: default
+    restart: always
+
+volumes:
+  dump1090-fa-data:
