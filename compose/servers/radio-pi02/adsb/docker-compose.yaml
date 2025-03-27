@@ -16,6 +16,8 @@ services:
       LON: ${LON}
       EXTRA_ARGS: --quiet
     restart: always
+    labels:
+      - "traefik.http.services.public_web.loadbalancer.server.port=80"
 
   tar1090:
     image: ${DOCKER_REGISTRY}tar1090-wsh
@@ -32,6 +34,8 @@ services:
       AISCATCHER_REFRESH: 15
       HEYWHATSTHAT_ID: ${HEYWHATSTHAT_ID}
     restart: always
+    labels:
+      - "traefik.http.services.public_web.loadbalancer.server.port=80"
 
   piaware:
     image: ${DOCKER_REGISTRY}piaware-wsh
@@ -54,6 +58,8 @@ services:
       SKYAWARE_URL: ${SKYAWARE_URL}
       # DEBUG: true
     restart: always
+    labels:
+      - "traefik.http.services.public_web.loadbalancer.server.port=80"
 
   fr24:
     image: ${DOCKER_REGISTRY}fr24-wsh
