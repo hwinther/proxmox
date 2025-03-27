@@ -7,8 +7,8 @@ services:
       - /dev/bus/usb:/dev/bus/usb
     device_cgroup_rules:
       - "c 189:* rwm"
-    ports:
-      - 8801:80
+    # ports:
+    #   - 8801:80
     environment:
       DEVICE_TYPE: rtlsdr
       DEVICE_INDEX: 00001090
@@ -23,8 +23,8 @@ services:
     depends_on:
       dump1090-fa:
         condition: service_healthy
-    ports:
-      - 8802:80
+    # ports:
+    #   - 8802:80
     volumes:
       - dump1090-fa-data:/run/dump1090-fa
     environment:
@@ -36,8 +36,8 @@ services:
   piaware:
     image: ${DOCKER_REGISTRY}piaware-wsh
     container_name: piaware
-    ports:
-      - 8803:80
+    # ports:
+    #   - 8803:80
     depends_on:
       dump1090-fa:
         condition: service_healthy
