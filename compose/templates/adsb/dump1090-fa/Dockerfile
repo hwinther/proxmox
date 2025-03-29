@@ -44,6 +44,8 @@ EOF
 RUN touch /etc/s6-overlay/s6-rc.d/user/contents.d/lighttpd
 #endregion lighttpd
 
+# Lighttpd HTTP server
+EXPOSE 80
 # TCP raw output listen port
 EXPOSE 30002
 # TCP BaseStation output listen port
@@ -53,8 +55,6 @@ EXPOSE 30004
 EXPOSE 30104
 # TCP Beast output listen port
 EXPOSE 30005
-# Lighttpd HTTP server
-EXPOSE 80
 
 HEALTHCHECK --start-period=5s --interval=30s --timeout=5s --retries=3 CMD ["bash", "-c", "cat < /dev/null > /dev/tcp/localhost/30005"]
 ENTRYPOINT [ "/init" ]
