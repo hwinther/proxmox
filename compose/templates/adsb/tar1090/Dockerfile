@@ -34,8 +34,8 @@ ENV GZIP_LVL=1
 ENV ENABLE_978=no
 ENV URL_978=""
 
-# nginx http port
-EXPOSE 8080
+# Nginx http port
+EXPOSE 80
 
 HEALTHCHECK --start-period=5s --interval=30s --timeout=5s --retries=3 CMD ["bash", "-c", "cat < /dev/null > /dev/tcp/localhost/80"]
 ENTRYPOINT [ "/init" ]

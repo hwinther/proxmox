@@ -16,11 +16,14 @@ RUN echo ${TARGETPLATFORM} > /srv/target.platform && \
     echo ${TARGETARCH} > /srv/target.arch && \
     echo ${TARGETVARIANT} > /srv/target.variant
 
-ENV AIS_CATCHER_PORT="8100"
+ENV AIS_CATCHER_PORT=8100
 ENV STATION_NAME="AIS-Catcher"
 ENV STATION_URL="https://google.com"
 ENV DEVICE_INDEX=00000001
 ENV BIASTEE=off
+
+# AIS-Catcher http port
+EXPOSE $AIS_CATCHER_PORT
 
 HEALTHCHECK --start-period=5s --interval=30s --timeout=5s --retries=3 CMD ["bash", "-c", "cat < /dev/null > /dev/tcp/localhost/$AIS_CATCHER_PORT"]
 ENTRYPOINT [ "/srv/start-ais-catcher.sh" ]

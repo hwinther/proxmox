@@ -87,12 +87,12 @@ ENV MLAT_BEAST_HOST="dump1090-fa"
 ENV MLAT_BEAST_PORT="30104"
 ENV DEBUG="false"
 
+# Lighttpd HTTP server
+EXPOSE 80
 # Beast output listen port
 EXPOSE 30105
 # Basestation output listen port
 EXPOSE 30106
-# Lighttpd HTTP server
-EXPOSE 80
 
 HEALTHCHECK --start-period=5s --interval=30s --timeout=5s --retries=3 CMD ["bash", "-c", "if [ -f /run/piaware/piaware.pid ]; then PID=$(cat /run/piaware/piaware.pid); if ps -p $PID > /dev/null; then exit 0; else exit 1; fi; else exit 1; fi"]
 ENTRYPOINT [ "/init" ]
