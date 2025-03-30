@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile_inline:
-        FROM nginx:latest
+        FROM nginx:latest AS base
         RUN echo '<html>\n\
         <body>\n\
             <h1>Welcome to Nginx1</h1>\n\
@@ -19,7 +19,7 @@ services:
     build:
       context: .
       dockerfile_inline:
-        FROM nginx:latest
+        FROM nginx:latest AS base
         RUN echo '<html>\n\
         <body>\n\
             <h1>Welcome to Nginx2</h1>\n\
@@ -35,7 +35,7 @@ services:
     build:
       context: .
       dockerfile_inline:
-        FROM nginx:latest
+        FROM nginx:latest AS base
         RUN echo '<html>\n\
         <body>\n\
             <h1>Welcome to Nginx3</h1>\n\
