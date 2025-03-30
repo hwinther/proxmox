@@ -1,28 +1,52 @@
 services:
   nginx1:
-    image: nginx:latest
+    build:
+      context: .
+      dockerfile_inline:
+        FROM nginx:latest
+        RUN echo '<html>\n\
+        <body>\n\
+            <h1>Welcome to Nginx1</h1>\n\
+        </body>\n\
+        </html>' > /usr/share/nginx/html/index.html
     container_name: nginx1
     ports:
       - "8081:80"
-    volumes:
-      - ./nginx1/index.html:/usr/share/nginx/html/index.html
+    # volumes:
+    #   - ./nginx1/index.html:/usr/share/nginx/html/index.html
 
   nginx2:
-    image: nginx:latest
+    build:
+      context: .
+      dockerfile_inline:
+        FROM nginx:latest
+        RUN echo '<html>\n\
+        <body>\n\
+            <h1>Welcome to Nginx2</h1>\n\
+        </body>\n\
+        </html>' > /usr/share/nginx/html/index.html
     container_name: nginx2
     ports:
       - "8082:80"
-    volumes:
-      - ./nginx2/index.html:/usr/share/nginx/html/index.html
+    # volumes:
+    #   - ./nginx2/index.html:/usr/share/nginx/html/index.html
 
   nginx3:
-    image: nginx:latest
+    build:
+      context: .
+      dockerfile_inline:
+        FROM nginx:latest
+        RUN echo '<html>\n\
+        <body>\n\
+            <h1>Welcome to Nginx3</h1>\n\
+        </body>\n\
+        </html>' > /usr/share/nginx/html/index.html
     container_name: nginx3
     ports:
       - "8083:80"
-    volumes:
-      - ./nginx3/footer.html:/usr/share/nginx/html/footer.html
-      - ./nginx3/index.html:/usr/share/nginx/html/index.html
-      - ./nginx3/main.html:/usr/share/nginx/html/main.html
-      - ./nginx3/menu.html:/usr/share/nginx/html/menu.html
-      - ./nginx3/top.html:/usr/share/nginx/html/top.html
+  #   volumes:
+  #     - ./nginx3/footer.html:/usr/share/nginx/html/footer.html
+  #     - ./nginx3/index.html:/usr/share/nginx/html/index.html
+  #     - ./nginx3/main.html:/usr/share/nginx/html/main.html
+  #     - ./nginx3/menu.html:/usr/share/nginx/html/menu.html
+  #     - ./nginx3/top.html:/usr/share/nginx/html/top.html
