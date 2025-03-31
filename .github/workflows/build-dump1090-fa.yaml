@@ -12,7 +12,7 @@ permissions:
   packages: write
 
 concurrency:
-  group: ${{ github.ref }}
+  group: ${{ github.ref }}-dump1090-fa
   cancel-in-progress: true
 
 env:

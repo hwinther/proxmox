@@ -12,7 +12,7 @@ permissions:
   packages: write
 
 concurrency:
-  group: ${{ github.ref }}
+  group: ${{ github.ref }}-adsbexchange
   cancel-in-progress: true
 
 env:
