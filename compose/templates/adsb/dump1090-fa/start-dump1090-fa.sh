@@ -20,6 +20,9 @@ else
     echo "Redirect for /tar1090/ already exists in $CONFIG_PATH"
 fi
 
+echo Dump1090-fa version:
+/usr/bin/dump1090-fa --version
+
 echo Starting dump1090-fa
 
 /usr/bin/dump1090-fa \
