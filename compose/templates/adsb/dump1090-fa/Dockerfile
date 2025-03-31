@@ -44,6 +44,12 @@ EOF
 RUN touch /etc/s6-overlay/s6-rc.d/user/contents.d/lighttpd
 #endregion lighttpd
 
+ENV DEVICE_TYPE="rtlsdr"
+ENV DEVICE_INDEX="00000000"
+ENV LAT="50.0"
+ENV LON="10"
+ENV EXTRA_ARGS="--quiet"
+
 # Lighttpd HTTP server
 EXPOSE 80
 # TCP raw output listen port
