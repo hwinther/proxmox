@@ -15,20 +15,16 @@ RUN cp -f /src/dump1090-fa/*.deb /opt/packages
 FROM runtime AS install
 COPY --from=build-dump1090-fa /opt/packages /opt/packages
 RUN apt -y install /opt/packages/*.deb && \
+    rm -f /opt/packages/*.deb && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
-COPY --from=build-dump1090-fa /usr/local/bin/ /usr/local/bin/
-COPY --from=build-dump1090-fa /usr/local/include/ /usr/local/include/
-COPY --from=build-dump1090-fa /usr/local/lib/ /usr/local/lib/
-
-FROM install AS final
 RUN mkdir -p /etc/dump1090-fa && mkdir -p /run/dump1090-fa
 COPY --from=build-dump1090-fa /src/dump1090-fa/wisdom.aarch64 /opt/dump1090-fa/wisdom.aarch64
 COPY --from=build-dump1090-fa /src/dump1090-fa/wisdom.arm /opt/dump1090-fa/wisdom.arm
 COPY --from=build-dump1090-fa /src/dump1090-fa/wisdom.generic /opt/dump1090-fa/wisdom.generic
 COPY --from=build-dump1090-fa /src/dump1090-fa/wisdom.x86 /opt/dump1090-fa/wisdom.x86
 # This can be used to generate the wisdom file for the current architecture
-COPY --from=build-dump1090-fa /src/dump1090-fa/package-bullseye/starch-benchmark /usr/local/bin/starch-benchmark
+# RUN /usr/share/dump1090-fa/generate-wisdom > /etc/dump1090-fa/wisdom.local
 RUN case "${TARGETARCH}" in \
     amd64) cp /opt/dump1090-fa/wisdom.x86 /etc/dump1090-fa/wisdom.local ;; \
     arm64) cp /opt/dump1090-fa/wisdom.aarch64 /etc/dump1090-fa/wisdom.local ;; \
