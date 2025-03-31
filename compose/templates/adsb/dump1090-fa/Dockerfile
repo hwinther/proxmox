@@ -23,6 +23,7 @@ COPY --from=build-dump1090-fa /src/dump1090-fa/wisdom.aarch64 /opt/dump1090-fa/w
 COPY --from=build-dump1090-fa /src/dump1090-fa/wisdom.arm /opt/dump1090-fa/wisdom.arm
 COPY --from=build-dump1090-fa /src/dump1090-fa/wisdom.generic /opt/dump1090-fa/wisdom.generic
 COPY --from=build-dump1090-fa /src/dump1090-fa/wisdom.x86 /opt/dump1090-fa/wisdom.x86
+COPY wisdom.rpi3b /opt/dump1090-fa/wisdom.rpi3b
 # This can be used to generate the wisdom file for the current architecture
 # RUN /usr/share/dump1090-fa/generate-wisdom > /etc/dump1090-fa/wisdom.local
 ARG TARGETARCH
