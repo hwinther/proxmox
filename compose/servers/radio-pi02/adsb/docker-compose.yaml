@@ -14,7 +14,7 @@ services:
       DEVICE_INDEX: 00001090
       LAT: ${LAT}
       LON: ${LON}
-      EXTRA_ARGS: --quiet
+      EXTRA_ARGS: --quiet --wisdom /opt/dump1090-fa/wisdom.rpi3b
     restart: always
     # labels:
     #   - "traefik.http.services.public_web.loadbalancer.server.port=80"
