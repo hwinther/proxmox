@@ -6,6 +6,20 @@
 # --net-bi-port <ports>    TCP Beast input listen ports  (default: 30004,30104)
 # --net-bo-port <ports>    TCP Beast output listen ports (default: 30005)
 
+REDIRECT='url.redirect = ("/" => "/tar1090/")'
+CONFIG_PATH="/etc/lighttpd/lighttpd.conf"
+if ! grep -q "$REDIRECT" $CONFIG_PATH; then
+    echo "Adding redirect rule to $CONFIG_PATH"
+    echo "$REDIRECT" >> $CONFIG_PATH
+
+    echo DEBUG: new content:
+    echo "----------------------------------------"
+    echo "$(cat $CONFIG_PATH)"
+    echo "----------------------------------------"
+else
+    echo "Redirect for /tar1090/ already exists in $CONFIG_PATH"
+fi
+
 echo Starting dump1090-fa
 
 /usr/bin/dump1090-fa \
