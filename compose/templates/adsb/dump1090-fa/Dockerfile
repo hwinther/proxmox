@@ -21,16 +21,31 @@ COPY --from=build-dump1090-fa /usr/local/bin/ /usr/local/bin/
 COPY --from=build-dump1090-fa /usr/local/include/ /usr/local/include/
 COPY --from=build-dump1090-fa /usr/local/lib/ /usr/local/lib/
 
-FROM install AS optimize
-RUN mkdir -p /opt/dump1090-fa
-##RUN /usr/share/dump1090-fa/generate-wisdom && cp -f /tmp/*/wisdom.local /opt/dump1090-fa/wisdom.local
-## OR
-COPY --from=build-dump1090-fa /src/dump1090-fa/wisdom.generic wisdom.generic
-RUN cp -f wisdom.generic /opt/dump1090-fa/wisdom.local
+# FROM install AS optimize
+# RUN mkdir -p /opt/dump1090-fa
+# ##RUN /usr/share/dump1090-fa/generate-wisdom && cp -f /tmp/*/wisdom.local /opt/dump1090-fa/wisdom.local
+# ## OR
+# COPY --from=build-dump1090-fa /src/dump1090-fa/wisdom.aarch64 /opt/dump1090-fa/wisdom.aarch64
+# COPY --from=build-dump1090-fa /src/dump1090-fa/wisdom.arm /opt/dump1090-fa/wisdom.arm
+# COPY --from=build-dump1090-fa /src/dump1090-fa/wisdom.generic /opt/dump1090-fa/wisdom.generic
+# COPY --from=build-dump1090-fa /src/dump1090-fa/wisdom.x86 /opt/dump1090-fa/wisdom.x86
+# COPY --from=build-dump1090-fa /usr/share/dump1090-fa/generate-wisdom /usr/share/dump1090-fa/generate-wisdom
+# RUN cp -f wisdom.generic /opt/dump1090-fa/wisdom.local
 
 FROM install AS final
 RUN mkdir -p /etc/dump1090-fa && mkdir -p /run/dump1090-fa
-COPY --from=optimize /opt/dump1090-fa/wisdom.local /etc/dump1090-fa/wisdom.local
+#COPY --from=optimize /opt/dump1090-fa/wisdom.local /etc/dump1090-fa/wisdom.local
+COPY --from=build-dump1090-fa /src/dump1090-fa/wisdom.aarch64 /opt/dump1090-fa/wisdom.aarch64
+COPY --from=build-dump1090-fa /src/dump1090-fa/wisdom.arm /opt/dump1090-fa/wisdom.arm
+COPY --from=build-dump1090-fa /src/dump1090-fa/wisdom.generic /opt/dump1090-fa/wisdom.generic
+COPY --from=build-dump1090-fa /src/dump1090-fa/wisdom.x86 /opt/dump1090-fa/wisdom.x86
+# This can be used to generate the wisdom file for the current architecture
+COPY --from=build-dump1090-fa /usr/share/dump1090-fa/generate-wisdom /usr/share/dump1090-fa/generate-wisdom
+RUN case "${TARGETARCH}" in \
+    amd64) cp /opt/dump1090-fa/wisdom.x86 /etc/dump1090-fa/wisdom.local ;; \
+    arm64) cp /opt/dump1090-fa/wisdom.aarch64 /etc/dump1090-fa/wisdom.local ;; \
+    *) echo "Unsupported TARGETARCH: $TARGETARCH" && exit 1 ;; \
+    esac
 COPY --chmod=755 start-dump1090-fa.sh /srv/start-dump1090-fa.sh
 
 #region lighttpd
