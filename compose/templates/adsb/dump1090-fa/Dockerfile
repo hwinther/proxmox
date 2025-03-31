@@ -28,7 +28,7 @@ COPY --from=build-dump1090-fa /src/dump1090-fa/wisdom.arm /opt/dump1090-fa/wisdo
 COPY --from=build-dump1090-fa /src/dump1090-fa/wisdom.generic /opt/dump1090-fa/wisdom.generic
 COPY --from=build-dump1090-fa /src/dump1090-fa/wisdom.x86 /opt/dump1090-fa/wisdom.x86
 # This can be used to generate the wisdom file for the current architecture
-COPY --from=build-dump1090-fa /usr/share/dump1090-fa/generate-wisdom /usr/share/dump1090-fa/generate-wisdom
+COPY --from=build-dump1090-fa/src/dump1090-fa/package-bullseye/starch-benchmark /usr/local/bin/starch-benchmark
 RUN case "${TARGETARCH}" in \
     amd64) cp /opt/dump1090-fa/wisdom.x86 /etc/dump1090-fa/wisdom.local ;; \
     arm64) cp /opt/dump1090-fa/wisdom.aarch64 /etc/dump1090-fa/wisdom.local ;; \
