@@ -3,13 +3,17 @@ name: Publish sdr-base docker images
 on:
   workflow_dispatch:
   push:
-    branches: ["main", "feat/add-runtime-images"]
+    branches: ["main"]
     paths:
       - ".github/workflows/build-sdr-base-images.yaml"
       - "compose/templates/sdr-base/**"
 
 permissions:
   packages: write
+
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
