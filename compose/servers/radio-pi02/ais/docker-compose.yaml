@@ -23,5 +23,5 @@ services:
       AIS_CATCHER_PORT: 80
     labels:
       - "traefik.http.services.public_web.loadbalancer.server.port=80"
-      - "traefik.http.middlewares.cors.headers.customResponseHeaders.Access-Control-Allow-Origin=https://tar1090.ct1.wsh.no"
+      - "traefik.http.middlewares.cors.headers.customResponseHeaders.Access-Control-Allow-Origin=https://tar1090.r2.wsh.no"
       - "traefik.http.routers.myrouter.middlewares=cors"
