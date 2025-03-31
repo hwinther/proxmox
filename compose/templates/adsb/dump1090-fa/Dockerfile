@@ -25,6 +25,7 @@ COPY --from=build-dump1090-fa /src/dump1090-fa/wisdom.generic /opt/dump1090-fa/w
 COPY --from=build-dump1090-fa /src/dump1090-fa/wisdom.x86 /opt/dump1090-fa/wisdom.x86
 # This can be used to generate the wisdom file for the current architecture
 # RUN /usr/share/dump1090-fa/generate-wisdom > /etc/dump1090-fa/wisdom.local
+ARG TARGETARCH
 RUN case "${TARGETARCH}" in \
     amd64) cp /opt/dump1090-fa/wisdom.x86 /etc/dump1090-fa/wisdom.local ;; \
     arm64) cp /opt/dump1090-fa/wisdom.aarch64 /etc/dump1090-fa/wisdom.local ;; \
