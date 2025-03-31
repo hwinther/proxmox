@@ -11,6 +11,10 @@ on:
 permissions:
   packages: write
 
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   PACKAGE_NAME: piaware-wsh
