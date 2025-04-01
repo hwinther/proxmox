@@ -10,6 +10,11 @@ REDIRECT='url.redirect = ("/" => "/tar1090/")'
 CONFIG_PATH="/etc/lighttpd/lighttpd.conf"
 if ! grep -q "$REDIRECT" $CONFIG_PATH; then
     echo "Adding redirect rule to $CONFIG_PATH"
+    cat <<EOF >> $CONFIG_PATH
+\$HTTP["url"] =~ "^/tar1090/" {
+    $REDIRECT
+}
+EOF
     echo "$REDIRECT" >> $CONFIG_PATH
 
     echo DEBUG: new content:
