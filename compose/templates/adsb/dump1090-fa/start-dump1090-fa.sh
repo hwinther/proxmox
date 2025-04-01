@@ -13,10 +13,17 @@ if ! grep -q "$REDIRECT" $CONFIG_PATH; then
     cat <<EOF >> $CONFIG_PATH
 \$HTTP["url"] =~ "^/tar1090/" {
     $REDIRECT
-    echo "Restarting lighttpd to apply changes"
-    s6-svc -r /var/run/s6/services/lighttpd
 }
 EOF
+
+    lighttpd -t -f $CONFIG_PATH
+    if [ $? -ne 0 ]; then
+        echo "Error: lighttpd configuration test failed. Please check the configuration."
+        exit 1
+    fi
+
+    echo "Restarting lighttpd to apply changes"
+    s6-svc -r /var/run/s6/services/lighttpd
 else
     echo "Redirect for /tar1090/ already exists in $CONFIG_PATH"
 fi
