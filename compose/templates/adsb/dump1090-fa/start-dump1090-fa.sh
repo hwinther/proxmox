@@ -23,7 +23,8 @@ EOF
     fi
 
     echo "Restarting lighttpd to apply changes"
-    s6-svc -r /var/run/s6/services/lighttpd
+    s6-rc -d change lighttpd
+    s6-rc -u change lighttpd
 else
     echo "Redirect for /tar1090/ already exists in $CONFIG_PATH"
 fi
