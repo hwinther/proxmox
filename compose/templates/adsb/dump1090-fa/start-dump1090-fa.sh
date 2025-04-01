@@ -15,11 +15,6 @@ if ! grep -q "$REDIRECT" $CONFIG_PATH; then
     $REDIRECT
 }
 EOF
-
-    echo DEBUG: new content:
-    echo "----------------------------------------"
-    echo "$(cat $CONFIG_PATH)"
-    echo "----------------------------------------"
 else
     echo "Redirect for /tar1090/ already exists in $CONFIG_PATH"
 fi
