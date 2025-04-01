@@ -13,6 +13,8 @@ if ! grep -q "$REDIRECT" $CONFIG_PATH; then
     cat <<EOF >> $CONFIG_PATH
 \$HTTP["url"] =~ "^/tar1090/" {
     $REDIRECT
+    echo "Restarting lighttpd to apply changes"
+    s6-svc -r /var/run/s6/services/lighttpd
 }
 EOF
 else

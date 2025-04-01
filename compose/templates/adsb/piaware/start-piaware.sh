@@ -54,8 +54,6 @@ if ! grep -q "$SKYAWARE_URL" /etc/lighttpd/conf-enabled/50-piaware.conf; then
     url.redirect = ( "^/skyaware/(.*)" => "$SKYAWARE_URL/\$1" )
 }
 EOF
-        echo /etc/lighttpd/conf-enabled/50-piaware.conf contents:
-        cat /etc/lighttpd/conf-enabled/50-piaware.conf
     else
         echo "SKYAWARE_URL is not set. Skipping the addition of the redirect rule."
     fi
