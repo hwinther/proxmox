@@ -15,7 +15,6 @@ if ! grep -q "$REDIRECT" $CONFIG_PATH; then
     $REDIRECT
 }
 EOF
-    echo "$REDIRECT" >> $CONFIG_PATH
 
     echo DEBUG: new content:
     echo "----------------------------------------"
