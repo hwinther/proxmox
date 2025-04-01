@@ -6,14 +6,14 @@
 # --net-bi-port <ports>    TCP Beast input listen ports  (default: 30004,30104)
 # --net-bo-port <ports>    TCP Beast output listen ports (default: 30005)
 
-REDIRECT='url.redirect = ("/" => "/tar1090/")'
+REDIRECT='$HTTP["url"] =~ "^/$" {
+    url.redirect = ("/" => "/tar1090/")
+}'
 CONFIG_PATH="/etc/lighttpd/lighttpd.conf"
 if ! grep -q "$REDIRECT" $CONFIG_PATH; then
     echo "Adding redirect rule to $CONFIG_PATH"
     cat <<EOF >> $CONFIG_PATH
-\$HTTP["url"] =~ "^/tar1090/" {
-    $REDIRECT
-}
+$REDIRECT
 EOF
 
     lighttpd -t -f $CONFIG_PATH
