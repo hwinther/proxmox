@@ -132,6 +132,8 @@ jobs:
       - name: Create Pull Request
         id: create-pr
         if: ${{ steps.next-version.outputs.initial_release == 'false' && steps.check.outputs.skip == 'false' && steps.check.outputs.has_diff == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           echo "Creating pull request..."
           gh pr create \
