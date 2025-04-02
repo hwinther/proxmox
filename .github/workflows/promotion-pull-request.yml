@@ -49,6 +49,8 @@ jobs:
 
       - name: Create initial release branch
         if: ${{ steps.next-version.outputs.initial_release == 'true' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
         run: |
           git checkout -b ${{ steps.next-version.outputs.release_branch }}
           git push origin ${{ steps.next-version.outputs.release_branch }}
