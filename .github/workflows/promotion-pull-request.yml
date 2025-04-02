@@ -80,6 +80,9 @@ jobs:
           diffs=$(git diff --name-status ${{ github.event.before }}..${{ github.event.after }} 2>&1 | wc -l)
           echo "diffs=$diffs"
 
+          echo "Changed files:"
+          git diff --name-only ${{ github.event.before }}..${{ github.event.after }}
+
           if ((diffs > 0)); then
             echo "setting has_diff true"
             echo "has_diff=true" >> "$GITHUB_OUTPUT"
