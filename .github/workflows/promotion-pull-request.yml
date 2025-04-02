@@ -121,11 +121,11 @@ jobs:
           # If we get "fatal: Invalid revision range id1..id2" we pipe the error to stdout and still get higher than 0,
           #  which means we fall back to creating a PR if there is an issue by design
           #diffs=$(git diff --name-status ${{ github.event.before }}..${{ github.event.after }} 2>&1 | wc -l)
-          diffs=$(git diff --name-status ${{ steps.check-branch.outputs.target_branch }}..${{ env.COMPARE_BRANCH }} 2>&1 | wc -l)
+          diffs=$(git diff --name-status origin/${{ steps.check-branch.outputs.target_branch }}..${{ env.COMPARE_BRANCH }} 2>&1 | wc -l)
           echo "diffs=$diffs"
 
           echo "Changed files:"
-          git diff --name-only ${{ steps.check-branch.outputs.target_branch }}..${{ env.COMPARE_BRANCH }}
+          git diff --name-only origin/${{ steps.check-branch.outputs.target_branch }}..${{ env.COMPARE_BRANCH }}
 
           if ((diffs > 0)); then
             echo "setting has_diff true"
