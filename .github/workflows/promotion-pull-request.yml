@@ -25,7 +25,12 @@ jobs:
 
           # Extract release branches and find the highest version
           latest_version=$(git branch -r | grep -o 'releases/[0-9]\+\.[0-9]\+' | sed 's/releases\///' | sort -V | tail -n 1)
-          echo "Latest version: $latest_version"
+          echo "Latest (current) version: $latest_version"
+          echo "latest_version=$latest_version" >> "$GITHUB_OUTPUT"
+
+          latest_release_branch="releases/$latest_version"
+          echo "Latest (current) release branch name: $latest_release_branch"
+          echo "latest_release_branch=$latest_release_branch" >> "$GITHUB_OUTPUT"
 
           # Increment the version
           if [[ -z "$latest_version" ]]; then
@@ -41,9 +46,9 @@ jobs:
           echo "Next version: $next_version"
           echo "next_version=$next_version" >> "$GITHUB_OUTPUT"
 
-          release_branch="releases/$next_version"
-          echo "Branch name: $release_branch"
-          echo "release_branch=$release_branch" >> "$GITHUB_OUTPUT"
+          next_release_branch="releases/$next_version"
+          echo "Next release branch name: $next_release_branch"
+          echo "next_release_branch=$next_release_branch" >> "$GITHUB_OUTPUT"
 
           echo "Initial release: $initial_release"
           echo "initial_release=$initial_release" >> "$GITHUB_OUTPUT"
@@ -51,8 +56,36 @@ jobs:
       - name: Create initial release branch
         if: ${{ steps.next-version.outputs.initial_release == 'true' }}
         run: |
-          git checkout -b ${{ steps.next-version.outputs.release_branch }}
-          git push origin ${{ steps.next-version.outputs.release_branch }}
+          git checkout -b ${{ steps.next-version.outputs.next_release_branch }}
+          git push origin ${{ steps.next-version.outputs.next_release_branch }}
+
+      - name: Check if release branch exists
+        id: check-branch
+        if: ${{ steps.next-version.outputs.initial_release == 'false' }}
+        run: |
+          # Check if the release branch exists
+          if git show-ref --verify --quiet refs/heads/${{ steps.next-version.outputs.next_release_branch }}; then
+            echo "Next release branch exists."
+
+            # Compare HEAD of release branch with latest_version branch
+            next_release_branch_sha=$(git rev-parse origin/${{ steps.next-version.outputs.next_release_branch }})
+            latest_release_branch_sha=$(git rev-parse origin/releases/${{ steps.next-version.outputs.latest_release_branch }})
+
+            echo "Next release branch SHA: $next_release_branch_sha"
+            echo "Latest release branch SHA: $latest_release_branch_sha"
+
+            if [[ "$next_release_branch_sha" == "$latest_release_branch_sha" ]]; then
+              echo "Next release branch matches the HEAD of the latest release branch."
+              echo "branch_matches=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "Next release branch does not match the HEAD of the latest release branch."
+              echo "branch_matches=false" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            # This should not happen due to the previous step
+            echo "Next release branch does not exist."
+            echo "branch_matches=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Check if PR exists
         id: check
@@ -65,7 +98,7 @@ jobs:
           prs=$(gh pr list \
               --repo "$GITHUB_REPOSITORY" \
               --json baseRefName,headRefName \
-              --jq "map(select(.baseRefName == \"${{ steps.next-version.outputs.release_branch }}\" and .headRefName == \"${{ env.COMPARE_BRANCH }}\")) | length")
+              --jq "map(select(.baseRefName == \"${{ steps.next-version.outputs.next_release_branch }}\" and .headRefName == \"${{ env.COMPARE_BRANCH }}\")) | length")
 
           if ((prs > 0)); then
               echo "setting skip true"
@@ -104,7 +137,7 @@ jobs:
         with:
           token: ${{ secrets.WORKFLOW_TOKEN }}
           branch: ${{ env.COMPARE_BRANCH }}
-          title: Merge ${{ env.COMPARE_BRANCH }} changes to ${{ steps.next-version.outputs.release_branch }}
+          title: Merge ${{ env.COMPARE_BRANCH }} changes to ${{ steps.next-version.outputs.next_release_branch }}
           body: Automatically created pull-request in order to merge changes that were recently pushed to the test branch, back to main
           # assignees: hwinther
           draft: true
