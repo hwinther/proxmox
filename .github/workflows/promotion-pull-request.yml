@@ -63,7 +63,6 @@ jobs:
         id: check-branch
         if: ${{ steps.next-version.outputs.initial_release == 'false' }}
         run: |
-          # Check if the release branch exists
           if ! git show-ref --verify --quiet refs/heads/${{ steps.next-version.outputs.next_release_branch }}; then
             echo "Creating next release branch..."
             git checkout -b ${{ steps.next-version.outputs.next_release_branch }}
