@@ -149,9 +149,9 @@ jobs:
         run: |
           echo "Creating pull request..."
           gh pr create \
-            --base ${{ steps.next-version.outputs.next_release_branch }} \
+            --base ${{ steps.check-branch.outputs.target_branch }} \
             --head ${{ env.COMPARE_BRANCH }} \
-            --title "Merge ${{ env.COMPARE_BRANCH }} changes to ${{ steps.next-version.outputs.next_release_branch }}" \
+            --title "Merge ${{ env.COMPARE_BRANCH }} changes to ${{ steps.check-branch.outputs.target_branch }}" \
             --body "Automatically created pull-request for the next release. TODO: Update the body with grouped conventional commit entries" \
             --draft
 
