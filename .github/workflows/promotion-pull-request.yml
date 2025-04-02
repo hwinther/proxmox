@@ -135,12 +135,6 @@ jobs:
             echo "has_diff=false" >> "$GITHUB_OUTPUT"
           fi
 
-      # - name: Reset promotion branch
-      #   if: ${{ steps.next-version.outputs.initial_release == 'false' && steps.check.outputs.skip == 'false' && steps.check.outputs.has_diff == 'true' }}
-      #   run: |
-      #     git fetch origin ${{ env.COMPARE_BRANCH }}:${{ env.COMPARE_BRANCH }}
-      #     git reset --hard ${{ env.COMPARE_BRANCH }}
-
       - name: Create Pull Request
         id: create-pr
         if: ${{ steps.next-version.outputs.initial_release == 'false' && steps.check.outputs.skip == 'false' && steps.check.outputs.has_diff == 'true' }}
