@@ -71,7 +71,11 @@ jobs:
         run: |
           previous_release_branch_sha=$(git rev-parse origin/${{ steps.next-version.outputs.previous_release_branch }})
           latest_release_branch_sha=$(git rev-parse origin/${{ steps.next-version.outputs.latest_release_branch }})
-          next_release_branch_sha=$(git rev-parse origin/${{ steps.next-version.outputs.next_release_branch }})
+          if ! git show-ref --verify --quiet refs/heads/${{ steps.next-version.outputs.next_release_branch }}; then
+            next_release_branch_sha="Does not exist"
+          else
+            next_release_branch_sha=$(git rev-parse origin/${{ steps.next-version.outputs.next_release_branch }})
+          fi
           echo "Previous release branch SHA: $previous_release_branch_sha"
           echo "Latest release branch SHA: $latest_release_branch_sha"
           echo "Next release branch SHA: $next_release_branch_sha"
