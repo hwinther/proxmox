@@ -84,7 +84,7 @@ jobs:
           else
             echo "Next release branch does not match the HEAD of the latest release branch."
             echo "branch_matches=false" >> "$GITHUB_OUTPUT"
-          fi
+          fi #temp change
 
       - name: Check if PR exists
         id: check
