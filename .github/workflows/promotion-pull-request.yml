@@ -1,0 +1,96 @@
+name: "Create promotion pull request"
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main", "feat/release-branches"]
+
+jobs:
+  promote-main-to-release:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Determine next release version
+        id: next-version
+        run: |
+          # Fetch all branches
+          git fetch --all
+
+          # Extract release branches and find the highest version
+          latest_version=$(git branch -r | grep -o 'releases/[0-9]\+\.[0-9]\+' | sed 's/releases\///' | sort -V | tail -n 1)
+          echo "Latest version: $latest_version"
+
+          # Increment the version
+          if [[ -z "$latest_version" ]]; then
+            next_version="1.0" # Default to 1.0 if no release branches exist
+          else
+            major=$(echo $latest_version | cut -d. -f1)
+            minor=$(echo $latest_version | cut -d. -f2)
+            next_version="$major.$((minor + 1))"
+          fi
+
+          echo "Next version: $next_version"
+          echo "next_version=$next_version" >> "$GITHUB_OUTPUT"
+
+      # - name: Check if PR exists
+      #   id: check
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
+      #   run: |
+      #     ref=$(echo $GITHUB_REF | sed 's/refs\/heads\///g')
+      #     echo "ref=$ref"
+      #     prs=$(gh pr list \
+      #         --repo "$GITHUB_REPOSITORY" \
+      #         --json baseRefName,headRefName \
+      #         --jq "map(select(.baseRefName == \"main\" and .headRefName == \"$ref\")) | length")
+
+      #     if ((prs > 0)); then
+      #         echo "setting skip true"
+      #         echo "skip=true" >> "$GITHUB_OUTPUT"
+      #     else
+      #         echo "setting skip false"
+      #         echo "skip=false" >> "$GITHUB_OUTPUT"
+      #     fi
+
+      #     # If we get "fatal: Invalid revision range id1..id2" we pipe the error to stdout and still get higher than 0,
+      #     #  which means we fall back to creating a PR if there is an issue by design
+      #     diffs=$(git diff --name-status ${{ github.event.before }}..${{ github.event.after }} 2>&1 | wc -l)
+      #     echo "diffs=$diffs"
+
+      #     if ((diffs > 0)); then
+      #       echo "setting has_diff true"
+      #       echo "has_diff=true" >> "$GITHUB_OUTPUT"
+      #     else
+      #       echo "setting has_diff false"
+      #       echo "has_diff=false" >> "$GITHUB_OUTPUT"
+      #     fi
+
+      # - name: Reset promotion branch
+      #   if: ${{ steps.check.outputs.skip == 'false' && steps.check.outputs.has_diff == 'true' }}
+      #   run: |
+      #     git fetch origin main:main
+      #     git reset --hard main
+
+      # - name: Create Pull Request
+      #   id: create-pr
+      #   uses: peter-evans/create-pull-request@v7
+      #   if: ${{ steps.check.outputs.skip == 'false' && steps.check.outputs.has_diff == 'true' }}
+      #   with:
+      #     token: ${{ secrets.WORKFLOW_TOKEN }}
+      #     branch: main
+      #     title: Merge main changes to releases/
+      #     body: Automatically created pull-request in order to merge changes that were recently pushed to the test branch, back to main
+      #     # assignees: hwinther
+      #     draft: true
+
+      # # Not possible if draft: true above
+      # # - name: Set auto merge on pull request
+      # #   if: ${{ steps.check.outputs.skip == 'false' && steps.check.outputs.has_diff == 'true' }}
+      # #   env:
+      # #     GH_TOKEN: ${{ github.token }}
+      # #     PR_URL: ${{ steps.create-pr.outputs.pull-request-url }}
+      # #   run: gh pr merge --merge --auto $PR_URL
