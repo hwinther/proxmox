@@ -131,16 +131,28 @@ jobs:
 
       - name: Create Pull Request
         id: create-pr
-        uses: peter-evans/create-pull-request@v7
         if: ${{ steps.next-version.outputs.initial_release == 'false' && steps.check.outputs.skip == 'false' && steps.check.outputs.has_diff == 'true' }}
-        with:
-          token: ${{ secrets.WORKFLOW_TOKEN }}
-          branch: ${{ steps.next-version.outputs.next_release_branch }}
-          base: ${{ env.COMPARE_BRANCH }}
-          title: Merge ${{ env.COMPARE_BRANCH }} changes to ${{ steps.next-version.outputs.next_release_branch }}
-          body: Automatically created pull-request in order to merge changes that were recently pushed to the test branch, back to main
-          # assignees: hwinther
-          draft: true
+        run: |
+          echo "Creating pull request..."
+          gh pr create \
+            --base ${{ steps.next-version.outputs.next_release_branch }} \
+            --head ${{ env.COMPARE_BRANCH }} \
+            --title "Merge ${{ env.COMPARE_BRANCH }} changes to ${{ steps.next-version.outputs.next_release_branch }}" \
+            --body "Automatically created pull-request for the next release. TODO: Update the body with grouped conventional commit entries" \
+            --draft
+
+      # - name: Create Pull Request
+      #   id: create-pr
+      #   uses: peter-evans/create-pull-request@v7
+      #   if: ${{ steps.next-version.outputs.initial_release == 'false' && steps.check.outputs.skip == 'false' && steps.check.outputs.has_diff == 'true' }}
+      #   with:
+      #     token: ${{ secrets.WORKFLOW_TOKEN }}
+      #     branch: ${{ steps.next-version.outputs.next_release_branch }}
+      #     base: ${{ env.COMPARE_BRANCH }}
+      #     title: Merge ${{ env.COMPARE_BRANCH }} changes to ${{ steps.next-version.outputs.next_release_branch }}
+      #     body: Automatically created pull-request in order to merge changes that were recently pushed to the test branch, back to main
+      #     # assignees: hwinther
+      #     draft: true
 
       # Not possible if draft: true above
       # - name: Set auto merge on pull request
