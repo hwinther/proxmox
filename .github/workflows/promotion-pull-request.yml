@@ -65,7 +65,7 @@ jobs:
           prs=$(gh pr list \
               --repo "$GITHUB_REPOSITORY" \
               --json baseRefName,headRefName \
-              --jq "map(select(.baseRefName == \"${{ env.COMPARE_BRANCH }}\" and .headRefName == \"$ref\")) | length")
+              --jq "map(select(.baseRefName == \"${{ steps.next-version.outputs.release_branch }}\" and .headRefName == \"${{ env.COMPARE_BRANCH }}\")) | length")
 
           if ((prs > 0)); then
               echo "setting skip true"
@@ -101,7 +101,7 @@ jobs:
         with:
           token: ${{ secrets.WORKFLOW_TOKEN }}
           branch: ${{ env.COMPARE_BRANCH }}
-          title: Merge ${{ env.COMPARE_BRANCH }} changes to releases/${{ steps.next-version.outputs.next_version }}
+          title: Merge ${{ env.COMPARE_BRANCH }} changes to ${{ steps.next-version.outputs.release_branch }}
           body: Automatically created pull-request in order to merge changes that were recently pushed to the test branch, back to main
           # assignees: hwinther
           draft: true
