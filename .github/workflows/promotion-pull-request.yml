@@ -15,6 +15,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ env.COMPARE_BRANCH }}
+          token: ${{ secrets.WORKFLOW_TOKEN }}
 
       - name: Determine next release version
         id: next-version
@@ -49,8 +50,6 @@ jobs:
 
       - name: Create initial release branch
         if: ${{ steps.next-version.outputs.initial_release == 'true' }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
         run: |
           git checkout -b ${{ steps.next-version.outputs.release_branch }}
           git push origin ${{ steps.next-version.outputs.release_branch }}
