@@ -59,31 +59,31 @@ jobs:
           git checkout -b ${{ steps.next-version.outputs.next_release_branch }}
           git push origin ${{ steps.next-version.outputs.next_release_branch }}
 
-      - name: Check if release branch exists
+      - name: Check if next release branch exists
         id: check-branch
         if: ${{ steps.next-version.outputs.initial_release == 'false' }}
         run: |
           # Check if the release branch exists
-          if git show-ref --verify --quiet refs/heads/${{ steps.next-version.outputs.next_release_branch }}; then
-            echo "Next release branch exists."
-
-            # Compare HEAD of release branch with latest_version branch
-            next_release_branch_sha=$(git rev-parse origin/${{ steps.next-version.outputs.next_release_branch }})
-            latest_release_branch_sha=$(git rev-parse origin/releases/${{ steps.next-version.outputs.latest_release_branch }})
-
-            echo "Next release branch SHA: $next_release_branch_sha"
-            echo "Latest release branch SHA: $latest_release_branch_sha"
-
-            if [[ "$next_release_branch_sha" == "$latest_release_branch_sha" ]]; then
-              echo "Next release branch matches the HEAD of the latest release branch."
-              echo "branch_matches=true" >> "$GITHUB_OUTPUT"
-            else
-              echo "Next release branch does not match the HEAD of the latest release branch."
-              echo "branch_matches=false" >> "$GITHUB_OUTPUT"
-            fi
+          if ! git show-ref --verify --quiet refs/heads/${{ steps.next-version.outputs.next_release_branch }}; then
+            echo "Creating next release branch..."
+            git checkout -b ${{ steps.next-version.outputs.next_release_branch }}
+            git push origin ${{ steps.next-version.outputs.next_release_branch }}
           else
-            # This should not happen due to the previous step
-            echo "Next release branch does not exist."
+            echo "Next release branch exists."
+          fi
+
+          # Compare HEAD of release branch with latest_version branch
+          next_release_branch_sha=$(git rev-parse origin/${{ steps.next-version.outputs.next_release_branch }})
+          latest_release_branch_sha=$(git rev-parse origin/${{ steps.next-version.outputs.latest_release_branch }})
+
+          echo "Next release branch SHA: $next_release_branch_sha"
+          echo "Latest release branch SHA: $latest_release_branch_sha"
+
+          if [[ "$next_release_branch_sha" == "$latest_release_branch_sha" ]]; then
+            echo "Next release branch matches the HEAD of the latest release branch."
+            echo "branch_matches=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Next release branch does not match the HEAD of the latest release branch."
             echo "branch_matches=false" >> "$GITHUB_OUTPUT"
           fi
 
