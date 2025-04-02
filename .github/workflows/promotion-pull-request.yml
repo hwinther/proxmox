@@ -29,17 +29,33 @@ jobs:
           # Increment the version
           if [[ -z "$latest_version" ]]; then
             next_version="0.1" # Default to 0.1 if no release branches exist
+            initial_release="true"
           else
             major=$(echo $latest_version | cut -d. -f1)
             minor=$(echo $latest_version | cut -d. -f2)
             next_version="$major.$((minor + 1))"
+            initial_release="false"
           fi
 
           echo "Next version: $next_version"
           echo "next_version=$next_version" >> "$GITHUB_OUTPUT"
 
+          release_branch="releases/$next_version"
+          echo "Branch name: $release_branch"
+          echo "release_branch=$release_branch" >> "$GITHUB_OUTPUT"
+
+          echo "Initial release: $initial_release"
+          echo "initial_release=$initial_release" >> "$GITHUB_OUTPUT"
+
+      - name: Create initial release branch
+        if: ${{ steps.next-version.outputs.initial_release == 'true' }}
+        run: |
+          git checkout -b ${{ steps.next-version.outputs.release_branch }}
+          git push origin ${{ steps.next-version.outputs.release_branch }}
+
       - name: Check if PR exists
         id: check
+        if: ${{ steps.next-version.outputs.initial_release == 'false' }}
         env:
           GITHUB_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
         run: |
@@ -72,7 +88,7 @@ jobs:
           fi
 
       - name: Reset promotion branch
-        if: ${{ steps.check.outputs.skip == 'false' && steps.check.outputs.has_diff == 'true' }}
+        if: ${{ steps.next-version.outputs.initial_release == 'false' && steps.check.outputs.skip == 'false' && steps.check.outputs.has_diff == 'true' }}
         run: |
           git fetch origin ${{ env.COMPARE_BRANCH }}:${{ env.COMPARE_BRANCH }}
           git reset --hard ${{ env.COMPARE_BRANCH }}
@@ -80,7 +96,7 @@ jobs:
       - name: Create Pull Request
         id: create-pr
         uses: peter-evans/create-pull-request@v7
-        if: ${{ steps.check.outputs.skip == 'false' && steps.check.outputs.has_diff == 'true' }}
+        if: ${{ steps.next-version.outputs.initial_release == 'false' && steps.check.outputs.skip == 'false' && steps.check.outputs.has_diff == 'true' }}
         with:
           token: ${{ secrets.WORKFLOW_TOKEN }}
           branch: ${{ env.COMPARE_BRANCH }}
@@ -91,7 +107,7 @@ jobs:
 
       # # Not possible if draft: true above
       # # - name: Set auto merge on pull request
-      # #   if: ${{ steps.check.outputs.skip == 'false' && steps.check.outputs.has_diff == 'true' }}
+      # #   if: ${{ steps.next-version.outputs.initial_release == 'false' && steps.check.outputs.skip == 'false' && steps.check.outputs.has_diff == 'true' }}
       # #   env:
       # #     GH_TOKEN: ${{ github.token }}
       # #     PR_URL: ${{ steps.create-pr.outputs.pull-request-url }}
