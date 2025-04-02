@@ -21,7 +21,6 @@ jobs:
       - name: Determine next release version
         id: next-version
         run: |
-          # Fetch all branches
           git fetch --all
 
           # Extract release branches and find the highest version
