@@ -216,8 +216,8 @@ jobs:
           gh pr create \
             --base ${{ steps.next-version.outputs.next_release_branch }} \
             --head ${{ env.COMPARE_BRANCH }} \
-            --title "Merge changes from main to ${{ steps.next-version.outputs.next_release_branch }}" \
-            --body "This is an automatically created draft pull request to merge changes from main to the next release branch." \
+            --title "Merge changes from ${{ env.COMPARE_BRANCH }} to ${{ steps.next-version.outputs.next_release_branch }}" \
+            --body "This is an automatically created draft pull request to merge changes from ${{ env.COMPARE_BRANCH }} to the next release branch." \
             --draft
 
       # - name: Create Pull Request
