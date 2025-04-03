@@ -18,7 +18,7 @@ jobs:
           ref: ${{ env.COMPARE_BRANCH }}
           token: ${{ secrets.WORKFLOW_TOKEN }}
 
-      # - name: Determine next release version
+      # - name: Determine next release version  x
       #   id: next-version
       #   run: |
       #     git fetch --all
