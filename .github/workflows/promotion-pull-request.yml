@@ -18,6 +18,137 @@ jobs:
           ref: ${{ env.COMPARE_BRANCH }}
           token: ${{ secrets.WORKFLOW_TOKEN }}
 
+      # - name: Determine next release version
+      #   id: next-version
+      #   run: |
+      #     git fetch --all
+
+      #     # Extract release branches and find the highest version
+      #     latest_version=$(git branch -r | grep -o 'releases/[0-9]\+\.[0-9]\+' | sed 's/releases\///' | sort -V | tail -n 1)
+      #     echo "Latest (current) version: $latest_version"
+      #     echo "latest_version=$latest_version" >> "$GITHUB_OUTPUT"
+
+      #     latest_release_branch="releases/$latest_version"
+      #     echo "Latest (current) release branch name: $latest_release_branch"
+      #     echo "latest_release_branch=$latest_release_branch" >> "$GITHUB_OUTPUT"
+
+      #     # Increment the version
+      #     if [[ -z "$latest_version" ]]; then
+      #       next_version="0.1" # Default to 0.1 if no release branches exist
+      #       initial_release="true"
+      #     else
+      #       major=$(echo $latest_version | cut -d. -f1)
+      #       minor=$(echo $latest_version | cut -d. -f2)
+      #       previous_version="$major.$((minor - 1))"
+      #       next_version="$major.$((minor + 1))"
+      #       initial_release="false"
+      #     fi
+
+      #     echo "Previous version: $previous_version"
+      #     echo "previous_version=$previous_version" >> "$GITHUB_OUTPUT"
+      #     previous_release_branch="releases/$previous_version"
+      #     echo "Previous release branch name: $previous_release_branch"
+      #     echo "previous_release_branch=$previous_release_branch" >> "$GITHUB_OUTPUT"
+
+      #     echo "Next version: $next_version"
+      #     echo "next_version=$next_version" >> "$GITHUB_OUTPUT"
+      #     next_release_branch="releases/$next_version"
+      #     echo "Next release branch name: $next_release_branch"
+      #     echo "next_release_branch=$next_release_branch" >> "$GITHUB_OUTPUT"
+
+      #     echo "Initial release: $initial_release"
+      #     echo "initial_release=$initial_release" >> "$GITHUB_OUTPUT"
+
+      # - name: Create initial release branch
+      #   if: ${{ steps.next-version.outputs.initial_release == 'true' }}
+      #   run: |
+      #     git checkout -b ${{ steps.next-version.outputs.next_release_branch }}
+      #     git push origin ${{ steps.next-version.outputs.next_release_branch }}
+
+      # - name: Check if next release branch exists
+      #   id: check-branch
+      #   if: ${{ steps.next-version.outputs.initial_release == 'false' }}
+      #   run: |
+      #     previous_release_branch_sha=$(git rev-parse origin/${{ steps.next-version.outputs.previous_release_branch }})
+      #     latest_release_branch_sha=$(git rev-parse origin/${{ steps.next-version.outputs.latest_release_branch }})
+      #     if ! git show-ref --verify --quiet refs/heads/${{ steps.next-version.outputs.next_release_branch }}; then
+      #       next_release_branch_sha="Does not exist"
+      #     else
+      #       next_release_branch_sha=$(git rev-parse origin/${{ steps.next-version.outputs.next_release_branch }})
+      #     fi
+      #     echo "Previous release branch SHA: $previous_release_branch_sha"
+      #     echo "Latest release branch SHA: $latest_release_branch_sha"
+      #     echo "Next release branch SHA: $next_release_branch_sha"
+
+      #     if [[ "$previous_release_branch_sha" == "$latest_release_branch_sha" ]]; then
+      #       echo "Previous and latest release branch are at the same commit."
+      #       echo "branch_matches=true" >> "$GITHUB_OUTPUT"
+      #     else
+      #       echo "Previous and latest release branch are not at the same commit."
+      #       echo "branch_matches=false" >> "$GITHUB_OUTPUT"
+      #       echo "target_branch=${{ steps.next-version.outputs.latest_release_branch }}" >> "$GITHUB_OUTPUT"
+      #     fi
+
+      #     # if ! git show-ref --verify --quiet refs/heads/${{ steps.next-version.outputs.next_release_branch }}; then
+      #     #   echo "Creating next release branch..."
+      #     #   git checkout -b ${{ steps.next-version.outputs.next_release_branch }}
+      #     #   git push origin ${{ steps.next-version.outputs.next_release_branch }}
+      #     # else
+      #     #   echo "Next release branch exists."
+      #     # fi
+
+      # - name: Check if PR exists
+      #   id: check
+      #   if: ${{ steps.next-version.outputs.initial_release == 'false' && steps.check-branch.outputs.branch_matches == 'false' }}
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
+      #   run: |
+      #     ref=$(echo $GITHUB_REF | sed 's/refs\/heads\///g')
+      #     echo "ref=$ref"
+      #     prs=$(gh pr list \
+      #         --repo "$GITHUB_REPOSITORY" \
+      #         --json baseRefName,headRefName \
+      #         --jq "map(select(.baseRefName == \"${{ steps.check-branch.outputs.target_branch }}\" and .headRefName == \"${{ env.COMPARE_BRANCH }}\")) | length")
+
+      #     if ((prs > 0)); then
+      #         echo "setting skip true"
+      #         echo "skip=true" >> "$GITHUB_OUTPUT"
+      #     else
+      #         echo "setting skip false"
+      #         echo "skip=false" >> "$GITHUB_OUTPUT"
+      #     fi
+
+      #     # If we get "fatal: Invalid revision range id1..id2" we pipe the error to stdout and still get higher than 0,
+      #     #  which means we fall back to creating a PR if there is an issue by design
+      #     #diffs=$(git diff --name-status ${{ github.event.before }}..${{ github.event.after }} 2>&1 | wc -l)
+      #     diffs=$(git diff --name-status origin/${{ steps.check-branch.outputs.target_branch }}..${{ env.COMPARE_BRANCH }} 2>&1 | wc -l)
+      #     echo "diffs=$diffs"
+
+      #     echo "Changed files:"
+      #     git diff --name-only origin/${{ steps.check-branch.outputs.target_branch }}..${{ env.COMPARE_BRANCH }}
+
+      #     if ((diffs > 0)); then
+      #       echo "setting has_diff true"
+      #       echo "has_diff=true" >> "$GITHUB_OUTPUT"
+      #     else
+      #       echo "setting has_diff false"
+      #       echo "has_diff=false" >> "$GITHUB_OUTPUT"
+      #     fi
+
+      # - name: Create Pull Request
+      #   id: create-pr
+      #   if: ${{ steps.next-version.outputs.initial_release == 'false' && steps.check.outputs.skip == 'false' && steps.check.outputs.has_diff == 'true' }}
+      #   env:
+      #     GH_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
+      #   run: |
+      #     echo "Creating pull request..."
+      #     gh pr create \
+      #       --base ${{ steps.check-branch.outputs.target_branch }} \
+      #       --head ${{ env.COMPARE_BRANCH }} \
+      #       --title "Merge ${{ env.COMPARE_BRANCH }} changes to ${{ steps.check-branch.outputs.target_branch }}" \
+      #       --body "Automatically created pull-request for the next release. TODO: Update the body with grouped conventional commit entries" \
+      #       --draft
+
       - name: Determine next release version
         id: next-version
         run: |
@@ -28,27 +159,14 @@ jobs:
           echo "Latest (current) version: $latest_version"
           echo "latest_version=$latest_version" >> "$GITHUB_OUTPUT"
 
-          latest_release_branch="releases/$latest_version"
-          echo "Latest (current) release branch name: $latest_release_branch"
-          echo "latest_release_branch=$latest_release_branch" >> "$GITHUB_OUTPUT"
-
           # Increment the version
           if [[ -z "$latest_version" ]]; then
             next_version="0.1" # Default to 0.1 if no release branches exist
-            initial_release="true"
           else
             major=$(echo $latest_version | cut -d. -f1)
             minor=$(echo $latest_version | cut -d. -f2)
-            previous_version="$major.$((minor - 1))"
             next_version="$major.$((minor + 1))"
-            initial_release="false"
           fi
-
-          echo "Previous version: $previous_version"
-          echo "previous_version=$previous_version" >> "$GITHUB_OUTPUT"
-          previous_release_branch="releases/$previous_version"
-          echo "Previous release branch name: $previous_release_branch"
-          echo "previous_release_branch=$previous_release_branch" >> "$GITHUB_OUTPUT"
 
           echo "Next version: $next_version"
           echo "next_version=$next_version" >> "$GITHUB_OUTPUT"
@@ -56,97 +174,50 @@ jobs:
           echo "Next release branch name: $next_release_branch"
           echo "next_release_branch=$next_release_branch" >> "$GITHUB_OUTPUT"
 
-          echo "Initial release: $initial_release"
-          echo "initial_release=$initial_release" >> "$GITHUB_OUTPUT"
-
-      - name: Create initial release branch
-        if: ${{ steps.next-version.outputs.initial_release == 'true' }}
-        run: |
-          git checkout -b ${{ steps.next-version.outputs.next_release_branch }}
-          git push origin ${{ steps.next-version.outputs.next_release_branch }}
-
-      - name: Check if next release branch exists
-        id: check-branch
-        if: ${{ steps.next-version.outputs.initial_release == 'false' }}
-        run: |
-          previous_release_branch_sha=$(git rev-parse origin/${{ steps.next-version.outputs.previous_release_branch }})
-          latest_release_branch_sha=$(git rev-parse origin/${{ steps.next-version.outputs.latest_release_branch }})
-          if ! git show-ref --verify --quiet refs/heads/${{ steps.next-version.outputs.next_release_branch }}; then
-            next_release_branch_sha="Does not exist"
-          else
-            next_release_branch_sha=$(git rev-parse origin/${{ steps.next-version.outputs.next_release_branch }})
-          fi
-          echo "Previous release branch SHA: $previous_release_branch_sha"
-          echo "Latest release branch SHA: $latest_release_branch_sha"
-          echo "Next release branch SHA: $next_release_branch_sha"
-
-          if [[ "$previous_release_branch_sha" == "$latest_release_branch_sha" ]]; then
-            echo "Previous and latest release branch are at the same commit."
-            echo "branch_matches=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "Previous and latest release branch are not at the same commit."
-            echo "branch_matches=false" >> "$GITHUB_OUTPUT"
-            echo "target_branch=${{ steps.next-version.outputs.latest_release_branch }}" >> "$GITHUB_OUTPUT"
-          fi
-
-          # if ! git show-ref --verify --quiet refs/heads/${{ steps.next-version.outputs.next_release_branch }}; then
-          #   echo "Creating next release branch..."
-          #   git checkout -b ${{ steps.next-version.outputs.next_release_branch }}
-          #   git push origin ${{ steps.next-version.outputs.next_release_branch }}
-          # else
-          #   echo "Next release branch exists."
-          # fi
-
-      - name: Check if PR exists
-        id: check
-        if: ${{ steps.next-version.outputs.initial_release == 'false' && steps.check-branch.outputs.branch_matches == 'false' }}
+      - name: Check if previous PR was merged
+        id: check-pr-merged
         env:
           GITHUB_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
         run: |
-          ref=$(echo $GITHUB_REF | sed 's/refs\/heads\///g')
-          echo "ref=$ref"
           prs=$(gh pr list \
               --repo "$GITHUB_REPOSITORY" \
-              --json baseRefName,headRefName \
-              --jq "map(select(.baseRefName == \"${{ steps.check-branch.outputs.target_branch }}\" and .headRefName == \"${{ env.COMPARE_BRANCH }}\")) | length")
+              --base "releases/${{ steps.next-version.outputs.latest_version }}" \
+              --head "${{ env.COMPARE_BRANCH }}" \
+              --state merged \
+              --json number \
+              --jq "length")
 
-          if ((prs > 0)); then
-              echo "setting skip true"
-              echo "skip=true" >> "$GITHUB_OUTPUT"
+          if (( prs > 0 )); then
+            echo "Previous PR was merged."
+            echo "pr_merged=true" >> "$GITHUB_OUTPUT"
           else
-              echo "setting skip false"
-              echo "skip=false" >> "$GITHUB_OUTPUT"
+            echo "No merged PR found."
+            echo "pr_merged=false" >> "$GITHUB_OUTPUT"
           fi
 
-          # If we get "fatal: Invalid revision range id1..id2" we pipe the error to stdout and still get higher than 0,
-          #  which means we fall back to creating a PR if there is an issue by design
-          #diffs=$(git diff --name-status ${{ github.event.before }}..${{ github.event.after }} 2>&1 | wc -l)
-          diffs=$(git diff --name-status origin/${{ steps.check-branch.outputs.target_branch }}..${{ env.COMPARE_BRANCH }} 2>&1 | wc -l)
-          echo "diffs=$diffs"
-
-          echo "Changed files:"
-          git diff --name-only origin/${{ steps.check-branch.outputs.target_branch }}..${{ env.COMPARE_BRANCH }}
-
-          if ((diffs > 0)); then
-            echo "setting has_diff true"
-            echo "has_diff=true" >> "$GITHUB_OUTPUT"
+      - name: Create next release branch if previous PR was merged
+        if: ${{ steps.check-pr-merged.outputs.pr_merged == 'true' }}
+        run: |
+          git fetch origin ${{ steps.next-version.outputs.next_release_branch }} || true
+          if ! git show-ref --verify --quiet refs/remotes/origin/${{ steps.next-version.outputs.next_release_branch }}; then
+            echo "Creating new release branch: ${{ steps.next-version.outputs.next_release_branch }}"
+            git checkout -b ${{ steps.next-version.outputs.next_release_branch }} ${{ env.COMPARE_BRANCH }}
+            git push origin ${{ steps.next-version.outputs.next_release_branch }}
           else
-            echo "setting has_diff false"
-            echo "has_diff=false" >> "$GITHUB_OUTPUT"
+            echo "Release branch ${{ steps.next-version.outputs.next_release_branch }} already exists."
           fi
 
-      - name: Create Pull Request
-        id: create-pr
-        if: ${{ steps.next-version.outputs.initial_release == 'false' && steps.check.outputs.skip == 'false' && steps.check.outputs.has_diff == 'true' }}
+      - name: Create Draft Pull Request
+        if: ${{ steps.check-pr-merged.outputs.pr_merged == 'true' }}
         env:
           GH_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
         run: |
-          echo "Creating pull request..."
+          echo "Creating draft pull request..."
           gh pr create \
-            --base ${{ steps.check-branch.outputs.target_branch }} \
+            --base ${{ steps.next-version.outputs.next_release_branch }} \
             --head ${{ env.COMPARE_BRANCH }} \
-            --title "Merge ${{ env.COMPARE_BRANCH }} changes to ${{ steps.check-branch.outputs.target_branch }}" \
-            --body "Automatically created pull-request for the next release. TODO: Update the body with grouped conventional commit entries" \
+            --title "Merge changes from main to ${{ steps.next-version.outputs.next_release_branch }}" \
+            --body "This is an automatically created draft pull request to merge changes from main to the next release branch." \
             --draft
 
       # - name: Create Pull Request
