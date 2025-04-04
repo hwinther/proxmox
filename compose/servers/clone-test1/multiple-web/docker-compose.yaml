@@ -1,0 +1,69 @@
+services:
+  nginx1:
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM nginx:latest
+        RUN echo '<html>\n\
+        <body>\n\
+            <h1>Welcome to Nginx1</h1>\n\
+        </body>\n\
+        </html>' > /usr/share/nginx/html/index.html
+    container_name: nginx1
+
+  nginx2:
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM nginx:latest
+        RUN echo '<html>\n\
+        <body>\n\
+            <h1>Welcome to Nginx2</h1>\n\
+        </body>\n\
+        </html>' > /usr/share/nginx/html/index.html
+    container_name: nginx2
+
+  nginx3:
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM nginx:latest
+        RUN echo '<html>\n\
+        <head>\n\
+            <title>Welcome to Nginx3</title>\n\
+        </head>\n\
+        <frameset rows="80px,*,50px" border="1">\n\
+            <frame src="top.html" name="topFrame" scrolling="no" noresize>\n\
+            <frameset cols="200px,*" border="1">\n\
+                <frame src="menu.html" name="menuFrame" scrolling="auto" noresize>\n\
+                <frame src="main.html" name="mainFrame" scrolling="auto">\n\
+            </frameset>\n\
+            <frame src="footer.html" name="footerFrame" scrolling="no" noresize>\n\
+        </frameset>\n\
+        </html>' > /usr/share/nginx/html/index.html
+        RUN echo '<html>\n\
+        <body style="background-color: #f4f4f4; text-align: center; font-family: Arial, sans-serif;">\n\
+            <h2>Welcome to Nginx3</h2>\n\
+        </body>\n\
+        </html>' > /usr/share/nginx/html/top.html
+        RUN echo '<html>\n\
+        <body style="background-color: #e0e0e0; font-family: Arial, sans-serif;">\n\
+            <ul style="list-style-type: none; padding: 10px;">\n\
+                <li><a href="main.html" target="mainFrame">Home</a></li>\n\
+                <li><a href="about.html" target="mainFrame">About</a></li>\n\
+                <li><a href="contact.html" target="mainFrame">Contact</a></li>\n\
+            </ul>\n\
+        </body>\n\
+        </html>' > /usr/share/nginx/html/menu.html
+        RUN echo '<html>\n\
+        <body style="font-family: Arial, sans-serif;">\n\
+            <h1>Welcome to the Main Content Area</h1>\n\
+            <p>This is where the main content will be displayed.</p>\n\
+        </body>\n\
+        </html>' > /usr/share/nginx/html/main.html
+        RUN echo '<html>\n\
+        <body style="background-color: #f4f4f4; text-align: center; font-family: Arial, sans-serif;">\n\
+            <p>&copy; 2025 Nginx3. All rights reserved.</p>\n\
+        </body>\n\
+        </html>' > /usr/share/nginx/html/footer.html
+    container_name: nginx3

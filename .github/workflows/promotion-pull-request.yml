@@ -15,6 +15,7 @@ on:
     tags: ["v*"]
     paths-ignore:
       - ".github/workflows/promotion-pull-request.yml" # Ignore changes to this workflow file
+      - "compose/servers/**" # Ignore changes to the compose/servers directory
 
 env:
   COMPARE_BRANCH: main # Should be set to the default branch of the repository
