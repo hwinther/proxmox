@@ -44,6 +44,9 @@ runs:
       FILE_PATH="${{ inputs.file_path }}"
       CHANGED_FILES=$(git diff --name-only $PREVIOUS_TAG $CURRENT_TAG | grep "$FILE_PATH" || true)
 
+      echo "Changed files:"
+      echo "$CHANGED_FILES"
+
       if [ -z "$CHANGED_FILES" ]; then
         echo "No changes detected in the specified path."
         echo "skip=true" >> "$GITHUB_OUTPUT"
