@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches: ["main"]
+    tags: ["v*"]
     paths:
       - ".github/workflows/build-sdr-base-images.yaml"
       - "compose/templates/sdr-base/**"
@@ -17,6 +18,7 @@ concurrency:
 
 env:
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  PACKAGE_PATH: /sdr/
   PACKAGE_VENDOR: WSH
   WORKING_DIRECTORY: compose/templates/sdr-base
 
@@ -32,22 +34,41 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Generate tag with or without version prefix
+        id: generate-tag
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            # Remove the 'v' prefix from the tag and append the Debian release
+            tag="${GITHUB_REF#refs/tags/v}-${MATRIX_DEBIAN_RELEASE}"
+          elif [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            # Use the tag without 'v' prefix and append the Debian release
+            tag="${GITHUB_REF#refs/tags/}-${MATRIX_DEBIAN_RELEASE}"
+          else
+            # Default to just the Debian release if not triggered by a tag
+            tag="${MATRIX_DEBIAN_RELEASE}"
+          fi
+
+          echo "Constructed tag: $tag"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
       - name: Build and push runtime docker image
         uses: ./.github/actions/docker
         with:
           package_name: sdr-base-wsh
+          package_path: ${{ env.PACKAGE_PATH }}
           package_description: "WSH SDR base runtime image (for ${{ matrix.debian_release }})"
           package_vendor: ${{ env.PACKAGE_VENDOR }}
           working_directory: ${{ env.WORKING_DIRECTORY }}/${{ matrix.debian_release }}/base-image
           push_condition: ${{ github.event_name != 'pull_request' }}
-          tag: ${{ matrix.debian_release }}
+          tag: ${{ steps.generate-tag.outputs.tag }}
 
       - name: Build and push build docker image
         uses: ./.github/actions/docker
         with:
           package_name: sdr-build-wsh
+          package_path: ${{ env.PACKAGE_PATH }}
           package_description: "WSH SDR base build image (for ${{ matrix.debian_release }})"
           package_vendor: ${{ env.PACKAGE_VENDOR }}
           working_directory: ${{ env.WORKING_DIRECTORY }}/${{ matrix.debian_release }}/build-image
           push_condition: ${{ github.event_name != 'pull_request' }}
-          tag: ${{ matrix.debian_release }}
+          tag: ${{ steps.generate-tag.outputs.tag }}

@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches: ["main"]
+    tags: ["v*"]
     paths:
       - ".github/workflows/build-fr24.yaml"
       - "compose/templates/adsb/fr24/**"
@@ -18,6 +19,7 @@ concurrency:
 env:
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   PACKAGE_NAME: fr24-wsh
+  PACKAGE_PATH: /sdr/adsb/
   PACKAGE_DESCRIPTION: "ADSB Exchange feeder for WSH"
   PACKAGE_VENDOR: WSH
   WORKING_DIRECTORY: compose/templates/adsb/fr24
@@ -30,12 +32,25 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Remove v prefix in tag
+        id: remove-v-prefix
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            echo "Tag without v prefix: ${GITHUB_REF#refs/tags/v}"
+            echo "tag=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "Tag without v prefix: ${{ github.ref_name }}"
+            echo "tag=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Build and push docker image
         uses: ./.github/actions/docker
         with:
           package_name: ${{ env.PACKAGE_NAME }}
+          package_path: ${{ env.PACKAGE_PATH }}
           package_description: ${{ env.PACKAGE_DESCRIPTION }}
           package_vendor: ${{ env.PACKAGE_VENDOR }}
           working_directory: ${{ env.WORKING_DIRECTORY }}
           push_condition: ${{ github.event_name != 'pull_request' }}
-          latest_tag_enabled: "true"
+          latest_tag_enabled: ${{ !startsWith(github.ref, 'refs/tags/') }}
+          tag: ${{ startsWith(github.ref, 'refs/tags/') && steps.remove-v-prefix.outputs.tag || '' }}
