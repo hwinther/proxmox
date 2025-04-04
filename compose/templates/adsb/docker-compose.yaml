@@ -4,7 +4,7 @@ services:
       context: dump1090-fa
       args:
         DOCKER_REGISTRY: ${DOCKER_REGISTRY}sdr/
-    image: ${DOCKER_REGISTRY}sdr/adsb/dump1090-fa-wsh
+    image: ${DOCKER_REGISTRY}sdr/adsb/dump1090-fa-wsh:latest
     container_name: dump1090-fa
     volumes:
       - dump1090-fa-data:/run/dump1090-fa
@@ -26,7 +26,7 @@ services:
       context: tar1090
       args:
         DOCKER_REGISTRY: ${DOCKER_REGISTRY}sdr/
-    image: ${DOCKER_REGISTRY}sdr/adsb/tar1090-wsh
+    image: ${DOCKER_REGISTRY}sdr/adsb/tar1090-wsh:latest
     container_name: tar1090
     depends_on:
       dump1090-fa:
@@ -46,7 +46,7 @@ services:
       context: piaware
       args:
         DOCKER_REGISTRY: ${DOCKER_REGISTRY}sdr/
-    image: ${DOCKER_REGISTRY}sdr/adsb/piaware-wsh
+    image: ${DOCKER_REGISTRY}sdr/adsb/piaware-wsh:latest
     container_name: piaware
     ports:
       - 8803:80
@@ -72,7 +72,7 @@ services:
       context: fr24
       args:
         DOCKER_REGISTRY: ${DOCKER_REGISTRY}sdr/
-    image: ${DOCKER_REGISTRY}sdr/adsb/fr24-wsh
+    image: ${DOCKER_REGISTRY}sdr/adsb/fr24-wsh:latest
     container_name: fr24
     depends_on:
       dump1090-fa:
@@ -89,7 +89,7 @@ services:
       context: adsbexchange
       args:
         DOCKER_REGISTRY: ${DOCKER_REGISTRY}sdr/
-    image: ${DOCKER_REGISTRY}sdr/adsb/adsbexchange-wsh
+    image: ${DOCKER_REGISTRY}sdr/adsb/adsbexchange-wsh:latest
     container_name: adsbexchange
     depends_on:
       dump1090-fa:
@@ -111,7 +111,7 @@ services:
       context: opensky
       args:
         DOCKER_REGISTRY: ${DOCKER_REGISTRY}sdr/
-    image: ${DOCKER_REGISTRY}sdr/adsb/opensky-wsh
+    image: ${DOCKER_REGISTRY}sdr/adsb/opensky-wsh:latest
     container_name: opensky
     depends_on:
       dump1090-fa:

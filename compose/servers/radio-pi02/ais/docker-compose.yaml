@@ -1,6 +1,6 @@
 services:
   ais-catcher:
-    image: ${DOCKER_REGISTRY}ais-catcher-wsh
+    image: ${DOCKER_REGISTRY}sdr/ais/ais-catcher-wsh:0.1
     container_name: ais-catcher
     restart: always
     devices:
@@ -24,4 +24,3 @@ services:
     labels:
       - "traefik.http.services.public_web.loadbalancer.server.port=80"
       - "traefik.http.middlewares.cors.headers.customResponseHeaders.Access-Control-Allow-Origin=https://tar1090.r2.wsh.no"
-      - "traefik.http.routers.myrouter.middlewares=cors"

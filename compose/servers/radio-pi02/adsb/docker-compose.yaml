@@ -1,6 +1,6 @@
 services:
   dump1090-fa:
-    image: ${DOCKER_REGISTRY}dump1090-fa-wsh
+    image: ${DOCKER_REGISTRY}sdr/adsb/dump1090-fa-wsh:0.1
     container_name: dump1090-fa
     volumes:
       - dump1090-fa-data:/run/dump1090-fa
@@ -20,7 +20,7 @@ services:
     #   - "traefik.http.services.public_web.loadbalancer.server.port=80"
 
   tar1090:
-    image: ${DOCKER_REGISTRY}tar1090-wsh
+    image: ${DOCKER_REGISTRY}sdr/adsb/tar1090-wsh:0.1
     container_name: tar1090
     depends_on:
       dump1090-fa:
@@ -38,7 +38,7 @@ services:
     #   - "traefik.http.services.public_web.loadbalancer.server.port=80"
 
   piaware:
-    image: ${DOCKER_REGISTRY}piaware-wsh
+    image: ${DOCKER_REGISTRY}sdr/adsb/piaware-wsh:0.1
     container_name: piaware
     # ports:
     #   - 8803:80
@@ -62,7 +62,7 @@ services:
     #   - "traefik.http.services.public_web.loadbalancer.server.port=80"
 
   fr24:
-    image: ${DOCKER_REGISTRY}fr24-wsh
+    image: ${DOCKER_REGISTRY}sdr/adsb/fr24-wsh:0.1
     container_name: fr24
     depends_on:
       dump1090-fa:
@@ -75,7 +75,7 @@ services:
     restart: always
 
   adsbexchange:
-    image: ${DOCKER_REGISTRY}adsbexchange-wsh
+    image: ${DOCKER_REGISTRY}sdr/adsb/adsbexchange-wsh:0.1
     container_name: adsbexchange
     depends_on:
       dump1090-fa:
@@ -93,7 +93,7 @@ services:
     restart: always
 
   opensky:
-    image: ${DOCKER_REGISTRY}opensky-wsh
+    image: ${DOCKER_REGISTRY}sdr/adsb/opensky-wsh:0.1
     container_name: opensky
     depends_on:
       dump1090-fa:
