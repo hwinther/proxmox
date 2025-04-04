@@ -137,7 +137,6 @@ jobs:
       - name: Check if branch was just created
         id: check-branch
         run: |
-          # Get the number of commits on the branch
           commit_count=$(git rev-list --count HEAD)
           echo "Commit count: $commit_count"
           if [[ "$commit_count" -eq 1 ]]; then
@@ -146,6 +145,7 @@ jobs:
           else
             echo "Branch already has multiple commits."
             echo "is_new_branch=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Determine release version from branch name
         id: extract-version
