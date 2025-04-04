@@ -5,38 +5,47 @@
 
 version: 2
 updates:
-  - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "weekly"
+- package-ecosystem: "npm"
+  directory: "/"
+  schedule:
+    interval: "weekly"
 
-  - package-ecosystem: "pip"
-    directory: "/"
-    schedule:
-      interval: "weekly"
+- package-ecosystem: "pip"
+  directory: "/"
+  schedule:
+    interval: "weekly"
 
-  - package-ecosystem: "docker"
-    directories:
-    - "/compose/templates/adsb/adsbexchange"
-    - "/compose/templates/adsb/dump1090-fa"
-    - "/compose/templates/adsb/fr24"
-    - "/compose/templates/adsb/opensky"
-    - "/compose/templates/adsb/piaware"
-    - "/compose/templates/adsb/tar1090"
-    - "/compose/templates/ais/ais-catcher"
-    - "/compose/templates/sdr-base/bookworm/base-image"
-    - "/compose/templates/sdr-base/bookworm/build-image"
-    - "/compose/templates/sdr-base/bullseye/base-image"
-    - "/compose/templates/sdr-base/bullseye/build-image"
-    - "/compose/templates/sdr-base/buster/base-image"
-    - "/compose/templates/sdr-base/buster/build-image"
-    schedule:
-      interval: "weekly"
+- package-ecosystem: "docker"
+  directories:
+  - "/compose/templates/adsb/adsbexchange"
+  - "/compose/templates/adsb/dump1090-fa"
+  - "/compose/templates/adsb/fr24"
+  - "/compose/templates/adsb/opensky"
+  - "/compose/templates/adsb/piaware"
+  - "/compose/templates/adsb/tar1090"
+  - "/compose/templates/ais/ais-catcher"
+  - "/compose/templates/sdr-base/bookworm/base-image"
+  - "/compose/templates/sdr-base/bookworm/build-image"
+  - "/compose/templates/sdr-base/bullseye/base-image"
+  - "/compose/templates/sdr-base/bullseye/build-image"
+  - "/compose/templates/sdr-base/buster/base-image"
+  - "/compose/templates/sdr-base/buster/build-image"
+  schedule:
+    interval: "weekly"
 
-  - package-ecosystem: "docker-compose"
-    directories:
-    - "/compose/templates/adsb"
-    - "/compose/templates/ais"
-    - "/compose/templates/sdr-base"
-    schedule:
-      interval: "weekly"
+- package-ecosystem: "docker-compose"
+  directories:
+  - "/compose/templates/adsb"
+  - "/compose/templates/ais"
+  - "/compose/templates/sdr-base"
+  schedule:
+    interval: "weekly"
+
+- package-ecosystem: "docker-compose"
+  directories:
+  - "/servers/radio-pi02/ais"
+  - "/servers/radio-pi02/adsb"
+  assignees: [ "hwinther" ]
+  target-branch: "deploy/radio-pi02"
+  schedule:
+    interval: "daily"
