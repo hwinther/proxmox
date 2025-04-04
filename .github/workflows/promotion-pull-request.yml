@@ -1,0 +1,214 @@
+name: "Create promotion pull request"
+
+# This workflow creates a pull request to promote changes from the main branch to a release branch.
+# It is triggered on push to the main branch or manually via workflow_dispatch.
+# The workflow checks if the latest release branch exists and increments the version number accordingly.
+# If the previous pull request was merged, it creates a new release branch and a draft pull request.
+
+# The first time this workflow is run, it will create a release branch with version 0.1.
+# Subsequent runs will increment the minor version number (e.g., 0.1 -> 0.2, 0.2 -> 0.3, etc.).
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main", "releases/*", "feat/release-branches"]
+    tags: ["v*"]
+    paths-ignore:
+      - ".github/workflows/promotion-pull-request.yml" # Ignore changes to this workflow file
+
+env:
+  COMPARE_BRANCH: feat/release-branches # Should be set to the default branch of the repository
+  ASSIGNEE: "hwinther" # Replace with the GitHub username of the assignee
+
+jobs:
+  promote-default-branch-changes-to-release:
+    name: "Promote default branch changes to release branch"
+    runs-on: ubuntu-latest
+    if: ${{ startsWith(github.ref, 'refs/heads/feat/release-branches') && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.COMPARE_BRANCH }}
+          token: ${{ secrets.WORKFLOW_TOKEN }}
+          fetch-depth: 0 # Fetch all history for all branches and tags
+
+      - name: Set up Git
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "GitHub Actions"
+
+      - name: Determine next release version
+        id: next-version
+        run: |
+          git fetch --all
+
+          # Extract release branches and find the highest version
+          latest_version=$(git branch -r | grep -o 'releases/[0-9]\+\.[0-9]\+' | sed 's/releases\///' | sort -V | tail -n 1)
+          echo "Latest (current) version: $latest_version"
+          echo "latest_version=$latest_version" >> "$GITHUB_OUTPUT"
+
+          # Increment the version
+          if [[ -z "$latest_version" ]]; then
+            next_version="0.1" # Default to 0.1 if no release branches exist
+            initial_release="true"
+          else
+            major=$(echo $latest_version | cut -d. -f1)
+            minor=$(echo $latest_version | cut -d. -f2)
+            next_version="$major.$((minor + 1))"
+            initial_release="false"
+          fi
+
+          echo "Next version: $next_version"
+          echo "next_version=$next_version" >> "$GITHUB_OUTPUT"
+          next_release_branch="releases/$next_version"
+          echo "Next release branch name: $next_release_branch"
+          echo "next_release_branch=$next_release_branch" >> "$GITHUB_OUTPUT"
+          echo "Initial release: $initial_release"
+          echo "initial_release=$initial_release" >> "$GITHUB_OUTPUT"
+
+      - name: Check if previous PR was merged
+        id: check-pr-merged
+        env:
+          GITHUB_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
+        run: |
+          prs=$(gh pr list \
+              --repo "$GITHUB_REPOSITORY" \
+              --base "releases/${{ steps.next-version.outputs.latest_version }}" \
+              --head "${{ env.COMPARE_BRANCH }}" \
+              --state merged \
+              --json number \
+              --jq "length")
+
+          if (( prs > 0 )); then
+            echo "Previous PR was merged."
+            echo "pr_merged=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No merged PR found."
+            echo "pr_merged=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create next release branch if previous PR was merged
+        if: ${{ steps.check-pr-merged.outputs.pr_merged == 'true' || steps.next-version.outputs.initial_release == 'true' }}
+        id: create-release-branch
+        run: |
+          git fetch origin ${{ env.COMPARE_BRANCH }}
+          git fetch origin ${{ steps.next-version.outputs.next_release_branch }} || true
+
+          # Check if the branch has at least one previous commit
+          if git rev-parse --verify "origin/${{ env.COMPARE_BRANCH }}~1" >/dev/null 2>&1; then
+            echo "Branch has at least one previous commit. Creating release branch from the previous commit."
+            git checkout -b ${{ steps.next-version.outputs.next_release_branch }} origin/${{ env.COMPARE_BRANCH }}~1
+            echo "create_pr=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Branch has only one commit. Creating release branch from the current commit and skipping PR creation."
+            git checkout -b ${{ steps.next-version.outputs.next_release_branch }} origin/${{ env.COMPARE_BRANCH }}
+            echo "create_pr=true" >> "$GITHUB_OUTPUT"
+          fi
+
+          git push origin ${{ steps.next-version.outputs.next_release_branch }}
+
+      - name: Create Draft Pull Request
+        if: ${{ steps.create-release-branch.outputs.create_pr == 'true' }}
+        id: create-pr
+        env:
+          GH_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
+        run: |
+          echo "Creating draft pull request..."
+
+          commit_messages=$(git log origin/${{ env.COMPARE_BRANCH }} ^origin/${{ steps.next-version.outputs.next_release_branch }} --pretty=format:"- %s" --no-merges)
+
+          gh pr create \
+            --base ${{ steps.next-version.outputs.next_release_branch }} \
+            --head ${{ env.COMPARE_BRANCH }} \
+            --title "Merge changes from ${{ env.COMPARE_BRANCH }} to ${{ steps.next-version.outputs.next_release_branch }}" \
+            --body "$(echo -e "### Commit Messages:\n\n$commit_messages")" \
+            --assignee ${{ env.ASSIGNEE }} \
+            --draft
+
+  create-tags-on-push-to-release-branch:
+    name: "Create tag for current release version"
+    runs-on: ubuntu-latest
+    if: ${{ startsWith(github.ref, 'refs/heads/releases/') && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.WORKFLOW_TOKEN }}
+          fetch-depth: 0 # Fetch all history for all branches and tags
+
+      - name: Debug github context
+        run: |
+          echo "GitHub context: ${{ toJson(github) }}"
+          echo "GitHub event: ${{ toJson(github.event) }}"
+
+      - name: Set up Git
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "GitHub Actions"
+
+      - name: Check if branch was just created or has an open pull request
+        id: check-branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
+        run: |
+          commit_count=$(git rev-list --count HEAD)
+          echo "Commit count: $commit_count"
+
+          pr_count=$(gh pr list \
+            --repo "$GITHUB_REPOSITORY" \
+            --base "${{ github.ref_name }}" \
+            --state open \
+            --json number \
+            --jq "length")
+
+          echo "Open PR count targeting this branch: $pr_count"
+
+          if [[ "$pr_count" -eq 1 || "$commit_count" -eq 0 ]]; then
+            echo "Branch has 0 commits or an open pull requests."
+            echo "is_new_branch=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Branch has multiple commits or an open pull request exists."
+            echo "is_new_branch=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Determine release version from branch name
+        id: extract-version
+        if: ${{ steps.check-branch.outputs.is_new_branch == 'false' }}
+        run: |
+          branch_name="${{ github.ref_name }}"
+          base_version="${branch_name#releases/}"
+
+          git fetch --tags
+          highest_patch=$(git tag -l "v${base_version}.*" | sed "s/v${base_version}.//" | sort -n | tail -n 1)
+
+          if [[ -z "$highest_patch" ]]; then
+            next_patch=0
+          else
+            next_patch=$((highest_patch + 1))
+          fi
+
+          release_version="${base_version}.${next_patch}"
+          echo "Next release version: $release_version"
+          echo "release_version=$release_version" >> "$GITHUB_OUTPUT"
+
+      - name: Create and push tag
+        if: ${{ steps.check-branch.outputs.is_new_branch == 'false' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
+        run: |
+          git tag -a "v${{ steps.extract-version.outputs.release_version }}" -m "Release version ${{ steps.extract-version.outputs.release_version }}"
+          git push origin "v${{ steps.extract-version.outputs.release_version }}"
+
+  tag-push:
+    name: Handle tag push
+    if: ${{ startsWith(github.ref, 'refs/tags/') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.WORKFLOW_TOKEN }}
+
+      - name: Handle tag push
+        run: |
+          echo "Tag pushed: ${{ github.ref }}"
+          # Add your logic here to handle the tag push event
