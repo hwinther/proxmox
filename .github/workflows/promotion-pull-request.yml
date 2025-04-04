@@ -90,20 +90,17 @@ jobs:
           git fetch origin ${{ env.COMPARE_BRANCH }}
           git fetch origin ${{ steps.next-version.outputs.next_release_branch }} || true
 
-          # Check if the branch exists and has at least one commit
-          if git rev-parse --verify "${{ env.COMPARE_BRANCH }}" >/dev/null 2>&1; then
-            if git rev-parse --verify "${{ env.COMPARE_BRANCH }}~1" >/dev/null 2>&1; then
-              echo "Creating new release branch: ${{ steps.next-version.outputs.next_release_branch }}"
-              git checkout -b ${{ steps.next-version.outputs.next_release_branch }} ${{ env.COMPARE_BRANCH }}~1
-            else
-              echo "Branch ${{ env.COMPARE_BRANCH }} has only one commit. Creating release branch from the current commit."
-              git checkout -b ${{ steps.next-version.outputs.next_release_branch }} ${{ env.COMPARE_BRANCH }}
-            fi
-            git push origin ${{ steps.next-version.outputs.next_release_branch }}
+          # Check if the branch has at least one previous commit
+          if git rev-parse --verify "origin/${{ env.COMPARE_BRANCH }}~1" >/dev/null 2>&1; then
+            echo "Branch has at least one previous commit. Creating release branch from the previous commit."
+            git reset --hard origin/${{ env.COMPARE_BRANCH }}~1
+            git checkout -b ${{ steps.next-version.outputs.next_release_branch }} origin/${{ env.COMPARE_BRANCH }}~1
           else
-            echo "Branch ${{ env.COMPARE_BRANCH }} does not exist. Cannot create release branch."
-            exit 1
+            echo "Branch has only one commit. Creating release branch from the current commit."
+            git checkout -b ${{ steps.next-version.outputs.next_release_branch }} origin/${{ env.COMPARE_BRANCH }}
           fi
+
+          git push origin ${{ steps.next-version.outputs.next_release_branch }}
 
           # if ! git show-ref --verify --quiet refs/remotes/origin/${{ steps.next-version.outputs.next_release_branch }}; then
           #   echo "Creating new release branch: ${{ steps.next-version.outputs.next_release_branch }}"
