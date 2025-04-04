@@ -1,18 +1,28 @@
 name: "Create promotion pull request"
 
+# This workflow creates a pull request to promote changes from the main branch to a release branch.
+# It is triggered on push to the main branch or manually via workflow_dispatch.
+# The workflow checks if the latest release branch exists and increments the version number accordingly.
+# If the previous pull request was merged, it creates a new release branch and a draft pull request.
+
+# The first time this workflow is run, it will create a release branch with version 0.1.
+# Subsequent runs will increment the minor version number (e.g., 0.1 -> 0.2, 0.2 -> 0.3, etc.).
+
 on:
   workflow_dispatch:
   push:
     branches: ["main", "feat/release-branches"]
+    tags: ["v*"]
+
+env:
+  COMPARE_BRANCH: feat/release-branches # Should be set to the default branch of the repository
+  ASSIGNEE: "hwinther" # Replace with the GitHub username of the assignee
 
 jobs:
-  promote-main-to-release:
+  promote-default-branch-changes-to-release:
+    name: "Promote default branch changes to release branch"
     runs-on: ubuntu-latest
-    # if: github.ref == 'refs/heads/main'
-    env:
-      # COMPARE_BRANCH: main ####
-      COMPARE_BRANCH: feat/release-branches
-      ASSIGNEE: "hwinther"
+    if: ${{ startsWith(github.ref, 'refs/heads/feat/release-branches') && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -82,7 +92,7 @@ jobs:
           fi
 
       - name: Create Draft Pull Request
-        if: ${{ steps.check-pr-merged.outputs.pr_merged == 'true' || steps.next-version.outputs.initial_release == 'true' }}
+        if: ${{ steps.check-pr-merged.outputs.pr_merged == 'true' }}
         env:
           GH_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
         run: |
@@ -94,3 +104,53 @@ jobs:
             --fill \
             --assignee ${{ env.ASSIGNEE }} \
             --draft
+
+  create-tags-on-push-to-release-branch:
+    name: "Create tag for current release version"
+    runs-on: ubuntu-latest
+    if: ${{ startsWith(github.ref, 'refs/heads/releases/') && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.WORKFLOW_TOKEN }}
+
+      - name: Determine release version from branch name
+        id: extract-version
+        run: |
+          branch_name="${{ github.ref_name }}"
+          base_version="${branch_name#releases/}"
+
+          git fetch --tags
+          highest_patch=$(git tag -l "v${base_version}.*" | sed "s/v${base_version}.//" | sort -n | tail -n 1)
+
+          if [[ -z "$highest_patch" ]]; then
+            next_patch=0
+          else
+            next_patch=$((highest_patch + 1))
+          fi
+
+          release_version="${base_version}.${next_patch}"
+          echo "Next release version: $release_version"
+          echo "release_version=$release_version" >> "$GITHUB_OUTPUT"
+
+      - name: Create and push tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
+        run: |
+          git tag -a "v${{ steps.extract-version.outputs.release_version }}" -m "Release version ${{ steps.extract-version.outputs.release_version }}"
+          git push origin "v${{ steps.extract-version.outputs.release_version }}"
+
+  tag-push:
+    name: Handle tag push
+    if: ${{ startsWith(github.ref, 'refs/tags/') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.WORKFLOW_TOKEN }}
+
+      - name: Handle tag push
+        run: |
+          echo "Tag pushed: ${{ github.ref }}"
+          # Add your logic here to handle the tag push event
