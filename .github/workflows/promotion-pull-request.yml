@@ -25,7 +25,7 @@ jobs:
   promote-default-branch-changes-to-release:
     name: "Promote default branch changes to release branch"
     runs-on: ubuntu-latest
-    if: ${{ startsWith(github.ref, 'refs/heads/feat/release-branches') && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
+    if: ${{ startsWith(github.ref, 'refs/heads/main') && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
     steps:
       - uses: actions/checkout@v4
         with:
