@@ -134,8 +134,22 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "GitHub Actions"
 
+      - name: Check if branch was just created
+        id: check-branch
+        run: |
+          # Get the number of commits on the branch
+          commit_count=$(git rev-list --count HEAD)
+          echo "Commit count: $commit_count"
+          if [[ "$commit_count" -eq 1 ]]; then
+            echo "Branch was just created."
+            echo "is_new_branch=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Branch already has multiple commits."
+            echo "is_new_branch=false" >> "$GITHUB_OUTPUT"
+
       - name: Determine release version from branch name
         id: extract-version
+        if: ${{ steps.check-branch.outputs.is_new_branch == 'true' }}
         run: |
           branch_name="${{ github.ref_name }}"
           base_version="${branch_name#releases/}"
@@ -154,6 +168,7 @@ jobs:
           echo "release_version=$release_version" >> "$GITHUB_OUTPUT"
 
       - name: Create and push tag
+        if: ${{ steps.check-branch.outputs.is_new_branch == 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
         run: |
