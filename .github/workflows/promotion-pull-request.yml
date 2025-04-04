@@ -129,6 +129,11 @@ jobs:
         with:
           token: ${{ secrets.WORKFLOW_TOKEN }}
 
+      - name: Debug github context
+        run: |
+          echo "GitHub context: ${{ toJson(github) }}"
+          echo "GitHub event: ${{ toJson(github.event) }}"
+
       - name: Set up Git
         run: |
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
