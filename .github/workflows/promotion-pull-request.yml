@@ -87,6 +87,11 @@ jobs:
             echo "Creating new release branch: ${{ steps.next-version.outputs.next_release_branch }}"
             git checkout -b ${{ steps.next-version.outputs.next_release_branch }} ${{ env.COMPARE_BRANCH }}
             git push origin ${{ steps.next-version.outputs.next_release_branch }}
+
+            if [[ "${{ steps.next-version.outputs.initial_release }}" == "true" ]]; then
+              git tag -a "v${{ steps.next-version.outputs.next_version }}" -m "Release version ${{ steps.next-version.outputs.next_version }}"
+              git push origin "v${{ steps.next-version.outputs.next_version }}"
+            fi
           else
             echo "Release branch ${{ steps.next-version.outputs.next_release_branch }} already exists."
           fi
