@@ -31,16 +31,16 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Remove v prefix in tag
-        id: remove-v-prefix
-        run: |
-          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-            echo "Tag without v prefix: ${GITHUB_REF#refs/tags/v}"
-            echo "tag=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
-          else
-            echo "Tag without v prefix: ${{ github.ref_name }}"
-            echo "tag=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
-          fi
+      # - name: Remove v prefix in tag
+      #   id: remove-v-prefix
+      #   run: |
+      #     if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+      #       echo "Tag without v prefix: ${GITHUB_REF#refs/tags/v}"
+      #       echo "tag=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
+      #     else
+      #       echo "Tag without v prefix: ${{ github.ref_name }}"
+      #       echo "tag=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+      #     fi
 
       - name: Build and push docker image
         uses: ./.github/actions/docker
@@ -51,4 +51,5 @@ jobs:
           working_directory: ${{ env.WORKING_DIRECTORY }}
           push_condition: ${{ github.event_name != 'pull_request' }}
           latest_tag_enabled: ${{ !startsWith(github.ref, 'refs/tags/') }}
-          tag: ${{ startsWith(github.ref, 'refs/tags/') && steps.remove-v-prefix.outputs.tag || '' }}
+          branch_tag_enabled: ${{ startsWith(github.ref, 'refs/tags/') }}
+          #tag: ${{ startsWith(github.ref, 'refs/tags/') && steps.remove-v-prefix.outputs.tag || '' }}
