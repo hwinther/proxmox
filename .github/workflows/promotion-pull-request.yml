@@ -81,6 +81,8 @@ jobs:
 
       - name: Create next release branch if previous PR was merged
         if: ${{ steps.check-pr-merged.outputs.pr_merged == 'true' || steps.next-version.outputs.initial_release == 'true' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
         run: |
           git fetch origin ${{ steps.next-version.outputs.next_release_branch }} || true
           if ! git show-ref --verify --quiet refs/remotes/origin/${{ steps.next-version.outputs.next_release_branch }}; then
