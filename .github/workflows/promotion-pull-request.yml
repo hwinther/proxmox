@@ -136,10 +136,6 @@ jobs:
           token: ${{ secrets.WORKFLOW_TOKEN }}
           fetch-depth: 0 # Fetch all history for all branches and tags
 
-      - name: Debug github context
-        run: |
-          echo "GitHub context: ${{ toJson(github) }}"
-
       - name: Set up Git
         run: |
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
