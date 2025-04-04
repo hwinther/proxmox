@@ -40,7 +40,7 @@ jobs:
         id: git-tag-diff
         uses: ./.github/actions/git-tag-diff
         with:
-          file_path: compose/templates/adsb/adsbexchange/
+          file_path: ${{ env.WORKING_DIRECTORY }}
 
       - name: Build and push docker image
         uses: ./.github/actions/docker

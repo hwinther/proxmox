@@ -54,14 +54,14 @@ jobs:
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
       - name: Check for changes in the specified path between tags
-        id: git-tag-diff
+        id: git-tag-diff-base-image
         uses: ./.github/actions/git-tag-diff
         with:
-          file_path: compose/templates/sdr-base/
+          file_path: ${{ env.WORKING_DIRECTORY }}/${{ matrix.debian_release }}/base-image
 
       - name: Build and push runtime docker image
         uses: ./.github/actions/docker
-        if: ${{ steps.git-tag-diff.outputs.skip == 'false' }}
+        if: ${{ steps.git-tag-diff-base-image.outputs.skip == 'false' }}
         with:
           package_name: sdr-base-wsh
           package_path: ${{ env.PACKAGE_PATH }}
@@ -71,9 +71,15 @@ jobs:
           push_condition: ${{ github.event_name != 'pull_request' }}
           tag: ${{ steps.generate-tag.outputs.tag }}
 
+      - name: Check for changes in the specified path between tags
+        id: git-tag-diff-build-image
+        uses: ./.github/actions/git-tag-diff
+        with:
+          file_path: ${{ env.WORKING_DIRECTORY }}/${{ matrix.debian_release }}/build-image
+
       - name: Build and push build docker image
         uses: ./.github/actions/docker
-        if: ${{ steps.git-tag-diff.outputs.skip == 'false' }}
+        if: ${{ steps.git-tag-diff-build-image.outputs.skip == 'false' }}
         with:
           package_name: sdr-build-wsh
           package_path: ${{ env.PACKAGE_PATH }}
