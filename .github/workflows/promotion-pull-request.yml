@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     # if: github.ref == 'refs/heads/main'
     env:
-      # COMPARE_BRANCH: main ##
+      # COMPARE_BRANCH: main ####
       COMPARE_BRANCH: feat/release-branches
       ASSIGNEE: "hwinther"
     steps:
