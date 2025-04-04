@@ -16,7 +16,7 @@ LATITUDE="59"
 LONGITUDE="10"
 
 ALTITUDE="0"
-
+#test change
 # this is the source for 978 data, use port 30978 from dump978 --raw-port
 # if you're not receiving 978, don't worry about it, not doing any harm!
 UAT_INPUT="127.0.0.1:30978"
