@@ -11,7 +11,7 @@ name: "Create promotion pull request"
 on:
   workflow_dispatch:
   push:
-    branches: ["main", "feat/release-branches"] # change next version
+    branches: ["main", "feat/release-branches"]
     tags: ["v*"]
 
 env:
@@ -87,6 +87,7 @@ jobs:
 
       - name: Create next release branch if previous PR was merged
         if: ${{ steps.check-pr-merged.outputs.pr_merged == 'true' || steps.next-version.outputs.initial_release == 'true' }}
+        id: create-release-branch
         run: |
           git fetch origin ${{ env.COMPARE_BRANCH }}
           git fetch origin ${{ steps.next-version.outputs.next_release_branch }} || true
@@ -96,36 +97,25 @@ jobs:
             echo "Branch has at least one previous commit. Creating release branch from the previous commit."
             git reset --hard origin/${{ env.COMPARE_BRANCH }}~1
             git checkout -b ${{ steps.next-version.outputs.next_release_branch }} origin/${{ env.COMPARE_BRANCH }}~1
+            echo "create_pr=true" >> "$GITHUB_OUTPUT"
           else
-            echo "Branch has only one commit. Creating release branch from the current commit."
+            echo "Branch has only one commit. Creating release branch from the current commit and skipping PR creation."
             git checkout -b ${{ steps.next-version.outputs.next_release_branch }} origin/${{ env.COMPARE_BRANCH }}
+            echo "create_pr=true" >> "$GITHUB_OUTPUT"
           fi
 
           git push origin ${{ steps.next-version.outputs.next_release_branch }}
 
-          # if ! git show-ref --verify --quiet refs/remotes/origin/${{ steps.next-version.outputs.next_release_branch }}; then
-          #   echo "Creating new release branch: ${{ steps.next-version.outputs.next_release_branch }}"
-            
-          #   git checkout -b ${{ steps.next-version.outputs.next_release_branch }} ${{ env.COMPARE_BRANCH }}
-          #   git push origin ${{ steps.next-version.outputs.next_release_branch }}
-
-          #   # if [[ "${{ steps.next-version.outputs.initial_release }}" == "true" ]]; then
-          #   #   git tag -a "v${{ steps.next-version.outputs.next_version }}" -m "Release version ${{ steps.next-version.outputs.next_version }}"
-          #   #   git push origin "v${{ steps.next-version.outputs.next_version }}"
-          #   # fi
-          # else
-          #   echo "Release branch ${{ steps.next-version.outputs.next_release_branch }} already exists."
-          # fi
-
       - name: Create Draft Pull Request
-        if: ${{ steps.check-pr-merged.outputs.pr_merged == 'true' || steps.next-version.outputs.initial_release == 'true' }}
+        if: ${{ steps.create-release-branch.outputs.create_pr == 'true' }}
+        id: create-pr
         env:
           GH_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
         run: |
           echo "Creating draft pull request..."
           gh pr create \
             --base ${{ steps.next-version.outputs.next_release_branch }} \
-            --head ${{ env.COMPARE_BRANCH }} \
+            --head ${{ env.COMPARE_BRANCH }}~1 \
             --title "Merge changes from ${{ env.COMPARE_BRANCH }} to ${{ steps.next-version.outputs.next_release_branch }}" \
             --fill \
             --assignee ${{ env.ASSIGNEE }} \
