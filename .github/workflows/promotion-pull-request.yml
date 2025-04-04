@@ -92,7 +92,8 @@ jobs:
 
           if ! git show-ref --verify --quiet refs/remotes/origin/${{ steps.next-version.outputs.next_release_branch }}; then
             echo "Creating new release branch: ${{ steps.next-version.outputs.next_release_branch }}"
-            git checkout -b ${{ steps.next-version.outputs.next_release_branch }} ${{ env.COMPARE_BRANCH }}~1
+            git reset --hard origin/${{ env.COMPARE_BRANCH }}~1
+            git checkout -b ${{ steps.next-version.outputs.next_release_branch }} ${{ env.COMPARE_BRANCH }}
             git push origin ${{ steps.next-version.outputs.next_release_branch }}
 
             # if [[ "${{ steps.next-version.outputs.initial_release }}" == "true" ]]; then
