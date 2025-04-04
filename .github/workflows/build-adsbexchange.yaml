@@ -43,7 +43,7 @@ jobs:
       #     fi
 
       - name: Build and push docker image
-        uses: ./.github/actions/docker@feat/release-branches
+        uses: ./.github/actions/docker
         with:
           package_name: ${{ env.PACKAGE_NAME }}
           package_description: ${{ env.PACKAGE_DESCRIPTION }}
