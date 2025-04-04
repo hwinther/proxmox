@@ -53,8 +53,15 @@ jobs:
           echo "Constructed tag: $tag"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
+      - name: Check for changes in the specified path between tags
+        id: git-tag-diff
+        uses: ./.github/actions/git-tag-diff
+        with:
+          file_path: compose/templates/sdr-base/
+
       - name: Build and push runtime docker image
         uses: ./.github/actions/docker
+        if: ${{ steps.git-tag-diff.outputs.skip == 'false' }}
         with:
           package_name: sdr-base-wsh
           package_path: ${{ env.PACKAGE_PATH }}
@@ -66,6 +73,7 @@ jobs:
 
       - name: Build and push build docker image
         uses: ./.github/actions/docker
+        if: ${{ steps.git-tag-diff.outputs.skip == 'false' }}
         with:
           package_name: sdr-build-wsh
           package_path: ${{ env.PACKAGE_PATH }}
