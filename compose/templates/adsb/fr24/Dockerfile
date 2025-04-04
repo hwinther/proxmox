@@ -1,4 +1,4 @@
-ARG DOCKER_REGISTRY=ghcr.io/hwinther/proxmox/
+ARG DOCKER_REGISTRY=ghcr.io/hwinther/proxmox/sdr/
 FROM ${DOCKER_REGISTRY}sdr-base-wsh:bookworm AS runtime
 
 FROM runtime AS install-flightradar24
