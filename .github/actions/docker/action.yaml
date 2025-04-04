@@ -51,7 +51,7 @@ runs:
         images: ghcr.io/${{ github.repository }}/${{ inputs.package_name }}
         tags: |
           type=edge,branch=main,enable=${{ github.ref == 'refs/heads/main' && inputs.edge_tag_enabled == 'true' }}
-          type=ref,event=tag,enable=${{ inputs.branch_tag_enabled == 'true' && github.event_name == 'pull_request' }}
+          type=ref,event=tag,enable=${{ inputs.branch_tag_enabled == 'true' }}
           type=ref,event=branch
           # set latest tag for default branch if tag has not been provided
           type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' && inputs.latest_tag_enabled == 'true' }}
