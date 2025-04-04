@@ -119,7 +119,7 @@ jobs:
             --base ${{ steps.next-version.outputs.next_release_branch }} \
             --head ${{ env.COMPARE_BRANCH }} \
             --title "Merge changes from ${{ env.COMPARE_BRANCH }} to ${{ steps.next-version.outputs.next_release_branch }}" \
-            --body "### Commit Messages:\n\n$commit_messages" \
+            --body "$(echo -e "### Commit Messages:\n\n$commit_messages")" \
             --assignee ${{ env.ASSIGNEE }} \
             --draft
 
