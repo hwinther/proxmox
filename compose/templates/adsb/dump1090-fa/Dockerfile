@@ -1,4 +1,4 @@
-ARG DOCKER_REGISTRY=ghcr.io/hwinther/proxmox/
+ARG DOCKER_REGISTRY=ghcr.io/hwinther/proxmox/sdr/
 FROM ${DOCKER_REGISTRY}sdr-base-wsh:bullseye AS runtime
 FROM ${DOCKER_REGISTRY}sdr-build-wsh:bullseye AS build
 
