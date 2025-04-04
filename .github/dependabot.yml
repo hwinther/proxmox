@@ -43,8 +43,8 @@ updates:
 
 - package-ecosystem: "docker-compose"
   directories:
-  - "/servers/radio-pi02/ais"
-  - "/servers/radio-pi02/adsb"
+  - "/compose/servers/radio-pi02/ais"
+  - "/compose/servers/radio-pi02/adsb"
   assignees: [ "hwinther" ]
   target-branch: "deploy/radio-pi02"
   schedule:
