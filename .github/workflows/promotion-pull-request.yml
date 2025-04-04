@@ -112,11 +112,12 @@ jobs:
           GH_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
         run: |
           echo "Creating draft pull request..."
+          commit_messages=$(git log origin/${{ env.COMPARE_BRANCH }} --pretty=format:"- %s" --no-merges)
           gh pr create \
             --base ${{ steps.next-version.outputs.next_release_branch }} \
             --head ${{ env.COMPARE_BRANCH }} \
             --title "Merge changes from ${{ env.COMPARE_BRANCH }} to ${{ steps.next-version.outputs.next_release_branch }}" \
-            --fill \
+            --body "### Commit Messages:\n\n$commit_messages" \
             --assignee ${{ env.ASSIGNEE }} \
             --draft
 
