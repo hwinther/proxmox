@@ -55,7 +55,7 @@ runs:
           type=ref,event=branch
           # set latest tag for default branch if tag has not been provided
           type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' && inputs.latest_tag_enabled == 'true' }}
-          type=raw,value=${{ inputs.tag }},enable=${{ github.ref == 'refs/heads/main' && inputs.tag != '' }}
+          type=raw,value=${{ inputs.tag }},enable=${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) && inputs.tag != '' }}
         labels: |
           org.opencontainers.image.title=${{ inputs.package_name }}
           org.opencontainers.image.description=${{ inputs.package_description }}
