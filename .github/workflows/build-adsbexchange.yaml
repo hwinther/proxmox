@@ -36,7 +36,7 @@ jobs:
         id: remove-v-prefix
         uses: ./.github/actions/git-tag-remove-prefix
 
-      - name: Remove v prefix in tag
+      - name: Check for changes in the specified path between tags
         id: git-tag-diff
         uses: ./.github/actions/git-tag-diff
         with:
