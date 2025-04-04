@@ -149,7 +149,7 @@ jobs:
 
       - name: Determine release version from branch name
         id: extract-version
-        if: ${{ steps.check-branch.outputs.is_new_branch == 'true' }}
+        if: ${{ steps.check-branch.outputs.is_new_branch == 'false' }}
         run: |
           branch_name="${{ github.ref_name }}"
           base_version="${branch_name#releases/}"
@@ -168,7 +168,7 @@ jobs:
           echo "release_version=$release_version" >> "$GITHUB_OUTPUT"
 
       - name: Create and push tag
-        if: ${{ steps.check-branch.outputs.is_new_branch == 'true' }}
+        if: ${{ steps.check-branch.outputs.is_new_branch == 'false' }}
         env:
           GITHUB_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
         run: |
