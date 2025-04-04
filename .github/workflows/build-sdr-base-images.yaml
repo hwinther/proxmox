@@ -36,6 +36,8 @@ jobs:
 
       - name: Generate tag with or without version prefix
         id: generate-tag
+        env:
+          MATRIX_DEBIAN_RELEASE: ${{ matrix.debian_release }}
         run: |
           if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
             # Remove the 'v' prefix from the tag and append the Debian release
