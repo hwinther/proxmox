@@ -11,7 +11,7 @@ name: "Create promotion pull request"
 on:
   workflow_dispatch:
   push:
-    branches: ["main", "feat/release-branches"] # change
+    branches: ["main", "feat/release-branches"] # change next version
     tags: ["v*"]
 
 env:
