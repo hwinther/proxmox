@@ -157,8 +157,8 @@ jobs:
 
           echo "Open PR count targeting this branch: $pr_count"
 
-          if [[ "$commit_count" -eq 1 && "$pr_count" -eq 0 ]]; then
-            echo "Branch was just created and has no open pull requests."
+          if [[ "$pr_count" -eq 1 || "$commit_count" -eq 0]]; then
+            echo "Branch has 0 commits or an open pull requests."
             echo "is_new_branch=true" >> "$GITHUB_OUTPUT"
           else
             echo "Branch has multiple commits or an open pull request exists."
