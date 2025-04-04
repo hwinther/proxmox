@@ -82,7 +82,7 @@ jobs:
           fi
 
       - name: Create Draft Pull Request
-        if: ${{ steps.check-pr-merged.outputs.pr_merged == 'true' }}
+        if: ${{ steps.check-pr-merged.outputs.pr_merged == 'true' || steps.next-version.outputs.initial_release == 'true' }}
         env:
           GH_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
         run: |
