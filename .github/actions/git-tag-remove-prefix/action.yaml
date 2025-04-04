@@ -1,0 +1,25 @@
+name: "Remove v prefix in tag"
+description: "Remove v prefix in tag"
+branding:
+  icon: check-square
+  color: blue
+
+outputs:
+  tag:
+    description: Current tag without the v prefix
+    value: "${{ steps.remove-v-prefix.outputs.tag }}"
+
+runs:
+  using: "composite"
+  steps:
+  - name: Remove v prefix in tag
+    id: remove-v-prefix
+    shell: bash
+    run: |
+      if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+        echo "Tag without v prefix: ${GITHUB_REF#refs/tags/v}"
+        echo "tag=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
+      else
+        echo "Tag without v prefix: ${{ github.ref_name }}"
+        echo "tag=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+      fi

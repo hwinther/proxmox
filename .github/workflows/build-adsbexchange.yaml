@@ -34,17 +34,17 @@ jobs:
 
       - name: Remove v prefix in tag
         id: remove-v-prefix
-        run: |
-          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-            echo "Tag without v prefix: ${GITHUB_REF#refs/tags/v}"
-            echo "tag=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
-          else
-            echo "Tag without v prefix: ${{ github.ref_name }}"
-            echo "tag=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
-          fi
+        uses: ./.github/actions/git-tag-remove-prefix
+
+      - name: Remove v prefix in tag
+        id: git-tag-diff
+        uses: ./.github/actions/git-tag-diff
+        with:
+          file_path: compose/templates/adsb/adsbexchange/
 
       - name: Build and push docker image
         uses: ./.github/actions/docker
+        if: ${{ steps.git-tag-diff.outputs.skip == 'false' }}
         with:
           package_name: ${{ env.PACKAGE_NAME }}
           package_path: ${{ env.PACKAGE_PATH }}
