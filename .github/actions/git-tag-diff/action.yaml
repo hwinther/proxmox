@@ -1,0 +1,56 @@
+name: "Check if ref is a tag and if there are changes between the current and previous tag"
+description: "Check if the current ref is a tag and if there are changes between the current and previous tag for a specific path"
+branding:
+  icon: book
+  color: blue
+
+inputs:
+  file_path:
+    required: true
+    description: File path to check for changes
+
+outputs:
+  skip:
+    description: Will be set to true if no changes are detected in the specified path
+    value: "${{ steps.check-for-changes.outputs.skip }}"
+  previous_tag:
+    description: The tag that was used to compare the changes
+    value: "${{ steps.check-for-changes.outputs.previous_tag }}"
+
+runs:
+  using: "composite"
+  steps:
+  - name: Get previous tag
+    id: check-for-changes
+    shell: bash
+    run: |
+      if [[ ! "${GITHUB_REF}" =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        echo "Current ref is not a valid tag in the format tags/v*."
+        echo "skip=false" >> "$GITHUB_OUTPUT"
+        exit 0
+      fi
+
+      CURRENT_TAG=${{ github.ref_name }}
+      PREVIOUS_TAG=$(git tag --sort=-v:refname | grep -A1 "^$CURRENT_TAG$" | tail -n1)
+
+      if [ -z "$PREVIOUS_TAG" ]; then
+        echo "No previous tag found."
+        echo "previous_tag=" >> "$GITHUB_OUTPUT"
+      else
+        echo "Previous tag: $PREVIOUS_TAG"
+        echo "previous_tag=$PREVIOUS_TAG" >> "$GITHUB_OUTPUT"
+      fi
+
+      FILE_PATH="${{ inputs.file_path }}"
+      CHANGED_FILES=$(git diff --name-only $PREVIOUS_TAG $CURRENT_TAG | grep "$FILE_PATH" || true)
+
+      echo "Changed files:"
+      echo "$CHANGED_FILES"
+
+      if [ -z "$CHANGED_FILES" ]; then
+        echo "No changes detected in the specified path."
+        echo "skip=true" >> "$GITHUB_OUTPUT"
+      else
+        echo "Changes detected in the specified path."
+        echo "skip=false" >> "$GITHUB_OUTPUT"
+      fi
