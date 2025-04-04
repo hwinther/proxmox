@@ -115,7 +115,7 @@ jobs:
           echo "Creating draft pull request..."
           gh pr create \
             --base ${{ steps.next-version.outputs.next_release_branch }} \
-            --head ${{ env.COMPARE_BRANCH }}~1 \
+            --head ${{ env.COMPARE_BRANCH }} \
             --title "Merge changes from ${{ env.COMPARE_BRANCH }} to ${{ steps.next-version.outputs.next_release_branch }}" \
             --fill \
             --assignee ${{ env.ASSIGNEE }} \
