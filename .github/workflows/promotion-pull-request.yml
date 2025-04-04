@@ -29,10 +29,10 @@ jobs:
           ref: ${{ env.COMPARE_BRANCH }}
           token: ${{ secrets.WORKFLOW_TOKEN }}
 
-      - name: Set up Git
-        run: |
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "GitHub Actions"
+      # - name: Set up Git
+      #   run: |
+      #     git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      #     git config --global user.name "GitHub Actions"
 
       - name: Determine next release version
         id: next-version
@@ -90,13 +90,13 @@ jobs:
           git fetch origin ${{ steps.next-version.outputs.next_release_branch }} || true
           if ! git show-ref --verify --quiet refs/remotes/origin/${{ steps.next-version.outputs.next_release_branch }}; then
             echo "Creating new release branch: ${{ steps.next-version.outputs.next_release_branch }}"
-            git checkout -b ${{ steps.next-version.outputs.next_release_branch }} ${{ env.COMPARE_BRANCH }}
+            git checkout -b ${{ steps.next-version.outputs.next_release_branch }} ${{ env.COMPARE_BRANCH }}~1
             git push origin ${{ steps.next-version.outputs.next_release_branch }}
 
-            if [[ "${{ steps.next-version.outputs.initial_release }}" == "true" ]]; then
-              git tag -a "v${{ steps.next-version.outputs.next_version }}" -m "Release version ${{ steps.next-version.outputs.next_version }}"
-              git push origin "v${{ steps.next-version.outputs.next_version }}"
-            fi
+            # if [[ "${{ steps.next-version.outputs.initial_release }}" == "true" ]]; then
+            #   git tag -a "v${{ steps.next-version.outputs.next_version }}" -m "Release version ${{ steps.next-version.outputs.next_version }}"
+            #   git push origin "v${{ steps.next-version.outputs.next_version }}"
+            # fi
           else
             echo "Release branch ${{ steps.next-version.outputs.next_release_branch }} already exists."
           fi
