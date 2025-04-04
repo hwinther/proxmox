@@ -95,7 +95,6 @@ jobs:
           # Check if the branch has at least one previous commit
           if git rev-parse --verify "origin/${{ env.COMPARE_BRANCH }}~1" >/dev/null 2>&1; then
             echo "Branch has at least one previous commit. Creating release branch from the previous commit."
-            git reset --hard origin/${{ env.COMPARE_BRANCH }}~1
             git checkout -b ${{ steps.next-version.outputs.next_release_branch }} origin/${{ env.COMPARE_BRANCH }}~1
             echo "create_pr=true" >> "$GITHUB_OUTPUT"
           else
