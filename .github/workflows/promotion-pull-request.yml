@@ -13,6 +13,8 @@ on:
   push:
     branches: ["main", "releases/*", "feat/release-branches"]
     tags: ["v*"]
+    paths-ignore:
+      - ".github/workflows/promotion-pull-request.yml" # Ignore changes to this workflow file
 
 env:
   COMPARE_BRANCH: feat/release-branches # Should be set to the default branch of the repository
