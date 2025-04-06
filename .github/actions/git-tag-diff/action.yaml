@@ -54,3 +54,9 @@ runs:
         echo "Changes detected in the specified path."
         echo "skip=false" >> "$GITHUB_OUTPUT"
       fi
+
+      if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+        echo "Workflow was triggered by workflow_dispatch."
+        echo "skip=false" >> "$GITHUB_OUTPUT"
+        exit 0
+      fi
