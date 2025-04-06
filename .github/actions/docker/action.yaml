@@ -48,44 +48,44 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Calculate Container Metadata
-      id: meta
-      uses: docker/metadata-action@v5
-      with:
-        images: ghcr.io/${{ github.repository }}${{ inputs.package_path }}${{ inputs.package_name }}
-        tags: |
-          type=edge,branch=main,enable=${{ github.ref == 'refs/heads/main' && inputs.edge_tag_enabled == 'true' }}
-          type=ref,event=tag,enable=${{ inputs.branch_tag_enabled == 'true' }}
-          type=ref,event=branch
-          # set latest tag for default branch if tag has not been provided
-          type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' && inputs.latest_tag_enabled == 'true' }}
-          type=raw,value=${{ inputs.tag }},enable=${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) && inputs.tag != '' }}
-        labels: |
-          org.opencontainers.image.title=${{ inputs.package_name }}
-          org.opencontainers.image.description=${{ inputs.package_description }}
-          org.opencontainers.image.vendor=${{ inputs.package_vendor }}
+  - name: Calculate Container Metadata
+    id: meta
+    uses: docker/metadata-action@v5
+    with:
+      images: ghcr.io/${{ github.repository }}${{ inputs.package_path }}${{ inputs.package_name }}
+      tags: |
+        type=edge,branch=main,enable=${{ github.ref == 'refs/heads/main' && inputs.edge_tag_enabled == 'true' }}
+        type=ref,event=tag,enable=${{ inputs.branch_tag_enabled == 'true' }}
+        type=ref,event=branch
+        # set latest tag for default branch if tag has not been provided
+        type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' && inputs.latest_tag_enabled == 'true' }}
+        type=raw,value=${{ inputs.tag }},enable=${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) && inputs.tag != '' }}
+      labels: |
+        org.opencontainers.image.title=${{ inputs.package_name }}
+        org.opencontainers.image.description=${{ inputs.package_description }}
+        org.opencontainers.image.vendor=${{ inputs.package_vendor }}
 
-    - name: Setup QEMU
-      uses: docker/setup-qemu-action@v3
+  - name: Setup QEMU
+    uses: docker/setup-qemu-action@v3
 
-    - name: Setup Buildx
-      uses: docker/setup-buildx-action@v3
+  - name: Setup Buildx
+    uses: docker/setup-buildx-action@v3
 
-    - name: Login to GitHub Container Registry
-      uses: docker/login-action@v3
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ env.GH_TOKEN }}
+  - name: Login to GitHub Container Registry
+    uses: docker/login-action@v3
+    with:
+      registry: ghcr.io
+      username: ${{ github.actor }}
+      password: ${{ env.GH_TOKEN }}
 
-    - name: Build and Push Images
-      uses: docker/build-push-action@v5
-      with:
-        context: ${{ inputs.working_directory }}
-        platforms: ${{ inputs.platforms }}
-        push: ${{ inputs.push_condition }}
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
-        outputs: type=image,name=target,annotation-index.org.opencontainers.image.description=${{ inputs.package_description }}
-        provenance: false # To simplify pruning
-        sbom: false
+  - name: Build and Push Images
+    uses: docker/build-push-action@v5
+    with:
+      context: ${{ inputs.working_directory }}
+      platforms: ${{ inputs.platforms }}
+      push: ${{ inputs.push_condition }}
+      tags: ${{ steps.meta.outputs.tags }}
+      labels: ${{ steps.meta.outputs.labels }}
+      outputs: type=image,name=target,annotation-index.org.opencontainers.image.description=${{ inputs.package_description }}
+      # provenance: false # To simplify pruning
+      # sbom: false
