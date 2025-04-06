@@ -1,0 +1,26 @@
+services:
+  ais-catcher:
+    image: ${DOCKER_REGISTRY}sdr/ais/ais-catcher-wsh:0.1
+    container_name: ais-catcher
+    restart: always
+    devices:
+      - "/dev/bus/usb:/dev/bus/usb"
+    device_cgroup_rules:
+      - "c 189:* rwm"
+    # volumes:
+    #   - "./ais-catcher-plugins:/usr/share/aiscatcher/my-plugins"
+    tmpfs:
+      - /run:exec,size=256M
+      - /tmp:size=128M
+      - /var/log:size=32M
+    environment:
+      DEVICE_INDEX: ${AIS_DEVICE_INDEX}
+      BIASTEE: ${AIS_BIASTEE}
+      LAT: ${LAT}
+      LON: ${LON}
+      STATION_NAME: ${STATION_NAME}
+      STATION_URL: ${STATION_URL}
+      AIS_CATCHER_PORT: 80
+    labels:
+      - "traefik.http.services.public_web.loadbalancer.server.port=80"
+      - "traefik.http.middlewares.cors.headers.customResponseHeaders.Access-Control-Allow-Origin=https://tar1090.r1.wsh.no"
