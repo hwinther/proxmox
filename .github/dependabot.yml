@@ -43,6 +43,15 @@ updates:
 
 - package-ecosystem: "docker-compose"
   directories:
+  - "/compose/servers/radio-pi01/ais"
+  - "/compose/servers/radio-pi01/adsb"
+  assignees: [ "hwinther" ]
+  target-branch: "deploy/radio-pi01"
+  schedule:
+    interval: "daily"
+
+- package-ecosystem: "docker-compose"
+  directories:
   - "/compose/servers/radio-pi02/ais"
   - "/compose/servers/radio-pi02/adsb"
   assignees: [ "hwinther" ]
