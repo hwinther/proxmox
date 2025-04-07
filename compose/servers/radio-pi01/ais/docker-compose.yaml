@@ -1,6 +1,6 @@
 services:
   ais-catcher:
-    image: ${DOCKER_REGISTRY}sdr/ais/ais-catcher-wsh:0.2.0
+    image: ${DOCKER_REGISTRY}sdr/ais/ais-catcher-wsh:0.3.0
     container_name: ais-catcher
     restart: always
     devices:
