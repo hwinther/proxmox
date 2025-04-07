@@ -18,14 +18,18 @@
 # -p 0  # Dongle temperature correction, ppm \
 # -o 4  # Output JSON sparse to console \
 
-/usr/local/bin/AIS-catcher \
+COMMAND="/usr/local/bin/AIS-catcher \
     -v 10 \
     -M DT \
     -gr TUNER 38.6 RTLAGC off BIASTEE $BIASTEE \
     -s 2304k \
     -p 0 \
     -o 4 \
-    -N $AIS_CATCHER_PORT GEOJSON on STATION "$STATION_NAME" STATION_LINK $STATION_URL LAT $LAT LON $LON SHARE_LOC on \
+    -N $AIS_CATCHER_PORT GEOJSON on STATION \"$STATION_NAME\" STATION_LINK $STATION_URL LAT $LAT LON $LON SHARE_LOC on \
     -N PLUGIN_DIR /usr/share/aiscatcher/my-plugins \
     -N REALTIME on \
-    -d $DEVICE_INDEX
+    -d $DEVICE_INDEX \
+    $EXTRA_ARGS"
+
+echo "Executing: $COMMAND"
+eval $COMMAND
