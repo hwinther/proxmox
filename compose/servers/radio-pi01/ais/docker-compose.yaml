@@ -21,6 +21,7 @@ services:
       STATION_NAME: ${STATION_NAME}
       STATION_URL: ${STATION_URL}
       AIS_CATCHER_PORT: 80
+      EXTRA_ARGS: ${AIS_EXTRA_ARGS}
     labels:
       - "traefik.http.services.public_web.loadbalancer.server.port=80"
       - "traefik.http.middlewares.cors.headers.customResponseHeaders.Access-Control-Allow-Origin=https://tar1090.r1.wsh.no"
