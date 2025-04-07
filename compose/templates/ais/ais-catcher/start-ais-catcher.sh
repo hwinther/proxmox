@@ -28,4 +28,5 @@
     -N $AIS_CATCHER_PORT GEOJSON on STATION "$STATION_NAME" STATION_LINK $STATION_URL LAT $LAT LON $LON SHARE_LOC on \
     -N PLUGIN_DIR /usr/share/aiscatcher/my-plugins \
     -N REALTIME on \
-    -d $DEVICE_INDEX
+    -d $DEVICE_INDEX \
+    $EXTRA_ARGS
