@@ -212,6 +212,27 @@ proxmox-backup-manager acl update /datastore/$USER1 DatastoreBackup --auth-id $U
 proxmox-backup-manager acl update /datastore/$USER2 DatastoreBackup --auth-id $USER2@pbs
 ```
 
+## Disk maintenance and testing
+
+### Reset SATA disk sectors (which can speed it up)
+
+```bash
+DISK=/dev/sdc
+PART=${DISK}1
+
+echo "disk: $DISK partition: $PART"
+#exit 0
+
+wipefs -a $DISK
+blkdiscard $DISK
+
+parted -s $DISK mklabel gpt
+parted -s $DISK mkpart primary ext4 0% 100%
+mkfs.ext4 $PART
+
+hdparm -tT $PART
+```
+
 ### New section template
 
 ```bash
