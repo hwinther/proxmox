@@ -70,7 +70,7 @@ def version_compare(v1, v2):
 
     # converts to integer from string
     arr1 = [int(i) for i in arr1]
-    print(arr2)
+    # print(arr2)
     arr2 = [int(i) for i in arr2]
 
     # compares which list is bigger and fills

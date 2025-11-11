@@ -203,10 +203,17 @@ class LxcNode:
     swap = None
     type = None
     uptime = None
+    pressurecpufull = None
+    pressurecpusome = None
+    pressureiofull = None
+    pressureiosome = None
+    pressurememoryfull = None
+    pressurememorysome = None
 
     # noinspection PyShadowingBuiltins
     def __init__(self, pve_node, vmid, cpu, cpus, disk, diskread, diskwrite, maxdisk, maxmem, maxswap, mem, name,
-                 netin, netout, status, swap, type, uptime, pid=None):
+                 netin, netout, status, swap, type, uptime, pid=None, pressurecpufull=None, pressurecpusome=None,
+                 pressureiofull=None, pressureiosome=None, pressurememoryfull=None, pressurememorysome=None):
         self.pve_node = pve_node
         self.vmid = vmid
         self.cpu = cpu
@@ -226,6 +233,12 @@ class LxcNode:
         self.swap = swap
         self.type = type
         self.uptime = uptime
+        self.pressurecpufull = pressurecpufull
+        self.pressurecpusome = pressurecpusome
+        self.pressureiofull = pressureiofull
+        self.pressureiosome = pressureiosome
+        self.pressurememoryfull = pressurememoryfull
+        self.pressurememorysome = pressurememorysome
 
     def __str__(self):
         return f'{self.vmid} of type {self.type} with status {self.status}'
