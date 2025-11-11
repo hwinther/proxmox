@@ -18,6 +18,10 @@ sed -i -e 's/buster/bullseye/g' /etc/apt/sources.list.d/*
 sed -i 's/bullseye/bookworm/g' /etc/apt/sources.list
 sed -i -e 's/bullseye/bookworm/g' /etc/apt/sources.list.d/*
 
+# Upgrade bookworm to trixie
+sed -i 's/bookworm/trixie/g' /etc/apt/sources.list
+sed -i -e 's/bookworm/trixie/g' /etc/apt/sources.list.d/*
+
 # After updating sources - new install packages without removing old ones
 apt update && apt upgrade --without-new-pkgs
 # Then perform a full upgrade
@@ -25,9 +29,25 @@ apt full-upgrade
 # Then reboot
 reboot
 
+# Then remove unused packages and cache
+apt autoremove && apt autoclean
+
 # Purge old/residual config packages in debian:
 dpkg -l | grep '^rc' | wc -l
 dpkg -l | grep '^rc' | awk '{print $2}' | xargs dpkg --purge
+```
+
+### DNS configuration of local apt cache
+
+First set up a DNS record in the LAN search domain, e.g.:
+`_apt_proxy._tcp.@  IN SRV 0 0 3142 apt-cacher-ng.@`
+
+[Reference documentation](https://github.com/terceiro/auto-apt-proxy)
+
+Then run the following on each debian machine that should use the cache:
+
+```bash
+apt install auto-apt-proxy -y && auto-apt-proxy
 ```
 
 ### Disk operations
@@ -137,6 +157,12 @@ sed -i 's/v3.18/v3.19/g' /etc/apk/repositories
 apk update && apk upgrade
 
 sed -i 's/v3.19/v3.20/g' /etc/apk/repositories
+apk update && apk upgrade
+
+sed -i 's/v3.20/v3.21/g' /etc/apk/repositories
+apk update && apk upgrade
+
+sed -i 's/v3.21/v3.22/g' /etc/apk/repositories
 apk update && apk upgrade
 ```
 
