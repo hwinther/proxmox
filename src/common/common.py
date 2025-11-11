@@ -1,9 +1,15 @@
 import configparser
 import json
+import hashlib
 import secrets
+import shlex
 import string
 import subprocess
-from typing import Callable
+import time
+import os
+import tempfile
+from functools import cache
+from typing import Callable, Optional
 
 
 class Config:
@@ -132,11 +138,13 @@ class LxcConfig:
     unprivileged = None
     startup = None
     parent = None
+    nameserver = None
 
     # noinspection PyShadowingBuiltins
     def __init__(self, lxc_node, arch, cores, digest, hostname, memory, ostype, rootfs, swap,
                  description=None, features=None, lxc=None, unprivileged=None,
                  cmode=None, onboot=None, startup=None, parent=None,
+                 nameserver=None,
                  mp0=None, mp1=None, mp2=None, mp3=None, mp4=None, mp5=None,
                  mp6=None, mp7=None, mp8=None, mp9=None,
                  net0=None, net1=None, net2=None, net3=None, net4=None,
@@ -158,6 +166,7 @@ class LxcConfig:
         self.parent = parent
         self.swap = swap
         self.unprivileged = unprivileged
+        self.nameserver = nameserver
         self.mp0 = mp0
         self.mp1 = mp1
         self.mp2 = mp2
@@ -245,8 +254,8 @@ class LxcNode:
 
     def get_lxc_config(self):
         return LxcConfig(lxc_node=self, **json.loads(
-            os_exec(f'pvesh get nodes/{self.pve_node.node}/lxc/{self.vmid}/config --output-format=json',
-                    local_override=True)))
+            os_exec_cached(f'pvesh get nodes/{self.pve_node.node}/lxc/{self.vmid}/config --output-format=json',
+                           cache_duration=3600, local_override=True)))
 
 
 class PveNode:
@@ -263,6 +272,7 @@ class PveNode:
     status = None
     type = None
     uptime = None
+    is_remote = None
 
     # noinspection PyShadowingBuiltins
     def __init__(self, id, node, ssl_fingerprint, status, type, cpu=None, disk=None, level=None, maxcpu=None,
@@ -280,6 +290,7 @@ class PveNode:
         self.status = status
         self.type = type
         self.uptime = uptime
+        self.is_remote = False
 
     def __str__(self):
         return f'{self.node} of type {self.type} with status {self.status}'
@@ -290,6 +301,56 @@ class PveNode:
 
 
 config = Config()
+_exec_cache = {}
+_cache_file_path = os.path.join(tempfile.gettempdir(), 'proxmox_exec_cache.json')
+
+
+def _get_cache_key(cmd, env=None, local_override=False, **kwargs):
+    """Generate a unique cache key for the command and its parameters."""
+    cache_data = {
+        'cmd': cmd,
+        'env': env,
+        'local_override': local_override,
+        'remote': config.remote,
+        'remote_host': config.remote_host if config.remote else None,
+        'kwargs': sorted(kwargs.items())
+    }
+    return hashlib.md5(str(cache_data).encode()).hexdigest()
+
+
+def _is_cache_valid(cache_entry, cache_duration):
+    """Check if cache entry is still valid based on duration."""
+    return time.time() - cache_entry['timestamp'] < cache_duration
+
+
+def _load_cache():
+    """Load cache from file if it exists."""
+    global _exec_cache
+    try:
+        if os.path.exists(_cache_file_path):
+            with open(_cache_file_path, 'r') as f:
+                _exec_cache = json.load(f)
+            if config.verbose:
+                print(f'loaded cache from {_cache_file_path} with {len(_exec_cache)} entries')
+        else:
+            if config.verbose:
+                print(f'Did not find cache data at expected location {_cache_file_path}')
+    except (json.JSONDecodeError, IOError) as e:
+        if config.verbose:
+            print(f'failed to load cache: {e}')
+        _exec_cache = {}
+
+
+def _save_cache():
+    """Save cache to file."""
+    try:
+        with open(_cache_file_path, 'w') as f:
+            json.dump(_exec_cache, f)
+        if config.verbose:
+            print(f'saved cache to {_cache_file_path} with {len(_exec_cache)} entries')
+    except IOError as e:
+        if config.verbose:
+            print(f'failed to save cache: {e}')
 
 
 def generate_random_password(length: int):
@@ -300,16 +361,41 @@ def generate_random_password(length: int):
     return password
 
 
-def os_exec(cmd, env=None, local_override: bool = False, **kwargs):
+def os_exec_cached(cmd, cache_duration: int = 300, env=None, local_override: bool = False, **kwargs):
+    # Load cache on first use
+    if not _exec_cache:
+        _load_cache()
+    
+    cache_key = _get_cache_key(cmd, env, local_override, **kwargs)
+    if cache_key in _exec_cache:
+        cache_entry = _exec_cache[cache_key]
+        if _is_cache_valid(cache_entry, cache_duration):
+            if config.verbose:
+                print(f'using cached result for: {cmd}')
+            return cache_entry['output']
+        else:
+            del _exec_cache[cache_key]
+
+    output = os_exec(cmd, env, local_override, **kwargs)
+    _exec_cache[cache_key] = {
+        'output': output,
+        'timestamp': time.time()
+    }
+    _save_cache()
+    return output
+
+
+def os_exec(cmd, env=None, local_override: bool = False, remote_host: str = None, **kwargs):
     if config.verbose:
         print(f'executing: {cmd}')
-    if config.remote and not local_override:
-        import shlex
-        cmds = shlex.split(f'ssh {config.remote_host} {shlex.quote(cmd)}')
+    if (config.remote or remote_host is not None) and not local_override:
+        if remote_host is None:
+            remote_host = config.remote_host
+        cmds = shlex.split(f'ssh {remote_host} {shlex.quote(cmd)}')
         if 'shell' in kwargs:
             kwargs['shell'] = False
             if config.verbose:
-                print('disabled shell flag')
+                print('disabled shell flag due to executing the command via a remote host')
         if config.verbose:
             print(f'updated cmd: {cmds}')
     elif 'shell' in kwargs:
@@ -329,4 +415,4 @@ def os_exec(cmd, env=None, local_override: bool = False, **kwargs):
 
 def pvesh_get_pve_nodes():
     return [PveNode(**node) for node in
-            json.loads(os_exec('pvesh get nodes --output-format=json', local_override=True))]
+            json.loads(os_exec_cached('pvesh get nodes --output-format=json', local_override=True))]

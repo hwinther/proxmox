@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from common.common import LxcConfig, PveNode
 from lxc.distro.alpine.services.jellyfin import JellyfinService
 from lxc.distro.alpine.services.msmtp import SmtpService
 from lxc.distro.alpine.services.muacme import AcmeService
@@ -26,8 +27,8 @@ def main():
     debian_image_path = f'/var/lib/vz/template/cache/{debian_newest_image_name}'
 
     # TODO: improve lazy caching
-    # alpine_image_path = '/var/lib/vz/template/cache/alpine-3.18-default_20230607_amd64.tar.xz'
-    # debian_image_path = '/var/lib/vz/template/cache/debian-12-standard_12.2-1_amd64.tar.zst'
+    # alpine_image_path = '/var/lib/vz/template/cache/alpine-3.22-default_20250617_amd64.tar.xz'
+    # debian_image_path = '/var/lib/vz/template/cache/debian-13-standard_13.1-2_amd64.tar.zst'
 
     alpine_version = alpine_image_path.split('alpine-')[1].split('-')[0]
     debian_version = debian_image_path.split('-standard_')[1].split('-')[0]
@@ -96,20 +97,27 @@ def check_existing_containers(alpine_version: str, debian_version: str, update: 
     containers: list[AlpineContainer | DebianContainer] = []
     # for i in range(601, 605):
     #     containers.append(AlpineContainer(i))
-    active_configs = Container.pct_list()
-    for lxc_config in active_configs:
-        if lxc_config.ostype == 'alpine':
-            containers.append(AlpineContainer(lxc_config=lxc_config))
-        elif lxc_config.ostype == 'debian':
-            containers.append(DebianContainer(lxc_config=lxc_config))
-        else:
-            print(f'\033[31mUnhandled ostype {lxc_config.ostype} for node {lxc_config.hostname}\033[0m')
+    active_configs: dict[PveNode, list[LxcConfig]] = Container.pct_list()
+    for pve_node in active_configs.keys():
+        print(f'Iterating over lxc configs for node {pve_node.node}')
+        for lxc_config in active_configs[pve_node]:
+            if lxc_config.ostype == 'alpine':
+                containers.append(AlpineContainer(lxc_config=lxc_config, pve_node=pve_node))
+            elif lxc_config.ostype == 'debian':
+                containers.append(DebianContainer(lxc_config=lxc_config, pve_node=pve_node))
+            else:
+                print(f'\033[31mUnhandled ostype {lxc_config.ostype} for node {lxc_config.hostname}\033[0m')
 
     print(f'\033[93mFound: \033[92m{len(containers)}\033[93m active containers\033[0m')
 
     for container in containers:
         try:
             prefix = f'\033[35m[\033[96m{container.id}\033[35m] '
+
+            if container.lxc_config.cmode != 'shell':
+                print(f'\n{prefix}\033[31mConsole mode is not set to "shell", skipping\033[0m')
+                continue
+
             release: str = container.pct_get_os_version()
 
             if isinstance(container, AlpineContainer):
