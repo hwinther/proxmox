@@ -3,7 +3,7 @@
   <component name="Black">
     <option name="sdkName" value="Remote Python 3.9.2" />
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="Remote Python 3.11.2 (sftp://root@office-pve-i9:22/root/.virtualenvs/proxmox/bin/python)" project-jdk-type="Python SDK" />
+  <component name="ProjectRootManager" version="2" project-jdk-name="Remote Python 3.11.2" project-jdk-type="Python SDK" />
   <component name="PythonCompatibilityInspectionAdvertiser">
     <option name="version" value="3" />
   </component>
