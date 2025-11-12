@@ -3,7 +3,7 @@ import platform
 import tempfile
 from typing import List, Sequence
 
-from common.common import LxcConfig, config, os_exec, pvesh_get_pve_nodes
+from common.common import LxcConfig, PveNode, config, os_exec, pvesh_get_pve_nodes
 from lxc.models import NetworkInterface
 
 
@@ -110,8 +110,9 @@ class Container:
     network_interfaces: List[NetworkInterface] = None
     services: List[Service] = None
     lxc_config: LxcConfig = None
+    pve_node: PveNode = None
 
-    def __init__(self, container_id: int = None, lxc_config: LxcConfig = None):
+    def __init__(self, container_id: int = None, lxc_config: LxcConfig = None, pve_node: PveNode = None):
         if container_id is not None:
             self.id = container_id
         elif lxc_config is not None:
@@ -122,8 +123,13 @@ class Container:
 
         self.network_interfaces = []
         self.services = []
+        self.pve_node = pve_node
 
     def push_file(self, container_file_path: str, local_file_path: str):
+        # TODO: file write/read is not properly redirected yet
+        if self.pve_node is not None and self.pve_node.is_remote:
+            print('will not work')
+            # TODO: try scp {local_file_path} {remote_host}/{local_file_path}
         return os_exec(f'pct push {self.id} {local_file_path} {container_file_path}')
 
     def push_file_from_template(self, container_file_path: str, template_file_path: str, **kwargs):
@@ -139,10 +145,10 @@ class Container:
             return return_value
 
     def add_net(self, interface_id: int, vlan_tag: int = None, ip4: str = None, ip6: str = None):
-        return os_exec(f'pct set {self.id} {generate_net_argument(interface_id, vlan_tag=vlan_tag, ip4=ip4, ip6=ip6)}')
+        return os_exec(f'pct set {self.id} {generate_net_argument(interface_id, vlan_tag=vlan_tag, ip4=ip4, ip6=ip6)}', remote_host=self.get_remote_host_value())
 
     def remove_net(self, interface_id: int):
-        return os_exec(f'pct set {self.id} --delete net{interface_id}')
+        return os_exec(f'pct set {self.id} --delete net{interface_id}', remote_host=self.get_remote_host_value())
 
     def if_restart(self, interface_id: int):
         return self.pct_console_shell(f'ifdown eth{interface_id}; ifup eth{interface_id}')
@@ -151,28 +157,33 @@ class Container:
         return self.pct_console_shell(f"echo '{text_line}' >> {file_path}")
 
     def pct_console_shell(self, container_command: str):
-        return os_exec(f'echo "{container_command}" | pct console {self.id}', shell=True)
+        return os_exec(f'echo "{container_command}" | pct console {self.id}', shell=True, remote_host=self.get_remote_host_value())
 
     def pct_get_os_version(self):
         raise NotImplementedError("pct_get_os_version was not implemented")
+
+    def get_remote_host_value(self):
+        return self.pve_node.node if self.pve_node is not None and self.pve_node.is_remote else None
 
     @staticmethod
     def pct_list():
         # Rather than parsing pct list and pct config output, we can use pvesh and get more details
         # pct_list = os_exec('pct list').split('\n')
-        active_configs = []
+        active_configs = {}
         pve_nodes = pvesh_get_pve_nodes()
         for pve_node in pve_nodes:
             if pve_node.status != 'online':
                 continue
 
-            # TODO: add support for remote running pct commands via ssh or pvesh?
-            # Until then, we will ignore remote PVE nodes
             if config.remote:
                 if pve_node.node != config.remote_host:
-                    continue
+                    if config.verbose:
+                        print(f"found non-remote node {pve_node.node}")
+                    pve_node.is_remote = True
             elif pve_node.node != platform.node():
-                continue
+                if config.verbose:
+                    print(f"found non-local node {pve_node.node}")
+                pve_node.is_remote = True
 
             # print(str(pve_node))
 
@@ -186,7 +197,10 @@ class Container:
                 lxc_config = lxc_node.get_lxc_config()
                 # print(str(lxc_config))
 
-                active_configs.append(lxc_config)
+                if pve_node not in active_configs.keys():
+                    active_configs[pve_node] = []
+
+                active_configs[pve_node].append(lxc_config)
 
         return active_configs
 
