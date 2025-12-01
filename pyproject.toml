@@ -37,7 +37,7 @@ dev = [
     "unittest-xml-reporting==3.2.0",
     "flake8==7.2.0",
     "flake8-html==0.4.3",
-    "genbadge[all]==1.1.2"
+    "genbadge[all]==1.1.3"
 ]
 
 [project.urls]
