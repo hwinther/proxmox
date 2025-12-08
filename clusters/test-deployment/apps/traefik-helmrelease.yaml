@@ -32,12 +32,12 @@ spec:
       type: ClusterIP
     ports:
       web:
-        expose: true
-        exposedPort: 80
         port: 8000
         hostPort: 80
+        expose:
+          default: true
       websecure:
-        expose: true
-        exposedPort: 443
         port: 8443
         hostPort: 443
+        expose:
+          default: true
