@@ -39,6 +39,10 @@ spec:
     service:
       type: ClusterIP
     ports:
+      traefik:
+        port: 9000
+        expose:
+          default: false
       web:
         port: 80
         expose:
