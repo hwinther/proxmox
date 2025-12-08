@@ -28,16 +28,17 @@ spec:
         name: traefik
         namespace: traefik
   values:
+    deployment:
+      kind: DaemonSet
+    hostNetwork: true
     service:
       type: ClusterIP
     ports:
       web:
-        port: 8000
-        hostPort: 80
+        port: 80
         expose:
           default: true
       websecure:
-        port: 8443
-        hostPort: 443
+        port: 443
         expose:
           default: true
