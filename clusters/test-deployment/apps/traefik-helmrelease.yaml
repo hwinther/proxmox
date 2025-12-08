@@ -29,10 +29,15 @@ spec:
         namespace: traefik
   values:
     service:
-      type: NodePort
-      spec:
-        externalTrafficPolicy: Local
+      type: ClusterIP
     ports:
       web:
-        nodePort: 30080
         expose: true
+        exposedPort: 80
+        port: 8000
+        hostPort: 80
+      websecure:
+        expose: true
+        exposedPort: 443
+        port: 8443
+        hostPort: 443
