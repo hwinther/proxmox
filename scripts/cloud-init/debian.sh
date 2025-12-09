@@ -24,7 +24,7 @@ export VMID=10001
 export VMMEM=2048
 export VMCORES=4
 export VMSETTINGS="--net0 virtio,bridge=vmbr0,tag=2001"
-export DISK_RESIZE=2G
+export DISK_RESIZE=8G
 
 USER_YAML="/var/lib/vz/snippets/cloud-init-debian-user.yaml"
 VENDOR_YAML="/var/lib/vz/snippets/cloud-init-debian-docker.yaml"

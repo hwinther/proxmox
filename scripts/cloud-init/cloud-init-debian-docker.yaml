@@ -5,7 +5,7 @@ package_upgrade: true
 package_reboot_if_required: true
 locale: en_US.UTF-8
 timezone: Europe/Oslo
-# ssh:
+#ssh:
 #   install-server: true
 #   allow-pw: true
 #   disable_root: false
@@ -23,11 +23,19 @@ timezone: Europe/Oslo
 #     X11Forwarding no
 #     AllowAgentForwarding no
 #     AllowUsers user
+apt:
+  sources:
+    docker.list:
+      source: deb [arch=amd64] https://download.docker.com/linux/ubuntu $RELEASE stable
+      keyid: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
 packages:
 - ssh
 - qemu-guest-agent
-- docker.io
-- docker-compose
+#- docker.io
+#- docker-compose
+- docker-ce
+- docker-ce-cli
+- containerd.io
 - git
 - fail2ban
 - ufw
@@ -36,9 +44,28 @@ packages:
 - curl
 - gnupg-agent
 - software-properties-common
+- openssh-server
+
+write_files:
+- path: /etc/sysctl.d/enabled_ipv4_forwarding.conf
+  content: |
+    net.ipv4.conf.all.forwarding=1
 
 runcmd:
 - ufw default deny incoming
 - ufw default allow outgoing
-- ufw allow 2222/tcp
+#- ufw allow 2222/tcp
+- ufw allow 22/tcp
 - ufw enable
+- systemctl enable ssh
+- systemctl start ssh
+# Due to the docker API bug on 5.29
+- apt-get install -y --allow-downgrades docker-ce=5:28.5.2-1~ubuntu.24.04~noble docker-ce-cli=5:28.5.2-1~ubuntu.24.04~noble containerd.io docker-buildx-plugin docker-compose-plugin
+- apt-mark hold docker-ce docker-ce-cli
+
+groups:
+  - docker
+
+system_info:
+  default_user:
+    groups: [docker]
