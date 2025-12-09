@@ -30,6 +30,8 @@ updates:
   - "/compose/templates/sdr-base/bullseye/build-image"
   - "/compose/templates/sdr-base/buster/base-image"
   - "/compose/templates/sdr-base/buster/build-image"
+  - "/clusters/test-deployment/apps"
+  - "/clusters/test-deployment/flux-system"
   schedule:
     interval: "weekly"
 
