@@ -1,4 +1,4 @@
-FROM ghcr.io/jvde-github/ais-catcher:v0.61 AS base
+FROM ghcr.io/jvde-github/ais-catcher:v0.65 AS base
 LABEL maintainer="Hans Christian Winther-Sørensen <docker@wsh.no>"
 ENV DEBIAN_FRONTEND=noninteractive
 SHELL ["/bin/bash", "-x", "-o", "pipefail", "-c"]
