@@ -3,6 +3,8 @@ kind: Kustomization
 resources:
 - api-deployment.yaml
 - frontend-deployment.yaml
+- clutterstock-api-deployment.yaml
+- clutterstock-frontend-deployment.yaml
 - ingress.yaml
 - podinfo-deployment.yaml
 - traefik-helmrelease.yaml

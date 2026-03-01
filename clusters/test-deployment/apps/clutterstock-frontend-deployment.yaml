@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clutterstock-frontend
+  namespace: test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: clutterstock-frontend
+  template:
+    metadata:
+      labels:
+        app: clutterstock-frontend
+    spec:
+      containers:
+      - name: clutterstock-frontend
+        image: ghcr.io/hwinther/clutterstock/frontend:latest
+        imagePullPolicy: Always
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        env:
+        # SSR: frontend server calls backend; port 5155 matches clutterstock-api
+        - name: VITE_API_URL
+          value: "http://clutterstock-api:5155"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: clutterstock-frontend
+  namespace: test
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8080
+    targetPort: http
+    protocol: TCP
+    name: http
+  selector:
+    app: clutterstock-frontend

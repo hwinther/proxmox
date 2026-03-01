@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clutterstock-api
+  namespace: test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: clutterstock-api
+  template:
+    metadata:
+      labels:
+        app: clutterstock-api
+    spec:
+      containers:
+      - name: clutterstock-api
+        image: ghcr.io/hwinther/clutterstock/api:latest
+        imagePullPolicy: Always
+        ports:
+        - name: http
+          containerPort: 5155
+          protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: clutterstock-api
+  namespace: test
+spec:
+  type: ClusterIP
+  ports:
+  - port: 5155
+    targetPort: http
+    protocol: TCP
+    name: http
+  selector:
+    app: clutterstock-api
