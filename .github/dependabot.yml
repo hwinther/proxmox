@@ -34,6 +34,9 @@ updates:
   - "/clusters/test-deployment/flux-system"
   schedule:
     interval: "weekly"
+  ignore:
+  - dependency-name: "*"
+    update-types: [ "version-update:semver-patch" ]
 
 - package-ecosystem: "docker-compose"
   directories:
