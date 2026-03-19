@@ -1,0 +1,41 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana
+  namespace: test
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+spec:
+  rules:
+    - host: grafana.kt.wsh.no
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: obs-grafana
+                port:
+                  number: 80
+---
+## OTLP/HTTP for browsers or external clients. Add a Traefik Headers/CORS middleware if the frontend origin
+## differs from this host (see https://doc.traefik.io/traefik/v3.0/middlewares/http/headers/#cors).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: otel-collector-otlp-http
+  namespace: test
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+spec:
+  rules:
+    - host: otel.kt.wsh.no
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: obs-otel-collector
+                port:
+                  number: 4318

@@ -26,6 +26,11 @@ spec:
           value: "8080"
         - name: VITE_API_URL
           value: "http://clutterstock-api:8080"
+        ## Browser OTLP/HTTP — must match Traefik ingress host in observability/observability-ingress.yaml
+        - name: VITE_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
+          value: "http://otel.kt.wsh.no/v1/traces"
+        - name: VITE_OTEL_SERVICE_NAME
+          value: "clutterstock-frontend"
 ---
 apiVersion: v1
 kind: Service

@@ -1,0 +1,89 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: obs-grafana
+  namespace: test
+spec:
+  interval: 30m
+  timeout: 10m
+  dependsOn:
+    - name: obs-prometheus
+      namespace: test
+    - name: obs-loki
+      namespace: test
+    - name: obs-tempo
+      namespace: test
+  chart:
+    spec:
+      chart: grafana
+      version: "10.5.15"
+      sourceRef:
+        kind: HelmRepository
+        name: grafana
+        namespace: test
+  values:
+    adminUser: admin
+    ## Admin password is stored in a Secret created by the chart when this is unset.
+    # adminPassword: ""
+    testFramework:
+      enabled: false
+    persistence:
+      enabled: true
+      size: 2Gi
+    resources:
+      requests:
+        cpu: 50m
+        memory: 256Mi
+      limits:
+        memory: 512Mi
+    datasources:
+      datasources.yaml:
+        apiVersion: 1
+        datasources:
+          - name: Prometheus
+            uid: prometheus
+            type: prometheus
+            access: proxy
+            url: http://obs-prometheus-server.test.svc.cluster.local
+            isDefault: true
+          - name: Loki
+            uid: loki
+            type: loki
+            access: proxy
+            url: http://obs-loki-gateway.test.svc.cluster.local
+          - name: Tempo
+            uid: tempo
+            type: tempo
+            access: proxy
+            url: http://obs-tempo.test.svc.cluster.local:3200
+            jsonData:
+              httpMethod: GET
+              tracesToLogs:
+                datasourceUid: loki
+                tags: ["service.name"]
+    dashboardProviders:
+      dashboardproviders.yaml:
+        apiVersion: 1
+        providers:
+          - name: default
+            orgId: 1
+            folder: ""
+            type: file
+            disableDeletion: false
+            editable: true
+            options:
+              path: /var/lib/grafana/dashboards/default
+    dashboards:
+      default:
+        opentelemetry-collector:
+          gnetId: 15983
+          revision: 29
+          datasource: Prometheus
+        opentelemetry-collector-dataflow:
+          gnetId: 18309
+          revision: 1
+          datasource: Prometheus
+        aspnet-core-otel:
+          gnetId: 19924
+          revision: 1
+          datasource: Prometheus
