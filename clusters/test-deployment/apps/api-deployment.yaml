@@ -17,6 +17,11 @@ spec:
       - name: api
         image: ghcr.io/hwinther/test/api:latest # {"$imagepolicy": "flux-system:api"}
         imagePullPolicy: Always
+        env:
+        - name: OTEL_SERVICE_NAME
+          value: "api"
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://obs-otel-collector.test.svc.cluster.local:4317"
         ports:
         - name: http
           containerPort: 8080

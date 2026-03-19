@@ -20,6 +20,11 @@ spec:
         env:
         - name: ASPNETCORE_URLS
           value: http://+:8080
+        ## Standard OpenTelemetry environment variables (.NET SDK)
+        - name: OTEL_SERVICE_NAME
+          value: "clutterstock-api"
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://obs-otel-collector.test.svc.cluster.local:4317"
         ports:
         - name: http
           containerPort: 8080
