@@ -25,3 +25,7 @@ Deployments in `apps/` wire **Vite** (`VITE_OTEL_*`) to `http://otel.kt.wsh.no/v
 ## Helm releases
 
 `obs-prometheus`, `obs-loki`, `obs-tempo`, `obs-grafana`, `obs-otel-collector` — all in namespace `test`.
+
+### Storage / Scheduling (k0s or clusters without a StorageClass)
+
+If PVCs show `FailedBinding` / *no storage class is set*, this repo disables durable volumes for the observability charts and turns off `prometheus-node-exporter` (hostPort 9100 often conflicts with hostNetwork ingress). For production, add a default **StorageClass** (e.g. local-path) and re-enable persistence in the HelmRelease values.

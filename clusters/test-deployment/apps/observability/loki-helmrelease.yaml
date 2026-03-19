@@ -20,11 +20,14 @@ spec:
       enabled: false
     lokiCanary:
       enabled: false
+    ## Default chunks cache asks for 8192Mi — too large for small nodes
+    chunksCache:
+      allocatedMemory: 512
+      allocatedCPU: 100m
     minio:
       enabled: true
       persistence:
-        enabled: true
-        size: 5Gi
+        enabled: false
       resources:
         requests:
           cpu: 50m
@@ -51,8 +54,7 @@ spec:
     singleBinary:
       replicas: 1
       persistence:
-        enabled: true
-        size: 10Gi
+        enabled: false
       resources:
         requests:
           cpu: 100m
