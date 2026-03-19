@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Blocked</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            font-size: 3em;
+            color: #dc3545;
+        }
+        p {
+            font-size: 1.2em;
+            color: #333;
+        }
+        .emoji {
+            font-size: 5em;
+        }
+        marquee {
+            margin-top: 20px;
+            font-size: 1.2em;
+            color: #dc3545;
+        }
+        .incident-id {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 15px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="emoji">🛡️</div>
+        <h1>Access Denied</h1>
+        <p>Your request has been blocked by our security policy.</p>
+        <p>This could be due to suspicious activity or policy violations.</p>
+        <div class="incident-id" id="incident-id">Incident ID: WAF-<span id="timestamp"></span>-<span id="random"></span></div>
+        <br/>
+        <img src="data:image/gif;base64,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" alt="Loading..." />
+        <marquee>Request blocked by security policy! Contact support if you believe this is an error.</marquee>
+    </div>
+    
+    <script>
+        // Generate timestamp in format YYYYMMDDHHMMSS
+        function generateTimestamp() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            return `${year}${month}${day}${hours}${minutes}${seconds}`;
+        }
+        
+        // Generate random alphanumeric string
+        function generateRandomId(length = 8) {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let result = '';
+            for (let i = 0; i < length; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+        
+        // Set the incident ID when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('timestamp').textContent = generateTimestamp();
+            document.getElementById('random').textContent = generateRandomId();
+        });
+    </script>
+</body>
+</html>

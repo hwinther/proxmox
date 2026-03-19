@@ -76,4 +76,4 @@ spec:
           service:
             name: clutterstock-api
             port:
-              number: 5155
+              number: 8080
