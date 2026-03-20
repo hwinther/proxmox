@@ -15,7 +15,9 @@ spec:
         name: prometheus-community
         namespace: test
   values:
+    ## Single replica (test cluster — no HA)
     server:
+      replicaCount: 1
       extraFlags:
         - web.enable-lifecycle
         - web.enable-otlp-receiver
@@ -45,6 +47,7 @@ spec:
       enabled: false
     kube-state-metrics:
       enabled: true
+      replicas: 1
     ## HostPort 9100 conflicts with other hostNetwork workloads (e.g. Traefik) on single-node pools
     prometheus-node-exporter:
       enabled: false

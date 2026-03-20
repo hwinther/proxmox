@@ -15,6 +15,7 @@ spec:
         name: grafana
         namespace: test
   values:
+    replicas: 1
     tempo:
       retention: 48h
       resources:
