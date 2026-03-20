@@ -34,7 +34,7 @@ spec:
       enabled: true
       replicas: 1
       persistence:
-        enabled: false
+        enabled: true
       resources:
         requests:
           cpu: 50m
