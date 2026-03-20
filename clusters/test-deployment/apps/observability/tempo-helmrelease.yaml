@@ -23,6 +23,6 @@ spec:
           memory: 256Mi
         limits:
           memory: 1Gi
+    ## No cluster StorageClass — use ephemeral storage
     persistence:
-      enabled: true
-      size: 5Gi
+      enabled: false

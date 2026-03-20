@@ -27,9 +27,9 @@ spec:
     # adminPassword: ""
     testFramework:
       enabled: false
+    ## No cluster StorageClass — Grafana uses emptyDir (dashboards re-import after restart)
     persistence:
-      enabled: true
-      size: 2Gi
+      enabled: false
     resources:
       requests:
         cpu: 50m
