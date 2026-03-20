@@ -74,14 +74,18 @@ spec:
           endpoint: obs-tempo.test.svc.cluster.local:4317
           tls:
             insecure: true
-        otlphttp:
+        # Prometheus OTLP write (distinct id — logs use otlphttp/loki below).
+        otlphttp/prometheus:
           endpoint: http://obs-prometheus-server.test.svc.cluster.local/api/v1/otlp
           tls:
             insecure: true
-        loki:
-          endpoint: http://obs-loki-gateway.test.svc.cluster.local/loki/api/v1/push
+        # Loki native OTLP (the contrib "loki" exporter was removed; see Grafana Loki OTEL docs).
+        otlphttp/loki:
+          endpoint: http://obs-loki-gateway.test.svc.cluster.local/otlp
           tls:
             insecure: true
+          headers:
+            X-Scope-OrgID: foo
       service:
         telemetry:
           metrics:
@@ -101,8 +105,8 @@ spec:
           metrics:
             receivers: [otlp]
             processors: [memory_limiter, batch]
-            exporters: [otlphttp]
+            exporters: [otlphttp/prometheus]
           logs:
             receivers: [otlp]
             processors: [memory_limiter, batch]
-            exporters: [loki]
+            exporters: [otlphttp/loki]
