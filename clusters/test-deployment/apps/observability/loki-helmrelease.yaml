@@ -15,17 +15,24 @@ spec:
         name: grafana
         namespace: test
   values:
+    ## One replica per workload (gateway, caches, MinIO, Loki). MinIO uses two in-pod volumes for erasure coding, not two replicas.
     deploymentMode: SingleBinary
+    gateway:
+      replicas: 1
     test:
       enabled: false
     lokiCanary:
       enabled: false
     ## Default chunks cache asks for 8192Mi — too large for small nodes
     chunksCache:
+      replicas: 1
       allocatedMemory: 512
       allocatedCPU: 100m
+    resultsCache:
+      replicas: 1
     minio:
       enabled: true
+      replicas: 1
       persistence:
         enabled: false
       resources:

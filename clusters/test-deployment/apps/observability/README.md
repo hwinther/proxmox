@@ -26,6 +26,10 @@ Deployments in `apps/` wire **Vite** (`VITE_OTEL_*`) to `http://otel.kt.wsh.no/v
 
 `obs-prometheus`, `obs-loki`, `obs-tempo`, `obs-grafana`, `obs-otel-collector` — all in namespace `test`.
 
+### Footprint (test cluster)
+
+All observability Helm releases are configured for **single-instance** (no HA): one Prometheus server, one Grafana, one Tempo, one OpenTelemetry Collector, and Loki in **SingleBinary** mode with **one** gateway / cache / MinIO / Loki pod each. Loki’s bundled MinIO still provisions **two PVCs or volumes per pod** by design (erasure coding); that is not two MinIO replicas.
+
 ### Storage / Scheduling (k0s or clusters without a StorageClass)
 
 If PVCs show `FailedBinding` / *no storage class is set*, this repo disables durable volumes for the observability charts and turns off `prometheus-node-exporter` (hostPort 9100 often conflicts with hostNetwork ingress). For production, add a default **StorageClass** (e.g. local-path) and re-enable persistence in the HelmRelease values.

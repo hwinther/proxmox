@@ -22,6 +22,7 @@ spec:
         name: grafana
         namespace: test
   values:
+    replicas: 1
     adminUser: admin
     ## Admin password is stored in a Secret created by the chart when this is unset.
     # adminPassword: ""
