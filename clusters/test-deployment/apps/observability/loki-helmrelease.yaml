@@ -35,6 +35,8 @@ spec:
       replicas: 1
       persistence:
         enabled: true
+        storageClass: local-path
+        storageClassName: local-path
       resources:
         requests:
           cpu: 50m
