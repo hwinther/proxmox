@@ -62,6 +62,13 @@ spec:
       replicas: 1
       persistence:
         enabled: false
+      ## Chart only mounts /var/loki when persistence is on; without this, Loki hits read-only root FS.
+      extraVolumes:
+        - name: var-loki-data
+          emptyDir: {}
+      extraVolumeMounts:
+        - name: var-loki-data
+          mountPath: /var/loki
       resources:
         requests:
           cpu: 100m
