@@ -23,13 +23,13 @@ spec:
       enabled: false
     lokiCanary:
       enabled: false
-    ## Default chunks cache asks for 8192Mi — too large for small nodes
+    ## Off on small test nodes (saves ~8Gi default + scheduling). Loki works without chunk cache at lower perf.
     chunksCache:
-      replicas: 1
-      allocatedMemory: 512
-      allocatedCPU: 100m
+      enabled: false
     resultsCache:
       replicas: 1
+      allocatedMemory: 256
+      allocatedCPU: 100m
     minio:
       enabled: true
       replicas: 1
