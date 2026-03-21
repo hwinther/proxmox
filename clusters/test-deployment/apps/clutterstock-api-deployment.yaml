@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: clutterstock-api
-        image: ghcr.io/hwinther/clutterstock/api:latest
+        image: ghcr.io/hwinther/clutterstock/api:1.0.0
         imagePullPolicy: Always
         env:
         - name: ASPNETCORE_URLS

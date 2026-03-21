@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: api
-        image: ghcr.io/hwinther/test/api:latest # {"$imagepolicy": "flux-system:api"}
+        image: ghcr.io/hwinther/test/api:1.0.0
         imagePullPolicy: Always
         env:
         - name: OTEL_SERVICE_NAME
