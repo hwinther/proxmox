@@ -17,6 +17,13 @@ spec:
       - name: api
         image: ghcr.io/hwinther/test/api:1.0.0
         imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
         env:
         - name: OTEL_SERVICE_NAME
           value: "api"
