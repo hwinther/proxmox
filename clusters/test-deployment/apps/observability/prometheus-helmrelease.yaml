@@ -25,16 +25,6 @@ spec:
       ## No StorageClass on this cluster — use emptyDir (data lost on pod delete)
       persistentVolume:
         enabled: false
-      ## Scrape OpenTelemetry Collector self-metrics (port 8888) for dashboard 15983
-      extraScrapeConfigs: |
-        - job_name: otel-collector
-          honor_timestamps: true
-          scrape_interval: 15s
-          static_configs:
-            - targets:
-                - obs-otel-collector.test.svc.cluster.local:8888
-              labels:
-                service: otel-collector
       resources:
         requests:
           cpu: 100m
@@ -51,3 +41,13 @@ spec:
     ## HostPort 9100 conflicts with other hostNetwork workloads (e.g. Traefik) on single-node pools
     prometheus-node-exporter:
       enabled: false
+    ## Chart expects this at values root (not under server) — merges into prometheus.yml
+    extraScrapeConfigs: |
+      - job_name: otel-collector
+        honor_timestamps: true
+        scrape_interval: 15s
+        static_configs:
+          - targets:
+              - obs-otel-collector.test.svc.cluster.local:8888
+            labels:
+              service: otel-collector
