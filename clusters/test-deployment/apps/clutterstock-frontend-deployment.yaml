@@ -15,8 +15,15 @@ spec:
     spec:
       containers:
       - name: clutterstock-frontend
-        image: ghcr.io/hwinther/clutterstock/frontend:v0.1.0
+        image: ghcr.io/hwinther/clutterstock/frontend:1.1.0
         imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
         ports:
         - name: http
           containerPort: 8080
