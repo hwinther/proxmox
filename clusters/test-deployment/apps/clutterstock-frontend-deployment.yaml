@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: clutterstock-frontend
-        image: ghcr.io/hwinther/clutterstock/frontend:latest
+        image: ghcr.io/hwinther/clutterstock/frontend:v0.1.0
         imagePullPolicy: Always
         ports:
         - name: http
