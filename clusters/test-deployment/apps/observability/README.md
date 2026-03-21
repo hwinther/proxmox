@@ -17,6 +17,13 @@ Flux installs Prometheus (with OTLP metrics ingest), Loki (SingleBinary + bundle
 
 Deployments in `apps/` wire **Vite** (`VITE_OTEL_*`) to `http://otel.kt.wsh.no/v1/traces` and **.NET** (`OTEL_SERVICE_NAME`, `OTEL_EXPORTER_OTLP_ENDPOINT`) to the collector on `4317`. If you change the `otel` host, update the frontend env values too. **Vite** still bakes `import.meta.env` at **image build time** unless your Docker/entrypoint injects it; align your frontend CI or runtime config with these Kubernetes vars.
 
+## Seeing telemetry in Grafana
+
+- **Pre-built dashboards (e.g. OpenTelemetry Collector 15983)** use **Prometheus metrics whose names start with `otelcol_`**. Those come from **scraping the collector on `:8888`**. In this repo, `extraScrapeConfigs` for that job must live at the **root** of the Prometheus chart `values` (not under `server`); otherwise the dashboards look empty even when apps send OTLP.
+- **App OTLP metrics** (e.g. .NET `dotnet_*`, `target_info` with `job` from the service name) appear under their **own metric names** — use **Explore → Prometheus** and try `{job="Api"}` or `dotnet_process_cpu_time_seconds_total`.
+- **Loki** multi-tenant mode needs **`X-Scope-OrgID`** on queries; the Grafana Loki datasource is provisioned with **`foo`** to match the OTEL collector’s Loki exporter.
+- **Traces in Tempo** only exist if apps **export traces** (not only metrics): e.g. ASP.NET Core with tracing + OTLP trace exporter, and browser OTLP to `otel` ingress (watch **CORS** if the site origin differs).
+
 ## Grafana
 
 - **Order:** Flux installs Grafana last among those three dependencies; wait for `obs-loki` and `obs-tempo` HelmReleases to be `Ready` if the UI does not load.
