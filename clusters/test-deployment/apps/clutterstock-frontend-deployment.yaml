@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: clutterstock-frontend
-        image: ghcr.io/hwinther/clutterstock/frontend:0.4.0
+        image: ghcr.io/hwinther/clutterstock/frontend:0.5.0
         imagePullPolicy: Always
         resources:
           requests:
@@ -31,12 +31,11 @@ spec:
         env:
         - name: PORT
           value: "8080"
-        - name: VITE_API_URL
+        - name: SERVER_API_URL
           value: "http://clutterstock-api:8080"
-        ## Browser OTLP/HTTP — must match Traefik ingress host in observability/observability-ingress.yaml
-        - name: VITE_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
+        - name: PUBLIC_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
           value: "http://otel.kt.wsh.no/v1/traces"
-        - name: VITE_OTEL_SERVICE_NAME
+        - name: PUBLIC_OTEL_SERVICE_NAME
           value: "clutterstock-frontend"
 ---
 apiVersion: v1
