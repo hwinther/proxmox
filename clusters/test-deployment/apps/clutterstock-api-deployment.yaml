@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: clutterstock-api
-        image: ghcr.io/hwinther/clutterstock/api:0.4.0
+        image: ghcr.io/hwinther/clutterstock/api:0.5.0
         imagePullPolicy: Always
         resources:
           requests:
@@ -27,7 +27,6 @@ spec:
         env:
         - name: ASPNETCORE_URLS
           value: http://+:8080
-        ## Standard OpenTelemetry environment variables (.NET SDK)
         - name: OTEL_SERVICE_NAME
           value: "clutterstock-api"
         - name: OTEL_EXPORTER_OTLP_ENDPOINT
