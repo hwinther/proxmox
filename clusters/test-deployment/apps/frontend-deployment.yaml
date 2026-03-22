@@ -31,9 +31,8 @@ spec:
         env:
         - name: API_URL
           value: "http://api:8080"
-        ## Set if this app is Vite and reads import.meta.env.VITE_OTEL_*
         - name: VITE_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
-          value: "http://otel.kt.wsh.no/v1/traces"
+          value: "https://otel.kt.wsh.no/v1/traces"
         - name: VITE_OTEL_SERVICE_NAME
           value: "frontend"
 ---
