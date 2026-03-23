@@ -48,3 +48,23 @@ SingleBinary Loki with **`persistence.enabled: false`** does not mount `/var/lok
 ### Storage / Scheduling (k0s or clusters without a StorageClass)
 
 If PVCs show `FailedBinding` / *no storage class is set*, this repo disables durable volumes for the observability charts and turns off `prometheus-node-exporter` (hostPort 9100 often conflicts with hostNetwork ingress). For production, add a default **StorageClass** (e.g. local-path) and re-enable persistence in the HelmRelease values.
+
+## Resource and connection visualization
+
+### Application service graph (Grafana + Tempo)
+
+- **Tempo** runs a **metrics generator** that derives **service graph** and **span metrics** from ingested traces and **remote_writes** them to Prometheus (`web.enable-remote-write-receiver` on the Prometheus server).
+- The **Tempo** datasource in Grafana sets **`serviceMap.datasourceUid: prometheus`**, so **Explore → Tempo** can show the **Service graph** (service-to-service edges) once traces exist.
+- Apps must export **OTLP traces** with stable **`service.name`** (e.g. `OTEL_SERVICE_NAME` on workloads). Example: `clutterstock-api` sets `OTEL_TRACES_EXPORTER=otlp`, `OTEL_EXPORTER_OTLP_PROTOCOL=grpc`, and `OTEL_RESOURCE_ATTRIBUTES` for namespace/environment.
+- Verify: Prometheus has series like `traces_service_graph_*` after traffic; Grafana Explore (Tempo) → **Service graph**.
+
+### Kubernetes object relationships (Kubevious)
+
+- Flux installs **[Kubevious](https://github.com/kubevious/kubevious)** in namespace **`kubevious`** (`apps/kubevious/`). It provides a UI for **workload and object relationships** (not the same as RPC service graphs).
+- **Ingress:** `kubevious.kt.wsh.no` → Service `kubevious-ui-clusterip:80` (adjust host/DNS like Grafana). MySQL uses **emptyDir** in this repo because the test cluster may have no StorageClass.
+- **Footprint:** multiple pods plus bundled MySQL and Redis; scale down or remove the HelmRelease if the node is too small.
+
+### Network flow maps (Cilium Hubble — optional CNI change)
+
+- **Hubble** (flow and service maps) ships with **Cilium**. It is **not** installed here: typical **k0s** clusters use another CNI (e.g. kube-router/Calico), and replacing the CNI is a **cluster-level** decision.
+- To get Hubble-style maps, plan a migration to **Cilium as CNI**, then enable **Hubble** per [Cilium Hubble documentation](https://docs.cilium.io/en/stable/observability/hubble/) and optionally connect observability (e.g. Grafana dashboards for Hubble metrics). This is separate from the Grafana/Tempo service graph above.

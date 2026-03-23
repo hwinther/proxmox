@@ -37,8 +37,8 @@ spec:
           value: "https://otel.kt.wsh.no/v1/traces"
         - name: PUBLIC_OTEL_SERVICE_NAME
           value: "clutterstock-frontend"
-        - name: ENABLE_DEBUG_CONFIG
-          value: "true"
+        # - name: ENABLE_DEBUG_CONFIG
+        #   value: "true"
 ---
 apiVersion: v1
 kind: Service

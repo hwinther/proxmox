@@ -1,0 +1,79 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: kubevious
+  namespace: test
+spec:
+  interval: 30m
+  timeout: 15m
+  targetNamespace: kubevious
+  install:
+    createNamespace: false
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  chart:
+    spec:
+      chart: kubevious
+      version: "1.2.2"
+      sourceRef:
+        kind: HelmRepository
+        name: kubevious
+        namespace: test
+  values:
+    ## Test cluster: no default StorageClass — MySQL uses emptyDir when persistence is off.
+    mysql:
+      persistence:
+        enabled: false
+      resources:
+        requests:
+          cpu: 100m
+          memory: 512Mi
+        limits:
+          memory: 1Gi
+    worldvious:
+      opt_out_all: true
+    backend:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 200Mi
+        limits:
+          memory: 512Mi
+    collector:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 200Mi
+        limits:
+          memory: 512Mi
+    parser:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 200Mi
+        limits:
+          memory: 512Mi
+    guard:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 200Mi
+        limits:
+          memory: 512Mi
+    ui:
+      resources:
+        requests:
+          cpu: 25m
+          memory: 50Mi
+        limits:
+          memory: 256Mi
+    redis:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          memory: 256Mi

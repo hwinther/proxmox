@@ -63,6 +63,9 @@ spec:
             url: http://obs-tempo.test.svc.cluster.local:3200
             jsonData:
               httpMethod: GET
+              ## Service graph uses metrics from Tempo metrics-generator → Prometheus remote_write.
+              serviceMap:
+                datasourceUid: prometheus
               tracesToLogs:
                 datasourceUid: loki
                 tags: ["service.name"]

@@ -9,3 +9,4 @@ resources:
 - podinfo-deployment.yaml
 - traefik-helmrelease.yaml
 - observability
+- kubevious
