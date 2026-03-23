@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: clutterstock-api
-        image: ghcr.io/hwinther/clutterstock/api:0.6.0
+        image: ghcr.io/hwinther/clutterstock/api:0.7.0
         imagePullPolicy: Always
         resources:
           requests:
@@ -27,6 +27,8 @@ spec:
         env:
         - name: ASPNETCORE_URLS
           value: http://+:8080
+        - name: ConnectionStrings__Default
+          value: Data Source=/data/clutterstock.db
         - name: OTEL_SERVICE_NAME
           value: "clutterstock-api"
         - name: OTEL_EXPORTER_OTLP_ENDPOINT
@@ -35,6 +37,13 @@ spec:
         - name: http
           containerPort: 8080
           protocol: TCP
+        volumeMounts:
+        - name: sqlite-data
+          mountPath: /data
+      volumes:
+      - name: sqlite-data
+        persistentVolumeClaim:
+          claimName: clutterstock-api-sqlite
 ---
 apiVersion: v1
 kind: Service
