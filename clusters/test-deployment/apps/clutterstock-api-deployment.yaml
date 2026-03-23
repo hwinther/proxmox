@@ -27,7 +27,7 @@ spec:
         env:
         - name: ASPNETCORE_URLS
           value: http://+:8080
-        - name: ConnectionStrings__Default
+        - name: ConnectionStrings__ClutterStock
           value: Data Source=/data/clutterstock.db
         - name: OTEL_SERVICE_NAME
           value: "clutterstock-api"
