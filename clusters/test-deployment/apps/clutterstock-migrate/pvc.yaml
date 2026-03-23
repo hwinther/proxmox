@@ -4,6 +4,7 @@ metadata:
   name: clutterstock-api-sqlite
   namespace: test
 spec:
+  storageClassName: local-path
   accessModes:
   - ReadWriteOnce
   resources:
