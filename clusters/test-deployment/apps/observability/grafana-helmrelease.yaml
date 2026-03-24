@@ -81,6 +81,18 @@ spec:
             editable: true
             options:
               path: /var/lib/grafana/dashboards/default
+          ## Separate path so dashboardsConfigMaps does not collide with the default provider volume (gnet downloads).
+          - name: custom
+            orgId: 1
+            folder: Custom
+            type: file
+            disableDeletion: false
+            editable: true
+            options:
+              path: /var/lib/grafana/dashboards/custom
+    ## Patched ASP.NET OTEL dashboard (see kustomization configMapGenerator).
+    dashboardsConfigMaps:
+      custom: grafana-dashboard-aspnet-otel
     dashboards:
       default:
         opentelemetry-collector:
@@ -91,7 +103,5 @@ spec:
           gnetId: 18309
           revision: 1
           datasource: Prometheus
-        aspnet-core-otel:
-          gnetId: 19924
-          revision: 1
-          datasource: Prometheus
+        ## ASP.NET Core: grafana.com/19924 uses label_values(http_server_active_requests,…) for variables;
+        ## that gauge is often missing when only histogram metrics are exported. Patched copy in ConfigMap.
