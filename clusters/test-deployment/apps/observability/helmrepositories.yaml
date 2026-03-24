@@ -24,3 +24,12 @@ metadata:
 spec:
   interval: 1h
   url: https://open-telemetry.github.io/opentelemetry-helm-charts
+---
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: HelmRepository
+metadata:
+  name: kubevious
+  namespace: test
+spec:
+  interval: 1h
+  url: https://helm.kubevious.io

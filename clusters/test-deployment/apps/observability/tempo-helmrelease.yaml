@@ -24,6 +24,19 @@ spec:
           memory: 256Mi
         limits:
           memory: 1Gi
+      ## Derive service graph + span metrics from traces and remote_write to Prometheus (see metrics-generator docs).
+      metricsGenerator:
+        enabled: true
+        storage:
+          remote_write:
+            - url: http://obs-prometheus-server.test.svc.cluster.local:9090/api/v1/write
+              send_exemplars: true
+      overrides:
+        defaults:
+          metrics_generator:
+            processors:
+              - service-graphs
+              - span-metrics
     ## No cluster StorageClass — use ephemeral storage
     persistence:
       enabled: false
