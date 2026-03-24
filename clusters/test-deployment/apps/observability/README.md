@@ -62,7 +62,7 @@ If PVCs show `FailedBinding` / *no storage class is set*, this repo disables dur
 ### Kubernetes object relationships (Kubevious)
 
 - Flux installs **[Kubevious](https://github.com/kubevious/kubevious)** in namespace **`kubevious`** (`apps/kubevious/`). It provides a UI for **workload and object relationships** (not the same as RPC service graphs).
-- **Ingress:** `kubevious.kt.wsh.no` → Service `kubevious-ui-clusterip:80` (adjust host/DNS like Grafana). MySQL uses **emptyDir** in this repo because the test cluster may have no StorageClass.
+- **Ingress:** Chart-managed Ingress (`ingressClassName: traefik`, host `kubevious.kt.wsh.no` — change in `kubevious-helmrelease.yaml`). If you see **404**, confirm DNS points at Traefik and the **Host** header matches that hostname (opening the site by node IP without the hostname often yields 404). **Blank page** usually means the UI pod is up but `/api/v1/*` to the backend fails — check all pods in `kubevious` are Running and `kubectl get endpoints -n kubevious kubevious-ui-clusterip`. MySQL uses **emptyDir** here when there is no StorageClass.
 - **Footprint:** multiple pods plus bundled MySQL and Redis; scale down or remove the HelmRelease if the node is too small.
 
 ### Network flow maps (Cilium Hubble — optional CNI change)

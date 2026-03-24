@@ -23,6 +23,18 @@ spec:
         name: kubevious
         namespace: test
   values:
+    ## Use chart Ingress so Service name and paths stay aligned with the release; Traefik needs the IngressClass.
+    ingress:
+      enabled: true
+      className: traefik
+      annotations:
+        traefik.ingress.kubernetes.io/router.entrypoints: web
+        traefik.ingress.kubernetes.io/service.passhostheader: "true"
+      hosts:
+        - host: kubevious.kt.wsh.no
+          paths:
+            - path: /
+              pathType: ImplementationSpecific
     ## Test cluster: no default StorageClass — MySQL uses emptyDir when persistence is off.
     mysql:
       persistence:
