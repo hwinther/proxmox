@@ -5,6 +5,11 @@ metadata:
   namespace: test
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Management
+    gethomepage.dev/name: Grafana
+    gethomepage.dev/icon: grafana
+    gethomepage.dev/description: Observability dashboards
 spec:
   rules:
     - host: grafana.mgmt-kt.wsh.no
@@ -27,6 +32,11 @@ metadata:
   namespace: test
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Observability
+    gethomepage.dev/name: OpenTelemetry Collector
+    gethomepage.dev/icon: opentelemetry
+    gethomepage.dev/description: OTLP HTTP endpoint
 spec:
   rules:
     - host: otel.kt.wsh.no
