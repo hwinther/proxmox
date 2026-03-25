@@ -1,7 +1,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: frontend
+  name: test-frontend
   namespace: test
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
@@ -14,14 +14,14 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: frontend
+            name: test-frontend
             port:
               number: 8080
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: api
+  name: test-api
   namespace: test
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
@@ -34,7 +34,7 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: api
+            name: test-api
             port:
               number: 8080
 ---
@@ -77,3 +77,23 @@ spec:
             name: clutterstock-api
             port:
               number: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: redisinsight
+  namespace: test
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+spec:
+  rules:
+  - host: redis.mgmt-kt.wsh.no
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: redisinsight
+            port:
+              number: 5540

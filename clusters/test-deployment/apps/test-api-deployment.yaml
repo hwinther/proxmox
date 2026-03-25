@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: api
+  name: test-api
   namespace: test
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: api
+      app: test-api
   template:
     metadata:
       labels:
-        app: api
+        app: test-api
     spec:
       containers:
-      - name: api
+      - name: test-api
         image: ghcr.io/hwinther/test/api:0.53.1
         imagePullPolicy: Always
         resources:
@@ -26,7 +26,7 @@ spec:
             memory: 512Mi
         env:
         - name: OTEL_SERVICE_NAME
-          value: "api"
+          value: "test-api"
         - name: OTEL_EXPORTER_OTLP_ENDPOINT
           value: "http://obs-otel-collector.test.svc.cluster.local:4317"
         ports:
@@ -37,7 +37,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: api
+  name: test-api
   namespace: test
 spec:
   type: ClusterIP
@@ -47,4 +47,4 @@ spec:
     protocol: TCP
     name: http
   selector:
-    app: api
+    app: test-api

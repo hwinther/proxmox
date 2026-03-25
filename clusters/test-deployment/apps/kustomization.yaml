@@ -1,10 +1,12 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-- api-deployment.yaml
-- frontend-deployment.yaml
+- test-api-deployment.yaml
+- test-frontend-deployment.yaml
 - clutterstock-api-deployment.yaml
 - clutterstock-frontend-deployment.yaml
+- redis-deployment.yaml
+- redisinsight-deployment.yaml
 - ingress.yaml
 - podinfo-deployment.yaml
 - traefik-helmrelease.yaml
