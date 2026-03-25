@@ -12,8 +12,10 @@ Flux installs Prometheus (with OTLP metrics ingest), Loki (SingleBinary + bundle
 
 ## Ingress (adjust hosts in `observability-ingress.yaml` / DNS)
 
-- Grafana: `grafana.kt.wsh.no` — **`obs-grafana` installs only after Prometheus, Loki, and Tempo are ready**, so expect **404** (no `obs-grafana` Service yet) until Loki finishes starting. Check: `kubectl get helmrelease -n test obs-grafana` and `kubectl get svc -n test obs-grafana`.
-- OTLP HTTP (e.g. browser): `otel.kt.wsh.no` — configure Traefik CORS middleware if the web app origin is different.
+**DNS zones:** **`*.mgmt-kt.wsh.no`** is the management plane for this kubernetes-test stack (Grafana, Kubevious); attach stricter WAF / Authelia (or IP allowlists) at your external reverse proxy on that zone. **`*.kt.wsh.no`** stays the public test surface (apps plus browser OTLP below).
+
+- Grafana: `grafana.mgmt-kt.wsh.no` — **`obs-grafana` installs only after Prometheus, Loki, and Tempo are ready**, so expect **404** (no `obs-grafana` Service yet) until Loki finishes starting. Check: `kubectl get helmrelease -n test obs-grafana` and `kubectl get svc -n test obs-grafana`.
+- OTLP HTTP (e.g. browser): `otel.kt.wsh.no` (public `kt` zone) — configure Traefik CORS middleware if the web app origin is different.
 
 Deployments in `apps/` wire **Vite** (`VITE_OTEL_*`) to `http://otel.kt.wsh.no/v1/traces` and **.NET** (`OTEL_SERVICE_NAME`, `OTEL_EXPORTER_OTLP_ENDPOINT`) to the collector on `4317`. If you change the `otel` host, update the frontend env values too. **Vite** still bakes `import.meta.env` at **image build time** unless your Docker/entrypoint injects it; align your frontend CI or runtime config with these Kubernetes vars.
 
@@ -62,7 +64,7 @@ If PVCs show `FailedBinding` / *no storage class is set*, this repo disables dur
 ### Kubernetes object relationships (Kubevious)
 
 - Flux installs **[Kubevious](https://github.com/kubevious/kubevious)** in namespace **`kubevious`** (`apps/kubevious/`). It provides a UI for **workload and object relationships** (not the same as RPC service graphs).
-- **Ingress:** Chart-managed Ingress (`ingressClassName: traefik`, host `kubevious.kt.wsh.no` — change in `kubevious-helmrelease.yaml`). If you see **404**, confirm DNS points at Traefik and the **Host** header matches that hostname (opening the site by node IP without the hostname often yields 404). **Blank page** usually means the UI pod is up but `/api/v1/*` to the backend fails — check all pods in `kubevious` are Running and `kubectl get endpoints -n kubevious kubevious-ui-clusterip`. MySQL uses **emptyDir** here when there is no StorageClass.
+- **Ingress:** Chart-managed Ingress (`ingressClassName: traefik`, host `kubevious.mgmt-kt.wsh.no` — change in `kubevious-helmrelease.yaml`). If you see **404**, confirm DNS points at Traefik and the **Host** header matches that hostname (opening the site by node IP without the hostname often yields 404). **Blank page** usually means the UI pod is up but `/api/v1/*` to the backend fails — check all pods in `kubevious` are Running and `kubectl get endpoints -n kubevious kubevious-ui-clusterip`. MySQL uses **emptyDir** here when there is no StorageClass.
 - **Footprint:** multiple pods plus bundled MySQL and Redis; scale down or remove the HelmRelease if the node is too small.
 
 ### Network flow maps (Cilium Hubble — optional CNI change)
