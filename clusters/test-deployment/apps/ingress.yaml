@@ -5,6 +5,11 @@ metadata:
   namespace: test
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Applications
+    gethomepage.dev/name: Test Frontend
+    gethomepage.dev/icon: mdi-application-outline
+    gethomepage.dev/description: Test project frontend
 spec:
   rules:
   - host: test.kt.wsh.no
@@ -25,6 +30,11 @@ metadata:
   namespace: test
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Applications
+    gethomepage.dev/name: Test API
+    gethomepage.dev/icon: mdi-api
+    gethomepage.dev/description: Test project API
 spec:
   rules:
   - host: api.kt.wsh.no
@@ -45,6 +55,11 @@ metadata:
   namespace: test
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Applications
+    gethomepage.dev/name: Clutterstock
+    gethomepage.dev/icon: mdi-image-multiple-outline
+    gethomepage.dev/description: Clutterstock frontend
 spec:
   rules:
   - host: clutterstock.kt.wsh.no
@@ -65,6 +80,11 @@ metadata:
   namespace: test
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Applications
+    gethomepage.dev/name: Clutterstock API
+    gethomepage.dev/icon: mdi-api
+    gethomepage.dev/description: Clutterstock API
 spec:
   rules:
   - host: api-clutterstock.kt.wsh.no
@@ -85,6 +105,11 @@ metadata:
   namespace: test
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Management
+    gethomepage.dev/name: RedisInsight
+    gethomepage.dev/icon: redis
+    gethomepage.dev/description: Redis management UI
 spec:
   rules:
   - host: redis.mgmt-kt.wsh.no
@@ -97,3 +122,28 @@ spec:
             name: redisinsight
             port:
               number: 5540
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: homepage
+  namespace: test
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Management
+    gethomepage.dev/name: Homepage
+    gethomepage.dev/icon: homepage
+    gethomepage.dev/description: Service dashboard
+spec:
+  rules:
+  - host: mgmt-kt.wsh.no
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: homepage
+            port:
+              number: 3000
