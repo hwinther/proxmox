@@ -37,6 +37,8 @@ spec:
           value: "https://otel.kt.wsh.no/v1/traces"
         - name: PUBLIC_OTEL_SERVICE_NAME
           value: "clutterstock-frontend"
+        - name: REDIS_URL
+          value: "redis://redis:6379"
         # - name: ENABLE_DEBUG_CONFIG
         #   value: "true"
 ---
