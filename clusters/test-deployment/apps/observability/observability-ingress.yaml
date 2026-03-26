@@ -23,8 +23,25 @@ spec:
                 port:
                   number: 80
 ---
-## OTLP/HTTP for browsers or external clients. Add a Traefik Headers/CORS middleware if the frontend origin
-## differs from this host (see https://doc.traefik.io/traefik/v3.0/middlewares/http/headers/#cors).
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: otel-cors
+  namespace: test
+spec:
+  headers:
+    accessControlAllowMethods:
+      - GET
+      - POST
+      - OPTIONS
+    accessControlAllowHeaders:
+      - Content-Type
+      - Authorization
+    accessControlAllowOriginList:
+      - https://clutterstock.kt.wsh.no
+      - https://test.kt.wsh.no
+    accessControlMaxAge: 3600
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -32,6 +49,7 @@ metadata:
   namespace: test
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: test-otel-cors@kubernetescrd
     gethomepage.dev/enabled: "true"
     gethomepage.dev/group: Observability
     gethomepage.dev/name: OpenTelemetry Collector
