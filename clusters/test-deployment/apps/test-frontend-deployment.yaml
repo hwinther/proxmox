@@ -29,11 +29,13 @@ spec:
           containerPort: 8080
           protocol: TCP
         env:
-        - name: API_URL
+        - name: PORT
+          value: "8080"
+        - name: SERVER_API_URL
           value: "http://test-api:8080"
-        - name: VITE_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
+        - name: PUBLIC_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
           value: "https://otel.kt.wsh.no/v1/traces"
-        - name: VITE_OTEL_SERVICE_NAME
+        - name: PUBLIC_OTEL_SERVICE_NAME
           value: "test-frontend"
         - name: REDIS_URL
           value: "redis://redis:6379"
