@@ -32,6 +32,9 @@ updates:
   - "/compose/templates/sdr-base/buster/build-image"
   - "/clusters/test-deployment"
   - "/clusters/test-deployment/apps"
+  - "/clusters/test-deployment/apps/clutterstock-migrate"
+  - "/clusters/test-deployment/apps/homepage"
+  - "/clusters/test-deployment/apps/kubevious"
   - "/clusters/test-deployment/apps/observability"
   - "/clusters/test-deployment/flux-system"
   schedule:
