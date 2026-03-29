@@ -1,8 +1,8 @@
-# Bump metadata.name (e.g. v072) when changing migrator image so applies succeed (Job spec is immutable).
+# Bump metadata.name (e.g. v091) when changing migrator image so applies succeed (Job spec is immutable).
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: clutterstock-migrate-v071
+  name: clutterstock-migrate-v090
   namespace: test
 spec:
   backoffLimit: 3
