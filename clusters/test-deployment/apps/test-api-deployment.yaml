@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: test-api
-        image: ghcr.io/hwinther/test/api:0.55.0
+        image: ghcr.io/hwinther/test/api:0.57.0
         imagePullPolicy: Always
         resources:
           requests:
