@@ -1,0 +1,6 @@
+# Shared platform resources for the production cluster (ingress, observability, etc.).
+# Per-app namespaces use appname-environment (e.g. clutterstock-api-production).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: platform-production
