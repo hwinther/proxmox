@@ -6,6 +6,7 @@
 #   - install Cilium (Helm/Flux after API is up — see infra/k0s/cilium-k0s-setup.md)
 #   - install Ceph CSI (in-cluster Helm/Flux; ensure ceph-public routing from this VLAN)
 #
+# Pinned k0s: bump K0S_VERSION with cluster upgrades — https://github.com/k0sproject/k0s/releases
 # After first boot, on controller: sudo k0s install controller --config /etc/k0s/k0s.yaml && sudo k0s start
 # On worker: sudo k0s install worker --token-file /root/k0s-token (or token from controller)
 
@@ -54,8 +55,21 @@ runcmd:
   - sysctl --system
   - systemctl enable --now qemu-guest-agent
   - systemctl enable --now ssh
-  # Install k0s (pin version in production by downloading a specific k0s binary instead)
-  - curl -sSLf https://get.k0s.sh | sh
+  # Install k0s binary from GitHub releases (no get.k0s.sh); + in tag must be %2B in URL
+  - |
+    set -e
+    K0S_VERSION=v1.35.2+k0s.0
+    ARCH=$(uname -m)
+    case "$ARCH" in
+      x86_64) ARCH=amd64 ;;
+      aarch64) ARCH=arm64 ;;
+      *) echo "unsupported arch for k0s: $ARCH" >&2; exit 1 ;;
+    esac
+    TAG_ESC=$(printf '%s\n' "$K0S_VERSION" | sed 's/+/%2B/g')
+    BIN="k0s-${K0S_VERSION}-${ARCH}"
+    BIN_ESC=$(printf '%s\n' "$BIN" | sed 's/+/%2B/g')
+    curl -sSLf -o /usr/local/bin/k0s "https://github.com/k0sproject/k0s/releases/download/${TAG_ESC}/${BIN_ESC}"
+    chmod +x /usr/local/bin/k0s
   # Load RBD for Ceph CSI node plugin (module may already load on first attach)
   - modprobe rbd || true
   - echo rbd >> /etc/modules-load.d/k8s-storage.conf
