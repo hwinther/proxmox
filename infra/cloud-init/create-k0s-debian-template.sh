@@ -26,10 +26,10 @@ export IMAGEFOLDER="${IMAGEFOLDER:-/tmp}"
 export STORAGE="${STORAGE:-local}"
 export VMNAME="${VMNAME:-k0s-debian13-trixie-cloudinit-template}"
 export VMID="${VMID:-10010}"
-export VMMEM="${VMMEM:-2048}"
-export VMCORES="${VMCORES:-4}"
+export VMMEM="${VMMEM:-8196}"
+export VMCORES="${VMCORES:-2}"
 export VMSETTINGS="${VMSETTINGS:---net0 virtio,bridge=vmbr0}"
-export DISK_RESIZE="${DISK_RESIZE:-16G}"
+export DISK_RESIZE="${DISK_RESIZE:-32G}"
 
 # Proxmox expects snippet names under local:snippets/ (files in /var/lib/vz/snippets/)
 USER_SNIPPET_NAME="${USER_SNIPPET_NAME:-cloud-init-k0s-user.yaml}"
