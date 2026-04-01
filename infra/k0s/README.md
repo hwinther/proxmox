@@ -6,6 +6,7 @@ Follow this order on lab nodes before relying on the same steps in production. A
 
 - Ensure the Ceph cluster is healthy (`ceph status`), pools exist for Kubernetes, and public/cluster networks match how VM nodes reach OSDs and each other.
 - Decide **RBD vs CephFS** (or both) for PVCs; install the matching **Ceph CSI** driver and `StorageClass` after Kubernetes API is available (step 5).
+- Use the concrete VLAN/CIDR and firewall baseline in **[network-plan.md](network-plan.md)**.
 
 ## 2. Node OS (Cilium prerequisites)
 
@@ -16,7 +17,7 @@ Confirm **k0s + Cilium** compatibility for your chosen versions (CNI-only vs kub
 ## 3. Bootstrap k0s
 
 - Use `k0sctl` or your standard method; keep **repeatable config** (API addresses, control-plane and worker roles, worker profiles).
-- Set **Cilium as the CNI** explicitly in k0s configuration; keep join tokens and sensitive material out of Git (use SOPS/Sealed Secrets for prod secrets).
+- Set **Cilium as the CNI** explicitly in k0s configuration (`spec.network.provider: custom`, install Cilium before relying on workers — see **[Cilium + k0s setup guide](cilium-k0s-setup.md)** for API endpoint, CoreDNS, firewalls, and Helm notes). Keep join tokens and sensitive material out of Git (use SOPS/Sealed Secrets for prod secrets).
 
 ## 4. Validate networking
 
