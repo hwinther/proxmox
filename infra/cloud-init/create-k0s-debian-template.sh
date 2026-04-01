@@ -39,7 +39,7 @@ VENDOR_SNIPPET_NAME="${VENDOR_SNIPPET_NAME:-vendor-k0s-debian-node.yaml}"
 USER_YAML="/var/lib/vz/snippets/${USER_SNIPPET_NAME}"
 VENDOR_YAML="/var/lib/vz/snippets/${VENDOR_SNIPPET_NAME}"
 
-USER_SOURCE="${USER_SOURCE:-${SNIPPETS_DIR}/cloud-init-user.example.yaml}"
+USER_SOURCE="${USER_SOURCE:-${SNIPPETS_DIR}/cloud-init-user.yaml}"
 VENDOR_SOURCE="${SNIPPETS_DIR}/vendor-k0s-debian-node.yaml"
 
 SSH_KEYS_FILE="${SSH_KEYS_FILE:-${REPO_ROOT}/scripts/cloud-init/ci-ssh-keys}"
