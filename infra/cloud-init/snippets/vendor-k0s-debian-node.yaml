@@ -56,7 +56,8 @@ runcmd:
   - mkdir -p /sys/fs/bpf
   - mountpoint -q /sys/fs/bpf || mount -t bpf bpf /sys/fs/bpf
   - sysctl --system
-  - systemctl enable --now qemu-guest-agent
+  # qemu-guest-agent.service on Debian often has no [Install] — `systemctl enable` exits 1 and breaks cloud-init.
+  - systemctl start qemu-guest-agent.service || true
   - systemctl enable --now ssh
   # After `locales` is installed: enable UTF-8 locale, then set default (replaces broken `locale:` key).
   - sed -i 's/^# \(en_US.UTF-8 UTF-8\)/\1/' /etc/locale.gen
