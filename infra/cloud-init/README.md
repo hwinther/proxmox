@@ -24,6 +24,23 @@ sudo ./infra/cloud-init/create-k0s-debian-template.sh
 
 Edit [`snippets/cloud-init-user.example.yaml`](snippets/cloud-init-user.example.yaml) (SSH key, user) **before** cloning the template for production use. Override `VMID`, `STORAGE`, `VMSETTINGS`, `IMAGENAME` / `IMAGEURL` as needed. Set `USE_CUSTOM_USER=0` to use only `scripts/cloud-init/ci-ssh-keys` and vendor data (no `user` snippet).
 
+### Static network (`NETWORK_SOURCE`)
+
+Example cloud-init **network v1** (static IPv4 + nameservers), same shape as `qm cloudinit dump <vmid> network`:
+
+- [`snippets/network-example-static.yaml`](snippets/network-example-static.yaml)
+
+Edit a copy (or the example) in the repo, then run the template script on the Proxmox host with **`NETWORK_SOURCE`** pointing at that file — the script symlinks it into `/var/lib/vz/snippets/` like user/vendor data:
+
+```bash
+NETWORK_SOURCE="${PWD}/infra/cloud-init/snippets/network-example-static.yaml" \
+  sudo ./infra/cloud-init/create-k0s-debian-template.sh
+```
+
+Optional: **`NETWORK_SNIPPET_NAME=my-net.yaml`** if the filename under `snippets/` should differ from the source basename. When `NETWORK_SOURCE` is unset, the script sets **`ipconfig0` DHCP** (no custom network in `cicustom`).
+
+**Two NICs (k0s node + ceph-public):** use [`snippets/network-example-static-dual-nic.yaml`](snippets/network-example-static-dual-nic.yaml). It sets a static address on each interface and **omits a gateway on the ceph-public NIC** so default routing stays on the cluster/management side, matching a firewall layout where ceph-public has no internet egress. In Proxmox, add **`net1`** (second virtio + correct bridge/VLAN) to the template or clone; align interface names and MACs in the YAML with `qm config <vmid>`.
+
 ## Debian vs Ubuntu (Docker snippet)
 
 `vendor-docker-ubuntu.yaml` uses Docker’s **Ubuntu** apt repo. On **Debian**, a vendor file that still points at `download.docker.com/linux/ubuntu` (or pins `~ubuntu...~noble` packages) will fail or behave oddly. Use **`vendor-docker-debian.yaml`** on Debian generic cloud images (`trixie` / Debian 13).

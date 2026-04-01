@@ -11,6 +11,7 @@
 # Usage:
 #   ./create-k0s-debian-template.sh
 #   IMAGENAME=... IMAGEURL=... VMID=10010 ./create-k0s-debian-template.sh
+#   NETWORK_SOURCE="${SNIPPETS_DIR}/network-example-static.yaml" ./create-k0s-debian-template.sh
 
 set -euo pipefail
 
@@ -38,7 +39,7 @@ VENDOR_SNIPPET_NAME="${VENDOR_SNIPPET_NAME:-vendor-k0s-debian-node.yaml}"
 USER_YAML="/var/lib/vz/snippets/${USER_SNIPPET_NAME}"
 VENDOR_YAML="/var/lib/vz/snippets/${VENDOR_SNIPPET_NAME}"
 
-USER_SOURCE="${SNIPPETS_DIR}/cloud-init-user.yaml" # Copy cloud-init-user.example.yaml to this file
+USER_SOURCE="${USER_SOURCE:-${SNIPPETS_DIR}/cloud-init-user.example.yaml}"
 VENDOR_SOURCE="${SNIPPETS_DIR}/vendor-k0s-debian-node.yaml"
 
 SSH_KEYS_FILE="${SSH_KEYS_FILE:-${REPO_ROOT}/scripts/cloud-init/ci-ssh-keys}"
@@ -64,9 +65,10 @@ qm set "${VMID}" --agent enabled=1,fstrim_cloned_disks=1
 
 CICUSTOM_PARTS=()
 
+mkdir -p /var/lib/vz/snippets
+
 USE_CUSTOM_USER="${USE_CUSTOM_USER:-1}"
 if [[ "${USE_CUSTOM_USER}" == "1" ]]; then
-  mkdir -p /var/lib/vz/snippets
   ln -sf "${USER_SOURCE}" "${USER_YAML}"
   ln -sf "${VENDOR_SOURCE}" "${VENDOR_YAML}"
   CICUSTOM_PARTS+=("user=local:snippets/${USER_SNIPPET_NAME}")
@@ -83,16 +85,21 @@ else
   CICUSTOM_PARTS+=("vendor=local:snippets/${VENDOR_SNIPPET_NAME}")
 fi
 
-if [[ -n "${NETWORK_YAML:-}" ]]; then
-  if [[ -L "${NETWORK_YAML}" ]] && [[ -e "${NETWORK_YAML}" ]]; then
-    echo "Symlink for network cloud-init exists."
-  else
-    echo "NETWORK_YAML set but symlink missing; create ${NETWORK_YAML} -> your network config" >&2
+# Optional static network: same pattern as user/vendor — symlink repo file into /var/lib/vz/snippets/.
+# Example: NETWORK_SOURCE="${SNIPPETS_DIR}/network-example-static.yaml"
+# Optional: NETWORK_SNIPPET_NAME=my-node.yaml (defaults to basename of NETWORK_SOURCE)
+if [[ -n "${NETWORK_SOURCE:-}" ]]; then
+  if [[ ! -f "${NETWORK_SOURCE}" ]]; then
+    echo "NETWORK_SOURCE is not a file: ${NETWORK_SOURCE}" >&2
     exit 1
   fi
-  CICUSTOM_PARTS+=("network=local:snippets/$(basename "${NETWORK_YAML}")")
+  NETWORK_SNIPPET_NAME="${NETWORK_SNIPPET_NAME:-$(basename "${NETWORK_SOURCE}")}"
+  NETWORK_YAML="/var/lib/vz/snippets/${NETWORK_SNIPPET_NAME}"
+  ln -sf "$(readlink -f "${NETWORK_SOURCE}")" "${NETWORK_YAML}"
+  CICUSTOM_PARTS+=("network=local:snippets/${NETWORK_SNIPPET_NAME}")
+  echo "Linked network config: ${NETWORK_SOURCE} -> ${NETWORK_YAML}"
 else
-  echo "No NETWORK_YAML; using DHCP and SLAAC for ipconfig0."
+  echo "No NETWORK_SOURCE; using DHCP and SLAAC for ipconfig0."
   qm set "${VMID}" --ipconfig0 ip=dhcp,ip6=auto
 fi
 
