@@ -3,10 +3,11 @@
 #
 # Does NOT:
 #   - join the cluster (use a per-clone vendor snippet, cloud-init merge, or SSH after boot)
-#   - install Cilium (Helm/Flux after API is up — see infra/k0s/cilium-k0s-setup.md)
+#   - install the Cilium CNI/dataplane (Helm/Flux after API is up — see infra/k0s/cilium-k0s-setup.md)
 #   - install Ceph CSI (in-cluster Helm/Flux; ensure ceph-public routing from this VLAN)
 #
-# Pinned k0s: bump K0S_VERSION with cluster upgrades — https://github.com/k0sproject/k0s/releases
+# Pinned k0s: bump K0S_VERSION — https://github.com/k0sproject/k0s/releases
+# Pinned cilium CLI: bump CILIUM_CLI_VERSION — https://github.com/cilium/cilium-cli/releases (not stable.txt)
 # After first boot, on controller: sudo k0s install controller --config /etc/k0s/k0s.yaml && sudo k0s start
 # On worker: sudo k0s install worker --token-file /root/k0s-token (or token from controller)
 
@@ -70,6 +71,25 @@ runcmd:
     BIN_ESC=$(printf '%s\n' "$BIN" | sed 's/+/%2B/g')
     curl -sSLf -o /usr/local/bin/k0s "https://github.com/k0sproject/k0s/releases/download/${TAG_ESC}/${BIN_ESC}"
     chmod +x /usr/local/bin/k0s
+  # Cilium CLI only (same flow as upstream docs, pinned version — no raw.githubusercontent.com/stable.txt)
+  - |
+    set -e
+    CILIUM_CLI_VERSION=v0.19.2
+    ARCH=$(uname -m)
+    case "$ARCH" in
+      x86_64) CLI_ARCH=amd64 ;;
+      aarch64) CLI_ARCH=arm64 ;;
+      *) echo "unsupported arch for cilium-cli: $ARCH" >&2; exit 1 ;;
+    esac
+    WORKDIR=$(mktemp -d)
+    trap 'rm -rf "$WORKDIR"' EXIT
+    cd "$WORKDIR"
+    BASE="https://github.com/cilium/cilium-cli/releases/download/${CILIUM_CLI_VERSION}"
+    TGZ="cilium-linux-${CLI_ARCH}.tar.gz"
+    curl -sSLf -O "${BASE}/${TGZ}"
+    curl -sSLf -O "${BASE}/${TGZ}.sha256sum"
+    sha256sum --check "${TGZ}.sha256sum"
+    tar xzfC "${TGZ}" /usr/local/bin
   # Load RBD for Ceph CSI node plugin (module may already load on first attach)
   - modprobe rbd || true
   - echo rbd >> /etc/modules-load.d/k8s-storage.conf
