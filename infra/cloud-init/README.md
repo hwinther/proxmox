@@ -39,6 +39,22 @@ NETWORK_SOURCE="${PWD}/infra/cloud-init/snippets/network-example-static.yaml" \
 
 Optional: **`NETWORK_SNIPPET_NAME=my-net.yaml`** if the filename under `snippets/` should differ from the source basename. When `NETWORK_SOURCE` is unset, the script sets **`ipconfig0` DHCP** (no custom network in `cicustom`).
 
+### Test clone (single script)
+
+[`k0s-cloud-init-test.sh`](k0s-cloud-init-test.sh) replaces a separate create/destroy pair: it clones the k0s template to a disposable VM (default **20010** from **10010**), starts it, and opens `qm terminal` unless `NO_TERMINAL=1`.
+
+```bash
+sudo ./infra/cloud-init/k0s-cloud-init-test.sh up              # create template if missing, clone, start, console
+sudo ./infra/cloud-init/k0s-cloud-init-test.sh up --destroy-first   # drop existing clone first
+DESTROY_FIRST=1 sudo ./infra/cloud-init/k0s-cloud-init-test.sh up   # same as --destroy-first
+sudo ./infra/cloud-init/k0s-cloud-init-test.sh recreate        # down + up (fresh clone)
+sudo ./infra/cloud-init/k0s-cloud-init-test.sh down            # destroy clone only (keep template)
+sudo ./infra/cloud-init/k0s-cloud-init-test.sh destroy-all     # destroy clone + template
+sudo ./infra/cloud-init/k0s-cloud-init-test.sh template        # run create-k0s-debian-template.sh only
+```
+
+Override **`TEMPLATE_VMID`**, **`CLONE_VMID`**, **`CLONE_NAME`** as needed.
+
 **Two NICs (k0s node + ceph-public):** use [`snippets/network-example-static-dual-nic.yaml`](snippets/network-example-static-dual-nic.yaml). It sets a static address on each interface and **omits a gateway on the ceph-public NIC** so default routing stays on the cluster/management side, matching a firewall layout where ceph-public has no internet egress. In Proxmox, add **`net1`** (second virtio + correct bridge/VLAN) to the template or clone; align interface names and MACs in the YAML with `qm config <vmid>`.
 
 ## Debian vs Ubuntu (Docker snippet)
