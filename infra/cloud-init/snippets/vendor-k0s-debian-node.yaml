@@ -6,6 +6,8 @@
 #   - install the Cilium CNI/dataplane (Helm/Flux after API is up — see infra/k0s/cilium-k0s-setup.md)
 #   - install Ceph CSI (in-cluster Helm/Flux; ensure ceph-public routing from this VLAN)
 #
+# Locale: do not set cloud-init `locale:` — on Debian the locale module runs before packages, so
+# `update-locale LANG=en_US.UTF-8` fails until en_US.UTF-8 is in locale.gen and generated (see runcmd).
 # Pinned k0s: bump K0S_VERSION — https://github.com/k0sproject/k0s/releases
 # Pinned cilium CLI: bump CILIUM_CLI_VERSION — https://github.com/cilium/cilium-cli/releases (not stable.txt)
 # After first boot, on controller: sudo k0s install controller --config /etc/k0s/k0s.yaml && sudo k0s start
@@ -15,10 +17,10 @@ hostname: k0s-node
 manage_etc_hosts: true
 package_upgrade: true
 package_reboot_if_required: true
-locale: en_US.UTF-8
 timezone: Europe/Oslo
 
 packages:
+  - locales
   - openssh-server
   - qemu-guest-agent
   - curl
@@ -56,6 +58,10 @@ runcmd:
   - sysctl --system
   - systemctl enable --now qemu-guest-agent
   - systemctl enable --now ssh
+  # After `locales` is installed: enable UTF-8 locale, then set default (replaces broken `locale:` key).
+  - sed -i 's/^# *\([^#]*en_US.UTF-8 UTF-8\)/\1/' /etc/locale.gen
+  - locale-gen en_US.UTF-8
+  - update-locale LANG=en_US.UTF-8
   # Install k0s binary from GitHub releases (no get.k0s.sh); + in tag must be %2B in URL
   - |
     set -e
@@ -89,7 +95,7 @@ runcmd:
     curl -sSLf -O "${BASE}/${TGZ}"
     curl -sSLf -O "${BASE}/${TGZ}.sha256sum"
     sha256sum --check "${TGZ}.sha256sum"
-    tar xzfC "${TGZ}" /usr/local/bin
+    tar -C /usr/local/bin -xzf "${TGZ}"
   # Load RBD for Ceph CSI node plugin (module may already load on first attach)
   - modprobe rbd || true
   - echo rbd >> /etc/modules-load.d/k8s-storage.conf
