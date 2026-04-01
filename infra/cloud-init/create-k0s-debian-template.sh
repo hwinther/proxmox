@@ -29,7 +29,7 @@ export VMNAME="${VMNAME:-k0s-debian13-trixie-cloudinit-template}"
 export VMID="${VMID:-10010}"
 export VMMEM="${VMMEM:-8196}"
 export VMCORES="${VMCORES:-2}"
-export VMSETTINGS="${VMSETTINGS:---net0 virtio,bridge=vmbr0}"
+export VMSETTINGS="${VMSETTINGS:---net0 virtio,bridge=vmbr0,tag=10,firewall=1 --net1 virtio,bridge=vmbr0,tag=20,firewall=1}"
 export DISK_RESIZE="${DISK_RESIZE:-32G}"
 
 # Proxmox expects snippet names under local:snippets/ (files in /var/lib/vz/snippets/)
