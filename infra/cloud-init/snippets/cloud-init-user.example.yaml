@@ -1,0 +1,14 @@
+#cloud-config
+# Copy to Proxmox snippets and replace SSH keys / users. Reference as cicustom user=...
+chpasswd:
+  expire: false
+users:
+  - default
+  - name: user
+    gecos: k0s node admin
+    groups: adm, users, sudo
+    lock_passwd: true
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - ssh-ed25519 AAAA...your-key-here

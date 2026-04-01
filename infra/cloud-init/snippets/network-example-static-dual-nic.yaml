@@ -1,0 +1,44 @@
+# Cloud-init network config v1 — two interfaces: k0s node + ceph-public
+# (no #cloud-config header)
+#
+# Matches the VLAN idea in infra/k0s/network-plan.md:
+#   - NIC 1: k0s node / control-plane traffic (default gateway, DNS, egress per your firewall)
+#   - NIC 2: ceph-public only — static address for Ceph CSI / librados; no default route here
+#
+# Proxmox: attach two virtio NICs (e.g. net0 on k0s VLAN, net1 on ceph-public VLAN). Example:
+#   --net0 virtio,bridge=vmbr0,tag=20 --net1 virtio,bridge=vmbr0,tag=30
+# Match `name` and `mac_address` below to `qm config <vmid>` / VM hardware.
+#
+# Debian cloud images often use ens18, ens19 (not eth0/eth1). Confirm with a DHCP boot first.
+#
+# Use with create-k0s-debian-template.sh:
+#   NETWORK_SOURCE=.../network-example-static-dual-nic.yaml
+
+version: 1
+config:
+# --- k0s node / cluster-facing (10.10.20.0/24 in network-plan example) ---
+- type: physical
+  name: ens18
+  mac_address: "bc:24:11:00:00:01"
+  subnets:
+  - type: static
+    address: 10.10.20.101/24
+    gateway: 10.10.20.1
+
+# --- ceph-public only (10.10.30.0/24) — no gateway: storage path is L2/local; firewall blocks WAN ---
+- type: physical
+  name: ens19
+  mac_address: "bc:24:11:00:00:02"
+  subnets:
+  - type: static
+    address: 10.10.30.101/24
+    # Intentionally no gateway: do not pull default route or “routing out” via ceph-public.
+    # Mons/OSDs on the same subnet are reached directly. For multi-subnet Ceph, add explicit
+    # `routes` here (not a default gateway) per your Ceph network layout.
+
+- type: nameserver
+  address:
+  - "10.10.10.1"
+  - "10.10.10.2"
+  search:
+  - "k0s.wsh.no"

@@ -37,6 +37,9 @@ updates:
   - "/clusters/test-deployment/apps/kubevious"
   - "/clusters/test-deployment/apps/observability"
   - "/clusters/test-deployment/flux-system"
+  - "/clusters/production"
+  - "/clusters/production/apps"
+  - "/clusters/production/flux-system"
   schedule:
     interval: "daily"
 
