@@ -1,0 +1,69 @@
+name: update-flux
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "11 8 * * *"
+
+permissions: {}
+
+jobs:
+  update-production-cluster:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Check out code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup Flux CLI
+        uses: fluxcd/flux2/action@871be9b40d53627786d3a3835a3ddba1e3234bd2 # v2.8.3
+
+      - name: Check for updates
+        id: update
+        run: |
+          flux install \
+            --export > ./clusters/production/flux-system/gotk-components.yaml
+
+          VERSION="$(flux -v)"
+          echo "flux_version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
+        with:
+          branch: update-flux-production
+          commit-message: Update to ${{ steps.update.outputs.flux_version }} (production cluster)
+          title: Update to ${{ steps.update.outputs.flux_version }} (production cluster)
+          body: |
+            ${{ steps.update.outputs.flux_version }}
+
+  update-test-cluster:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Check out code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup Flux CLI
+        uses: fluxcd/flux2/action@871be9b40d53627786d3a3835a3ddba1e3234bd2 # v2.8.3
+
+      - name: Check for updates
+        id: update
+        run: |
+          flux install \
+          --export > ./clusters/test-deployment/flux-system/gotk-components.yaml
+
+          VERSION="$(flux -v)"
+          echo "flux_version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
+        with:
+          branch: update-flux-test
+          commit-message: Update to ${{ steps.update.outputs.flux_version }} (test cluster)
+          title: Update to ${{ steps.update.outputs.flux_version }} (test cluster)
+          body: |
+            ${{ steps.update.outputs.flux_version }}
