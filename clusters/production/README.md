@@ -22,9 +22,16 @@ If this directory and `flux-system` already exist in Git, bootstrap reconciles a
 
 ## In-cluster sync
 
-[`flux-system/gotk-sync.yaml`](flux-system/gotk-sync.yaml) defines a `GitRepository`, a **`clutterstock-migrate`** `Kustomization` (`path: ./clusters/production/apps/clutterstock-migrate`), and the root **`flux-system`** `Kustomization` with `path: ./clusters/production` and **`dependsOn: clutterstock-migrate`** so the SQLite PVC and migrator Job run before the main bundle (Clutterstock Deployments/Ingress).
+[`flux-system/gotk-sync.yaml`](flux-system/gotk-sync.yaml) defines a `GitRepository`, a **`clutterstock-migrate`** `Kustomization` (`path: ./clusters/production/apps/clutterstock-migrate`), and the root **`flux-system`** `Kustomization` with `path: ./clusters/production`. The root **`flux-system` Kustomization does not `dependsOn` migrate**: if migrate were blocked (PVC not bound, missing `csi-rbd-secret`, etc.), that would prevent **all** of production (including observability) from applying. Run the migrator Job and wait for success before relying on Clutterstock API if you need a strict DB migration order.
 
 Platform checklist before apps: [`../../infra/k0s/README.md`](../../infra/k0s/README.md). **Ceph RBD:** Flux manifests under [`apps/ceph-csi/`](apps/ceph-csi/README.md) (fill in FSID/monitors, create `csi-rbd-secret` before expecting PVCs).
+
+### Troubleshooting: empty namespace / no HelmReleases
+
+1. **Git:** Flux reads **`main`** on `https://github.com/hwinther/proxmox.git`. Local-only commits are invisible until **pushed**.
+2. **Reconcile:** `flux reconcile source git flux-system -n flux-system` then `flux reconcile kustomization flux-system -n flux-system`.
+3. **Status:** `flux get kustomizations -n flux-system` — if `flux-system` is **NotReady**, read `kubectl describe kustomization flux-system -n flux-system` (kustomize build errors, denied RBAC, etc.).
+4. **Migrate KS:** `flux get kustomization clutterstock-migrate -n flux-system` — failing migrate does **not** block the root bundle anymore; fix PVC/Job for Clutterstock all the same.
 
 ## Apps on this cluster
 

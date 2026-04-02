@@ -32,6 +32,14 @@ Namespace: **`observability-production`**. Flux installs **kube-prometheus-stack
 | `obs-tempo` | Tempo + metrics generator → Prometheus remote_write |
 | `obs-otel-collector` | OTLP → Tempo / Loki / Prometheus OTLP |
 
+### Where are the Deployments?
+
+In **`obs-loki`**, the Loki **SingleBinary** process is a **StatefulSet** named **`obs-loki`**, not a Deployment. You should see **`obs-loki-gateway`** as a **Deployment**, plus StatefulSets **`obs-loki`**, **`obs-loki-minio`**, **`obs-loki-results-cache`**. Use:
+
+`kubectl get deploy,sts,pods -n observability-production`
+
+**kube-prometheus-stack** also creates many **StatefulSets** (Prometheus, Alertmanager) and **DaemonSets** (node-exporter), not only Deployments.
+
 ## OTel collector metrics
 
 Prometheus scrapes the collector self-metrics via **additionalServiceMonitors** in `obs-kps` (Service port name `metrics`, `:8888`).
