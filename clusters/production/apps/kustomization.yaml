@@ -3,3 +3,8 @@ kind: Kustomization
 resources:
   - namespace-platform-production.yaml
   - ceph-csi
+  - traefik
+  - observability
+  - homepage
+  - clutterstock
+  - ingress.yaml

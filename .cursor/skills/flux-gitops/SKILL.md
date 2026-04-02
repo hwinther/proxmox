@@ -43,8 +43,9 @@ Guidelines:
 
 | Environment | Host pattern | Example |
 |-------------|----------------|---------|
-| **Production** | `appname.wsh.no` | `clutterstock.wsh.no` |
-| **Test** | `appname.test.wsh.no` | `clutterstock.test.wsh.no` |
+| **Production (apps)** | `{service}.wsh.no` | `clutterstock.wsh.no`, `api-clutterstock.wsh.no` |
+| **Production (management)** | Homepage: `mgmt.wsh.no`; other services: `{service}.mgmt.wsh.no` | `mgmt.wsh.no`, `grafana.mgmt.wsh.no` |
+| **Test** | `appname.test.wsh.no` or cluster-specific zones (e.g. `*.kt.wsh.no`) | `clutterstock.test.wsh.no`, `grafana.mgmt-kt.wsh.no` |
 | **PR / preview** | `appname-<pr-number>.preview.wsh.no` | `clutterstock-184.preview.wsh.no` |
 
 **PR/preview shape:** put **`appname`** and **`pr-number`** in one DNS label left of `preview.wsh.no` (`clutterstock-184`), not `184.clutterstock.preview.wsh.no`, so **`*.preview.wsh.no`** covers all preview hosts without per-app wildcards.
@@ -85,7 +86,8 @@ The dependency ensures migration jobs run before the main app bundle reconciles.
 ### Production (`clusters/production/flux-system/gotk-sync.yaml`)
 
 - Same **GitRepository** pattern (URL/branch/`secretRef` as appropriate for the prod cluster).
-- **Single** root `Kustomization` `flux-system` with `path: ./clusters/production` — **no** `dependsOn` pointing at test-only paths.
+- **Kustomization** `clutterstock-migrate` with `path: ./clusters/production/apps/clutterstock-migrate` (namespace + PVC + migrator Job).
+- Root **Kustomization** `flux-system` with `path: ./clusters/production` and **`dependsOn: clutterstock-migrate`** so Clutterstock storage exists before the main app bundle.
 
 Bootstrap production with `flux bootstrap github --path=clusters/production` (see `clusters/production/README.md`). Each cluster gets its own in-cluster `flux-system` secret for Git; do not copy test cluster kubeconfig secrets to prod.
 

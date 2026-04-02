@@ -2,123 +2,73 @@
 name: k8s-observability
 description: >-
   Work with the observability stack (Prometheus, Loki, Tempo, Grafana,
-  OpenTelemetry Collector) in the test cluster. Use when configuring telemetry
-  endpoints, adding dashboards, instrumenting apps, or troubleshooting metrics,
-  logs, and traces.
+  OpenTelemetry Collector) on test or production clusters in this repo. Use when
+  configuring telemetry endpoints, adding dashboards, instrumenting apps, or
+  troubleshooting metrics, logs, and traces.
 ---
 
 # Observability Stack
 
-All observability components are in `clusters/test-deployment/apps/observability/` and deploy to namespace `test`. For detailed operational notes, see `clusters/test-deployment/apps/observability/README.md`.
+## Production (`clusters/production/apps/observability/`)
 
-## Components
+Namespace **`observability-production`**. **kube-prometheus-stack** HelmRelease **`obs-kps`** provides Prometheus (with OTLP + remote-write receiver), Grafana (bundled), Alertmanager, node-exporter, and kube-state-metrics. Separate HelmReleases: **`obs-loki`**, **`obs-tempo`**, **`obs-otel-collector`**.
 
-| HelmRelease | Chart Source | Purpose |
-|---|---|---|
-| `obs-prometheus` | `prometheus-community` | Metrics collection and storage |
-| `obs-loki` | `grafana` | Log aggregation (SingleBinary + bundled MinIO) |
-| `obs-tempo` | `grafana` | Distributed tracing backend |
-| `obs-grafana` | `grafana` | Visualization (depends on the three above) |
-| `obs-otel-collector` | `open-telemetry` | OTLP receiver, routes signals to backends |
+Operational notes: [`clusters/production/apps/observability/README.md`](../../../clusters/production/apps/observability/README.md).
 
-HelmRepositories are defined in `clusters/test-deployment/apps/observability/helmrepositories.yaml`.
-
-## In-Cluster Endpoints for Apps
+### Production in-cluster endpoints
 
 | Signal | Endpoint |
-|---|---|
+|--------|----------|
+| OTLP gRPC | `obs-otel-collector.observability-production.svc.cluster.local:4317` |
+| OTLP HTTP | `http://obs-otel-collector.observability-production.svc.cluster.local:4318` |
+| OTLP HTTP (ingress) | `https://otel.mgmt.wsh.no` |
+| Prometheus | `http://obs-kps-kube-prometheus-st-prometheus.observability-production.svc.cluster.local:9090` |
+
+### Production Grafana
+
+- Ingress: **`grafana.mgmt.wsh.no`** → `obs-kps-grafana:80`.
+- Secret: **`obs-kps-grafana`** (admin password).
+- Extra datasources (Loki, Tempo) are set in **`kube-prometheus-stack-helmrelease.yaml`** under `grafana.additionalDataSources`.
+
+## Test / reference (`clusters/test-deployment/apps/observability/`)
+
+Legacy stack in namespace **`test`**: standalone **`obs-prometheus`** chart, **`obs-grafana`**, **`obs-loki`**, **`obs-tempo`**, **`obs-otel-collector`**. Detailed notes: [`clusters/test-deployment/apps/observability/README.md`](../../../clusters/test-deployment/apps/observability/README.md).
+
+### Test in-cluster endpoints
+
+| Signal | Endpoint |
+|--------|----------|
 | OTLP gRPC | `obs-otel-collector.test.svc.cluster.local:4317` |
 | OTLP HTTP | `http://obs-otel-collector.test.svc.cluster.local:4318` |
 | Prometheus OTLP (direct) | `http://obs-prometheus-server.test.svc.cluster.local/api/v1/otlp` |
 
-Apps should send telemetry to the **OTEL Collector** (gRPC on 4317), which fans out to Prometheus, Loki, and Tempo.
+### Test Grafana
+
+- Datasources point at `obs-prometheus-server`, `obs-loki-gateway`, `obs-tempo` in namespace `test`.
+- Login Secret: **`obs-grafana`**.
 
 ## Instrumenting an App
 
-Add these env vars to the Deployment container:
+Send telemetry to the **OTEL Collector** (gRPC **4317**) for the target cluster/namespace.
+
+**Production example:**
 
 ```yaml
 env:
-- name: OTEL_SERVICE_NAME
-  value: "<app-name>"
-- name: OTEL_EXPORTER_OTLP_ENDPOINT
-  value: "http://obs-otel-collector.test.svc.cluster.local:4317"
+  - name: OTEL_SERVICE_NAME
+    value: "<app-name>"
+  - name: OTEL_EXPORTER_OTLP_ENDPOINT
+    value: "http://obs-otel-collector.observability-production.svc.cluster.local:4317"
 ```
 
-For .NET apps that need explicit trace/metric exporters:
+**Browser / Vite (production):** use the OTLP HTTP ingress, e.g. **`https://otel.mgmt.wsh.no/v1/traces`** (CORS allowlist in `observability-ingress.yaml`).
 
-```yaml
-- name: OTEL_TRACES_EXPORTER
-  value: "otlp"
-- name: OTEL_EXPORTER_OTLP_PROTOCOL
-  value: "grpc"
-- name: OTEL_RESOURCE_ATTRIBUTES
-  value: "service.namespace=test,deployment.environment=test"
-```
+## Service graphs (Tempo + Prometheus)
 
-For browser/Vite apps, telemetry goes to the external OTLP HTTP ingress: `http://otel.kt.wsh.no/v1/traces`. This URL is baked at image build time via `VITE_OTEL_*` env vars unless the Docker entrypoint injects it at runtime.
+Tempo’s metrics generator **remote_writes** to Prometheus (`/api/v1/write`). In Grafana, the Tempo datasource uses **`serviceMap.datasourceUid: prometheus`** so **Explore → Tempo → Service graph** works when traces and metrics exist.
 
-## Grafana
+## Operational notes
 
-### Datasources (pre-provisioned)
-
-| Name | UID | Type | URL |
-|---|---|---|---|
-| Prometheus | `prometheus` | `prometheus` | `http://obs-prometheus-server.test.svc.cluster.local` |
-| Loki | `loki` | `loki` | `http://obs-loki-gateway.test.svc.cluster.local` |
-| Tempo | `tempo` | `tempo` | `http://obs-tempo.test.svc.cluster.local:3200` |
-
-Loki requires `X-Scope-OrgID: foo` (multi-tenant mode); this is configured in the Grafana datasource.
-
-### Dashboards
-
-Two provisioning methods:
-
-1. **grafana.com downloads** -- specify `gnetId` and `revision` in HelmRelease values under `dashboards.default`:
-
-```yaml
-dashboards:
-  default:
-    my-dashboard:
-      gnetId: 12345
-      revision: 1
-      datasource: Prometheus
-```
-
-2. **Custom JSON from repo** -- add the JSON file to `clusters/test-deployment/apps/observability/dashboards/`, then add it to the `configMapGenerator` in `clusters/test-deployment/apps/observability/kustomization.yaml`:
-
-```yaml
-configMapGenerator:
-  - name: grafana-dashboard-<name>
-    files:
-      - dashboards/<name>.json
-    options:
-      disableNameSuffixHash: true
-```
-
-Then reference it in the Grafana HelmRelease under `dashboardsConfigMaps`:
-
-```yaml
-dashboardsConfigMaps:
-  custom: grafana-dashboard-<name>
-```
-
-Custom dashboards appear under the **Custom** folder in Grafana.
-
-### Login
-
-User `admin`, password auto-generated in Secret `obs-grafana` (or set `adminPassword` in HelmRelease values).
-
-## Service Graphs (Tempo + Prometheus)
-
-Tempo's metrics generator derives service graph edges from traces and remote-writes them to Prometheus (`web.enable-remote-write-receiver` is enabled on the Prometheus server). In Grafana, the Tempo datasource has `serviceMap.datasourceUid: prometheus` so **Explore -> Tempo -> Service graph** works once traces exist.
-
-Apps must export OTLP traces with a stable `service.name` for edges to appear.
-
-## Key Operational Notes
-
-- **Grafana 404 after deploy:** It installs last (depends on Prometheus, Loki, Tempo). Wait for all three to be Ready: `kubectl get helmrelease -n test`.
-- **Empty dashboards:** Verify `extraScrapeConfigs` for the collector metrics job is at the **root** of Prometheus chart values (not nested under `server`).
-- **Loki OTLP ingest:** The OTEL Collector exports logs via `otlphttp` to `http://obs-loki-gateway.test.svc.cluster.local/otlp`. The legacy `loki` exporter was removed upstream; do not use it.
-- **No PVCs:** This cluster may lack a StorageClass. Persistence is disabled; data does not survive pod restarts. For production, add a StorageClass and re-enable persistence in the HelmRelease values.
-- **Node exporter disabled:** `prometheus-node-exporter` is off to avoid hostPort 9100 conflicts with Traefik's hostNetwork.
+- **Empty collector dashboards:** On production, collector self-metrics are scraped via **kube-prometheus-stack `additionalServiceMonitors`** (port **`metrics`**, target `:8888`). On test, ensure **`extraScrapeConfigs`** for the collector remains at the **root** of the Prometheus chart values.
+- **Loki OTLP:** Collector uses **`otlphttp`** to the Loki gateway **`/otlp`** path with header **`X-Scope-OrgID: foo`** (matches Grafana Loki datasource).
+- **Persistence:** Production uses **ceph-rbd** for Prometheus, Grafana, Loki/MinIO, Tempo, and Clutterstock SQLite where configured; test may use `local-path` or emptyDir.
