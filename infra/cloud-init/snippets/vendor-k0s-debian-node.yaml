@@ -20,83 +20,95 @@ package_reboot_if_required: true
 timezone: Europe/Oslo
 
 packages:
-  - locales
-  - openssh-server
-  - qemu-guest-agent
-  - curl
-  - ca-certificates
-  - iptables
-  - conntrack
-  - socat
-  - nfs-common
-  # Optional: useful for debugging Ceph client paths (CSI still runs in containers)
-  # - ceph-common
+- locales
+- openssh-server
+- qemu-guest-agent
+- curl
+- ca-certificates
+- iptables
+- conntrack
+- socat
+- nfs-common
+# Optional: useful for debugging Ceph client paths (CSI still runs in containers)
+# - ceph-common
 
 write_files:
-  # Sysctls: Cilium stable docs focus on kernel BPF config + firewall ports (VXLAN/Geneve, health),
-  # not a long sysctl list — see https://docs.cilium.io/en/stable/operations/system_requirements/
-  # rp_filter=0 avoids strict reverse-path filtering that breaks many CNIs; Cilium Helm can still apply
-  # per-interface fixes (e.g. systemd overriding rp_filter on some distros).
-  - path: /etc/sysctl.d/99-k8s-network.conf
-    content: |
-      net.ipv4.ip_forward = 1
-      net.ipv4.conf.all.rp_filter = 0
-      net.ipv4.conf.default.rp_filter = 0
-      # If you use IPv6 in Cilium (enable-ipv6), forwarding must be on.
-      net.ipv6.conf.all.forwarding = 1
-      net.ipv6.conf.default.forwarding = 1
-      # Kubernetes nodes with many watches (Flux, operators): avoids inotify exhaustion.
-      fs.inotify.max_user_instances = 8192
-      fs.inotify.max_user_watches = 524288
+# overlay + br_netfilter: kubeadm/k8s baseline
+- path: /etc/modules-load.d/k8s-cni.conf
+  content: |
+    overlay
+    br_netfilter
+
+# Sysctls: Cilium stable docs focus on kernel BPF config + firewall ports (VXLAN/Geneve, health),
+# not a long sysctl list — see https://docs.cilium.io/en/stable/operations/system_requirements/
+# rp_filter=0 avoids strict reverse-path filtering that breaks many CNIs; Cilium Helm can still apply
+# per-interface fixes (e.g. systemd overriding rp_filter on some distros).
+- path: /etc/sysctl.d/99-k8s-network.conf
+  content: |
+    net.ipv4.ip_forward = 1
+    net.ipv4.conf.all.rp_filter = 0
+    net.ipv4.conf.default.rp_filter = 0
+    # Require br_netfilter (see modules-load + modprobe in runcmd before sysctl --system).
+    # Lets iptables/nft see traffic bridged on Linux bridges (kube-proxy, some CNIs, host networking).
+    net.bridge.bridge-nf-call-iptables = 1
+    net.bridge.bridge-nf-call-ip6tables = 1
+    # If you use IPv6 in Cilium (enable-ipv6), forwarding must be on.
+    net.ipv6.conf.all.forwarding = 1
+    net.ipv6.conf.default.forwarding = 1
+    # Kubernetes nodes with many watches (Flux, operators): avoids inotify exhaustion.
+    fs.inotify.max_user_instances = 8192
+    fs.inotify.max_user_watches = 524288
 
 runcmd:
-  # Optional persistent bpffs — Cilium can mount this itself, but docs recommend fstab for persistence
-  # across agent restarts: https://docs.cilium.io/en/stable/operations/system_requirements/#mounted-ebpf-filesystem
-  - test -f /etc/fstab && grep -q '[[:space:]]/sys/fs/bpf[[:space:]]' /etc/fstab || echo 'bpffs /sys/fs/bpf bpf defaults 0 0' >> /etc/fstab
-  - mkdir -p /sys/fs/bpf
-  - mountpoint -q /sys/fs/bpf || mount -t bpf bpf /sys/fs/bpf
-  - sysctl --system
-  # qemu-guest-agent.service on Debian often has no [Install] — `systemctl enable` exits 1 and breaks cloud-init.
-  - systemctl start qemu-guest-agent.service || true
-  - systemctl enable --now ssh
-  # After `locales` is installed: enable UTF-8 locale, then set default (replaces broken `locale:` key).
-  - sed -i 's/^# \(en_US.UTF-8 UTF-8\)/\1/' /etc/locale.gen
-  - locale-gen en_US.UTF-8
-  - update-locale LANG=en_US.UTF-8
-  # Install k0s binary from GitHub releases (no get.k0s.sh); + in tag must be %2B in URL
-  - |
-    set -e
-    K0S_VERSION=v1.35.2+k0s.0
-    ARCH=$(uname -m)
-    case "$ARCH" in
-      x86_64) ARCH=amd64 ;;
-      aarch64) ARCH=arm64 ;;
-      *) echo "unsupported arch for k0s: $ARCH" >&2; exit 1 ;;
-    esac
-    TAG_ESC=$(printf '%s\n' "$K0S_VERSION" | sed 's/+/%2B/g')
-    BIN="k0s-${K0S_VERSION}-${ARCH}"
-    BIN_ESC=$(printf '%s\n' "$BIN" | sed 's/+/%2B/g')
-    curl -sSLf -o /usr/local/bin/k0s "https://github.com/k0sproject/k0s/releases/download/${TAG_ESC}/${BIN_ESC}"
-    chmod +x /usr/local/bin/k0s
-  # Cilium CLI only (same flow as upstream docs, pinned version — no raw.githubusercontent.com/stable.txt)
-  - |
-    set -e
-    CILIUM_CLI_VERSION=v0.19.2
-    ARCH=$(uname -m)
-    case "$ARCH" in
-      x86_64) CLI_ARCH=amd64 ;;
-      aarch64) CLI_ARCH=arm64 ;;
-      *) echo "unsupported arch for cilium-cli: $ARCH" >&2; exit 1 ;;
-    esac
-    WORKDIR=$(mktemp -d)
-    trap 'rm -rf "$WORKDIR"' EXIT
-    cd "$WORKDIR"
-    BASE="https://github.com/cilium/cilium-cli/releases/download/${CILIUM_CLI_VERSION}"
-    TGZ="cilium-linux-${CLI_ARCH}.tar.gz"
-    curl -sSLf -O "${BASE}/${TGZ}"
-    curl -sSLf -O "${BASE}/${TGZ}.sha256sum"
-    sha256sum --check "${TGZ}.sha256sum"
-    tar -C /usr/local/bin -xzf "${TGZ}"
-  # Load RBD for Ceph CSI node plugin (module may already load on first attach)
-  - modprobe rbd || true
-  - echo rbd >> /etc/modules-load.d/k8s-storage.conf
+# Optional persistent bpffs — Cilium can mount this itself, but docs recommend fstab for persistence
+# across agent restarts: https://docs.cilium.io/en/stable/operations/system_requirements/#mounted-ebpf-filesystem
+- test -f /etc/fstab && grep -q '[[:space:]]/sys/fs/bpf[[:space:]]' /etc/fstab || echo 'bpffs /sys/fs/bpf bpf defaults 0 0' >> /etc/fstab
+- mkdir -p /sys/fs/bpf
+- mountpoint -q /sys/fs/bpf || mount -t bpf bpf /sys/fs/bpf
+- modprobe overlay || true
+- modprobe br_netfilter || true
+- sysctl --system
+# qemu-guest-agent.service on Debian often has no [Install] — `systemctl enable` exits 1 and breaks cloud-init.
+- systemctl start qemu-guest-agent.service || true
+- systemctl enable --now ssh
+# After `locales` is installed: enable UTF-8 locale, then set default (replaces broken `locale:` key).
+- sed -i 's/^# \(en_US.UTF-8 UTF-8\)/\1/' /etc/locale.gen
+- locale-gen en_US.UTF-8
+- update-locale LANG=en_US.UTF-8
+# Install k0s binary from GitHub releases (no get.k0s.sh); + in tag must be %2B in URL
+- |
+  set -e
+  K0S_VERSION=v1.35.2+k0s.0
+  ARCH=$(uname -m)
+  case "$ARCH" in
+    x86_64) ARCH=amd64 ;;
+    aarch64) ARCH=arm64 ;;
+    *) echo "unsupported arch for k0s: $ARCH" >&2; exit 1 ;;
+  esac
+  TAG_ESC=$(printf '%s\n' "$K0S_VERSION" | sed 's/+/%2B/g')
+  BIN="k0s-${K0S_VERSION}-${ARCH}"
+  BIN_ESC=$(printf '%s\n' "$BIN" | sed 's/+/%2B/g')
+  curl -sSLf -o /usr/local/bin/k0s "https://github.com/k0sproject/k0s/releases/download/${TAG_ESC}/${BIN_ESC}"
+  chmod +x /usr/local/bin/k0s
+# Cilium CLI only (same flow as upstream docs, pinned version — no raw.githubusercontent.com/stable.txt)
+- |
+  set -e
+  CILIUM_CLI_VERSION=v0.19.2
+  ARCH=$(uname -m)
+  case "$ARCH" in
+    x86_64) CLI_ARCH=amd64 ;;
+    aarch64) CLI_ARCH=arm64 ;;
+    *) echo "unsupported arch for cilium-cli: $ARCH" >&2; exit 1 ;;
+  esac
+  WORKDIR=$(mktemp -d)
+  trap 'rm -rf "$WORKDIR"' EXIT
+  cd "$WORKDIR"
+  BASE="https://github.com/cilium/cilium-cli/releases/download/${CILIUM_CLI_VERSION}"
+  TGZ="cilium-linux-${CLI_ARCH}.tar.gz"
+  curl -sSLf -O "${BASE}/${TGZ}"
+  curl -sSLf -O "${BASE}/${TGZ}.sha256sum"
+  sha256sum --check "${TGZ}.sha256sum"
+  tar -C /usr/local/bin -xzf "${TGZ}"
+# Load RBD for Ceph CSI node plugin (module may already load on first attach)
+- modprobe rbd || true
+- echo rbd >> /etc/modules-load.d/k8s-storage.conf
