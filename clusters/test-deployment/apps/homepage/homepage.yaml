@@ -54,6 +54,12 @@ data:
         provider: duckduckgo
         target: _blank
   docker.yaml: ""
+  proxmox.yaml: |
+    ---
+    # pve:
+    # url: https://proxmox.host.or.ip:8006
+    # token: username@pam!Token ID
+    # secret: secret
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -180,6 +186,9 @@ spec:
             - mountPath: /app/config/docker.yaml
               name: homepage-config
               subPath: docker.yaml
+            - mountPath: /app/config/proxmox.yaml
+              name: homepage-config
+              subPath: proxmox.yaml
             - mountPath: /app/config/kubernetes.yaml
               name: homepage-config
               subPath: kubernetes.yaml
