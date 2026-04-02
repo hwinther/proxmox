@@ -52,7 +52,7 @@ jobs:
             if (!raw) {
               return;
             }
-            const paths = raw.split(/\n').filter(Boolean);
+            const paths = raw.split("\n").filter(Boolean);
             const marker = '<!-- dependabot-clusters-check -->';
             const body = [
               marker,
