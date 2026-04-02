@@ -23,7 +23,7 @@ HelmRepositories for the observability stack are consolidated in `clusters/test-
 ## HelmRepository Template
 
 ```yaml
-apiVersion: source.toolkit.fluxcd.io/v1beta2
+apiVersion: source.toolkit.fluxcd.io/v1
 kind: HelmRepository
 metadata:
   name: <repo-name>
@@ -33,7 +33,7 @@ spec:
   url: https://example.github.io/helm-charts
 ```
 
-- API version: `source.toolkit.fluxcd.io/v1beta2`
+- API version: `source.toolkit.fluxcd.io/v1`
 - Interval: `1h` (how often Flux checks for new chart versions)
 - Place in the same namespace as the HelmRelease that references it
 

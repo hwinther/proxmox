@@ -12,6 +12,7 @@ spec:
     metadata:
       labels:
         app: test-api
+        app.kubernetes.io/name: test-api
     spec:
       containers:
       - name: test-api

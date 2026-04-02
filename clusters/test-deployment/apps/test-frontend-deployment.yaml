@@ -12,6 +12,7 @@ spec:
     metadata:
       labels:
         app: test-frontend
+        app.kubernetes.io/name: test-frontend
     spec:
       containers:
       - name: test-frontend

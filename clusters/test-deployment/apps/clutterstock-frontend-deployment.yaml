@@ -12,6 +12,7 @@ spec:
     metadata:
       labels:
         app: clutterstock-frontend
+        app.kubernetes.io/name: clutterstock-frontend
     spec:
       containers:
       - name: clutterstock-frontend

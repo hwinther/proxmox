@@ -55,6 +55,7 @@ metadata:
     gethomepage.dev/name: OpenTelemetry Collector
     gethomepage.dev/icon: opentelemetry
     gethomepage.dev/description: OTLP HTTP endpoint
+    gethomepage.dev/pod-selector: app.kubernetes.io/instance=obs-otel-collector
 spec:
   rules:
     - host: otel.kt.wsh.no
