@@ -16,12 +16,27 @@ spec:
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
+  name: clutterstock-migrate
+  namespace: flux-system
+spec:
+  interval: 10m0s
+  path: ./clusters/production/apps/clutterstock-migrate
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
   name: flux-system
   namespace: flux-system
 spec:
   interval: 10m0s
   path: ./clusters/production
   prune: true
+  dependsOn:
+    - name: clutterstock-migrate
   sourceRef:
     kind: GitRepository
     name: flux-system

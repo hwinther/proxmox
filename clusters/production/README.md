@@ -22,9 +22,19 @@ If this directory and `flux-system` already exist in Git, bootstrap reconciles a
 
 ## In-cluster sync
 
-[`flux-system/gotk-sync.yaml`](flux-system/gotk-sync.yaml) defines a `GitRepository` and a single root `Kustomization` with `path: ./clusters/production` and **no** dependency on test-only paths (for example migration jobs that exist only under `test-deployment`).
+[`flux-system/gotk-sync.yaml`](flux-system/gotk-sync.yaml) defines a `GitRepository`, a **`clutterstock-migrate`** `Kustomization` (`path: ./clusters/production/apps/clutterstock-migrate`), and the root **`flux-system`** `Kustomization` with `path: ./clusters/production` and **`dependsOn: clutterstock-migrate`** so the SQLite PVC and migrator Job run before the main bundle (Clutterstock Deployments/Ingress).
 
 Platform checklist before apps: [`../../infra/k0s/README.md`](../../infra/k0s/README.md). **Ceph RBD:** Flux manifests under [`apps/ceph-csi/`](apps/ceph-csi/README.md) (fill in FSID/monitors, create `csi-rbd-secret` before expecting PVCs).
+
+## Apps on this cluster
+
+| Area | Path | Notes |
+|------|------|--------|
+| **Observability** | [`apps/observability/`](apps/observability/) | kube-prometheus-stack, Loki, Tempo, OTel; see [README](apps/observability/README.md) |
+| **Traefik** | [`apps/traefik/`](apps/traefik/) | DaemonSet + hostNetwork (same pattern as test) |
+| **Homepage** | [`apps/homepage/`](apps/homepage/) | Namespace `platform-production`; Ingress host **`mgmt.wsh.no`** |
+| **Clutterstock** | [`apps/clutterstock/`](apps/clutterstock/) | Namespace `clutterstock-production`, Ceph PVC via migrate |
+| **Ingress** | [`apps/ingress.yaml`](apps/ingress.yaml) | Public + management hosts (see hostnames below) |
 
 ## Namespace naming
 
@@ -34,4 +44,7 @@ The placeholder namespace under `apps/` is `platform-production` for cluster-wid
 
 ## Public hostnames (`wsh.no`)
 
-Production Ingress hosts use **`appname.wsh.no`** (e.g. `clutterstock.wsh.no`). Non-prod uses **`appname.test.wsh.no`**; PR previews use **`appname-<pr-number>.preview.wsh.no`** (e.g. `clutterstock-184.preview.wsh.no`). See [`.cursor/skills/flux-gitops/SKILL.md`](../../.cursor/skills/flux-gitops/SKILL.md).
+- **Applications:** **`{service}.wsh.no`** — e.g. `clutterstock.wsh.no`, `api-clutterstock.wsh.no`.
+- **Management plane:** **Homepage** uses **`mgmt.wsh.no`**. Other management UIs use **`{service}.mgmt.wsh.no`** — e.g. `grafana.mgmt.wsh.no`, `otel.mgmt.wsh.no`, `alertmanager.mgmt.wsh.no`. Prefer stricter edge controls (WAF / auth) on `mgmt.wsh.no` and `*.mgmt.wsh.no`.
+
+Non-prod uses **`appname.test.wsh.no`** or test-specific zones (e.g. `*.kt.wsh.no`); PR previews use **`appname-<pr-number>.preview.wsh.no`**. See [`.cursor/skills/flux-gitops/SKILL.md`](../../.cursor/skills/flux-gitops/SKILL.md).
