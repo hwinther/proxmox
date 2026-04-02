@@ -1,8 +1,5 @@
-# Ceph CSI RBD driver (RWO block volumes). Requires:
-# - Ceph pool (e.g. k8s-rbd) + CephX user; see README in this directory
-# - Secret csi-rbd-secret in ceph-csi-production before pods can provision
-# - Replace CHANGEME_CEPH_FSID and monitor addresses below (same FSID in csiConfig + storageClass)
-apiVersion: source.toolkit.fluxcd.io/v1beta2
+# Ceph CSI RBD driver (RWO block volumes)
+apiVersion: source.toolkit.fluxcd.io/v1
 kind: HelmRepository
 metadata:
   name: ceph-csi
