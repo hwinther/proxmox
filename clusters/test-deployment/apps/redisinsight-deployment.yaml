@@ -12,6 +12,7 @@ spec:
     metadata:
       labels:
         app: redisinsight
+        app.kubernetes.io/name: redisinsight
     spec:
       containers:
       - name: redisinsight
