@@ -1,0 +1,35 @@
+name: Verify Dependabot cluster directories
+
+on:
+  pull_request:
+    paths:
+      - "clusters/**"
+      - ".github/dependabot.yml"
+      - ".github/scripts/verify_dependabot_clusters_dirs.py"
+      - ".github/workflows/verify-dependabot-clusters.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "clusters/**"
+      - ".github/dependabot.yml"
+      - ".github/scripts/verify_dependabot_clusters_dirs.py"
+      - ".github/workflows/verify-dependabot-clusters.yml"
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install PyYAML
+        run: pip install pyyaml
+
+      - name: Verify cluster YAML dirs are in Dependabot
+        run: python .github/scripts/verify_dependabot_clusters_dirs.py
