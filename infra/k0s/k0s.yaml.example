@@ -19,7 +19,12 @@ spec:
       - chartname: cilium/cilium
         name: cilium
         namespace: kube-system
+        version: "1.19.2"
         values: |
+          # Identity for Hubble TLS: SANs are *.<name>.hubble-grpc.cilium.io. Keep stable
+          # or regenerate Hubble TLS secrets after changing (relay checks this hostname).
+          cluster:
+            name: default
           kubeProxyReplacement: true
           k8sServiceHost: 10.10.20.101
           k8sServicePort: 6443
@@ -27,6 +32,17 @@ spec:
             mode: kubernetes
           routingMode: tunnel
           tunnelProtocol: vxlan
+          hubble:
+            enabled: true
+            relay:
+              enabled: true
+              peerService:
+                internalTrafficPolicy: Cluster
+            tls:
+              enabled: true
+              auto:
+                enabled: true
+                method: helm
       repositories:
       - name: cilium
         url: https://helm.cilium.io
