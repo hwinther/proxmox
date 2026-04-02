@@ -23,7 +23,7 @@ jobs:
       - name: Check for updates
         id: update
         run: |
-          flux install \
+          flux install --components-extra=image-reflector-controller,image-automation-controller \
             --export > ./clusters/production/flux-system/gotk-components.yaml
 
           VERSION="$(flux -v)"
@@ -53,7 +53,7 @@ jobs:
       - name: Check for updates
         id: update
         run: |
-          flux install \
+          flux install --components-extra=image-reflector-controller,image-automation-controller \
           --export > ./clusters/test-deployment/flux-system/gotk-components.yaml
 
           VERSION="$(flux -v)"
