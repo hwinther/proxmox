@@ -87,7 +87,7 @@ The dependency ensures migration jobs run before the main app bundle reconciles.
 
 - Same **GitRepository** pattern (URL/branch/`secretRef` as appropriate for the prod cluster).
 - **Kustomization** `clutterstock-migrate` with `path: ./clusters/production/apps/clutterstock-migrate` (namespace + PVC + migrator Job).
-- Root **Kustomization** `flux-system` with `path: ./clusters/production` and **`dependsOn: clutterstock-migrate`** so Clutterstock storage exists before the main app bundle.
+- Root **Kustomization** `flux-system` with `path: ./clusters/production` — **no `dependsOn` migrate**, so a stuck Clutterstock PVC/Job does not block observability, Traefik, or Homepage. Ensure migrator Job has completed before depending on Clutterstock API.
 
 Bootstrap production with `flux bootstrap github --path=clusters/production` (see `clusters/production/README.md`). Each cluster gets its own in-cluster `flux-system` secret for Git; do not copy test cluster kubeconfig secrets to prod.
 
