@@ -23,6 +23,9 @@ spec:
           kubeProxyReplacement: true
           k8sServiceHost: 10.10.20.101
           k8sServicePort: 6443
+          ipam:
+            mode: kubernetes
+          tunnel: vxlan
       repositories:
       - name: cilium
         url: https://helm.cilium.io

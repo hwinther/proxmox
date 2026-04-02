@@ -8,10 +8,14 @@ Run from a machine with `flux` CLI and GitHub credentials (replace owner/repo/br
 
 ```bash
 flux bootstrap github \
+  --token-auth \
+  --components-extra=image-reflector-controller,image-automation-controller \
   --owner=hwinther \
   --repository=proxmox \
   --branch=main \
-  --path=clusters/production
+  --path=clusters/production \
+  --read-write-key \
+  --personal
 ```
 
 If this directory and `flux-system` already exist in Git, bootstrap reconciles against the committed `gotk-sync.yaml` and `gotk-components.yaml`. After upgrading Flux versions, regenerate `flux-system/gotk-components.yaml` (for example via `flux install --export`) and align with [`../test-deployment/flux-system/gotk-components.yaml`](../test-deployment/flux-system/gotk-components.yaml) when both clusters should run the same controller version.
