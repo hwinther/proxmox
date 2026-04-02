@@ -24,7 +24,7 @@ If this directory and `flux-system` already exist in Git, bootstrap reconciles a
 
 [`flux-system/gotk-sync.yaml`](flux-system/gotk-sync.yaml) defines a `GitRepository` and a single root `Kustomization` with `path: ./clusters/production` and **no** dependency on test-only paths (for example migration jobs that exist only under `test-deployment`).
 
-Platform checklist before apps: [`../../infra/k0s/README.md`](../../infra/k0s/README.md).
+Platform checklist before apps: [`../../infra/k0s/README.md`](../../infra/k0s/README.md). **Ceph RBD:** Flux manifests under [`apps/ceph-csi/`](apps/ceph-csi/README.md) (fill in FSID/monitors, create `csi-rbd-secret` before expecting PVCs).
 
 ## Namespace naming
 

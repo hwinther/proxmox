@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ceph-csi-production
+  labels:
+    app.kubernetes.io/name: ceph-csi
+    app.kubernetes.io/component: storage

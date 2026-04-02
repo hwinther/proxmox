@@ -25,7 +25,8 @@ Confirm **k0s + Cilium** compatibility for your chosen versions (CNI-only vs kub
 
 ## 5. Ceph CSI and StorageClass
 
-- Install CSI to match your Ceph auth and pools; create a **default** or named `StorageClass`(es).
+- **Production (GitOps):** Flux deploys **ceph-csi-rbd** from [`clusters/production/apps/ceph-csi/`](../../clusters/production/apps/ceph-csi/README.md) (namespace `ceph-csi-production`, StorageClass `ceph-rbd`). Set **`kubeletDir: /var/lib/k0s/kubelet`** there — k0s does not use `/var/lib/kubelet`.
+- **Manual / other clusters:** Install CSI to match your Ceph auth and pools; create a **default** or named `StorageClass`(es).
 - Validate with a disposable PVC and Pod before application workloads.
 
 ## 6. Flux (production path)
