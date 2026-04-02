@@ -21,6 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -34,4 +35,62 @@ jobs:
         run: pip install pyyaml
 
       - name: Verify cluster YAML dirs are in Dependabot
+        id: dependabot-check
+        continue-on-error: true
         run: python .github/scripts/verify_dependabot_clusters_dirs.py
+
+      - name: Comment on PR with missing Dependabot paths
+        if: github.event_name == 'pull_request' && steps.dependabot-check.outcome == 'failure'
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const tmp = process.env.RUNNER_TEMP || '/tmp';
+            const filePath = path.join(tmp, 'dependabot-cluster-missing.txt');
+            const raw = fs.readFileSync(filePath, 'utf8').trim();
+            if (!raw) {
+              return;
+            }
+            const paths = raw.split(/\n').filter(Boolean);
+            const marker = '<!-- dependabot-clusters-check -->';
+            const body = [
+              marker,
+              '### Dependabot: missing cluster directories',
+              '',
+              'These paths contain YAML under `clusters/` but are not listed in `.github/dependabot.yml`:',
+              '',
+              ...paths.map((p) => `- \`${p}\``),
+              '',
+              'Add each under the appropriate `package-ecosystem` (e.g. the `docker` `directories` list).',
+            ].join('\n');
+            const issue_number = context.payload.pull_request.number;
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number,
+            });
+            const existing = comments.find(
+              (c) =>
+                c.body?.includes(marker) &&
+                c.user?.login === 'github-actions[bot]',
+            );
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number,
+                body,
+              });
+            }
+
+      - name: Fail if Dependabot cluster check failed
+        if: steps.dependabot-check.outcome == 'failure'
+        run: exit 1

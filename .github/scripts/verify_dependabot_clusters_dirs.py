@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -11,7 +12,9 @@ import yaml
 REPO_ROOT = Path(__file__).resolve().parents[2]
 CLUSTERS = REPO_ROOT / "clusters"
 DEPENDABOT = REPO_ROOT / ".github" / "dependabot.yml"
+DEPENDABOT_REL = ".github/dependabot.yml"
 YAML_SUFFIXES = (".yaml", ".yml")
+MISSING_LIST_FILE = Path(os.environ.get("RUNNER_TEMP", "/tmp")) / "dependabot-cluster-missing.txt"
 
 
 def clusters_dirs_with_yaml() -> set[str]:
@@ -43,11 +46,29 @@ def dependabot_directories() -> set[str]:
     return dirs
 
 
+def _github_error_message(text: str) -> str:
+    """Escape for ::error command body (see GitHub workflow commands docs)."""
+    return (
+        text.replace("%", "%25")
+        .replace("\r\n", "%0D%0A")
+        .replace("\r", "%0D")
+        .replace("\n", "%0A")
+    )
+
+
 def main() -> int:
     required = clusters_dirs_with_yaml()
     configured = dependabot_directories()
     missing = sorted(required - configured)
     if missing:
+        MISSING_LIST_FILE.write_text("\n".join(missing) + "\n", encoding="utf-8")
+        hint = (
+            "Add under the appropriate package-ecosystem "
+            '(e.g. docker "directories" list).'
+        )
+        for m in missing:
+            msg = _github_error_message(f"Cluster directory {m} is not listed in Dependabot. {hint}")
+            print(f"::error file={DEPENDABOT_REL},title=Dependabot::{msg}")
         print(
             "These cluster directories contain YAML but are not listed "
             "in .github/dependabot.yml (directory or directories):",
@@ -55,11 +76,7 @@ def main() -> int:
         )
         for m in missing:
             print(f"  - {m}", file=sys.stderr)
-        print(
-            "\nAdd each path under the appropriate package-ecosystem "
-            '(e.g. docker "directories" list).',
-            file=sys.stderr,
-        )
+        print(f"\n{hint}", file=sys.stderr)
         return 1
     return 0
 
