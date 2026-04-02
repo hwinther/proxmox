@@ -58,6 +58,8 @@ write_files:
     # Kubernetes nodes with many watches (Flux, operators): avoids inotify exhaustion.
     fs.inotify.max_user_instances = 8192
     fs.inotify.max_user_watches = 524288
+    # Swap off for kubelet (default expects no swap unless kubelet swap support is enabled).
+    vm.swappiness = 0
 
 runcmd:
 # Optional persistent bpffs — Cilium can mount this itself, but docs recommend fstab for persistence
@@ -68,6 +70,9 @@ runcmd:
 - modprobe overlay || true
 - modprobe br_netfilter || true
 - sysctl --system
+# Disable swap for Kubernetes/k0s (kubelet). Persists across reboot via fstab.
+- swapoff -a || true
+- test -f /etc/fstab && sed -i.bak '/[[:space:]]swap[[:space:]]/s/^/#/' /etc/fstab || true
 # qemu-guest-agent.service on Debian often has no [Install] — `systemctl enable` exits 1 and breaks cloud-init.
 - systemctl start qemu-guest-agent.service || true
 - systemctl enable --now ssh
