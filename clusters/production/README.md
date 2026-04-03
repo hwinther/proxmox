@@ -51,7 +51,7 @@ The placeholder namespace under `apps/` is `platform-production` for cluster-wid
 
 ## Public hostnames (`wsh.no`)
 
-- **Applications:** **`{service}.wsh.no`** — e.g. `clutterstock.wsh.no`, `api-clutterstock.wsh.no`.
+- **Applications:** **`{service}.wsh.no`** — e.g. `clutterstock.wsh.no` (Clutterstock API is routed on the same host under `/api/`).
 - **Management plane:** **Homepage** uses **`mgmt.wsh.no`**. Other management UIs use **`{service}.mgmt.wsh.no`** — e.g. `grafana.mgmt.wsh.no`, `otel.mgmt.wsh.no`, `alertmanager.mgmt.wsh.no`. Prefer stricter edge controls (WAF / auth) on `mgmt.wsh.no` and `*.mgmt.wsh.no`.
 
 Non-prod uses **`appname.test.wsh.no`** or test-specific zones (e.g. `*.kt.wsh.no`); PR previews use **`appname-<pr-number>.preview.wsh.no`**. See [`.cursor/skills/flux-gitops/SKILL.md`](../../.cursor/skills/flux-gitops/SKILL.md).
