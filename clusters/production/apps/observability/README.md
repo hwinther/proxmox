@@ -47,3 +47,8 @@ Prometheus scrapes the collector self-metrics via **additionalServiceMonitors** 
 ## CORS (browser OTLP)
 
 Middleware `otel-cors` in this namespace; allowlist includes `https://clutterstock.wsh.no`. Extend `observability-ingress.yaml` for more origins.
+
+## Homepage (`mgmt.wsh.no`)
+
+- **Kubernetes widget** (cluster/node CPU and memory) needs the **metrics.k8s.io** API. k0s ships **metrics-server** in `kube-system` by default — do **not** install a second copy via Helm (name collisions / reconcile failures). If `kubectl top nodes` works, the widget should too; if metrics scrape fails, patch the k0s **metrics-server** Deployment args (e.g. `--kubelet-insecure-tls`) per [`infra/k0s/cilium-k0s-setup.md`](../../../infra/k0s/cilium-k0s-setup.md).
+- **Ingress-derived pod status** uses pod labels. For the OpenTelemetry ingress, **`gethomepage.dev/pod-selector`** must match the collector pods (e.g. `app.kubernetes.io/instance=obs-otel-collector`), not the Ingress resource name.

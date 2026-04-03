@@ -24,6 +24,14 @@ Confirm **k0s + Cilium** compatibility for your chosen versions (CNI-only vs kub
 
 - Cilium pods healthy; pod-to-pod and service connectivity; DNS once CoreDNS is running.
 
+### metrics-server (k0s default)
+
+k0s installs **metrics-server** in `kube-system` (static stack `metricserver`). It satisfies `metrics.k8s.io` for `kubectl top`, HPAs, and tools like Homepage’s kubernetes widget.
+
+- **Do not** add a second metrics-server with Helm/Flux unless you first **disable** the built-in one, e.g. controller install flag [`--disable-components=metrics-server`](https://docs.k0sproject.io/stable/configuration/) (same entry appears in k0s docs under component toggles). Otherwise expect name collisions or failed Helm adoption.
+- **Tuning:** The stock manifest already uses `--kubelet-use-node-status-port` and preferred address types. Add **`--kubelet-insecure-tls`** only when logs show **certificate** verification errors against the kubelet, not for generic “connection refused” (that usually means kubelet/firewall/path—see [cilium-k0s-setup.md](cilium-k0s-setup.md)). To change args on the k0s-managed Deployment, patch in place or switch to GitOps-owned metrics-server after disabling the k0s component.
+- **Health:** `kubectl get apiservice v1beta1.metrics.k8s.io` should show `AVAILABLE=True`; `kubectl top nodes` should list all nodes. Brief `FailedDiscoveryCheck` during joins or overload can clear once scrapes succeed again.
+
 ## 5. Ceph CSI and StorageClass
 
 - **Production (GitOps):** Flux deploys **ceph-csi-rbd** from [`clusters/production/apps/ceph-csi/`](../../clusters/production/apps/ceph-csi/README.md) (namespace `ceph-csi-production`, StorageClass `ceph-rbd`). Set **`kubeletDir: /var/lib/k0s/kubelet`** there — k0s does not use `/var/lib/kubelet`.

@@ -54,6 +54,8 @@ metadata:
     gethomepage.dev/name: OpenTelemetry Collector
     gethomepage.dev/icon: opentelemetry
     gethomepage.dev/description: OTLP HTTP endpoint
+    # Ingress name is not a pod label; match the OTel Helm release (same as test cluster).
+    gethomepage.dev/pod-selector: app.kubernetes.io/instance=obs-otel-collector
 spec:
   rules:
     - host: otel.mgmt.wsh.no
