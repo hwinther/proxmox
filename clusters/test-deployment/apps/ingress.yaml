@@ -130,3 +130,28 @@ spec:
             name: homepage
             port:
               number: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: podinfo
+  namespace: test
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Applications
+    gethomepage.dev/name: Podinfo
+    gethomepage.dev/icon: mdi-information-outline
+    gethomepage.dev/description: Demo web app for Kubernetes/GitOps testing (stefanprodan/podinfo)
+spec:
+  rules:
+  - host: podinfo.kt.wsh.no
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: podinfo
+            port:
+              number: 9898
