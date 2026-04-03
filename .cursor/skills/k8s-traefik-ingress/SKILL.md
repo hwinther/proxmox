@@ -91,7 +91,8 @@ These annotations register the service in the Homepage dashboard automatically:
 2. Append a new `---` separated Ingress document to `clusters/test-deployment/apps/ingress.yaml`.
 3. Include both Traefik and Homepage annotations.
 4. Ensure the referenced Service exists (from a `*-deployment.yaml` or HelmRelease).
-5. Commit to `main`.
+5. If one Ingress fronts **multiple** Deployments (e.g. `/` + `/api` on one host), set **`gethomepage.dev/pod-selector`** so Homepage can resolve pod status (e.g. `app in (my-frontend, my-api)`). Otherwise it may infer `app` from the Ingress name and show **not found**.
+6. Commit to `main`.
 
 ## Troubleshooting
 

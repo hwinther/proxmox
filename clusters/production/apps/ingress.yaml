@@ -10,6 +10,8 @@ metadata:
     gethomepage.dev/name: Clutterstock
     gethomepage.dev/icon: mdi-image-multiple-outline
     gethomepage.dev/description: Clutterstock web app (API under /api/)
+    # Ingress name ≠ single Deployment; both pods back this host (see gethomepage kubernetes.md)
+    gethomepage.dev/pod-selector: app in (clutterstock-frontend, clutterstock-api)
 spec:
   rules:
     - host: clutterstock.wsh.no

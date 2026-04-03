@@ -60,6 +60,7 @@ metadata:
     gethomepage.dev/name: Clutterstock
     gethomepage.dev/icon: mdi-image-multiple-outline
     gethomepage.dev/description: Clutterstock web app (API under /api/)
+    gethomepage.dev/pod-selector: app in (clutterstock-frontend, clutterstock-api)
 spec:
   rules:
   - host: clutterstock.kt.wsh.no
