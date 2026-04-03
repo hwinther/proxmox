@@ -38,6 +38,8 @@ spec:
               enabled: true
               peerService:
                 internalTrafficPolicy: Cluster
+            ui:
+              enabled: true
             tls:
               enabled: true
               auto:

@@ -8,3 +8,4 @@ resources:
   - homepage
   - clutterstock
   - ingress.yaml
+  - hubble-ui-ingress.yaml
