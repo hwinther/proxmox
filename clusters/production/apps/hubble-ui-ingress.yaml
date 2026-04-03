@@ -1,0 +1,25 @@
+# Hubble UI runs in kube-system; Ingress must live in the same namespace as the Service backend.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hubble-ui
+  namespace: kube-system
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Management
+    gethomepage.dev/name: Hubble
+    gethomepage.dev/icon: mdi-chart-timeline-variant
+    gethomepage.dev/description: Cilium Hubble service map & flows
+spec:
+  rules:
+    - host: hubble.mgmt.wsh.no
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: hubble-ui
+                port:
+                  number: 80

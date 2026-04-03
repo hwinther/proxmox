@@ -132,16 +132,166 @@ cilium status
 
 Confirm **DNS**: a short-lived pod that resolves `kubernetes.default` and a `Service` name in your namespace.
 
+### metrics-server / pods → `kubernetes` Service (`10.96.0.1`)
+
+If **metrics-server** exits with a **panic** mentioning:
+
+`Get "https://10.96.0.1:443/...": dial tcp 10.96.0.1:443: connect: no route to host`
+
+the failure is **not** kubelet TLS. The pod has **no working route** to the **default Kubernetes Service** (in-cluster API VIP). With **Cilium kube-proxy replacement**, fix the dataplane so **pods** can reach the **Service CIDR**, and confirm **`k8sServiceHost`** / **`k8sServicePort`** match an API address reachable from **every** node (§5). Check **host firewalls** between pod CIDR, service CIDR, and **TCP 6443** on the control plane.
+
+Quick check from a throwaway pod:
+
+```bash
+kubectl get svc kubernetes -n default
+kubectl run -n default netcheck --rm -it --restart=Never --image=curlimages/curl:latest -- \
+  curl -k -sS -m 5 -o /dev/null -w "%{http_code}\n" https://10.96.0.1/healthz
+```
+
+**kubectl:** options like `--kubelet-insecure-tls` belong in the **metrics-server** container **`args`** (edit the Deployment YAML), not as flags on `kubectl edit`.
+
+**Narrow workaround:** `hostNetwork: true` on the metrics-server Deployment can sometimes work around a broken pod→ClusterIP path; prefer fixing Cilium/routing so all workloads reach Services.
+
 ---
 
-## 7. After CNI: CSI (Ceph) and GitOps
+## 7. Hubble Relay (stay healthy)
+
+Keep **Cilium + Hubble** values **in `k0s`’s Cilium Helm stanza** (see [`k0s.yaml.example`](k0s.yaml.example) or [`k0s.production.example.yaml`](k0s.production.example.yaml)) so upgrades do not silently strip Hubble. That file pins **`cluster.name`**, **`hubble.relay.peerService.internalTrafficPolicy: Cluster`**, and **`hubble.tls.auto`** (`method: helm`) — all of which matter for a stable **Hubble Relay**.
+
+### TLS / `cluster-name` mismatch
+
+Hubble Relay verifies TLS using `hubble-peer.<cluster-name>.hubble-grpc.cilium.io`. The agents’ certs must match the same **`cluster-name`** as `cilium-config` and `hubble-relay-config`.
+
+**Explicit `cluster.name` in Helm user values:** Keep `cluster.name` **under the Cilium Helm `values`** in k0s (not only relying on chart defaults). We have seen **`hubble-server-certs`** minted with **`*.local.hubble-grpc.cilium.io`** while `cilium-config` still had **`cluster-name: default`** — Relay then fails TLS until secrets are recreated with the correct name. After fixing, confirm with:
+
+```bash
+helm get values cilium -n kube-system | head -20
+kubectl get secret -n kube-system hubble-server-certs -o jsonpath='{.data.tls\.crt}' | base64 -d | openssl x509 -noout -ext subjectAltName
+```
+
+**Helm stuck in `pending-rollback`:** If `helm status` shows a failed revision and **pending-rollback**, finish it before upgrading: `helm history cilium -n kube-system` then `helm rollback cilium <last-deployed-revision> -n kube-system --wait`.
+
+**Force-correct certs (cluster already on `default`):**
+
+```bash
+kubectl -n kube-system delete secret hubble-server-certs hubble-relay-client-certs
+helm upgrade cilium cilium/cilium -n kube-system --version 1.19.2 --reuse-values \
+  --set cluster.name=default --set hubble.relay.peerService.internalTrafficPolicy=Cluster --wait
+kubectl -n kube-system rollout restart ds/cilium deploy/hubble-relay
+kubectl -n kube-system patch svc hubble-peer -p '{"spec":{"internalTrafficPolicy":"Cluster"}}'
+```
+
+(Adjust `--version` to your chart pin.)
+
+```bash
+kubectl -n kube-system get cm cilium-config -o jsonpath='{.data.cluster-name}{"\n"}'
+kubectl -n kube-system get cm hubble-relay-config -o yaml | head -5
+```
+
+If logs show **`x509: certificate is valid for *.local... not hubble-peer.default...`**, either set **`cluster.name`** in Helm to match the certs you minted, or (recommended for **`default`**) **delete Hubble TLS Secrets** in `kube-system`, **re-run the Cilium install** (`helm upgrade` / k0s stack apply) so `method: helm` recreates secrets, then:
+
+```bash
+kubectl -n kube-system rollout restart ds/cilium
+kubectl -n kube-system rollout restart deploy/hubble-relay
+```
+
+### Relay cannot open peer notify (Cilium 1.19.x)
+
+If Relay logs **`Failed to create peer notify client`** with **`operation not permitted`** dialing the **ClusterIP**, set the peer Service to **Cluster** policy (Helm: `hubble.relay.peerService.internalTrafficPolicy: Cluster`; or one-shot `kubectl patch svc hubble-peer -n kube-system -p '{"spec":{"internalTrafficPolicy":"Cluster"}}'`). Rare cases need a **one-time** `cleanBPFState: true` Cilium cycle — see [cilium#44891](https://github.com/cilium/cilium/issues/44891).
+
+**Always capture the full line** (Relay truncates in some UIs):
+
+```bash
+kubectl -n kube-system logs deploy/hubble-relay --tail=50 | grep -E 'error=|x509|peer notify|Received peer'
+```
+
+Interpretation:
+
+| `error=` snippet | Action |
+|------------------|--------|
+| `x509` / `certificate` / `*.local.hubble-grpc` vs `hubble-peer.default` | **TLS / cluster-name drift** — regenerate secrets (below). |
+| `operation not permitted` dialing ClusterIP | **`internalTrafficPolicy: Cluster`** on `hubble-peer` and/or BPF note in §7. |
+| `connection refused` / `timeout` | Agents not listening, network, or wrong `hubble-peer` endpoints. |
+
+### Regenerate Hubble TLS secrets (after changing `cluster.name` or fixing a mismatch)
+
+`rollout restart` **does not** re-issue Helm minted certs. **`hubble.tls.auto.method: helm`** creates or updates secrets when **Cilium’s Helm release** is upgraded/reconciled **after** old secrets are removed.
+
+1. **Confirm intended cluster name** (must match Helm `cluster.name`):
+
+   ```bash
+   kubectl -n kube-system get cm cilium-config -o jsonpath='{.data.cluster-name}{"\n"}'
+   ```
+
+2. **Confirm `hubble-peer` traffic policy** (should be `Cluster` on 1.19.x):
+
+   ```bash
+   kubectl -n kube-system get svc hubble-peer -o jsonpath='{.spec.internalTrafficPolicy}{"\n"}'
+   kubectl patch svc hubble-peer -n kube-system -p '{"spec":{"internalTrafficPolicy":"Cluster"}}'   # if not Cluster
+   ```
+
+3. **List and remove Hubble TLS secrets** (names can vary slightly by chart version; list first):
+
+   ```bash
+   kubectl -n kube-system get secrets | grep -i hubble
+   ```
+
+   Typical **Cilium 1.19** chart materials include **`hubble-server-certs`** and **`hubble-relay-client-certs`**. Delete those (and any other `hubble-*-certs` TLS secrets); **do not** delete unrelated **`cilium-*`** secrets unless you know they are only for Hubble.
+
+   ```bash
+   kubectl -n kube-system delete secret hubble-server-certs hubble-relay-client-certs --ignore-not-found
+   ```
+
+4. **Re-run the Cilium Helm install** so templates recreate secrets. With **k0s extensions**, that means bringing the release in sync again — for example **restart k0s on a controller** after saving `/etc/k0s/k0s.yaml`, or run the equivalent **Helm upgrade** yourself against `kube-system` using the same `values` block as in ClusterConfig. Until Helm runs again, pods may stay broken.
+
+5. **Roll workloads** to load new mounts:
+
+   ```bash
+   kubectl -n kube-system rollout restart ds/cilium
+   kubectl -n kube-system rollout restart deploy/hubble-relay
+   ```
+
+6. **Optional:** inspect that a server cert SAN matches `cluster-name`:
+
+   ```bash
+   kubectl -n kube-system get secret hubble-server-certs -o jsonpath='{.data.tls\.crt}' | base64 -d \
+     | openssl x509 -noout -ext subjectAltName 2>/dev/null || true
+   ```
+
+   You should see a pattern like **`*.<cluster-name>.hubble-grpc.cilium.io`** aligned with `cilium-config` **`cluster-name`**.
+
+### Hubble UI (same chart as Cilium)
+
+Enable the web UI in the **same** `cilium/cilium` Helm values — **not** the “standalone UI only” snippet from older docs:
+
+```yaml
+hubble:
+  ui:
+    enabled: true
+```
+
+Keep **`hubble.ui.standalone.enabled: false`** (default). **Standalone** mode is for installing **only** the UI against a cluster that already has Cilium/Relay from elsewhere; it needs a **`certsVolume`** with relay client TLS material. In a normal k0s + embedded Cilium install, the chart wires UI → Relay and uses the same TLS setup as Relay.
+
+Expose the UI with **`kubectl port-forward -n kube-system svc/hubble-ui 12000:80`**, **`NodePort`** (`hubble.ui.service.type`), or chart **`hubble.ui.ingress`** (e.g. Traefik `ingressClassName`). The Service is **`hubble-ui`** in **`kube-system`** by default. On **production** GitOps, Traefik ingress for **`hubble.mgmt.wsh.no`** lives in [`clusters/production/apps/hubble-ui-ingress.yaml`](../../clusters/production/apps/hubble-ui-ingress.yaml) (Ingress must be in **`kube-system`** with the backend Service).
+
+### Verify
+
+```bash
+cilium status
+kubectl -n kube-system logs deploy/hubble-relay --tail=20 | grep -i 'peer\|error\|Received'
+kubectl -n kube-system get svc hubble-ui
+```
+
+---
+
+## 8. After CNI: CSI (Ceph) and GitOps
 
 - **Ceph CSI** is **separate** from this guide: install the driver, pools, secrets, and **`StorageClass`** after pod networking is stable — see the overview in [`README.md`](README.md) §5–7.
 - **Flux** can own **Cilium long-term** (HelmRelease) once you are comfortable repeating bootstrap; first cluster install is often **plain Helm** or k0s extensions, then migrate to GitOps if you want.
 
 ---
 
-## 8. Third-party articles
+## 9. Third-party articles
 
 Blog posts (e.g. [OneUptime – Configure Cilium on k0s](https://oneuptime.com/blog/post/2026-03-13-configure-cilium-k0s/view)) are useful for **workflow**, but often use **`127.0.0.1`** as `k8sServiceHost` (suitable only on a **single** controller where that matches reality) and may include **misleading CoreDNS commentary**. Prefer **this file** + **k0s/Cilium versioned docs** for values you actually apply.
 
@@ -157,3 +307,4 @@ Blog posts (e.g. [OneUptime – Configure Cilium on k0s](https://oneuptime.com/b
 - [ ] **CoreDNS** left enabled  
 - [ ] Cilium **Ready**; basic pod + **DNS** check passed  
 - [ ] Then: Ceph CSI, then workloads / Flux  
+- [ ] **Hubble:** `cluster.name` aligned with Hubble TLS; `peerService.internalTrafficPolicy: Cluster`; Relay **Ready** (`cilium status`)  
