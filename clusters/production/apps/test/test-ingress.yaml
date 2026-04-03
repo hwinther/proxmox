@@ -1,0 +1,57 @@
+# Strip /api at the edge so the same API image as api.kt.wsh.no (root paths) works on one hostname.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-api-stripprefix
+  namespace: test
+spec:
+  stripPrefix:
+    prefixes:
+      - /api
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: test-api
+  namespace: test
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: test-test-api-stripprefix@kubernetescrd
+spec:
+  rules:
+    - host: test.test.wsh.no
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: test-api
+                port:
+                  number: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: test-frontend
+  namespace: test
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Applications
+    gethomepage.dev/name: Test (repo sample)
+    gethomepage.dev/icon: mdi-application-outline
+    gethomepage.dev/description: ghcr.io/hwinther/test on prod (namespace test); API at /api/
+    gethomepage.dev/pod-selector: app in (test-frontend, test-api)
+spec:
+  rules:
+    - host: test.test.wsh.no
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: test-frontend
+                port:
+                  number: 8080
