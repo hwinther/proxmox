@@ -44,6 +44,8 @@ spec:
     accessControlAllowOriginList:
       - https://clutterstock.wsh.no
       - https://clutterstock.test.wsh.no
+      - https://redis-prod.mgmt.wsh.no
+      - https://redis-test.mgmt.wsh.no
       - https://test.test.wsh.no
     accessControlMaxAge: 3600
 ---

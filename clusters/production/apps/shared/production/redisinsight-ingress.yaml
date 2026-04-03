@@ -2,18 +2,18 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: redisinsight
-  namespace: shared-test
+  namespace: shared-production
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
     gethomepage.dev/enabled: "true"
     gethomepage.dev/group: Management
-    gethomepage.dev/name: RedisInsight (test Redis)
+    gethomepage.dev/name: RedisInsight (production Redis)
     gethomepage.dev/icon: redis
-    gethomepage.dev/description: shared-test Redis — preconnected to in-cluster redis.shared-test.svc.cluster.local
-    gethomepage.dev/weight: "10"
+    gethomepage.dev/description: shared-production Redis — preconnected to in-cluster redis.shared-production.svc.cluster.local
+    gethomepage.dev/weight: "5"
 spec:
   rules:
-    - host: redis-test.mgmt.wsh.no
+    - host: redis-prod.mgmt.wsh.no
       http:
         paths:
           - path: /
