@@ -57,6 +57,7 @@ updates:
   - "/clusters/production/apps/clutterstock-migrate"
   - "/clusters/production/apps/homepage"
   - "/clusters/production/apps/observability"
+  - "/clusters/production/apps/test-test"
   - "/clusters/production/apps/traefik"
   - "/clusters/production/flux-system"
   schedule:
