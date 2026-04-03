@@ -51,7 +51,7 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: clutterstock-frontend
+  name: clutterstock
   namespace: test
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
@@ -59,42 +59,24 @@ metadata:
     gethomepage.dev/group: Applications
     gethomepage.dev/name: Clutterstock
     gethomepage.dev/icon: mdi-image-multiple-outline
-    gethomepage.dev/description: Clutterstock frontend
+    gethomepage.dev/description: Clutterstock web app (API under /api/)
 spec:
   rules:
   - host: clutterstock.kt.wsh.no
     http:
       paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: clutterstock-api
+            port:
+              number: 8080
       - path: /
         pathType: Prefix
         backend:
           service:
             name: clutterstock-frontend
-            port:
-              number: 8080
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: clutterstock-api
-  namespace: test
-  annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web
-    gethomepage.dev/enabled: "true"
-    gethomepage.dev/group: Applications
-    gethomepage.dev/name: Clutterstock API
-    gethomepage.dev/icon: mdi-api
-    gethomepage.dev/description: Clutterstock API
-spec:
-  rules:
-  - host: api-clutterstock.kt.wsh.no
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: clutterstock-api
             port:
               number: 8080
 ---

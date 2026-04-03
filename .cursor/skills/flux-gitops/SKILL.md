@@ -43,7 +43,7 @@ Guidelines:
 
 | Environment | Host pattern | Example |
 |-------------|----------------|---------|
-| **Production (apps)** | `{service}.wsh.no` | `clutterstock.wsh.no`, `api-clutterstock.wsh.no` |
+| **Production (apps)** | `{service}.wsh.no` | `clutterstock.wsh.no` (API at `/api/`) |
 | **Production (management)** | Homepage: `mgmt.wsh.no`; other services: `{service}.mgmt.wsh.no` | `mgmt.wsh.no`, `grafana.mgmt.wsh.no` |
 | **Test** | `appname.test.wsh.no` or cluster-specific zones (e.g. `*.kt.wsh.no`) | `clutterstock.test.wsh.no`, `grafana.mgmt-kt.wsh.no` |
 | **PR / preview** | `appname-<pr-number>.preview.wsh.no` | `clutterstock-184.preview.wsh.no` |
