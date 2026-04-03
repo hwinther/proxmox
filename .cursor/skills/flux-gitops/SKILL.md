@@ -72,7 +72,7 @@ clusters/<name>/
 
 **Test cluster** (`clusters/test-deployment/apps/`) includes raw deployments, `ingress.yaml`, `traefik-helmrelease.yaml`, `observability/`, `kubevious/`, `homepage/`, `clutterstock-migrate/`, etc.
 
-**Production** (`clusters/production/`) starts minimal; add workloads under `apps/` as you promote them from test patterns.
+**Production** (`clusters/production/apps/`) lists **`shared/production`** and **`shared/test`** before app bundles so **`shared-production`** / **`shared-test`** (Redis, etc.) exist first — see [`clusters/production/apps/shared/README.md`](../../../clusters/production/apps/shared/README.md).
 
 ## Sync configuration
 

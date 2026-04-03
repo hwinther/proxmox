@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redisinsight
+  namespace: shared-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redisinsight
+  template:
+    metadata:
+      labels:
+        app: redisinsight
+        app.kubernetes.io/name: redisinsight
+    spec:
+      containers:
+        - name: redisinsight
+          image: redis/redisinsight:latest
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+          ports:
+            - name: http
+              containerPort: 5540
+              protocol: TCP
+          env:
+            - name: RI_PROXY_PATH
+              value: "/"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redisinsight
+  namespace: shared-test
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5540
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: redisinsight

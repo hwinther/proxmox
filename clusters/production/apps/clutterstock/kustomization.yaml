@@ -4,4 +4,3 @@ resources:
   - namespace.yaml
   - clutterstock-api-deployment.yaml
   - clutterstock-frontend-deployment.yaml
-  - redis-deployment.yaml

@@ -59,6 +59,8 @@ updates:
   - "/clusters/production/apps/observability"
   - "/clusters/production/apps/test-test"
   - "/clusters/production/apps/traefik"
+  - "/clusters/production/apps/shared/production"
+  - "/clusters/production/apps/shared/test"
   - "/clusters/production/flux-system"
   schedule:
     interval: "daily"

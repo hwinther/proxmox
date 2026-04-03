@@ -6,6 +6,8 @@ resources:
   - traefik
   - observability
   - homepage
+  - shared/production
+  - shared/test
   - clutterstock
   - test-test
   - ingress.yaml
