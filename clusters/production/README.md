@@ -40,7 +40,8 @@ Platform checklist before apps: [`../../infra/k0s/README.md`](../../infra/k0s/RE
 | **Observability** | [`apps/observability/`](apps/observability/) | kube-prometheus-stack, Loki, Tempo, OTel; see [README](apps/observability/README.md) |
 | **Traefik** | [`apps/traefik/`](apps/traefik/) | DaemonSet + hostNetwork (same pattern as test) |
 | **Homepage** | [`apps/homepage/`](apps/homepage/) | Namespace `platform-production`; Ingress host **`mgmt.wsh.no`** |
-| **Clutterstock** | [`apps/clutterstock/`](apps/clutterstock/) | Namespace `clutterstock-production`, Ceph PVC via migrate |
+| **Shared (env-scoped)** | [`apps/shared/`](apps/shared/) | **`shared-production`** / **`shared-test`** — Redis (etc.) shared per environment line; see [README](apps/shared/README.md) |
+| **Clutterstock** | [`apps/clutterstock/`](apps/clutterstock/) | Namespace `clutterstock-production`, Ceph PVC via migrate; Redis → **`shared-production`** |
 | **Test (sample app)** | [`apps/test-test/`](apps/test-test/) | Namespace **`test-test`** (app **test** + env **test**); **`test.test.wsh.no`** (UI + `/api`, same images as test-deployment cluster) |
 | **Ingress** | [`apps/ingress.yaml`](apps/ingress.yaml) | Public + management hosts (see hostnames below) |
 
