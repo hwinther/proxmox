@@ -9,6 +9,7 @@ resources:
   - shared/production
   - shared/test
   - clutterstock
+  - clutterstock-test
   - test-test
   - ingress.yaml
   - hubble-ui-ingress.yaml

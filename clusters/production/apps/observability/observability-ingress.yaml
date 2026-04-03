@@ -43,6 +43,7 @@ spec:
       - baggage
     accessControlAllowOriginList:
       - https://clutterstock.wsh.no
+      - https://clutterstock.test.wsh.no
       - https://test.test.wsh.no
     accessControlMaxAge: 3600
 ---
