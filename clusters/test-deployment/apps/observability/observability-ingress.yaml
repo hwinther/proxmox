@@ -37,6 +37,9 @@ spec:
     accessControlAllowHeaders:
       - Content-Type
       - Authorization
+      - traceparent
+      - tracestate
+      - baggage
     accessControlAllowOriginList:
       - https://clutterstock.kt.wsh.no
       - https://test.kt.wsh.no

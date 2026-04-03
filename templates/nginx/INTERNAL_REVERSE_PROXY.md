@@ -30,3 +30,7 @@ Do **not** point nginx at a Kubernetes **ClusterIP** (`10.96.0.0/12`) from a hos
 - **NodePort**: nginx uses `any_node:high_port` with the same multi-node or VIP idea.
 
 If TLS and routing can live entirely on the cluster, you can point clients at Traefik (or a single LB VIP) and **drop** this nginx hop for those hostnames.
+
+## Tracing headers (W3C Trace Context)
+
+This template does **not** strip client request headers. Nginx forwards them to Traefik by default, including **`traceparent`**, **`tracestate`**, and **`baggage`**. You only need extra `proxy_set_header` lines if you add middleware that removes unknown headers or build an allowlist of forwarded headers.

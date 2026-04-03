@@ -96,5 +96,5 @@ These annotations register the service in the Homepage dashboard automatically:
 ## Troubleshooting
 
 - **404 on a hostname:** Verify DNS resolves to a Traefik node, the `Host` header matches the Ingress rule, and the backend Service + Endpoints exist (`kubectl get endpoints -n test <service>`).
-- **CORS issues (browser OTLP):** Add Traefik CORS middleware if the web app origin differs from the OTLP ingress host.
+- **CORS issues (browser OTLP):** Add Traefik CORS middleware if the web app origin differs from the OTLP ingress host. Include `traceparent`, `tracestate`, and `baggage` in `accessControlAllowHeaders` when browsers send them. Same-host path routing (e.g. UI + `/api` on one hostname) avoids CORS for those API requests; Traefik forwards inbound client headers to backends by default.
 - **Blank page from chart-managed Ingress (e.g. Kubevious):** Check all pods are Running and the Service has Endpoints.

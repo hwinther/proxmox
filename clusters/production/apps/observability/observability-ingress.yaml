@@ -37,6 +37,10 @@ spec:
     accessControlAllowHeaders:
       - Content-Type
       - Authorization
+      # W3C Trace Context — browser may send these on OTLP or preflight; avoids dropped headers vs simple allowlist
+      - traceparent
+      - tracestate
+      - baggage
     accessControlAllowOriginList:
       - https://clutterstock.wsh.no
     accessControlMaxAge: 3600

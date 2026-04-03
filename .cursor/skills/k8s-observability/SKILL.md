@@ -61,7 +61,7 @@ env:
     value: "http://obs-otel-collector.observability-production.svc.cluster.local:4317"
 ```
 
-**Browser / Vite (production):** use the OTLP HTTP ingress, e.g. **`https://otel.mgmt.wsh.no/v1/traces`** (CORS allowlist in `observability-ingress.yaml`).
+**Browser / Vite (production):** use the OTLP HTTP ingress, e.g. **`https://otel.mgmt.wsh.no/v1/traces`** (CORS allowlist and headers—including W3C trace context—in `observability-ingress.yaml`). Same-origin app API traffic (e.g. `/api` on the app host) does not use this CORS path for fetch propagation.
 
 ## Service graphs (Tempo + Prometheus)
 

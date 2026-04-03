@@ -46,7 +46,9 @@ Prometheus scrapes the collector self-metrics via **additionalServiceMonitors** 
 
 ## CORS (browser OTLP)
 
-Middleware `otel-cors` in this namespace; allowlist includes `https://clutterstock.wsh.no`. Extend `observability-ingress.yaml` for more origins.
+Middleware `otel-cors` in this namespace; allowlist includes `https://clutterstock.wsh.no`. **`accessControlAllowHeaders`** includes `Content-Type`, `Authorization`, and W3C trace headers (`traceparent`, `tracestate`, `baggage`) so browsers are not blocked from sending them on cross-origin OTLP POSTs to `otel.mgmt.wsh.no`.
+
+Serving the app API under the **same host** as the UI (e.g. `/api/*` on `clutterstock.wsh.no`) avoids CORS for **app HTTP** calls and their trace propagation; **OTLP export** to the collector hostname is still cross-origin and stays covered by this middleware. Extend `observability-ingress.yaml` for more origins.
 
 ## Homepage (`mgmt.wsh.no`)
 
