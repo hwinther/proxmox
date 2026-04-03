@@ -1,8 +1,0 @@
-# Playground namespace on the production cluster (same images as test-deployment cluster).
-# Name `test` matches the repo’s “test” application; host is test.test.wsh.no.
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: test
-  labels:
-    app.kubernetes.io/part-of: test-on-production

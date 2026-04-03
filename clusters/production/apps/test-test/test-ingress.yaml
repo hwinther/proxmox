@@ -3,7 +3,7 @@ apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-api-stripprefix
-  namespace: test
+  namespace: test-test
 spec:
   stripPrefix:
     prefixes:
@@ -13,10 +13,10 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: test-api
-  namespace: test
+  namespace: test-test
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
-    traefik.ingress.kubernetes.io/router.middlewares: test-test-api-stripprefix@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: test-test-test-api-stripprefix@kubernetescrd
 spec:
   rules:
     - host: test.test.wsh.no
@@ -34,14 +34,14 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: test-frontend
-  namespace: test
+  namespace: test-test
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
     gethomepage.dev/enabled: "true"
     gethomepage.dev/group: Applications
     gethomepage.dev/name: Test (repo sample)
     gethomepage.dev/icon: mdi-application-outline
-    gethomepage.dev/description: ghcr.io/hwinther/test on prod (namespace test); API at /api/
+    gethomepage.dev/description: Sample test app — test.test.wsh.no (API under /api/)
     gethomepage.dev/pod-selector: app in (test-frontend, test-api)
 spec:
   rules:

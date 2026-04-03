@@ -1,0 +1,7 @@
+# Namespace **test-test** = app **test** (repo sample) + environment **test** (DNS *.test.wsh.no). Cluster: production k0s.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-test
+  labels:
+    app.kubernetes.io/part-of: test-test
