@@ -5,7 +5,7 @@ Redis (and similar) **shared by multiple apps** on the same **environment line**
 | Bundle | Namespace | Consumers (examples) |
 |--------|-----------|----------------------|
 | [`production/`](production/) | **`shared-production`** | Prod-tier apps (`clutterstock-production`, …) |
-| [`test/`](test/) | **`shared-test`** | Test-tier apps (`test-test`, future stable `*.test.wsh.no` workloads) |
+| [`test/`](test/) | **`shared-test`** | Test-tier apps (`test-test`, …); Redis UI **`https://redis-test.mgmt.wsh.no`** (RedisInsight → `redis.shared-test.svc.cluster.local:6379`) |
 
 Apps point **`REDIS_URL`** at `redis://redis.<namespace>.svc.cluster.local:6379`.
 

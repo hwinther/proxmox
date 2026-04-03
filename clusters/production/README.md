@@ -54,6 +54,6 @@ The placeholder namespace under `apps/` is `platform-production` for cluster-wid
 ## Public hostnames (`wsh.no`)
 
 - **Applications:** **`{service}.wsh.no`** — e.g. `clutterstock.wsh.no` (Clutterstock API is routed on the same host under `/api/`).
-- **Management plane:** **Homepage** uses **`mgmt.wsh.no`**. Other management UIs use **`{service}.mgmt.wsh.no`** — e.g. `grafana.mgmt.wsh.no`, `otel.mgmt.wsh.no`, `alertmanager.mgmt.wsh.no`. Prefer stricter edge controls (WAF / auth) on `mgmt.wsh.no` and `*.mgmt.wsh.no`.
+- **Management plane:** **Homepage** uses **`mgmt.wsh.no`**. Other management UIs use **`{service}.mgmt.wsh.no`** — e.g. `grafana.mgmt.wsh.no`, `otel.mgmt.wsh.no`, `alertmanager.mgmt.wsh.no`, **`redis-test.mgmt.wsh.no`** (RedisInsight for **`shared-test`** Redis). Prefer stricter edge controls (WAF / auth) on `mgmt.wsh.no` and `*.mgmt.wsh.no`.
 
 Non-prod uses **`appname.test.wsh.no`** or test-specific zones (e.g. `*.kt.wsh.no`); PR previews use **`appname-<pr-number>.preview.wsh.no`**. The **`test.test.wsh.no`** hostname is the sample **`ghcr.io/hwinther/test`** stack: **test-environment** traffic (`*.test.wsh.no`), not “production product” traffic, even though the workload runs on this cluster (see [`apps/test-test/README.md`](apps/test-test/README.md)). See [`.cursor/skills/flux-gitops/SKILL.md`](../../.cursor/skills/flux-gitops/SKILL.md).

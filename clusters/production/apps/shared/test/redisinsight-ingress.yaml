@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: redisinsight
+  namespace: shared-test
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Management
+    gethomepage.dev/name: RedisInsight (test Redis)
+    gethomepage.dev/icon: redis
+    gethomepage.dev/description: shared-test Redis — add connection redis.shared-test.svc.cluster.local:6379
+spec:
+  rules:
+    - host: redis-test.mgmt.wsh.no
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: redisinsight
+                port:
+                  number: 5540
