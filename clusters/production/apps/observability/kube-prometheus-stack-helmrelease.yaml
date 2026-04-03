@@ -113,8 +113,12 @@ spec:
                 requests:
                   storage: 20Gi
 
+    # Traefik uses hostNetwork + hostPort 9100 for metrics; node-exporter defaults to hostNetwork
+    # and requests the same host port → all pods Pending. Pod-network mode still scrapes via ServiceMonitor.
     prometheus-node-exporter:
       enabled: true
+      hostNetwork: false
+      dnsPolicy: ClusterFirst
 
     kube-state-metrics:
       enabled: true
