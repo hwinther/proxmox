@@ -9,7 +9,7 @@ metadata:
     gethomepage.dev/group: Management
     gethomepage.dev/name: RedisInsight (test Redis)
     gethomepage.dev/icon: redis
-    gethomepage.dev/description: shared-test Redis — add connection redis.shared-test.svc.cluster.local:6379
+    gethomepage.dev/description: shared-test Redis — preconnected to in-cluster redis.shared-test.svc.cluster.local
 spec:
   rules:
     - host: redis-test.mgmt.wsh.no

@@ -90,9 +90,9 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: web
     gethomepage.dev/enabled: "true"
     gethomepage.dev/group: Management
-    gethomepage.dev/name: RedisInsight
+    gethomepage.dev/name: RedisInsight (KT test cluster)
     gethomepage.dev/icon: redis
-    gethomepage.dev/description: Redis management UI
+    gethomepage.dev/description: Redis management UI — preconnected to Redis in namespace test
 spec:
   rules:
   - host: redis.mgmt-kt.wsh.no
