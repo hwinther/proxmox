@@ -7,5 +7,6 @@ resources:
   - observability
   - homepage
   - clutterstock
+  - test-test
   - ingress.yaml
   - hubble-ui-ingress.yaml

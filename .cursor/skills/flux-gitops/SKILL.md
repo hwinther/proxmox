@@ -46,6 +46,7 @@ Guidelines:
 | **Production (apps)** | `{service}.wsh.no` | `clutterstock.wsh.no` (API at `/api/`) |
 | **Production (management)** | Homepage: `mgmt.wsh.no`; other services: `{service}.mgmt.wsh.no` | `mgmt.wsh.no`, `grafana.mgmt.wsh.no` |
 | **Test** | `appname.test.wsh.no` or cluster-specific zones (e.g. `*.kt.wsh.no`) | `clutterstock.test.wsh.no`, `grafana.mgmt-kt.wsh.no` |
+| **Test-tier DNS (on prod cluster)** | `*.test.wsh.no` | `test.test.wsh.no` — namespace **`test-test`** (app **test** + env **test**); ([`clusters/production/apps/test-test/`](../../../clusters/production/apps/test-test/README.md)) |
 | **PR / preview** | `appname-<pr-number>.preview.wsh.no` | `clutterstock-184.preview.wsh.no` |
 
 **PR/preview shape:** put **`appname`** and **`pr-number`** in one DNS label left of `preview.wsh.no` (`clutterstock-184`), not `184.clutterstock.preview.wsh.no`, so **`*.preview.wsh.no`** covers all preview hosts without per-app wildcards.
