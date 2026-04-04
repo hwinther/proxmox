@@ -24,3 +24,14 @@ spec:
         kind: HelmRepository
         name: kyverno
         namespace: kyverno
+  values:
+    # k0s + Cilium kube-proxy replacement: kube-apiserver often cannot reach Service ClusterIPs, so admission
+    # webhooks fail with "No agent available" (see ../../infra/k0s/cilium-k0s-setup.md). Prefer
+    # spec.api.extraArgs.enable-aggregator-routing: "true" on controllers long-term; hostNetwork is the
+    # Kyverno-side workaround. replicas: 1 avoids port bind clashes on small node counts.
+    admissionController:
+      replicas: 1
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      webhookServer:
+        port: 10443

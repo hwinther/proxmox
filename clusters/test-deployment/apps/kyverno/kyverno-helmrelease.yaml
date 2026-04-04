@@ -28,6 +28,11 @@ spec:
     # Test cluster: single-node friendly; chart default is higher replica count.
     admissionController:
       replicas: 1
+      # Same as production: k0s + Cilium without kube-proxy — apiserver → ClusterIP webhooks breaks without this.
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      webhookServer:
+        port: 10443
       resources:
         requests:
           cpu: 100m

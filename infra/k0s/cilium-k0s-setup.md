@@ -67,6 +67,7 @@ With **`spec.network.kubeProxy.disabled: true`**, the kube-apiserver process usu
 - UIs (e.g. **Headlamp**) returning **503** on paths under  
   `/apis/spdx.softwarecomposition.kubescape.io/...`
 - `kubectl api-resources` **omitting** those API groups (so `kubectl get workloadconfigurationscans` says the resource type does not exist)
+- **Kyverno** (and other **admission webhooks** that target a `Service` ClusterIP): `kubectl apply` / Flux dry-run fails with **`No agent available`** when calling webhooks such as `mutate-policy.kyverno.svc` or `mutate.kyverno.svc-fail` — the control plane often cannot open a working path to those **Service** VIPs without kube-proxy. This repo uses **Kyverno `admissionController.hostNetwork: true`** and a non-default **`webhookServer.port`** (see `clusters/*/apps/kyverno/kyverno-helmrelease.yaml`) as a practical workaround; also ensure **`enable-aggregator-routing`** is set for **aggregated APIs** per below.
 
 Kubernetes documents that if kube-proxy is **not** running on the same host as the API server, you should set **`--enable-aggregator-routing=true`** on **kube-apiserver** so aggregation traffic is routed to **endpoint IPs** instead of ClusterIPs. In k0s, add this under **`spec.api.extraArgs`** in your controller `k0s.yaml`, then **restart k0s on each controller** (or your usual roll) so the apiserver process reloads with the new flags:
 
