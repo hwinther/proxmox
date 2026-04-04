@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - namespace-platform-production.yaml
   - ceph-csi
+  - kyverno
   - traefik
   - headlamp-production
   - kubescape-production
