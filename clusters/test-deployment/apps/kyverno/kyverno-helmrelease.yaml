@@ -25,14 +25,52 @@ spec:
         name: kyverno
         namespace: kyverno
   values:
-    # Test cluster: single-node friendly; chart default is higher replica count.
+    features:
+      controllerRuntimeMetrics:
+        bindAddress: "0"
     admissionController:
       replicas: 1
-      # Same as production: k0s + Cilium without kube-proxy — apiserver → ClusterIP webhooks breaks without this.
+      # Same as production: apiserver → webhook Service ClusterIP breaks under k0s+Cilium without kube-proxy.
+      # (enable-aggregator-routing does not fix admission webhooks — only aggregated APIs.)
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
       webhookServer:
         port: 10443
+      metering:
+        port: 28543
+      updateStrategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxSurge: 0
+          maxUnavailable: 1
+      startupProbe:
+        httpGet:
+          path: /health/liveness
+          port: 10443
+          scheme: HTTPS
+        failureThreshold: 20
+        initialDelaySeconds: 2
+        periodSeconds: 6
+      livenessProbe:
+        httpGet:
+          path: /health/liveness
+          port: 10443
+          scheme: HTTPS
+        initialDelaySeconds: 15
+        periodSeconds: 30
+        timeoutSeconds: 5
+        failureThreshold: 2
+        successThreshold: 1
+      readinessProbe:
+        httpGet:
+          path: /health/readiness
+          port: 10443
+          scheme: HTTPS
+        initialDelaySeconds: 5
+        periodSeconds: 10
+        timeoutSeconds: 5
+        failureThreshold: 6
+        successThreshold: 1
       resources:
         requests:
           cpu: 100m

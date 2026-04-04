@@ -25,13 +25,49 @@ spec:
         name: kyverno
         namespace: kyverno
   values:
-    # k0s + Cilium kube-proxy replacement: kube-apiserver often cannot reach Service ClusterIPs, so admission
-    # webhooks fail with "No agent available" (see ../../infra/k0s/cilium-k0s-setup.md). Prefer
-    # spec.api.extraArgs.enable-aggregator-routing: "true" on controllers long-term; hostNetwork is the
-    # Kyverno-side workaround. replicas: 1 avoids port bind clashes on small node counts.
+    # With hostNetwork, declared container ports bind on the node. Traefik uses host port 8000 — Kyverno's
+    # default metrics port 8000 then makes scheduling fail ("didn't have free ports"). Use a high port.
+    features:
+      controllerRuntimeMetrics:
+        bindAddress: "0"
     admissionController:
       replicas: 1
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
       webhookServer:
         port: 10443
+      metering:
+        port: 28543
+      updateStrategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxSurge: 0
+          maxUnavailable: 1
+      startupProbe:
+        httpGet:
+          path: /health/liveness
+          port: 10443
+          scheme: HTTPS
+        failureThreshold: 20
+        initialDelaySeconds: 2
+        periodSeconds: 6
+      livenessProbe:
+        httpGet:
+          path: /health/liveness
+          port: 10443
+          scheme: HTTPS
+        initialDelaySeconds: 15
+        periodSeconds: 30
+        timeoutSeconds: 5
+        failureThreshold: 2
+        successThreshold: 1
+      readinessProbe:
+        httpGet:
+          path: /health/readiness
+          port: 10443
+          scheme: HTTPS
+        initialDelaySeconds: 5
+        periodSeconds: 10
+        timeoutSeconds: 5
+        failureThreshold: 6
+        successThreshold: 1
