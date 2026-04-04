@@ -27,3 +27,6 @@ spec:
     capabilities:
       continuousScan: enable
       networkPolicyService: enable
+    # k0s: node-agent /readyz was HTTP 500 with privileged: false (eBPF/debugfs); required for runtime/network features.
+    nodeAgent:
+      privileged: true
