@@ -221,3 +221,6 @@ fabric.properties
 
 # .env files should not be version-controlled
 .env
+
+# config.ini is a local configuration file for the script, it should not be version-controlled
+config.ini

@@ -1,0 +1,47 @@
+# Requires a CycloneDX SBOM attestation in the registry (e.g. syft + cosign attest, or equivalent).
+# Same GitHub OIDC identity as your build is typical when attestation runs in the same workflow.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: wsh-require-cyclonedx-sbom
+  annotations:
+    policies.kyverno.io/title: Require CycloneDX SBOM attestation (ghcr.io/hwinther)
+    policies.kyverno.io/category: Supply Chain
+    policies.kyverno.io/severity: medium
+spec:
+  validationFailureAction: Audit
+  background: false
+  webhookTimeoutSeconds: 60
+  rules:
+    - name: cyclonedx-attestation
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+                - flux-system
+      verifyImages:
+        - imageReferences:
+            - ghcr.io/hwinther/*
+          failureAction: Audit
+          mutateDigest: true
+          attestations:
+            - predicateType: https://cyclonedx.org/schema
+              attestors:
+                - entries:
+                    - keyless:
+                        issuer: https://token.actions.githubusercontent.com
+                        subject: https://github.com/hwinther/*
+                        rekor:
+                          url: https://rekor.sigstore.dev
+              conditions:
+                - all:
+                    - key: "{{ Data.bomFormat }}"
+                      operator: Equals
+                      value: CycloneDX
