@@ -1,0 +1,42 @@
+# Cosign vulnerability scan attestation (e.g. grype scan output passed to cosign attest --type vuln).
+# Remove this resource from bases/kyverno-supply-chain/kustomization.yaml if you do not publish vuln attestations.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: wsh-require-cosign-vuln-attestation
+  annotations:
+    policies.kyverno.io/title: Require Cosign vuln attestation (ghcr.io/hwinther)
+    policies.kyverno.io/category: Supply Chain
+    policies.kyverno.io/severity: medium
+spec:
+  validationFailureAction: Audit
+  background: false
+  webhookTimeoutSeconds: 60
+  rules:
+    - name: cosign-vuln-attestation
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+                - flux-system
+      verifyImages:
+        - imageReferences:
+            - ghcr.io/hwinther/*
+          failureAction: Audit
+          mutateDigest: true
+          attestations:
+            - predicateType: https://cosign.sigstore.dev/attestation/vuln/v1
+              attestors:
+                - entries:
+                    - keyless:
+                        issuer: https://token.actions.githubusercontent.com
+                        subject: https://github.com/hwinther/*
+                        rekor:
+                          url: https://rekor.sigstore.dev

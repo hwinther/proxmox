@@ -1,0 +1,54 @@
+# GitHub actions/attest-build-provenance publishes Sigstore bundles (SLSA v1).
+# Scoped to ghcr.io/hwinther/* — other registries/images are not evaluated (no exception needed).
+#
+# Legacy org images without attestations: add skipImageReferences on each verifyImages entry, or create
+# ClusterPolicyException (kyverno.io/v2beta1) with spec.verifyImages.imageReferences for those patterns.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: wsh-require-github-slsa-provenance
+  annotations:
+    policies.kyverno.io/title: Require GitHub SLSA provenance (ghcr.io/hwinther)
+    policies.kyverno.io/category: Supply Chain
+    policies.kyverno.io/severity: high
+spec:
+  validationFailureAction: Audit
+  background: false
+  webhookTimeoutSeconds: 60
+  rules:
+    - name: slsa-provenance-github-oidc
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+                - flux-system
+      verifyImages:
+        - imageReferences:
+            - ghcr.io/hwinther/*
+          # Optional central allowlist (same patterns on all three policies if you use it):
+          # skipImageReferences:
+          #   - ghcr.io/hwinther/legacy-service/*
+          failureAction: Audit
+          mutateDigest: true
+          type: SigstoreBundle
+          attestations:
+            - type: https://slsa.dev/provenance/v1
+              attestors:
+                - entries:
+                    - keyless:
+                        issuer: https://token.actions.githubusercontent.com
+                        subject: https://github.com/hwinther/*
+                        rekor:
+                          url: https://rekor.sigstore.dev
+              conditions:
+                - all:
+                    - key: "{{ buildDefinition.buildType }}"
+                      operator: Equals
+                      value: https://actions.github.io/buildtypes/workflow/v1
