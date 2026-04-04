@@ -1,0 +1,29 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: kubescape
+  namespace: kubescape-production
+spec:
+  interval: 30m
+  timeout: 15m
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  chart:
+    spec:
+      chart: kubescape-operator
+      version: "1.30.6"
+      sourceRef:
+        kind: HelmRepository
+        name: kubescape
+        namespace: kubescape-production
+  values:
+    clusterName: production
+    ksNamespace: kubescape-production
+    excludeNamespaces: "kubescape,kubescape-production,kube-system,kube-public,kube-node-lease,kubeconfig,gmp-system,gmp-public"
+    capabilities:
+      continuousScan: enable
+      networkPolicyService: enable
