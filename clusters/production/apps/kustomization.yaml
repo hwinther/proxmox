@@ -4,6 +4,7 @@ resources:
   - namespace-platform-production.yaml
   - ceph-csi
   - traefik
+  - headlamp-production
   - observability
   - homepage
   - shared/production
