@@ -26,6 +26,35 @@ spec:
     kind: GitRepository
     name: flux-system
 ---
+# Kyverno CRDs come from the Helm chart; policies must apply in a separate Kustomization after this is Ready.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: kyverno
+  namespace: flux-system
+spec:
+  interval: 10m0s
+  path: ./clusters/test-deployment/apps/kyverno
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: kyverno-policies
+  namespace: flux-system
+spec:
+  interval: 10m0s
+  path: ./clusters/test-deployment/apps/kyverno-policies
+  prune: true
+  dependsOn:
+    - name: kyverno
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:

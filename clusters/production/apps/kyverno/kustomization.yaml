@@ -4,4 +4,3 @@ resources:
   - namespace.yaml
   - helmrepository.yaml
   - kyverno-helmrelease.yaml
-  - ../../../../bases/kyverno-supply-chain
