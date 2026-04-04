@@ -9,6 +9,12 @@ spec:
     ca:
       certificatesExpireAfter: 8760h0m0s
       expiresAfter: 87600h0m0s
+    # Required when kube-proxy is disabled (e.g. Cilium kube-proxy replacement): the API
+    # server cannot reach Service ClusterIPs for aggregation discovery. Without this,
+    # APIServices such as metrics.k8s.io and Kubescape storage (spdx.softwarecomposition.*)
+    # stay FailedDiscoveryCheck / 503 from the API. See cilium-k0s-setup.md § Aggregated APIs.
+    extraArgs:
+      enable-aggregator-routing: "true"
     k0sApiPort: 9443
     port: 6443
   controllerManager: {}

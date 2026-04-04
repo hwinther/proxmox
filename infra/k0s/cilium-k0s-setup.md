@@ -58,6 +58,39 @@ spec:
 
 **Do not disable CoreDNS** based on generic “Cilium manages DNS” comments. Cilium is **not** a substitute for **cluster DNS** (CoreDNS). Keep k0s’ normal DNS stack unless you have a **documented** alternative.
 
+### Aggregated APIs (`APIService`) when kube-proxy is disabled
+
+With **`spec.network.kubeProxy.disabled: true`**, the kube-apiserver process usually **does not** have kube-proxy rules on the host to reach **Service ClusterIPs**. Extension API servers register an **`APIService`** that points at a **Service** (for example **metrics-server** → `metrics.k8s.io`, or **Kubescape storage** → `spdx.softwarecomposition.kubescape.io`). Discovery then fails with **`FailedDiscoveryCheck`**, often surfaced as:
+
+- `kubectl get apiservice` → `False (FailedDiscoveryCheck)` and a message like  
+  `Get "https://<service-cluster-ip>:443/...": No agent available`
+- UIs (e.g. **Headlamp**) returning **503** on paths under  
+  `/apis/spdx.softwarecomposition.kubescape.io/...`
+- `kubectl api-resources` **omitting** those API groups (so `kubectl get workloadconfigurationscans` says the resource type does not exist)
+
+Kubernetes documents that if kube-proxy is **not** running on the same host as the API server, you should set **`--enable-aggregator-routing=true`** on **kube-apiserver** so aggregation traffic is routed to **endpoint IPs** instead of ClusterIPs. In k0s, add this under **`spec.api.extraArgs`** in your controller `k0s.yaml`, then **restart k0s on each controller** (or your usual roll) so the apiserver process reloads with the new flags:
+
+```yaml
+spec:
+  api:
+    extraArgs:
+      enable-aggregator-routing: "true"
+```
+
+See also [Configure the aggregation layer](https://kubernetes.io/docs/tasks/extend-kubernetes/configure-aggregation-layer/) (note near the end on **enable-aggregator-routing**). The repo example [`k0s.yaml.example`](k0s.yaml.example) includes this flag next to **Cilium + kube-proxy disabled**.
+
+#### Verifying the *running* apiserver (not only `k0s.yaml`)
+
+There is **no** cluster API that lists kube-apiserver flags. Use the **controller node** and/or **indirect** checks:
+
+| What | How |
+|------|-----|
+| **Config file syntax** | On a controller: `sudo k0s config validate --config /etc/k0s/k0s.yaml` (catches YAML/schema issues; does not prove the running process matched the file before restart). |
+| **Process command line** | On **each** controller, k0s runs **kube-apiserver** on the host. Inspect argv, e.g. `pgrep -af kube-apiserver` or `tr '\0' ' ' < /proc/$(pgrep -o -f kube-apiserver)/cmdline` and confirm **`--enable-aggregator-routing=true`** appears. |
+| **Indirect (aggregation target)** | `kubectl describe apiservice v1beta1.spdx.softwarecomposition.kubescape.io` (or `… -o yaml`): if **`FailedDiscoveryCheck`** URLs use a **pod IP** (e.g. `https://10.244.x.x:8443/...`) instead of a **Service ClusterIP** (an address inside your **`serviceCIDR`**), aggregator routing is **likely** active; **`No agent available`** then points at **Konnectivity** / path to pod network, not a missing flag. |
+
+If discovery still fails after that, treat it as **Konnectivity or host firewall**: ensure workers reach controllers on **8132**, and review k0s networking / firewalld notes (similar symptoms appear when the control plane cannot open paths to pod/service networks).
+
 ---
 
 ## 4. Bootstrap order (recommended)

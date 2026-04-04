@@ -28,6 +28,8 @@ Confirm **k0s + Cilium** compatibility for your chosen versions (CNI-only vs kub
 
 k0s installs **metrics-server** in `kube-system` (static stack `metricserver`). It satisfies `metrics.k8s.io` for `kubectl top`, HPAs, and tools like Homepage’s kubernetes widget.
 
+If **`metrics.k8s.io`** (or other **`APIService`** registrations such as Kubescape’s **`spdx.softwarecomposition.kubescape.io`**) stays **`FailedDiscoveryCheck`** with errors like **`No agent available`** while using **Cilium with kube-proxy disabled**, set **`spec.api.extraArgs.enable-aggregator-routing: "true"`** on controllers — see the **Aggregated APIs** section in [cilium-k0s-setup.md](cilium-k0s-setup.md) and [`k0s.yaml.example`](k0s.yaml.example).
+
 - **Do not** add a second metrics-server with Helm/Flux unless you first **disable** the built-in one, e.g. controller install flag [`--disable-components=metrics-server`](https://docs.k0sproject.io/stable/configuration/) (same entry appears in k0s docs under component toggles). Otherwise expect name collisions or failed Helm adoption.
 - **Tuning:** The stock manifest already uses `--kubelet-use-node-status-port` and preferred address types. Add **`--kubelet-insecure-tls`** only when logs show **certificate** verification errors against the kubelet, not for generic “connection refused” (that usually means kubelet/firewall/path—see [cilium-k0s-setup.md](cilium-k0s-setup.md)). To change args on the k0s-managed Deployment, patch in place or switch to GitOps-owned metrics-server after disabling the k0s component.
 - **Health:** `kubectl get apiservice v1beta1.metrics.k8s.io` should show `AVAILABLE=True`; `kubectl top nodes` should list all nodes. Brief `FailedDiscoveryCheck` during joins or overload can clear once scrapes succeed again.
