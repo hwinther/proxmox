@@ -57,6 +57,7 @@ updates:
   - "/clusters/production/apps/clutterstock-migrate"
   - "/clusters/production/apps/clutterstock-test"
   - "/clusters/production/apps/clutterstock-test-migrate"
+  - "/clusters/production/apps/headlamp-production"
   - "/clusters/production/apps/homepage"
   - "/clusters/production/apps/observability"
   - "/clusters/production/apps/test-test"
