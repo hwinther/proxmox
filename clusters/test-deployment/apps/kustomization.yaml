@@ -10,6 +10,7 @@ resources:
 - ingress.yaml
 - podinfo-deployment.yaml
 - traefik-helmrelease.yaml
+- policy-reporter-test
 - observability
 - kubevious
 - homepage

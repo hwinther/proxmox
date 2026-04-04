@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: policy-reporter-ui
+  namespace: policy-reporter-test
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Management
+    gethomepage.dev/name: Policy Reporter
+    gethomepage.dev/icon: mdi-clipboard-text-search
+    gethomepage.dev/description: Kyverno policy reports dashboard
+spec:
+  rules:
+    - host: policy-reporter.mgmt-kt.wsh.no
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: policy-reporter-ui
+                port:
+                  number: 8080

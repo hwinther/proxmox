@@ -5,6 +5,7 @@ resources:
   - ceph-csi
   - traefik
   - headlamp-production
+  - policy-reporter-production
   - kubescape-production
   - observability
   - homepage

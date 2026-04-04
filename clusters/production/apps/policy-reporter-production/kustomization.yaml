@@ -1,0 +1,7 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - namespace-policy-reporter-production.yaml
+  - helmrepository.yaml
+  - policy-reporter-helmrelease.yaml
+  - policy-reporter-ingress.yaml
