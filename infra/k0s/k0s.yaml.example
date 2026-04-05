@@ -56,6 +56,12 @@ spec:
               auto:
                 enabled: true
                 method: helm
+          # Raspberry Pi edge nodes use taint node-type=edge-sdr:NoSchedule (see
+          # raspberry-pi-worker.md). Cilium's chart default is tolerations: [{ operator: Exists }],
+          # which schedules on any tainted node. Keep that (or an explicit edge-sdr entry) if you
+          # change tolerations here — otherwise cilium-agent may stay Pending on Pis.
+          tolerations:
+            - operator: Exists
       repositories:
       - name: cilium
         url: https://helm.cilium.io

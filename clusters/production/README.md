@@ -44,6 +44,7 @@ Platform checklist before apps: [`../../infra/k0s/README.md`](../../infra/k0s/RE
 | **Shared (env-scoped)** | [`apps/shared/`](apps/shared/) | **`shared-production`** / **`shared-test`** — Redis (etc.) shared per environment line; see [README](apps/shared/README.md) |
 | **Clutterstock** | [`apps/clutterstock/`](apps/clutterstock/) | Namespace `clutterstock-production`, Ceph PVC via migrate; Redis → **`shared-production`**; public **`clutterstock.wsh.no`** |
 | **Clutterstock (test)** | [`apps/clutterstock-test/`](apps/clutterstock-test/) | Namespace **`clutterstock-test`**, separate SQLite PVC + [`clutterstock-test-migrate/`](apps/clutterstock-test-migrate/); Redis → **`shared-test`**; **`clutterstock.test.wsh.no`** for Playwright / release validation |
+| **Podinfo (edge / Pi)** | [`apps/podinfo-test/`](apps/podinfo-test/) | Namespace **`podinfo-test`** (not **`test-test`**); **`podinfo-edge.test.wsh.no`** — scheduling demo for SDR edge nodes; see [README](apps/podinfo-test/README.md) |
 | **Test (sample app)** | [`apps/test-test/`](apps/test-test/) | Namespace **`test-test`** (app **test** + env **test**); **`test.test.wsh.no`** (UI + `/api`, same images as test-deployment cluster) |
 | **Policy Reporter** | [`apps/policy-reporter-production/`](apps/policy-reporter-production/) | Kyverno policy reports UI; **`policy-reporter.mgmt.wsh.no`** |
 | **Ingress** | [`apps/ingress.yaml`](apps/ingress.yaml) | Public + management hosts (see hostnames below) |
