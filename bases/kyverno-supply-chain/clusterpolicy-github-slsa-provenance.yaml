@@ -37,7 +37,7 @@ spec:
           # skipImageReferences:
           #   - ghcr.io/hwinther/legacy-service/*
           failureAction: Audit
-          mutateDigest: false
+          mutateDigest: true
           type: SigstoreBundle
           attestations:
             - type: https://slsa.dev/provenance/v1
