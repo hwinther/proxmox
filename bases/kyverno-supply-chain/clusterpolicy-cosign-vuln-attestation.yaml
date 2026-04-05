@@ -31,7 +31,7 @@ spec:
         - imageReferences:
             - ghcr.io/hwinther/*
           failureAction: Audit
-          mutateDigest: true
+          mutateDigest: false
           attestations:
             - predicateType: https://cosign.sigstore.dev/attestation/vuln/v1
               attestors:
