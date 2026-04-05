@@ -28,6 +28,9 @@ spec:
     features:
       controllerRuntimeMetrics:
         bindAddress: "0"
+      # Same as production: avoid hard-fail when apiserver cannot reach Kyverno's webhook Service.
+      forceFailurePolicyIgnore:
+        enabled: true
     admissionController:
       replicas: 1
       # Same as production: apiserver → webhook Service ClusterIP breaks under k0s+Cilium without kube-proxy.

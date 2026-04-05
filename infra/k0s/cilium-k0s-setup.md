@@ -102,7 +102,7 @@ If **`kubectl apply`** or **Flux** keeps failing with **`No agent available`** t
 2. Compare **`kubectl get endpoints -n kyverno kyverno-kyverno-svc -o wide`** with your **`webhookServer.port`** — addresses should be **node IPs** with that port, not stale pod IPs.
 3. Treat persistent failures as **no dataplane path from the apiserver host to Service CIDR** (firewall, Cilium-only-on-workers, or misconfigured **`k8sServiceHost`** / **`kubeProxyReplacement`**) rather than a wrong Kyverno port on the Service object.
 
-As a **last-resort bootstrap** option (policies may not enforce if the webhook errors), Kyverno supports **`features.forceFailurePolicyIgnore.enabled`** — prefer fixing reachability; see upstream issues for caveats.
+As a **stop-gap** when admission must stay available (Flux, Helm, migrate Jobs), Kyverno **`features.forceFailurePolicyIgnore.enabled`** makes webhook **call failures** non-blocking; **policy decisions still apply when the webhook is reachable**. This repo enables it in **`clusters/*/apps/kyverno/kyverno-helmrelease.yaml`** until **Konnectivity (8132)** and **Service VIP reachability from controllers** are confirmed; set **`enabled: false`** again after that. See upstream issues for edge cases.
 
 #### Kubescape `node-agent` on k0s controllers
 
