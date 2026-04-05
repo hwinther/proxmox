@@ -5,7 +5,8 @@ metadata:
   namespace: kubescape-production
 spec:
   interval: 30m
-  timeout: 15m
+  # node-agent pulls eBPF-heavy image and waits for /readyz on every node; allow slow clusters.
+  timeout: 30m
   install:
     remediation:
       retries: 3
@@ -21,6 +22,16 @@ spec:
         name: kubescape
         namespace: kubescape-production
   values:
+    # hostScanner defaults include control-plane tolerations; node-agent and storage fall back to
+    # customScheduling — without this, DaemonSets / storage may never schedule on k0s controllers.
+    customScheduling:
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+          effect: NoSchedule
     clusterName: production
     ksNamespace: kubescape-production
     excludeNamespaces: "kubescape,kubescape-production,kube-system,kube-public,kube-node-lease,kubeconfig,gmp-system,gmp-public"

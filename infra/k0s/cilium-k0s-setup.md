@@ -92,6 +92,22 @@ There is **no** cluster API that lists kube-apiserver flags. Use the **controlle
 
 If discovery still fails after that, treat it as **Konnectivity or host firewall**: ensure workers reach controllers on **8132**, and review k0s networking / firewalld notes (similar symptoms appear when the control plane cannot open paths to pod/service networks).
 
+#### Kyverno admission webhooks and hostNetwork
+
+Kyverno’s **MutatingWebhookConfiguration** / **ValidatingWebhookConfiguration** still reference **`clientConfig.service`** (for example `kyverno-kyverno-svc.kyverno.svc`, Service port **443**). The Service’s **`targetPort`** is the named port **https**, which maps to **`admissionController.webhookServer.port`** on the pod (this repo uses **10443** when **hostNetwork** is on). The apiserver therefore dials the **Service ClusterIP:443**; Cilium’s kube-proxy replacement must translate that on **controller** hosts the same way it does on workers.
+
+If **`kubectl apply`** or **Flux** keeps failing with **`No agent available`** to `https://…kyverno…svc:443/…` after enabling **hostNetwork**:
+
+1. Confirm **Cilium runs on every controller** and **kube-proxy replacement** is healthy (`cilium status` on controllers).
+2. Compare **`kubectl get endpoints -n kyverno kyverno-kyverno-svc -o wide`** with your **`webhookServer.port`** — addresses should be **node IPs** with that port, not stale pod IPs.
+3. Treat persistent failures as **no dataplane path from the apiserver host to Service CIDR** (firewall, Cilium-only-on-workers, or misconfigured **`k8sServiceHost`** / **`kubeProxyReplacement`**) rather than a wrong Kyverno port on the Service object.
+
+As a **last-resort bootstrap** option (policies may not enforce if the webhook errors), Kyverno supports **`features.forceFailurePolicyIgnore.enabled`** — prefer fixing reachability; see upstream issues for caveats.
+
+#### Kubescape `node-agent` on k0s controllers
+
+The **kubescape-operator** chart’s **node-agent** DaemonSet only picks up control-plane **tolerations** if you set **`nodeAgent.tolerations`** or **`customScheduling.tolerations`**. **hostScanner** ships default control-plane tolerations; **node-agent** does not. Without them, Helm can time out waiting for **node-agent** on single-node or control-plane-only taints. This repo sets **`customScheduling.tolerations`** in `clusters/production/apps/kubescape-production/kubescape-operator-helmrelease.yaml`.
+
 ---
 
 ## 4. Bootstrap order (recommended)
@@ -102,6 +118,15 @@ If discovery still fails after that, treat it as **Konnectivity or host firewall
 4. Wait until **Cilium** (and the Cilium **operator**) are **Ready**.
 5. **Join workers** with valid tokens; confirm nodes become **Ready**.
 6. Run **connectivity checks** (`cilium status`, optional `cilium connectivity test` if CLI installed).
+
+   **SSH / kubeconfig:** The `cilium` CLI queries the API the same way as **`kubectl`** (via **`KUBECONFIG`**). If you run `cilium status` on a shell with **no** kubeconfig, client-go falls back to **`http://localhost:8080`**, you get **`dial tcp [::1]:8080: connect: connection refused`**, and the summary shows **errors** for Cilium, Envoy, and the operator even when the dataplane on that node is fine. **Fix:** point **`KUBECONFIG`** at a file whose **`server:`** URL is reachable **from that host** (not `127.0.0.1:6443` on workers unless the API really listens there).
+
+   | Node role | Typical approach |
+   |-----------|------------------|
+   | **Controller** | `export KUBECONFIG=/var/lib/k0s/pki/admin.conf` (default k0s data dir), or `sudo k0s kubeconfig admin > "$HOME/.kube/config"` once, then `cilium status`. |
+   | **Worker** | **`admin.conf` is usually not on workers** — use a kubeconfig copied from a controller (with **`server:`** set to the same API endpoint Cilium uses, e.g. your stable controller IP **`6443`**), or run **`cilium status`** only from a machine that already has cluster admin access. |
+
+   **`DaemonSet Ready` but `cilium` shows errors / `error dialing backend: No agent available`:** The summary can still show **Cilium: N errors** while **DaemonSets are 3/3** and **Cluster Pods … managed by Cilium** looks healthy. In that case the CLI has already talked to the API successfully; the errors come from **`kubectl exec`** (or equivalent) into each **cilium-agent** pod to run **`cilium-dbg status`** inside the container. That path is **API server → kubelet** streaming. On **k0s**, broken **Konnectivity** (workers must reach controllers on **TCP 8132**, see the table in §1) often surfaces as **`No agent available`** for **`kubectl exec`**, **`kubectl logs`**, and the same for **Kyverno webhooks** / **aggregated APIs** that need a working control-plane-to-node path. **Checks:** confirm **`kube-system`** pods **konnectivity-agent** (per node) and **konnectivity-server** (controllers) are **Running**; from a worker, `nc -zv <controller-ip> 8132` (or your **`agentPort`**); review host firewalls (§1). **Workaround to inspect one node without exec:** on that host, use **`crictl`** / **`ctr`** to **exec** into the **cilium** container and run **`cilium-dbg status`** (or use Cilium’s host-mounted debug socket if your install exposes it).
 
 Joining workers **before** Cilium runs can leave nodes without a working pod CNI — prefer **Cilium on the control plane API** as soon as the API is usable, **then** expand workers.
 
