@@ -31,7 +31,8 @@ spec:
     - imageReferences:
       - ghcr.io/hwinther/*
       failureAction: Enforce # Note: Enforce is required for mutateDigest: true
-      mutateDigest: true
+      # mutateDigest: true
+      verifyDigest: true
       attestations:
       - predicateType: https://cosign.sigstore.dev/attestation/vuln/v1
         attestors:

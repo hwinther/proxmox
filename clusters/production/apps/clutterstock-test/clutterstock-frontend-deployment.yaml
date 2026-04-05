@@ -15,31 +15,31 @@ spec:
         app.kubernetes.io/name: clutterstock-frontend
     spec:
       containers:
-        - name: clutterstock-frontend
-          image: ghcr.io/hwinther/clutterstock/frontend:0.9.1
-          imagePullPolicy: Always
-          resources:
-            requests:
-              cpu: 50m
-              memory: 128Mi
-            limits:
-              cpu: 200m
-              memory: 256Mi
-          ports:
-            - name: http
-              containerPort: 8080
-              protocol: TCP
-          env:
-            - name: PORT
-              value: "8080"
-            - name: SERVER_API_URL
-              value: "http://clutterstock-api:8080"
-            - name: PUBLIC_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
-              value: "https://otel.mgmt.wsh.no/v1/traces"
-            - name: PUBLIC_OTEL_SERVICE_NAME
-              value: "clutterstock-frontend"
-            - name: REDIS_URL
-              value: "redis://redis.shared-test.svc.cluster.local:6379"
+      - name: clutterstock-frontend
+        image: ghcr.io/hwinther/clutterstock/frontend:sha256-966ed1a35beb440b34939ace6ec3cd96d641a67c7af251586d9b1864cb88a13f # 0.9.1
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        env:
+        - name: PORT
+          value: "8080"
+        - name: SERVER_API_URL
+          value: "http://clutterstock-api:8080"
+        - name: PUBLIC_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
+          value: "https://otel.mgmt.wsh.no/v1/traces"
+        - name: PUBLIC_OTEL_SERVICE_NAME
+          value: "clutterstock-frontend"
+        - name: REDIS_URL
+          value: "redis://redis.shared-test.svc.cluster.local:6379"
 ---
 apiVersion: v1
 kind: Service
@@ -49,9 +49,9 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-    - port: 8080
-      targetPort: http
-      protocol: TCP
-      name: http
+  - port: 8080
+    targetPort: http
+    protocol: TCP
+    name: http
   selector:
     app: clutterstock-frontend

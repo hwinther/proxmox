@@ -15,42 +15,42 @@ spec:
         app.kubernetes.io/name: clutterstock-api
     spec:
       containers:
-        - name: clutterstock-api
-          image: ghcr.io/hwinther/clutterstock/api:0.10.0
-          imagePullPolicy: Always
-          resources:
-            requests:
-              cpu: 100m
-              memory: 256Mi
-            limits:
-              cpu: 500m
-              memory: 512Mi
-          env:
-            - name: ASPNETCORE_URLS
-              value: http://+:8080
-            - name: ConnectionStrings__ClutterStock
-              value: Data Source=/data/clutterstock.db
-            - name: OTEL_SERVICE_NAME
-              value: "clutterstock-api"
-            - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: "http://obs-otel-collector.observability-production.svc.cluster.local:4317"
-            - name: OTEL_EXPORTER_OTLP_PROTOCOL
-              value: grpc
-            - name: OTEL_TRACES_EXPORTER
-              value: otlp
-            - name: OTEL_RESOURCE_ATTRIBUTES
-              value: service.namespace=clutterstock-test,deployment.environment=testing
-          ports:
-            - name: http
-              containerPort: 8080
-              protocol: TCP
-          volumeMounts:
-            - name: sqlite-data
-              mountPath: /data
-      volumes:
+      - name: clutterstock-api
+        image: ghcr.io/hwinther/clutterstock/api:sha256-23570c124fa723cc2c969307e6ae2f58e733764cd6239163749223baa145c6bb # 0.10.0
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        env:
+        - name: ASPNETCORE_URLS
+          value: http://+:8080
+        - name: ConnectionStrings__ClutterStock
+          value: Data Source=/data/clutterstock.db
+        - name: OTEL_SERVICE_NAME
+          value: "clutterstock-api"
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://obs-otel-collector.observability-production.svc.cluster.local:4317"
+        - name: OTEL_EXPORTER_OTLP_PROTOCOL
+          value: grpc
+        - name: OTEL_TRACES_EXPORTER
+          value: otlp
+        - name: OTEL_RESOURCE_ATTRIBUTES
+          value: service.namespace=clutterstock-test,deployment.environment=testing
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        volumeMounts:
         - name: sqlite-data
-          persistentVolumeClaim:
-            claimName: clutterstock-api-sqlite
+          mountPath: /data
+      volumes:
+      - name: sqlite-data
+        persistentVolumeClaim:
+          claimName: clutterstock-api-sqlite
 ---
 apiVersion: v1
 kind: Service
@@ -60,9 +60,9 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-    - port: 8080
-      targetPort: http
-      protocol: TCP
-      name: http
+  - port: 8080
+    targetPort: http
+    protocol: TCP
+    name: http
   selector:
     app: clutterstock-api
