@@ -105,6 +105,7 @@ updates:
   - "/clusters/production/apps/clutterstock-test-migrate"
   - "/clusters/production/apps/test-test"
   - "/clusters/production/apps/shared/test"
+  - "/clusters/production/apps/podinfo-test"
   schedule:
     interval: "daily"
   groups:
