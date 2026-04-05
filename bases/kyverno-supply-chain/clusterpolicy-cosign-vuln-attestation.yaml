@@ -14,30 +14,30 @@ spec:
   # Kubernetes caps webhook timeout at 30s.
   webhookTimeoutSeconds: 30
   rules:
-    - name: cosign-vuln-attestation
-      match:
-        any:
-          - resources:
-              kinds:
-                - Pod
-      exclude:
-        any:
-          - resources:
-              namespaces:
-                - kube-system
-                - kyverno
-                - flux-system
-      verifyImages:
-        - imageReferences:
-            - ghcr.io/hwinther/*
-          failureAction: Audit
-          mutateDigest: true
-          attestations:
-            - predicateType: https://cosign.sigstore.dev/attestation/vuln/v1
-              attestors:
-                - entries:
-                    - keyless:
-                        issuer: https://token.actions.githubusercontent.com
-                        subject: https://github.com/hwinther/*
-                        rekor:
-                          url: https://rekor.sigstore.dev
+  - name: cosign-vuln-attestation
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    exclude:
+      any:
+      - resources:
+          namespaces:
+          - kube-system
+          - kyverno
+          - flux-system
+    verifyImages:
+    - imageReferences:
+      - ghcr.io/hwinther/*
+      failureAction: Enforce # Note: Enforce is required for mutateDigest: true
+      mutateDigest: true
+      attestations:
+      - predicateType: https://cosign.sigstore.dev/attestation/vuln/v1
+        attestors:
+        - entries:
+          - keyless:
+              issuer: https://token.actions.githubusercontent.com
+              subject: https://github.com/hwinther/*
+              rekor:
+                url: https://rekor.sigstore.dev

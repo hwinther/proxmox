@@ -17,39 +17,39 @@ spec:
   # Kubernetes caps webhook timeout at 30s.
   webhookTimeoutSeconds: 30
   rules:
-    - name: slsa-provenance-github-oidc
-      match:
-        any:
-          - resources:
-              kinds:
-                - Pod
-      exclude:
-        any:
-          - resources:
-              namespaces:
-                - kube-system
-                - kyverno
-                - flux-system
-      verifyImages:
-        - imageReferences:
-            - ghcr.io/hwinther/*
-          # Optional central allowlist (same patterns on all three policies if you use it):
-          # skipImageReferences:
-          #   - ghcr.io/hwinther/legacy-service/*
-          failureAction: Audit
-          mutateDigest: true
-          type: SigstoreBundle
-          attestations:
-            - type: https://slsa.dev/provenance/v1
-              attestors:
-                - entries:
-                    - keyless:
-                        issuer: https://token.actions.githubusercontent.com
-                        subject: https://github.com/hwinther/*
-                        rekor:
-                          url: https://rekor.sigstore.dev
-              conditions:
-                - all:
-                    - key: "{{ buildDefinition.buildType }}"
-                      operator: Equals
-                      value: https://actions.github.io/buildtypes/workflow/v1
+  - name: slsa-provenance-github-oidc
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    exclude:
+      any:
+      - resources:
+          namespaces:
+          - kube-system
+          - kyverno
+          - flux-system
+    verifyImages:
+    - imageReferences:
+      - ghcr.io/hwinther/*
+      # Optional central allowlist (same patterns on all three policies if you use it):
+      # skipImageReferences:
+      #   - ghcr.io/hwinther/legacy-service/*
+      failureAction: Enforce # Note: Enforce is required for mutateDigest: true
+      mutateDigest: true
+      type: SigstoreBundle
+      attestations:
+      - type: https://slsa.dev/provenance/v1
+        attestors:
+        - entries:
+          - keyless:
+              issuer: https://token.actions.githubusercontent.com
+              subject: https://github.com/hwinther/*
+              rekor:
+                url: https://rekor.sigstore.dev
+        conditions:
+        - all:
+          - key: "{{ buildDefinition.buildType }}"
+            operator: Equals
+            value: https://actions.github.io/buildtypes/workflow/v1
