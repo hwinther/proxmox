@@ -36,7 +36,7 @@ spec:
       # Optional central allowlist (same patterns on all three policies if you use it):
       # skipImageReferences:
       #   - ghcr.io/hwinther/legacy-service/*
-      failureAction: Enforce # Note: Enforce is required for mutateDigest: true
+      failureAction: Audit # Note: Enforce is required for mutateDigest: true
       # mutateDigest: true
       verifyDigest: true
       type: SigstoreBundle
