@@ -11,7 +11,8 @@ metadata:
 spec:
   validationFailureAction: Audit
   background: false
-  webhookTimeoutSeconds: 60
+  # Kubernetes caps webhook timeout at 30s.
+  webhookTimeoutSeconds: 30
   rules:
     - name: cosign-vuln-attestation
       match:

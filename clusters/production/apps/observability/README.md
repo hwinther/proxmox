@@ -21,7 +21,7 @@ Namespace: **`observability-production`**. Flux installs **kube-prometheus-stack
 - **Ingress:** `grafana.mgmt.wsh.no` → Service `obs-kps-grafana:80`.
 - **Login:** user `admin`; password in Secret `obs-kps-grafana` (chart-generated unless set in values).
 - **Datasources:** Prometheus (default from stack), Loki, Tempo (see `kube-prometheus-stack-helmrelease.yaml` `grafana.additionalDataSources`).
-- **Dashboards:** stock kube-prometheus-stack Grafana dashboards (phase 1; no extra gnet IDs in Git).
+- **Dashboards:** stock kube-prometheus-stack Grafana dashboards plus **ASP.NET Core OTEL** (`dashboards/aspnet-core-otel.json` → ConfigMap `grafana-dashboard-aspnet-otel`, sidecar label `grafana_dashboard=1`).
 
 ## Helm releases
 
