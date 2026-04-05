@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   - ../../../../bases/kyverno-supply-chain
   - ../../../../bases/kyverno-best-practices
+  - ../../../../bases/kyverno-platform

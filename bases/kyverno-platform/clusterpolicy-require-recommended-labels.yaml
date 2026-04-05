@@ -1,0 +1,37 @@
+# Recommended Kubernetes labels: https://kubernetes.io/docs/concepts/overview/working-with-objects/common-labels/
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: wsh-require-recommended-labels
+  annotations:
+    policies.kyverno.io/title: Require recommended Kubernetes labels on Pods
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: low
+    policies.kyverno.io/description: >-
+      Pods should set metadata.labels app.kubernetes.io/name (and optionally app.kubernetes.io/component).
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: require-app-kubernetes-io-name
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+                - flux-system
+                - traefik
+      validate:
+        message: >-
+          Set metadata.labels app.kubernetes.io/name to identify the application (see Kubernetes
+          recommended labels).
+        pattern:
+          metadata:
+            labels:
+              app.kubernetes.io/name: "?*"

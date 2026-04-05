@@ -1,0 +1,30 @@
+# Upstream: kyverno/policies traefik/disallow-default-tlsoptions — kind set for traefik.io/v1alpha1.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: wsh-traefik-disallow-default-tlsoption
+  annotations:
+    policies.kyverno.io/title: Disallow default Traefik TLSOption
+    policies.kyverno.io/category: Traefik
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      Creating a TLSOption named default affects cluster-wide TLS defaults; restrict to cluster-admin.
+spec:
+  validationFailureAction: Audit
+  background: false
+  rules:
+    - name: disallow-default-tlsoptions
+      match:
+        any:
+          - resources:
+              kinds:
+                - traefik.io/v1alpha1/TLSOption
+              names:
+                - default
+      exclude:
+        clusterRoles:
+          - cluster-admin
+      validate:
+        message: >-
+          Only cluster administrators may create a TLSOption named default.
+        deny: {}

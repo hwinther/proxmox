@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - clusterpolicy-disallow-latest-require-digest.yaml
+  - clusterpolicy-disallow-host-namespaces.yaml
+  - clusterpolicy-disallow-host-path.yaml
+  - clusterpolicy-require-recommended-labels.yaml
+  - clusterpolicy-check-deprecated-apis.yaml
+  - clusterpolicy-flux-trusted-sources.yaml
+  - clusterpolicy-traefik-disallow-default-tlsoption.yaml

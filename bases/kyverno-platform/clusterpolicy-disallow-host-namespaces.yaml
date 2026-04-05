@@ -1,0 +1,38 @@
+# Pod Security baseline — host PID/IPC/network. Excludes platform namespaces that need hostNetwork.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: wsh-disallow-host-namespaces
+  annotations:
+    policies.kyverno.io/title: Disallow host namespaces
+    policies.kyverno.io/category: Pod Security Standards (Baseline)
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      spec.hostPID, spec.hostIPC, and spec.hostNetwork must be unset or false except in excluded namespaces.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: host-namespaces
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+                - flux-system
+                - traefik
+      validate:
+        message: >-
+          Sharing the host PID, IPC, or network namespace is disallowed. Set hostPID, hostIPC, and
+          hostNetwork to false or omit them.
+        pattern:
+          spec:
+            =(hostPID): "false"
+            =(hostIPC): "false"
+            =(hostNetwork): "false"
