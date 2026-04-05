@@ -30,11 +30,13 @@ spec:
     features:
       controllerRuntimeMetrics:
         bindAddress: "0"
-      # k0s + Cilium without kube-proxy: apiserver → Kyverno Service VIP often fails (same class as
-      # "No agent available" / Konnectivity). Webhooks with failurePolicy=Fail then block Flux, Helm,
-      # and Jobs. This sets ignore-on-webhook-call-failure so transport errors do not reject requests;
-      # when the webhook is reachable, policies still evaluate. Prefer fixing control-plane → Service
-      # CIDR + Konnectivity (8132), then set back to false — see infra/k0s/cilium-k0s-setup.md.
+      # k0s + Cilium without kube-proxy: apiserver → Kyverno Service VIP often fails ("No agent
+      # available" / Konnectivity). This flag helps the *resource* webhooks (mutate/validate workload
+      # objects). It does **not** change Kyverno 1.17.x **policy** webhooks (`mutate-policy.kyverno.svc`,
+      # `validate-policy.kyverno.svc`) — those stay failurePolicy=Fail in upstream code, so applying
+      # ClusterPolicy via Flux still fails until the apiserver can reach the Kyverno Service. Fix
+      # Konnectivity (8132) + Service VIP from controllers; keep `flux reconcile kustomization kyverno
+      # --with-source` in sync with the rest of the repo so this flag is actually on the admission pod.
       forceFailurePolicyIgnore:
         enabled: true
     admissionController:

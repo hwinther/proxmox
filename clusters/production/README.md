@@ -32,6 +32,7 @@ Platform checklist before apps: [`../../infra/k0s/README.md`](../../infra/k0s/RE
 2. **Reconcile:** `flux reconcile source git flux-system -n flux-system` then `flux reconcile kustomization flux-system -n flux-system`.
 3. **Status:** `flux get kustomizations -n flux-system` — if `flux-system` is **NotReady**, read `kubectl describe kustomization flux-system -n flux-system` (kustomize build errors, denied RBAC, etc.).
 4. **Migrate KS:** `flux get kustomization clutterstock-migrate -n flux-system` (and **`clutterstock-test-migrate`**) — failing migrate does **not** block the root bundle anymore; fix PVC/Job for the matching Clutterstock stack all the same.
+5. **Kyverno / `No agent available`:** Workload webhooks and **ClusterPolicy** webhooks both call the Kyverno **Service** from the apiserver. **`forceFailurePolicyIgnore`** (see `apps/kyverno/kyverno-helmrelease.yaml`) does **not** relax **`mutate-policy.kyverno.svc`** (Flux **`kyverno-policies`** dry-run). Fix **Konnectivity (8132)** and **Service VIP from controllers** per [`infra/k0s/cilium-k0s-setup.md`](../../infra/k0s/cilium-k0s-setup.md). If **`kyverno`** shows an older Git **revision** than **`flux-system`**, run `flux reconcile kustomization kyverno -n flux-system --with-source` so the admission controller chart values (including that flag) match Git.
 
 ## Apps on this cluster
 

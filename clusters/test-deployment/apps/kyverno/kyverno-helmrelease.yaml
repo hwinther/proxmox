@@ -28,7 +28,7 @@ spec:
     features:
       controllerRuntimeMetrics:
         bindAddress: "0"
-      # Same as production: avoid hard-fail when apiserver cannot reach Kyverno's webhook Service.
+      # Same as production: helps resource webhooks only; policy webhooks stay Fail in Kyverno 1.17.x.
       forceFailurePolicyIgnore:
         enabled: true
     admissionController:

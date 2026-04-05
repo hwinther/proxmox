@@ -5,6 +5,7 @@ metadata:
   namespace: kube-system
 spec:
   api:
+    # Each controller sets its own LAN IP here (the address this apiserver advertises).
     address: 10.10.20.101
     ca:
       certificatesExpireAfter: 8760h0m0s
@@ -32,8 +33,12 @@ spec:
           cluster:
             name: default
           kubeProxyReplacement: true
-          k8sServiceHost: 10.10.20.101
-          k8sServicePort: 6443
+          # With nodeLocalLoadBalancing enabled, each node has a local Envoy proxy on
+          # apiServerBindPort (default 7443). Cilium can use that as the API target so it
+          # does not hardcode a single controller IP. On a single-controller cluster you
+          # can use the controller's LAN IP directly instead.
+          k8sServiceHost: 127.0.0.1
+          k8sServicePort: 7443
           ipam:
             mode: kubernetes
           routingMode: tunnel
@@ -88,8 +93,14 @@ spec:
       autoMTU: true
       hairpin: Enabled
       metricsPort: 8080
+    # HA (multi-controller): MUST be enabled. Without this, k0s picks ONE controller IP for
+    # konnectivity-agent --proxy-server-host, so agents only connect to that server. The other
+    # controllers' konnectivity-servers have zero agents → apiserver calls through them
+    # (exec, logs, admission webhooks, aggregated APIs) fail with "No agent available".
+    # Envoy on each node load-balances to ALL controllers for both API (7443) and Konnectivity
+    # (7132). Cilium k8sServiceHost should then point to 127.0.0.1:7443.
     nodeLocalLoadBalancing:
-      enabled: false
+      enabled: true
       envoyProxy:
         apiServerBindPort: 7443
         konnectivityServerBindPort: 7132
