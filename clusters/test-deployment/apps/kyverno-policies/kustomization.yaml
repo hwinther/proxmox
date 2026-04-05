@@ -3,3 +3,4 @@ kind: Kustomization
 # Applied by Flux Kustomization kyverno-policies after Kyverno HelmRelease installs CRDs.
 resources:
   - ../../../../bases/kyverno-supply-chain
+  - ../../../../bases/kyverno-best-practices

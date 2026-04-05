@@ -1,0 +1,38 @@
+# Audit containers that haven't explicitly disabled privilege escalation.
+# background: true so Kyverno scans existing resources and generates PolicyReports.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: wsh-disallow-privilege-escalation
+  annotations:
+    policies.kyverno.io/title: Disallow privilege escalation
+    policies.kyverno.io/category: Pod Security
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      Audit containers that do not set allowPrivilegeEscalation to false.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: privilege-escalation
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+                - flux-system
+      validate:
+        message: >-
+          Privilege escalation is disallowed. Set
+          spec.containers[*].securityContext.allowPrivilegeEscalation to false.
+        pattern:
+          spec:
+            containers:
+              - securityContext:
+                  allowPrivilegeEscalation: false

@@ -1,0 +1,39 @@
+# Audit containers missing memory limits.
+# background: true so Kyverno scans existing resources and generates PolicyReports.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: wsh-require-resource-limits
+  annotations:
+    policies.kyverno.io/title: Require resource limits
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: low
+    policies.kyverno.io/description: >-
+      Audit containers that do not specify memory limits.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: memory-limits
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+                - flux-system
+      validate:
+        message: >-
+          Memory limits are required. Set
+          spec.containers[*].resources.limits.memory.
+        pattern:
+          spec:
+            containers:
+              - resources:
+                  limits:
+                    memory: "?*"
