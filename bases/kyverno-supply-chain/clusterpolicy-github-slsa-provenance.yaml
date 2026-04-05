@@ -37,7 +37,7 @@ spec:
       # skipImageReferences:
       #   - ghcr.io/hwinther/legacy-service/*
       failureAction: Audit # Note: Enforce is required for mutateDigest: true
-      # mutateDigest: true
+      mutateDigest: false
       verifyDigest: true
       type: SigstoreBundle
       attestations:
