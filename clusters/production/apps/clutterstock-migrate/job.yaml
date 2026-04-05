@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: clutterstock-migrate-v092
+  name: clutterstock-migrate-v093
   namespace: clutterstock-production
 spec:
   backoffLimit: 3
@@ -13,7 +13,7 @@ spec:
       # RWO PVC: scale clutterstock-api to 0 before this Job runs, or the volume stays attached to the API pod.
       initContainers:
         - name: ensure-data-writable
-          image: busybox:1.36
+          image: busybox:1.37
           command:
             - sh
             - -c
