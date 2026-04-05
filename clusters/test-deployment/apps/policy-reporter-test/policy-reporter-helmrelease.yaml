@@ -38,10 +38,10 @@ spec:
       enabled: true
       clusters:
         - name: Test cluster
-          host: http://policy-reporter:8080
+          host: http://policy-reporter.policy-reporter-test.svc.cluster.local:8080
           plugins:
             - name: kyverno
-              host: http://policy-reporter-kyverno-plugin:8080
+              host: http://policy-reporter-kyverno-plugin.policy-reporter-test.svc.cluster.local:8080
       resources:
         requests:
           cpu: 25m

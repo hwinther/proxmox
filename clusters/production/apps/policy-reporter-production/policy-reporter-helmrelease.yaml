@@ -37,11 +37,13 @@ spec:
     ui:
       enabled: true
       clusters:
+        # Use FQDN: short names (policy-reporter) can hit resolv.conf search + timeouts on
+        # some nodes; FQDN resolves in one query to kube-dns (see ndots / glibc behavior).
         - name: Production
-          host: http://policy-reporter:8080
+          host: http://policy-reporter.policy-reporter-production.svc.cluster.local:8080
           plugins:
             - name: kyverno
-              host: http://policy-reporter-kyverno-plugin:8080
+              host: http://policy-reporter-kyverno-plugin.policy-reporter-production.svc.cluster.local:8080
       resources:
         requests:
           cpu: 25m
