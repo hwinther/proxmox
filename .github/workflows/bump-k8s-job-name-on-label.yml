@@ -1,0 +1,56 @@
+# When a reviewer adds label `bump-k8s-job-name`, bump Job metadata.name for any
+# **/job.yaml changed in the PR where spec changed vs base but name was not bumped
+# (same rules as verify-k8s-job-name-bump). Create the label in GitHub repo settings
+# if it does not exist yet.
+name: Bump Kubernetes Job name (label)
+
+on:
+  pull_request:
+    types: [labeled]
+
+concurrency:
+  group: bump-k8s-job-name-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  bump:
+    if: >
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.label.name == 'bump-k8s-job-name'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+
+      - name: Install PyYAML
+        run: pip install pyyaml
+
+      - name: Bump Job metadata.name where needed
+        id: bump
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: python .github/scripts/bump_job_metadata_name.py
+
+      - name: Commit and push
+        if: steps.bump.outputs.bumped == 'true'
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -u
+          git status
+          git commit -m "chore: bump Job metadata.name (bump-k8s-job-name label)"
+          git push origin "HEAD:refs/heads/${HEAD_REF}"
