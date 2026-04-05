@@ -28,6 +28,7 @@ updates:
   cooldown:
     default-days: 7
 
+# Compose / SDR templates only (separate PR stream from cluster manifests).
 - package-ecosystem: "docker"
   directories:
   - "/compose/templates/adsb/adsbexchange"
@@ -43,6 +44,12 @@ updates:
   - "/compose/templates/sdr-base/bullseye/build-image"
   - "/compose/templates/sdr-base/buster/base-image"
   - "/compose/templates/sdr-base/buster/build-image"
+  schedule:
+    interval: "daily"
+
+# Test cluster (test-deployment) — separate from production.
+- package-ecosystem: "docker"
+  directories:
   - "/clusters/test-deployment"
   - "/clusters/test-deployment/apps"
   - "/clusters/test-deployment/apps/clutterstock-migrate"
@@ -53,13 +60,24 @@ updates:
   - "/clusters/test-deployment/apps/observability"
   - "/clusters/test-deployment/apps/policy-reporter-test"
   - "/clusters/test-deployment/flux-system"
+  schedule:
+    interval: "daily"
+  groups:
+    clutterstock:
+      patterns:
+      - "ghcr.io/hwinther/clutterstock/*"
+    test:
+      patterns:
+      - "ghcr.io/hwinther/test/*"
+
+# Production cluster — prod workloads only (excludes in-cluster test apps).
+- package-ecosystem: "docker"
+  directories:
   - "/clusters/production"
   - "/clusters/production/apps"
   - "/clusters/production/apps/ceph-csi"
   - "/clusters/production/apps/clutterstock"
   - "/clusters/production/apps/clutterstock-migrate"
-  - "/clusters/production/apps/clutterstock-test"
-  - "/clusters/production/apps/clutterstock-test-migrate"
   - "/clusters/production/apps/headlamp-production"
   - "/clusters/production/apps/kubescape-production"
   - "/clusters/production/apps/kyverno"
@@ -67,13 +85,35 @@ updates:
   - "/clusters/production/apps/homepage"
   - "/clusters/production/apps/observability"
   - "/clusters/production/apps/policy-reporter-production"
-  - "/clusters/production/apps/test-test"
   - "/clusters/production/apps/traefik"
   - "/clusters/production/apps/shared/production"
-  - "/clusters/production/apps/shared/test"
   - "/clusters/production/flux-system"
   schedule:
     interval: "daily"
+  groups:
+    clutterstock:
+      patterns:
+      - "ghcr.io/hwinther/clutterstock/*"
+    test:
+      patterns:
+      - "ghcr.io/hwinther/test/*"
+
+# Production cluster — test-tier apps (separate PRs from prod workloads above).
+- package-ecosystem: "docker"
+  directories:
+  - "/clusters/production/apps/clutterstock-test"
+  - "/clusters/production/apps/clutterstock-test-migrate"
+  - "/clusters/production/apps/test-test"
+  - "/clusters/production/apps/shared/test"
+  schedule:
+    interval: "daily"
+  groups:
+    clutterstock:
+      patterns:
+      - "ghcr.io/hwinther/clutterstock/*"
+    test:
+      patterns:
+      - "ghcr.io/hwinther/test/*"
 
 - package-ecosystem: "docker-compose"
   directories:
