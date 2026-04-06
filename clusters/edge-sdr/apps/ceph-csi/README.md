@@ -2,6 +2,8 @@
 
 Flux installs **`ceph-csi-rbd`** into **`ceph-csi-edge-sdr`**. Adjust monitors / `clusterID` / **`pool`** in [`ceph-csi-rbd-helmrelease.yaml`](ceph-csi-rbd-helmrelease.yaml) if this cluster differs from production.
 
+The HelmRelease sets **`nodeplugin`** and **`provisioner`** tolerations for **`node-type=edge-sdr:NoSchedule`** so CSI pods schedule on Raspberry Pi edge workers (see [infra/k0s/raspberry-pi-worker.md](../../../../infra/k0s/raspberry-pi-worker.md)).
+
 ## Pool: share with production or not?
 
 **Sharing one pool (e.g. `k8s-rbd`)** is normal: both clusters get RBD images in the same pool; Kubernetes keeps volume identity separate per cluster. Downsides: shared capacity and one place to size/operate; if you ever need hard isolation (quotas, blast radius, “this pool is only edge”), use a **second pool** (e.g. `k8s-rbd-edge-sdr`) and point this HelmRelease’s **`storageClass.pool`** (and `csiConfig`) at it.

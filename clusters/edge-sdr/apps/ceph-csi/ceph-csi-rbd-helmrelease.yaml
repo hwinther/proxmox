@@ -37,8 +37,21 @@ spec:
     logLevel: 3
     sidecarLogLevel: 2
 
+    # Pi / edge workers: node-type=edge-sdr:NoSchedule (see infra/k0s/raspberry-pi-worker.md).
+    nodeplugin:
+      tolerations:
+        - key: node-type
+          operator: Equal
+          value: edge-sdr
+          effect: NoSchedule
+
     provisioner:
       replicaCount: 2
+      tolerations:
+        - key: node-type
+          operator: Equal
+          value: edge-sdr
+          effect: NoSchedule
 
     secret:
       create: false
