@@ -27,7 +27,21 @@ spec:
   values:
     # hostScanner defaults include control-plane tolerations; node-agent and storage fall back to
     # customScheduling — without this, DaemonSets / storage may never schedule on k0s controllers.
+    # Keep all Kubescape pods on the x86 / main node: Pi workers use role=sdr-edge (see
+    # infra/k0s/raspberry-pi-worker.md). DoesNotExist OR NotIn matches the main node with or without role=*.
     customScheduling:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: role
+                    operator: DoesNotExist
+              - matchExpressions:
+                  - key: role
+                    operator: NotIn
+                    values:
+                      - sdr-edge
       tolerations:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
