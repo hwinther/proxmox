@@ -13,7 +13,6 @@ resources:
   - shared/test
   - clutterstock
   - clutterstock-test
-  - podinfo-test
   - test-test
   - ingress.yaml
   - hubble-ui-ingress.yaml

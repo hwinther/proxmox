@@ -1,7 +1,0 @@
-# Namespace **podinfo-test** = app **podinfo** (edge scheduling demo) + env **test** (*.test.wsh.no). Separate from **test-test** (sample ghcr.io/hwinther/test stack).
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: podinfo-test
-  labels:
-    app.kubernetes.io/part-of: podinfo-test
