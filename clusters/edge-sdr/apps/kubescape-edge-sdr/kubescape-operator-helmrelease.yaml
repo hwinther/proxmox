@@ -44,3 +44,8 @@ spec:
     # k0s: node-agent /readyz was HTTP 500 with privileged: false (eBPF/debugfs); required for runtime/network features.
     nodeAgent:
       privileged: true
+
+    # Explicit SC (same as clusters/edge-sdr/apps/ceph-csi) — avoids ambiguous default and documents intent.
+    # If PVCs were created while no provisioner existed, delete them and reconcile (see README.md).
+    persistence:
+      storageClass: ceph-rbd
