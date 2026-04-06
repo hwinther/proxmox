@@ -9,4 +9,5 @@ resources:
   - homepage
   - headlamp-edge-sdr
   - podinfo-edge-sdr
+  - ais-catcher-edge-sdr
   - ingress.yaml

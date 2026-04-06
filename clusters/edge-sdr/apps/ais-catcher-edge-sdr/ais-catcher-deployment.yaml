@@ -1,0 +1,99 @@
+# Schedules on Raspberry Pi edge workers: label role=sdr-edge and taint
+# node-type=edge-sdr:NoSchedule. USB via hostPath /dev/bus/usb (see PolicyException).
+# Image from compose servers/radio-pi02/ais/docker-compose.yaml (GHCR publish workflow).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ais-catcher
+  namespace: ais-catcher-edge-sdr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ais-catcher
+  template:
+    metadata:
+      labels:
+        app: ais-catcher
+        app.kubernetes.io/name: ais-catcher
+    spec:
+      tolerations:
+        - key: node-type
+          operator: Equal
+          value: edge-sdr
+          effect: NoSchedule
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: role
+                    operator: In
+                    values:
+                      - sdr-edge
+      containers:
+        - name: ais-catcher
+          image: ghcr.io/hwinther/proxmox/sdr/ais/ais-catcher-wsh:0.2.0
+          imagePullPolicy: IfNotPresent
+          # ConfigMap first, then Secret: same key in both → Secret wins (good for API keys / EXTRA_ARGS).
+          # Create Secret manually (or ExternalSecrets / SOPS); optional so the pod runs without it.
+          envFrom:
+            - configMapRef:
+                name: ais-catcher-env
+            - secretRef:
+                name: ais-catcher-secret
+                optional: true
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: dev-bus-usb
+              mountPath: /dev/bus/usb
+            - name: run
+              mountPath: /run
+            - name: tmp
+              mountPath: /tmp
+            - name: varlog
+              mountPath: /var/log
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+      volumes:
+        - name: dev-bus-usb
+          hostPath:
+            path: /dev/bus/usb
+            type: Directory
+        - name: run
+          emptyDir:
+            medium: Memory
+            sizeLimit: 256Mi
+        - name: tmp
+          emptyDir:
+            medium: Memory
+            sizeLimit: 128Mi
+        - name: varlog
+          emptyDir:
+            medium: Memory
+            sizeLimit: 32Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ais-catcher
+  namespace: ais-catcher-edge-sdr
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: ais-catcher

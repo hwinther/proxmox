@@ -1,0 +1,21 @@
+# Exempt ais-catcher from wsh-disallow-host-path (USB device access under /dev/bus/usb).
+apiVersion: kyverno.io/v2beta1
+kind: PolicyException
+metadata:
+  name: ais-catcher-hostpath-usb
+  namespace: ais-catcher-edge-sdr
+spec:
+  exceptions:
+    - policyName: wsh-disallow-host-path
+      ruleNames:
+        - host-path
+  match:
+    any:
+      - resources:
+          kinds:
+            - Pod
+          namespaces:
+            - ais-catcher-edge-sdr
+          selector:
+            matchLabels:
+              app: ais-catcher

@@ -1,0 +1,17 @@
+# Station and dongle settings — non-secret defaults. Sensitive overrides: Secret
+# **ais-catcher-secret** (same keys as here, or e.g. EXTRA_ARGS with hub/MQTT flags); see
+# ais-catcher-secret.example.yaml.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ais-catcher-env
+  namespace: ais-catcher-edge-sdr
+data:
+  DEVICE_INDEX: "00000162"
+  BIASTEE: "on"
+  LAT: "59.000000"
+  LON: "10.000000"
+  STATION_NAME: "Gjonnes"
+  STATION_URL: "https://ais.edge-sdr.wsh.no"
+  AIS_CATCHER_PORT: "8080"
+  EXTRA_ARGS: ""

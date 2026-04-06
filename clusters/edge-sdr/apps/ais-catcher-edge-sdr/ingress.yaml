@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ais-catcher
+  namespace: ais-catcher-edge-sdr
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Applications
+    gethomepage.dev/name: AIS-Catcher (edge / Pi)
+    gethomepage.dev/icon: mdi-ship-wheel
+    gethomepage.dev/description: AIS receiver on SDR edge nodes (USB RTL-AIS), matches compose radio-pi02/ais
+spec:
+  rules:
+    - host: ais.edge-sdr.wsh.no
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ais-catcher
+                port:
+                  number: 8080
