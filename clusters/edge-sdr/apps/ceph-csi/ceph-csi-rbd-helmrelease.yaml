@@ -1,0 +1,67 @@
+# Ceph CSI RBD driver (RWO block volumes) — edge-sdr
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: ceph-csi
+  namespace: ceph-csi-edge-sdr
+spec:
+  interval: 24h
+  url: https://ceph.github.io/csi-charts
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: ceph-csi-rbd
+  namespace: ceph-csi-edge-sdr
+spec:
+  interval: 30m
+  timeout: 10m
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  chart:
+    spec:
+      chart: ceph-csi-rbd
+      version: "3.16.2"
+      sourceRef:
+        kind: HelmRepository
+        name: ceph-csi
+        namespace: ceph-csi-edge-sdr
+  values:
+    # k0s uses a non-standard kubelet path — required for volume attach/mount.
+    kubeletDir: /var/lib/k0s/kubelet
+
+    logLevel: 3
+    sidecarLogLevel: 2
+
+    provisioner:
+      replicaCount: 2
+
+    secret:
+      create: false
+      name: csi-rbd-secret
+
+    csiConfig:
+    - clusterID: f189e617-9a97-4e5a-a0aa-b91740651ff8
+      monitors:
+      # 6789 is legacy, 3300 is msgr2 — ensure edge nodes can reach these IPs
+      - "10.20.4.18:3300"
+      - "10.20.4.20:3300"
+      - "10.20.4.34:3300"
+
+    storageClass:
+      create: true
+      name: ceph-rbd
+      annotations:
+        storageclass.kubernetes.io/is-default-class: "true"
+      clusterID: f189e617-9a97-4e5a-a0aa-b91740651ff8
+      pool: k8s-rbd
+      reclaimPolicy: Delete
+      allowVolumeExpansion: true
+      provisionerSecret: csi-rbd-secret
+      controllerExpandSecret: csi-rbd-secret
+      controllerPublishSecret: csi-rbd-secret
+      nodeStageSecret: csi-rbd-secret

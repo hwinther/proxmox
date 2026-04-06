@@ -1,0 +1,7 @@
+# Namespace **podinfo-edge-sdr** — Podinfo on edge-sdr; Ingress **podinfo.edge-sdr.wsh.no**.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: podinfo-edge-sdr
+  labels:
+    app.kubernetes.io/part-of: podinfo-edge-sdr

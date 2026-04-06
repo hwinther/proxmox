@@ -1,0 +1,46 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: kubescape
+  namespace: kubescape-edge-sdr
+spec:
+  interval: 30m
+  # node-agent pulls eBPF-heavy image and waits for /readyz on every node; allow slow clusters.
+  timeout: 30m
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  dependsOn:
+    - name: ceph-csi-rbd
+      namespace: ceph-csi-edge-sdr
+  chart:
+    spec:
+      chart: kubescape-operator
+      version: "1.30.6"
+      sourceRef:
+        kind: HelmRepository
+        name: kubescape
+        namespace: kubescape-edge-sdr
+  values:
+    # hostScanner defaults include control-plane tolerations; node-agent and storage fall back to
+    # customScheduling — without this, DaemonSets / storage may never schedule on k0s controllers.
+    customScheduling:
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+          effect: NoSchedule
+    clusterName: edge-sdr
+    ksNamespace: kubescape-edge-sdr
+    excludeNamespaces: "kubescape,kubescape-edge-sdr,kube-system,kube-public,kube-node-lease,kubeconfig,gmp-system,gmp-public"
+    capabilities:
+      continuousScan: enable
+      networkPolicyService: enable
+    # k0s: node-agent /readyz was HTTP 500 with privileged: false (eBPF/debugfs); required for runtime/network features.
+    nodeAgent:
+      privileged: true

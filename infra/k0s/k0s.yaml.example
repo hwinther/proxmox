@@ -33,10 +33,10 @@ spec:
           cluster:
             name: default
           kubeProxyReplacement: true
-          # With nodeLocalLoadBalancing enabled, each node has a local Envoy proxy on
-          # apiServerBindPort (default 7443). Cilium can use that as the API target so it
-          # does not hardcode a single controller IP. On a single-controller cluster you
-          # can use the controller's LAN IP directly instead.
+          # With nodeLocalLoadBalancing enabled, each node (including workers) has a local
+          # Envoy on apiServerBindPort (default 7443) → 127.0.0.1:7443 is correct everywhere.
+          # Without that, workers need a real controller IP/VIP:6443, not loopback.
+          # On a single-controller cluster you can use the controller's LAN IP directly instead.
           k8sServiceHost: 127.0.0.1
           k8sServicePort: 7443
           ipam:

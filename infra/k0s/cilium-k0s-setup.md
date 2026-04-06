@@ -140,11 +140,12 @@ For **kube-proxy replacement**, Cilium needs the **Kubernetes API** address as s
 
 | Wrong | Right |
 |--------|--------|
-| `127.0.0.1` on workers | Workers are not the API server — `127.0.0.1` points at **the wrong host** |
+| **`127.0.0.1:6443` on workers** (treating loopback as the apiserver) | On a worker, nothing listens for the **cluster** API on **6443** — that is wrong unless you mean something else below. |
+| **`127.0.0.1:7443` without `nodeLocalLoadBalancing`** | Envoy is not bound on every node; use a **controller IP / VIP** and **`6443`** instead. |
 
 **Use one of:**
 
-- **`127.0.0.1:7443`** — when **`nodeLocalLoadBalancing`** is enabled (recommended for multi-controller HA). Envoy on each node proxies to all controllers' `6443`. See §6 datapath checklist, step 0.
+- **`127.0.0.1:7443`** — when **`nodeLocalLoadBalancing`** is enabled (recommended for multi-controller HA). **Envoy runs on every node** (controllers **and** workers); loopback hits **that node’s** local proxy, which forwards to all controllers’ `6443`. Same **`k8sServiceHost` / `k8sServicePort`** in Cilium values is therefore correct cluster-wide. See §6 datapath checklist, step 0.
 - **Stable controller IP** (private LAN) — simplest single-controller homelab option.
 - **DNS name** resolving to that IP.
 - **Load balancer / VIP** for HA control plane.

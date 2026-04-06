@@ -1,0 +1,6 @@
+# Shared platform namespace for edge-sdr (Homepage ingress, etc.).
+# Per-app namespaces use appname-environment (e.g. headlamp-edge-sdr).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: platform-edge-sdr

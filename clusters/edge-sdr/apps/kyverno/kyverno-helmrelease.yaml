@@ -1,0 +1,82 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: kyverno
+  namespace: kyverno
+spec:
+  interval: 30m
+  timeout: 15m
+  targetNamespace: kyverno
+  install:
+    createNamespace: false
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  upgrade:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  chart:
+    spec:
+      chart: kyverno
+      version: "3.7.1"
+      sourceRef:
+        kind: HelmRepository
+        name: kyverno
+        namespace: kyverno
+  values:
+    # With hostNetwork, declared container ports bind on the node. Traefik uses host port 8000 — Kyverno's
+    # default metrics port 8000 then makes scheduling fail ("didn't have free ports"). Use a high port.
+    features:
+      controllerRuntimeMetrics:
+        bindAddress: "0"
+      # k0s + Cilium without kube-proxy: apiserver → Kyverno Service VIP often fails ("No agent
+      # available" / Konnectivity). This flag helps the *resource* webhooks (mutate/validate workload
+      # objects). It does **not** change Kyverno 1.17.x **policy** webhooks (`mutate-policy.kyverno.svc`,
+      # `validate-policy.kyverno.svc`) — those stay failurePolicy=Fail in upstream code, so applying
+      # ClusterPolicy via Flux still fails until the apiserver can reach the Kyverno Service. Fix
+      # Konnectivity (8132) + Service VIP from controllers; keep `flux reconcile kustomization kyverno
+      # --with-source` in sync with the rest of the repo so this flag is actually on the admission pod.
+      forceFailurePolicyIgnore:
+        enabled: true
+    admissionController:
+      replicas: 1
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      webhookServer:
+        port: 10443
+      metering:
+        port: 28543
+      updateStrategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxSurge: 0
+          maxUnavailable: 1
+      startupProbe:
+        httpGet:
+          path: /health/liveness
+          port: 10443
+          scheme: HTTPS
+        failureThreshold: 20
+        initialDelaySeconds: 2
+        periodSeconds: 6
+      livenessProbe:
+        httpGet:
+          path: /health/liveness
+          port: 10443
+          scheme: HTTPS
+        initialDelaySeconds: 15
+        periodSeconds: 30
+        timeoutSeconds: 5
+        failureThreshold: 2
+        successThreshold: 1
+      readinessProbe:
+        httpGet:
+          path: /health/readiness
+          port: 10443
+          scheme: HTTPS
+        initialDelaySeconds: 5
+        periodSeconds: 10
+        timeoutSeconds: 5
+        failureThreshold: 6
+        successThreshold: 1

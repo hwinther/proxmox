@@ -71,6 +71,31 @@ updates:
       patterns:
       - "ghcr.io/hwinther/test/*"
 
+# edge-sdr cluster (k0s / SDR edge).
+- package-ecosystem: "docker"
+  directories:
+  - "/clusters/edge-sdr"
+  - "/clusters/edge-sdr/apps"
+  - "/clusters/edge-sdr/apps/traefik"
+  - "/clusters/edge-sdr/apps/ceph-csi"
+  - "/clusters/edge-sdr/apps/homepage"
+  - "/clusters/edge-sdr/apps/headlamp-edge-sdr"
+  - "/clusters/edge-sdr/apps/podinfo-edge-sdr"
+  - "/clusters/edge-sdr/apps/kyverno"
+  - "/clusters/edge-sdr/apps/kyverno-policies"
+  - "/clusters/edge-sdr/apps/kubescape-edge-sdr"
+  - "/clusters/edge-sdr/apps/policy-reporter-edge-sdr"
+  - "/clusters/edge-sdr/flux-system"
+  schedule:
+    interval: "daily"
+  groups:
+    clutterstock:
+      patterns:
+      - "ghcr.io/hwinther/clutterstock/*"
+    test:
+      patterns:
+      - "ghcr.io/hwinther/test/*"
+
 # Production cluster — prod workloads only (excludes in-cluster test apps).
 - package-ecosystem: "docker"
   directories:
