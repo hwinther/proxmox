@@ -54,6 +54,7 @@ updates:
   - "/clusters/test-deployment/apps"
   - "/clusters/test-deployment/apps/clutterstock-migrate"
   - "/clusters/test-deployment/apps/homepage"
+  - "/clusters/test-deployment/apps/headlamp-test"
   - "/clusters/test-deployment/apps/kubevious"
   - "/clusters/test-deployment/apps/kyverno"
   - "/clusters/test-deployment/apps/kyverno-policies"

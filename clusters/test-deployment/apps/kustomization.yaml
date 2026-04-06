@@ -13,4 +13,5 @@ resources:
 - policy-reporter-test
 - observability
 - kubevious
+- headlamp-test
 - homepage
