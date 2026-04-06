@@ -1,0 +1,7 @@
+# Namespace **ais-catcher-edge-sdr** — AIS-Catcher on Raspberry Pi edge workers; Ingress **ais.edge-sdr.wsh.no**.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ais-catcher-edge-sdr
+  labels:
+    app.kubernetes.io/part-of: ais-catcher-edge-sdr
