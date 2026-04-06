@@ -138,7 +138,7 @@ spec:
       containers:
         - name: homepage
           # Pinned digest (linux/arm64) — Kyverno + Pi workers; bump when upgrading Homepage.
-          image: ghcr.io/gethomepage/homepage@sha256:ccca9f449d1ef1125c1ec01decb8c29bf295f4b500c6a60124b78741be3e3117
+          image: ghcr.io/gethomepage/homepage@sha256:cc84f2f5eb3c7734353701ccbaa24ed02dacb0d119114e50e4251e2005f3990a
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
