@@ -59,6 +59,27 @@ spec:
     nodeAgent:
       privileged: true
 
+    # 2 vCPU node was ~95% CPU-requested; defaults (storage 100m + kubevuln 300m) could not schedule. Requests are
+    # scheduling hints only — limits stay at chart defaults for burst (Grype scans).
+    storage:
+      resources:
+        requests:
+          cpu: 30m
+          memory: 400Mi
+        limits:
+          cpu: 1500m
+          memory: 1500Mi
+    kubevuln:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 1000Mi
+          ephemeral-storage: 5Gi
+        limits:
+          cpu: 1500m
+          memory: 5000Mi
+          ephemeral-storage: 10Gi
+
     # Explicit SC (same as clusters/edge-sdr/apps/ceph-csi) — avoids ambiguous default and documents intent.
     # If PVCs were created while no provisioner existed, delete them and reconcile (see README.md).
     persistence:
