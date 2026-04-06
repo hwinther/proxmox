@@ -195,7 +195,7 @@ This is separate from **6443** to the controller (your join-token **`server:`**)
 
 ## Label and taint (edge / SDR pool)
 
-Use the same keys as the rest of the repo so [podinfo-edge](../../clusters/production/apps/podinfo-test/podinfo-edge-deployment.yaml) (production k0s cluster, namespace **`podinfo-test`**) and future SDR workloads schedule correctly:
+Use the same keys as the rest of the repo so [podinfo-edge](../../clusters/edge-sdr/apps/podinfo-edge-sdr/podinfo-edge-deployment.yaml) (edge-sdr cluster, namespace **`podinfo-edge-sdr`**) and future SDR workloads schedule correctly:
 
 ```bash
 kubectl label node <pi-hostname> role=sdr-edge --overwrite

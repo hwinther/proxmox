@@ -4,7 +4,7 @@ Flux installs **`ceph-csi-rbd`** into **`ceph-csi-edge-sdr`**. Adjust monitors /
 
 The HelmRelease sets **`nodeplugin`** and **`provisioner`** tolerations for **`node-type=edge-sdr:NoSchedule`** so CSI pods schedule on Raspberry Pi edge workers (see [infra/k0s/raspberry-pi-worker.md](../../../../infra/k0s/raspberry-pi-worker.md)).
 
-**Small clusters:** **`provisioner.replicaCount: 1`** — the chart’s pod anti-affinity cannot place two provisioners on one edge worker. **`nodeplugin.httpMetrics.enabled: false`** — with **hostNetwork**, the metrics port and **liveness-prometheus** both tried to bind the same host **:8080** (seen as `address already in use`).
+**Small clusters:** **`provisioner.replicaCount: 1`** — the chart’s pod anti-affinity cannot place two provisioners on one edge worker. **`nodeplugin.httpMetrics.enabled: false`** — with **hostNetwork**, the metrics sidecar and the CSI plugin both tried to use host **:8080** (`address already in use`). After changing this, ensure Helm **finishes** upgrading the DaemonSet (HelmRelease **`timeout: 30m`** helps on slow Pi pulls; a failed install can leave an old manifest still listing **liveness-prometheus**).
 
 ## Pool: share with production or not?
 

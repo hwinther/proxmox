@@ -15,7 +15,8 @@ metadata:
   namespace: ceph-csi-edge-sdr
 spec:
   interval: 30m
-  timeout: 10m
+  # Pi / slow pulls: avoid Helm timeout before nodeplugin + provisioner become Ready (was leaving old DS with liveness-prometheus).
+  timeout: 30m
   install:
     remediation:
       retries: 3
