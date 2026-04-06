@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: podinfo-edge
+  namespace: podinfo-edge-sdr
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Applications
+    gethomepage.dev/name: Podinfo (edge / Pi)
+    gethomepage.dev/icon: mdi-information-outline
+    gethomepage.dev/description: Podinfo pinned to SDR edge nodes (role=sdr-edge) for scheduling tests
+spec:
+  rules:
+    - host: podinfo.edge-sdr.wsh.no
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: podinfo-edge
+                port:
+                  number: 9898

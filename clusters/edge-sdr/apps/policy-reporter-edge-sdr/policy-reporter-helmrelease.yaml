@@ -1,0 +1,61 @@
+# Policy Reporter + UI + Kyverno plugin — see https://kyverno.github.io/policy-reporter-docs/policy-reporter-ui/introduction.html
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: policy-reporter
+  namespace: policy-reporter-edge-sdr
+spec:
+  interval: 30m
+  timeout: 10m
+  targetNamespace: policy-reporter-edge-sdr
+  install:
+    createNamespace: false
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  dependsOn:
+    - name: kyverno
+      namespace: kyverno
+  chart:
+    spec:
+      chart: policy-reporter
+      version: "3.7.3"
+      sourceRef:
+        kind: HelmRepository
+        name: policy-reporter
+        namespace: policy-reporter-edge-sdr
+  values:
+    replicaCount: 1
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        memory: 512Mi
+    ui:
+      enabled: true
+      clusters:
+        # Use FQDN: short names (policy-reporter) can hit resolv.conf search + timeouts on
+        # some nodes; FQDN resolves in one query to kube-dns (see ndots / glibc behavior).
+        - name: edge-sdr
+          host: http://policy-reporter.policy-reporter-edge-sdr.svc.cluster.local:8080
+          plugins:
+            - name: kyverno
+              host: http://policy-reporter-kyverno-plugin.policy-reporter-edge-sdr.svc.cluster.local:8080
+      resources:
+        requests:
+          cpu: 25m
+          memory: 128Mi
+        limits:
+          memory: 256Mi
+    plugin:
+      kyverno:
+        enabled: true
+        resources:
+          requests:
+            cpu: 25m
+            memory: 64Mi
+          limits:
+            memory: 256Mi
