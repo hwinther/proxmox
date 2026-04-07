@@ -66,10 +66,10 @@ updates:
   groups:
     clutterstock:
       patterns:
-      - "ghcr.io/hwinther/clutterstock/*"
+      - "hwinther/clutterstock/*"
     test:
       patterns:
-      - "ghcr.io/hwinther/test/*"
+      - "hwinther/test/*"
     fluxcd:
       patterns:
       - "fluxcd/*"
@@ -96,10 +96,10 @@ updates:
   groups:
     clutterstock:
       patterns:
-      - "ghcr.io/hwinther/clutterstock/*"
+      - "hwinther/clutterstock/*"
     test:
       patterns:
-      - "ghcr.io/hwinther/test/*"
+      - "hwinther/test/*"
     fluxcd:
       patterns:
       - "fluxcd/*"
@@ -127,10 +127,10 @@ updates:
   groups:
     clutterstock:
       patterns:
-      - "ghcr.io/hwinther/clutterstock/*"
+      - "hwinther/clutterstock/*"
     test:
       patterns:
-      - "ghcr.io/hwinther/test/*"
+      - "hwinther/test/*"
     fluxcd:
       patterns:
       - "fluxcd/*"
@@ -147,10 +147,10 @@ updates:
   groups:
     clutterstock:
       patterns:
-      - "ghcr.io/hwinther/clutterstock/*"
+      - "hwinther/clutterstock/*"
     test:
       patterns:
-      - "ghcr.io/hwinther/test/*"
+      - "hwinther/test/*"
 
 - package-ecosystem: "docker-compose"
   directories:
