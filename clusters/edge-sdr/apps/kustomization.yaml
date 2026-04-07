@@ -10,4 +10,5 @@ resources:
   - headlamp-edge-sdr
   - podinfo-edge-sdr
   - ais-catcher-edge-sdr
+  - adsb-edge-sdr
   - ingress.yaml

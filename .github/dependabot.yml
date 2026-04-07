@@ -76,6 +76,7 @@ updates:
   directories:
   - "/clusters/edge-sdr"
   - "/clusters/edge-sdr/apps"
+  - "/clusters/edge-sdr/apps/adsb-edge-sdr"
   - "/clusters/edge-sdr/apps/ais-catcher-edge-sdr"
   - "/clusters/edge-sdr/apps/traefik"
   - "/clusters/edge-sdr/apps/ceph-csi"

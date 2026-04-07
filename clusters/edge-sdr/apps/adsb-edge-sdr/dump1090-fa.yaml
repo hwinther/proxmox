@@ -1,0 +1,103 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dump1090-fa
+  namespace: adsb-edge-sdr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dump1090-fa
+  template:
+    metadata:
+      labels:
+        app: dump1090-fa
+        app.kubernetes.io/name: dump1090-fa
+        app.kubernetes.io/part-of: adsb-edge-sdr
+    spec:
+      tolerations:
+        - key: node-type
+          operator: Equal
+          value: edge-sdr
+          effect: NoSchedule
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: role
+                    operator: In
+                    values:
+                      - sdr-edge
+      containers:
+        - name: dump1090-fa
+          image: ghcr.io/hwinther/proxmox/sdr/adsb/dump1090-fa-wsh:0.1.0
+          imagePullPolicy: IfNotPresent
+          # ConfigMap then Secret: shared keys (e.g. LAT/LON) in Secret override ConfigMap.
+          envFrom:
+            - configMapRef:
+                name: adsb-env
+            - secretRef:
+                name: adsb-secret
+                optional: true
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: dev-bus-usb
+              mountPath: /dev/bus/usb
+            - name: dump1090-run
+              mountPath: /run/dump1090-fa
+          readinessProbe:
+            tcpSocket:
+              port: 30005
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          startupProbe:
+            tcpSocket:
+              port: 30005
+            failureThreshold: 36
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 768Mi
+      volumes:
+        - name: dev-bus-usb
+          hostPath:
+            path: /dev/bus/usb
+            type: Directory
+        - name: dump1090-run
+          hostPath:
+            path: /var/lib/k8s-edge-sdr/dump1090-fa
+            type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dump1090-fa
+  namespace: adsb-edge-sdr
+spec:
+  selector:
+    app: dump1090-fa
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+    - name: raw-out
+      port: 30002
+      targetPort: 30002
+    - name: sbs
+      port: 30003
+      targetPort: 30003
+    - name: beast-in-a
+      port: 30004
+      targetPort: 30004
+    - name: beast-out
+      port: 30005
+      targetPort: 30005
+    - name: beast-in-b
+      port: 30104
+      targetPort: 30104

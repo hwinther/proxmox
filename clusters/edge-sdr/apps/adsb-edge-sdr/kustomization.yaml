@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - namespace.yaml
+  - configmap-adsb-env.yaml
+  - dump1090-fa.yaml
+  - tar1090.yaml
+  - tar1090-ingress.yaml
+  - adsb-feeders.yaml
+  - kyverno-policyexception-hostpath.yaml

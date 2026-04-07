@@ -1,6 +1,5 @@
-# Station and dongle settings — non-secret defaults. Sensitive overrides: Secret
-# **ais-catcher-secret** (same keys as here, or e.g. EXTRA_ARGS with hub/MQTT flags); see
-# ais-catcher-secret.example.yaml.
+# Station and dongle defaults. **ais-catcher-secret** can override any key (e.g. LAT/LON,
+# EXTRA_ARGS); see README.md.
 apiVersion: v1
 kind: ConfigMap
 metadata:

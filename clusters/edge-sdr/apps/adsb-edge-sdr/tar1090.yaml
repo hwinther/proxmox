@@ -1,0 +1,83 @@
+# Shares dump1090 JSON via same hostPath as dump1090-fa; must schedule on same node (podAffinity).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tar1090
+  namespace: adsb-edge-sdr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tar1090
+  template:
+    metadata:
+      labels:
+        app: tar1090
+        app.kubernetes.io/name: tar1090
+        app.kubernetes.io/part-of: adsb-edge-sdr
+    spec:
+      tolerations:
+        - key: node-type
+          operator: Equal
+          value: edge-sdr
+          effect: NoSchedule
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: role
+                    operator: In
+                    values:
+                      - sdr-edge
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app: dump1090-fa
+              topologyKey: kubernetes.io/hostname
+      containers:
+        - name: tar1090
+          image: ghcr.io/hwinther/proxmox/sdr/adsb/tar1090-wsh:0.1.0
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: adsb-env
+            - secretRef:
+                name: adsb-secret
+                optional: true
+          volumeMounts:
+            - name: dump1090-run
+              mountPath: /run/dump1090-fa
+              readOnly: true
+          readinessProbe:
+            tcpSocket:
+              port: 80
+            initialDelaySeconds: 20
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+      volumes:
+        - name: dump1090-run
+          hostPath:
+            path: /var/lib/k8s-edge-sdr/dump1090-fa
+            type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tar1090
+  namespace: adsb-edge-sdr
+spec:
+  selector:
+    app: tar1090
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      protocol: TCP
