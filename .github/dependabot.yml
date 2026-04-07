@@ -70,6 +70,9 @@ updates:
     test:
       patterns:
       - "ghcr.io/hwinther/test/*"
+    fluxcd:
+      patterns:
+      - "fluxcd/*"
 
 # edge-sdr cluster (k0s / SDR edge).
 - package-ecosystem: "docker"
@@ -97,6 +100,9 @@ updates:
     test:
       patterns:
       - "ghcr.io/hwinther/test/*"
+    fluxcd:
+      patterns:
+      - "fluxcd/*"
 
 # Production cluster — prod workloads only (excludes in-cluster test apps).
 - package-ecosystem: "docker"
@@ -125,6 +131,9 @@ updates:
     test:
       patterns:
       - "ghcr.io/hwinther/test/*"
+    fluxcd:
+      patterns:
+      - "fluxcd/*"
 
 # Production cluster — test-tier apps (separate PRs from prod workloads above).
 - package-ecosystem: "docker"
