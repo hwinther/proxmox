@@ -58,10 +58,10 @@ spec:
           resources:
             requests:
               cpu: 50m
-              memory: 128Mi
+              memory: 48Mi
             limits:
               cpu: "1"
-              memory: 512Mi
+              memory: 256Mi
       volumes:
         - name: dump1090-run
           hostPath:

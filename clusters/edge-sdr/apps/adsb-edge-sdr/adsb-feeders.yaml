@@ -55,10 +55,10 @@ spec:
           resources:
             requests:
               cpu: 50m
-              memory: 128Mi
+              memory: 32Mi
             limits:
               cpu: 500m
-              memory: 384Mi
+              memory: 256Mi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -110,10 +110,10 @@ spec:
           resources:
             requests:
               cpu: 50m
-              memory: 128Mi
+              memory: 32Mi
             limits:
               cpu: 500m
-              memory: 256Mi
+              memory: 192Mi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -159,10 +159,10 @@ spec:
           resources:
             requests:
               cpu: 50m
-              memory: 128Mi
+              memory: 32Mi
             limits:
               cpu: 500m
-              memory: 384Mi
+              memory: 256Mi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -208,7 +208,7 @@ spec:
           resources:
             requests:
               cpu: 50m
-              memory: 128Mi
+              memory: 32Mi
             limits:
               cpu: 500m
-              memory: 256Mi
+              memory: 192Mi
