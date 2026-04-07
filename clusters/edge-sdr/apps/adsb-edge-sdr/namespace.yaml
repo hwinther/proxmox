@@ -1,0 +1,8 @@
+# ADSB stack (dump1090-fa, tar1090, feeders) on edge Pi workers. Shared JSON under hostPath
+# /var/lib/k8s-edge-sdr/dump1090-fa (dump1090 + tar1090 must land on the same node).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: adsb-edge-sdr
+  labels:
+    app.kubernetes.io/part-of: adsb-edge-sdr

@@ -1,0 +1,18 @@
+# Namespace uses hostPath for USB (dump1090) and shared JSON dir (dump1090 + tar1090).
+apiVersion: kyverno.io/v2beta1
+kind: PolicyException
+metadata:
+  name: adsb-edge-sdr-hostpath
+  namespace: adsb-edge-sdr
+spec:
+  exceptions:
+    - policyName: wsh-disallow-host-path
+      ruleNames:
+        - host-path
+  match:
+    any:
+      - resources:
+          kinds:
+            - Pod
+          namespaces:
+            - adsb-edge-sdr

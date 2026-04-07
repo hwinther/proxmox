@@ -1,0 +1,18 @@
+# Defaults for compose-derived settings. **LAT**, **LON**, **ALT** (and other keys) can be
+# overridden by the same names in **adsb-secret** (envFrom: ConfigMap then Secret — see README.md).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: adsb-env
+  namespace: adsb-edge-sdr
+data:
+  LAT: "59.0"
+  LON: "10.0"
+  ALT: "100"
+  DEVICE_TYPE: rtlsdr
+  DEVICE_INDEX: "00001090"
+  EXTRA_ARGS: "--quiet --wisdom /opt/dump1090-fa/wisdom.rpi3b"
+  AISCATCHER_SERVER: "https://ais.edge-sdr.wsh.no"
+  AISCATCHER_REFRESH: "15"
+  SKYAWARE_URL: ""
+  DEBUG: "false"

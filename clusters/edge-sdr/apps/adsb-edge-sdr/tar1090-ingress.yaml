@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tar1090
+  namespace: adsb-edge-sdr
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Applications
+    gethomepage.dev/name: tar1090 (edge / Pi)
+    gethomepage.dev/icon: mdi-airplane
+    gethomepage.dev/description: ADS-B map; pairs with dump1090-fa on the same node (shared hostPath)
+spec:
+  rules:
+    - host: tar1090.edge-sdr.wsh.no
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: tar1090
+                port:
+                  number: 80
