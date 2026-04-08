@@ -2,7 +2,8 @@ FROM debian:buster AS base
 LABEL maintainer="Hans Christian Winther-Sørensen <docker@wsh.no>"
 ENV DEBIAN_FRONTEND=noninteractive
 SHELL ["/bin/bash", "-x", "-o", "pipefail", "-c"]
-RUN apt-get update && \
+RUN sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list && \
+    apt-get update && \
     apt-get -y full-upgrade
 
 FROM base AS runtime
