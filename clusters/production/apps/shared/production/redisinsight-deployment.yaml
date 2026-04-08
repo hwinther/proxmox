@@ -16,7 +16,13 @@ spec:
     spec:
       containers:
         - name: redisinsight
-          image: redis/redisinsight:latest
+          image: docker.io/redis/redisinsight@sha256:55542a762210bb1cd681410282642bac0970f780f39bc134565394a81b1f1fd9 # latest as of pin
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
           resources:
             requests:
               cpu: 50m
@@ -28,6 +34,12 @@ spec:
             - name: http
               containerPort: 5540
               protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 15
           env:
             - name: RI_PROXY_PATH
               value: "/"
