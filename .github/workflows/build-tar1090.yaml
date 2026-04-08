@@ -47,7 +47,7 @@ jobs:
 
       - name: Build and push docker image
         uses: ./.github/actions/docker
-        if: ${{ steps.git-tag-diff.outputs.skip == 'false' }}
+        # if: ${{ steps.git-tag-diff.outputs.skip == 'false' }}
         with:
           package_name: ${{ env.PACKAGE_NAME }}
           package_path: ${{ env.PACKAGE_PATH }}

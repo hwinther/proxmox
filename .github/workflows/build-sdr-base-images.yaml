@@ -64,7 +64,7 @@ jobs:
 
       - name: Build and push runtime docker image
         uses: ./.github/actions/docker
-        if: ${{ steps.git-tag-diff-base-image.outputs.skip == 'false' }}
+        # if: ${{ steps.git-tag-diff-base-image.outputs.skip == 'false' }}
         with:
           package_name: sdr-base-wsh
           package_path: ${{ env.PACKAGE_PATH }}
@@ -83,7 +83,7 @@ jobs:
 
       - name: Build and push build docker image
         uses: ./.github/actions/docker
-        if: ${{ steps.git-tag-diff-build-image.outputs.skip == 'false' }}
+        # if: ${{ steps.git-tag-diff-build-image.outputs.skip == 'false' }}
         with:
           package_name: sdr-build-wsh
           package_path: ${{ env.PACKAGE_PATH }}
