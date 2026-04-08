@@ -2,7 +2,7 @@
 # Scoped to ghcr.io/hwinther/* — other registries/images are not evaluated (no exception needed).
 #
 # Legacy org images without attestations: add skipImageReferences on each verifyImages entry, or create
-# ClusterPolicyException (kyverno.io/v2beta1) with spec.verifyImages.imageReferences for those patterns.
+# ClusterPolicyException (kyverno.io/v2) with spec.verifyImages.imageReferences for those patterns.
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:

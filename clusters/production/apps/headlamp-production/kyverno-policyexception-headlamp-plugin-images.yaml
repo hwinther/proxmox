@@ -1,5 +1,5 @@
 # Third-party plugin image (Flux sidebar) has no stable digest pin in this repo; kubescape-plugin uses digest.
-apiVersion: kyverno.io/v2beta1
+apiVersion: kyverno.io/v2
 kind: PolicyException
 metadata:
   name: headlamp-plugin-flux-image

@@ -1,5 +1,5 @@
 # Exempt ais-catcher from wsh-disallow-host-path (USB device access under /dev/bus/usb).
-apiVersion: kyverno.io/v2beta1
+apiVersion: kyverno.io/v2
 kind: PolicyException
 metadata:
   name: ais-catcher-hostpath-usb
