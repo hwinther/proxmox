@@ -37,12 +37,13 @@ jobs:
           if [ -n "$PREVIOUS_VERSION" ]; then
             CHANGELOG_URL="${CHANGELOG_URL}"$'\n'"https://github.com/fluxcd/flux2/compare/${PREVIOUS_VERSION}...${VERSION}"
           fi
+          # Public repo: do not send GITHUB_TOKEN — cross-repo API calls with the workflow
+          # token can be rejected (403) for other orgs, which leaves body empty.
           RELEASE_NOTES=""
-          if RELEASE_JSON=$(curl -fsSL \
+          if RELEASE_JSON=$(curl -fsSL --connect-timeout 20 \
             -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
             "https://api.github.com/repos/fluxcd/flux2/releases/tags/${VERSION}"); then
-            RELEASE_NOTES=$(echo "$RELEASE_JSON" | jq -r '.body // empty')
+            RELEASE_NOTES=$(printf '%s\n' "$RELEASE_JSON" | jq -r '.body // empty')
           fi
           if [ -z "$RELEASE_NOTES" ]; then
             RELEASE_NOTES="*No release notes available for ${VERSION}.*"
@@ -61,7 +62,7 @@ jobs:
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
         with:
-          branch: update-flux-production
+          branch: chore/update-flux-production
           commit-message: |
             chore(flux): update to ${{ steps.update.outputs.flux_version }} (production cluster)
             Changelog:
@@ -111,12 +112,13 @@ jobs:
           if [ -n "$PREVIOUS_VERSION" ]; then
             CHANGELOG_URL="${CHANGELOG_URL}"$'\n'"https://github.com/fluxcd/flux2/compare/${PREVIOUS_VERSION}...${VERSION}"
           fi
+          # Public repo: do not send GITHUB_TOKEN — cross-repo API calls with the workflow
+          # token can be rejected (403) for other orgs, which leaves body empty.
           RELEASE_NOTES=""
-          if RELEASE_JSON=$(curl -fsSL \
+          if RELEASE_JSON=$(curl -fsSL --connect-timeout 20 \
             -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
             "https://api.github.com/repos/fluxcd/flux2/releases/tags/${VERSION}"); then
-            RELEASE_NOTES=$(echo "$RELEASE_JSON" | jq -r '.body // empty')
+            RELEASE_NOTES=$(printf '%s\n' "$RELEASE_JSON" | jq -r '.body // empty')
           fi
           if [ -z "$RELEASE_NOTES" ]; then
             RELEASE_NOTES="*No release notes available for ${VERSION}.*"
@@ -135,7 +137,7 @@ jobs:
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
         with:
-          branch: update-flux-test
+          branch: chore/update-flux-test
           commit-message: |
             chore(flux): update to ${{ steps.update.outputs.flux_version }} (test cluster)
             Changelog:
@@ -185,12 +187,13 @@ jobs:
           if [ -n "$PREVIOUS_VERSION" ]; then
             CHANGELOG_URL="${CHANGELOG_URL}"$'\n'"https://github.com/fluxcd/flux2/compare/${PREVIOUS_VERSION}...${VERSION}"
           fi
+          # Public repo: do not send GITHUB_TOKEN — cross-repo API calls with the workflow
+          # token can be rejected (403) for other orgs, which leaves body empty.
           RELEASE_NOTES=""
-          if RELEASE_JSON=$(curl -fsSL \
+          if RELEASE_JSON=$(curl -fsSL --connect-timeout 20 \
             -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
             "https://api.github.com/repos/fluxcd/flux2/releases/tags/${VERSION}"); then
-            RELEASE_NOTES=$(echo "$RELEASE_JSON" | jq -r '.body // empty')
+            RELEASE_NOTES=$(printf '%s\n' "$RELEASE_JSON" | jq -r '.body // empty')
           fi
           if [ -z "$RELEASE_NOTES" ]; then
             RELEASE_NOTES="*No release notes available for ${VERSION}.*"
@@ -209,7 +212,7 @@ jobs:
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
         with:
-          branch: update-flux-edge
+          branch: chore/update-flux-edge
           commit-message: |
             chore(flux): update to ${{ steps.update.outputs.flux_version }} (edge cluster)
             Changelog:
