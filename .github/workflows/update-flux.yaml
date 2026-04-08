@@ -23,20 +23,33 @@ jobs:
       - name: Check for updates
         id: update
         run: |
+          PREVIOUS_VERSION="$(rg -o 'v[0-9]+\.[0-9]+\.[0-9]+' ./clusters/production/flux-system/gotk-components.yaml -m1 || true)"
           flux install --components-extra=image-reflector-controller,image-automation-controller \
             --export > ./clusters/production/flux-system/gotk-components.yaml
 
-          VERSION="$(flux -v)"
+          VERSION="$(flux -v | rg -o 'v[0-9]+\.[0-9]+\.[0-9]+' -m1)"
+          CHANGELOG_URL="https://github.com/fluxcd/flux2/releases/tag/${VERSION}"
+          if [ -n "$PREVIOUS_VERSION" ]; then
+            CHANGELOG_URL="${CHANGELOG_URL}"$'\n'"https://github.com/fluxcd/flux2/compare/${PREVIOUS_VERSION}...${VERSION}"
+          fi
           echo "flux_version=$VERSION" >> $GITHUB_OUTPUT
+          echo "flux_changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG_URL" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
         with:
           branch: update-flux-production
-          commit-message: Update to ${{ steps.update.outputs.flux_version }} (production cluster)
-          title: Update to ${{ steps.update.outputs.flux_version }} (production cluster)
+          commit-message: |
+            chore(flux): update to ${{ steps.update.outputs.flux_version }} (production cluster)
+            Changelog:
+            ${{ steps.update.outputs.flux_changelog }}
+          title: "chore(flux): update to ${{ steps.update.outputs.flux_version }} (production cluster)"
           body: |
             ${{ steps.update.outputs.flux_version }}
+            Changelog:
+            ${{ steps.update.outputs.flux_changelog }}
 
   update-test-cluster:
     runs-on: ubuntu-latest
@@ -53,20 +66,33 @@ jobs:
       - name: Check for updates
         id: update
         run: |
+          PREVIOUS_VERSION="$(rg -o 'v[0-9]+\.[0-9]+\.[0-9]+' ./clusters/test-deployment/flux-system/gotk-components.yaml -m1 || true)"
           flux install --components-extra=image-reflector-controller,image-automation-controller \
           --export > ./clusters/test-deployment/flux-system/gotk-components.yaml
 
-          VERSION="$(flux -v)"
+          VERSION="$(flux -v | rg -o 'v[0-9]+\.[0-9]+\.[0-9]+' -m1)"
+          CHANGELOG_URL="https://github.com/fluxcd/flux2/releases/tag/${VERSION}"
+          if [ -n "$PREVIOUS_VERSION" ]; then
+            CHANGELOG_URL="${CHANGELOG_URL}"$'\n'"https://github.com/fluxcd/flux2/compare/${PREVIOUS_VERSION}...${VERSION}"
+          fi
           echo "flux_version=$VERSION" >> $GITHUB_OUTPUT
+          echo "flux_changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG_URL" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
         with:
           branch: update-flux-test
-          commit-message: Update to ${{ steps.update.outputs.flux_version }} (test cluster)
-          title: Update to ${{ steps.update.outputs.flux_version }} (test cluster)
+          commit-message: |
+            chore(flux): update to ${{ steps.update.outputs.flux_version }} (test cluster)
+            Changelog:
+            ${{ steps.update.outputs.flux_changelog }}
+          title: "chore(flux): update to ${{ steps.update.outputs.flux_version }} (test cluster)"
           body: |
             ${{ steps.update.outputs.flux_version }}
+            Changelog:
+            ${{ steps.update.outputs.flux_changelog }}
 
   update-edge-cluster:
     runs-on: ubuntu-latest
@@ -83,17 +109,30 @@ jobs:
       - name: Check for updates
         id: update
         run: |
+          PREVIOUS_VERSION="$(rg -o 'v[0-9]+\.[0-9]+\.[0-9]+' ./clusters/edge-sdr/flux-system/gotk-components.yaml -m1 || true)"
           flux install --components-extra=image-reflector-controller,image-automation-controller \
           --export > ./clusters/edge-sdr/flux-system/gotk-components.yaml
 
-          VERSION="$(flux -v)"
+          VERSION="$(flux -v | rg -o 'v[0-9]+\.[0-9]+\.[0-9]+' -m1)"
+          CHANGELOG_URL="https://github.com/fluxcd/flux2/releases/tag/${VERSION}"
+          if [ -n "$PREVIOUS_VERSION" ]; then
+            CHANGELOG_URL="${CHANGELOG_URL}"$'\n'"https://github.com/fluxcd/flux2/compare/${PREVIOUS_VERSION}...${VERSION}"
+          fi
           echo "flux_version=$VERSION" >> $GITHUB_OUTPUT
+          echo "flux_changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG_URL" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
         with:
           branch: update-flux-edge
-          commit-message: Update to ${{ steps.update.outputs.flux_version }} (edge cluster)
-          title: Update to ${{ steps.update.outputs.flux_version }} (edge cluster)
+          commit-message: |
+            chore(flux): update to ${{ steps.update.outputs.flux_version }} (edge cluster)
+            Changelog:
+            ${{ steps.update.outputs.flux_changelog }}
+          title: "chore(flux): update to ${{ steps.update.outputs.flux_version }} (edge cluster)"
           body: |
             ${{ steps.update.outputs.flux_version }}
+            Changelog:
+            ${{ steps.update.outputs.flux_changelog }}
