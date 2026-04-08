@@ -6,8 +6,10 @@ metadata:
 spec:
   replicas: 1
   # RWO PVC: avoid RollingUpdate (second pod cannot attach until the first releases the volume).
+  # rollingUpdate: null clears stale rollingUpdate from live objects on strategic merge (required with Recreate).
   strategy:
     type: Recreate
+    rollingUpdate: null
   selector:
     matchLabels:
       app: clutterstock-api
