@@ -127,3 +127,5 @@ For apps that also need trace-specific config (e.g. .NET), add:
 3. Add the filename to `clusters/test-deployment/apps/kustomization.yaml`.
 4. Add an Ingress entry in `clusters/test-deployment/apps/ingress.yaml` if external access is needed.
 5. Commit to `main` for Flux to reconcile.
+
+For **production** or any cluster that applies **Kyverno** `wsh-*` policies and **Kubescape** scans, follow [**.cursor/skills/k8s-kyverno-kubescape-compliance/SKILL.md**](../k8s-kyverno-kubescape-compliance/SKILL.md): pin images **by digest**, set **securityContext** / **limits** / **readinessProbe**, add **NetworkPolicy** where appropriate, and use **PolicyExceptions** only when narrowly scoped.
