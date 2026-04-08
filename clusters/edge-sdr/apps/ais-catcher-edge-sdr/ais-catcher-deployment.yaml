@@ -38,7 +38,7 @@ spec:
                 - sdr-edge
       containers:
       - name: ais-catcher
-        image: ghcr.io/hwinther/proxmox/sdr/ais/ais-catcher-wsh:0.3.0
+        image: ghcr.io/hwinther/proxmox/sdr/ais/ais-catcher-wsh:0.4.0
         imagePullPolicy: IfNotPresent
         # ConfigMap first, then Secret: same key in both → Secret wins (good for API keys / EXTRA_ARGS).
         # Create Secret manually (or ExternalSecrets / SOPS); optional so the pod runs without it.
