@@ -125,6 +125,11 @@ metadata:
     app.kubernetes.io/name: homepage
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
   selector:
     matchLabels:
       app.kubernetes.io/name: homepage
@@ -133,6 +138,24 @@ spec:
       labels:
         app.kubernetes.io/name: homepage
     spec:
+      # Controller / non-Pi workers only. Pis use role=sdr-edge + taint node-type=edge-sdr.
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: role
+                    operator: NotIn
+                    values:
+                      - sdr-edge
+      # k0s controllers often retain control-plane NoSchedule; allow scheduling there without tolerating Pi taint.
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+          effect: NoSchedule
       serviceAccountName: homepage
       automountServiceAccountToken: true
       containers:
@@ -178,6 +201,12 @@ spec:
             initialDelaySeconds: 20
             periodSeconds: 20
             timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /api/healthcheck
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
           volumeMounts:
             - mountPath: /app/config/custom.js
               name: homepage-config

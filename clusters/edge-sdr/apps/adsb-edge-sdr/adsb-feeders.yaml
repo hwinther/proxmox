@@ -6,6 +6,11 @@ metadata:
   namespace: adsb-edge-sdr
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
   selector:
     matchLabels:
       app: piaware
@@ -67,6 +72,11 @@ metadata:
   namespace: adsb-edge-sdr
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
   selector:
     matchLabels:
       app: fr24
@@ -122,6 +132,11 @@ metadata:
   namespace: adsb-edge-sdr
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
   selector:
     matchLabels:
       app: adsbexchange
@@ -171,6 +186,11 @@ metadata:
   namespace: adsb-edge-sdr
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
   selector:
     matchLabels:
       app: opensky

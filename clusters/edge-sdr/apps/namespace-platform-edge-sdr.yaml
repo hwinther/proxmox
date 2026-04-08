@@ -1,5 +1,5 @@
-# Shared platform namespace for edge-sdr (Homepage ingress, etc.).
-# Per-app namespaces use appname-environment (e.g. headlamp-edge-sdr).
+# Platform namespace for edge-sdr (e.g. Homepage on controller / non-Pi workers).
+# Pi pool uses role=sdr-edge + taint node-type=edge-sdr; those nodes are excluded from Homepage scheduling.
 apiVersion: v1
 kind: Namespace
 metadata:

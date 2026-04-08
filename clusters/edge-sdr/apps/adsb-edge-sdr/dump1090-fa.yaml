@@ -5,6 +5,12 @@ metadata:
   namespace: adsb-edge-sdr
 spec:
   replicas: 1
+  # Edge node: avoid default maxSurge (25% → +1 pod) doubling memory during Flux/image rollouts.
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
   selector:
     matchLabels:
       app: dump1090-fa
