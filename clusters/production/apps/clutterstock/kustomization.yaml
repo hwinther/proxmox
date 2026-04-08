@@ -4,3 +4,4 @@ resources:
   - namespace.yaml
   - clutterstock-api-deployment.yaml
   - clutterstock-frontend-deployment.yaml
+  - networkpolicies.yaml

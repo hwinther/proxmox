@@ -8,12 +8,15 @@ spec:
   backoffLimit: 3
   ttlSecondsAfterFinished: 86400
   template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: clutterstock-migrate
     spec:
       restartPolicy: Never
       # RWO PVC: scale clutterstock-api to 0 before this Job runs, or the volume stays attached to the API pod.
       initContainers:
       - name: ensure-data-writable
-        image: busybox:1.37
+        image: docker.io/library/busybox@sha256:b8d1827e38a1d49cd17217efd7b07d689e4ea1744e39c7dcbb95533d175bea65 # 1.37
         command:
         - sh
         - -c
@@ -23,10 +26,13 @@ spec:
           mountPath: /data
         securityContext:
           runAsUser: 0
+          allowPrivilegeEscalation: false
       containers:
       - name: migrator
         image: ghcr.io/hwinther/clutterstock/migrator@sha256:b6a8642d79f2ee69afd596c79b88f6063d96b78b75cc4ebf02b64851662322fc # 0.10.0
         imagePullPolicy: Always
+        securityContext:
+          allowPrivilegeEscalation: false
         env:
         - name: ConnectionStrings__ClutterStock
           value: Data Source=/data/clutterstock.db
