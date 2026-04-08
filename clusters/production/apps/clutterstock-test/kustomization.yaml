@@ -5,3 +5,5 @@ resources:
   - clutterstock-api-deployment.yaml
   - clutterstock-frontend-deployment.yaml
   - networkpolicies.yaml
+patches:
+  - path: clutterstock-api-strategy-patch.yaml

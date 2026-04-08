@@ -1,0 +1,10 @@
+# Replace entire spec.strategy so live rollingUpdate is not merged with type: Recreate (K8s rejects both).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clutterstock-api
+  namespace: clutterstock-production
+spec:
+  strategy:
+    $patch: replace
+    type: Recreate

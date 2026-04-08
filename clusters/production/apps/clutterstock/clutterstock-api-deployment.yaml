@@ -8,7 +8,6 @@ spec:
   # RWO PVC: avoid RollingUpdate (second pod cannot attach until the first releases the volume).
   strategy:
     type: Recreate
-    rollingUpdate: null
   selector:
     matchLabels:
       app: clutterstock-api
