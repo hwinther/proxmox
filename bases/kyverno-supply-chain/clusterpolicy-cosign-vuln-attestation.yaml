@@ -1,4 +1,5 @@
-# Cosign vulnerability scan attestation (e.g. grype scan output passed to cosign attest --type vuln).
+# Cosign vulnerability scan attestation (grype SARIF / cosign attest --type vuln).
+# Identity: same reusable workflow as other ghcr.io/hwinther/* supply-chain policies (@refs/tags/v1).
 # Remove this resource from bases/kyverno-supply-chain/kustomization.yaml if you do not publish vuln attestations.
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
@@ -39,6 +40,6 @@ spec:
         - entries:
           - keyless:
               issuer: https://token.actions.githubusercontent.com
-              subject: https://github.com/hwinther/*
+              subjectRegExp: ^https://github.com/hwinther/reusable-workflows/\.github/workflows/docker-container\.yml@refs/tags/v1$
               rekor:
                 url: https://rekor.sigstore.dev
