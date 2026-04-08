@@ -1,0 +1,22 @@
+# Init container must run as root to chmod SQLite volume; migrator runs non-root.
+apiVersion: kyverno.io/v2beta1
+kind: PolicyException
+metadata:
+  name: clutterstock-migrate-init-root
+  namespace: clutterstock-production
+spec:
+  exceptions:
+    - policyName: wsh-require-run-as-non-root
+      ruleNames:
+        - run-as-non-root
+        - autogen-run-as-non-root
+  match:
+    any:
+      - resources:
+          kinds:
+            - Pod
+          namespaces:
+            - clutterstock-production
+          selector:
+            matchLabels:
+              app.kubernetes.io/component: clutterstock-migrate
