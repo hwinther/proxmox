@@ -5,6 +5,10 @@ metadata:
   namespace: clutterstock-test
 spec:
   replicas: 1
+  # RWO PVC: avoid RollingUpdate (second pod cannot attach until the first releases the volume).
+  strategy:
+    type: Recreate
+    rollingUpdate: null
   selector:
     matchLabels:
       app: clutterstock-api
@@ -24,7 +28,7 @@ spec:
           allowPrivilegeEscalation: false
           capabilities:
             drop:
-              - ALL
+            - ALL
         resources:
           requests:
             cpu: 100m

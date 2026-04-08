@@ -9,7 +9,7 @@ metadata:
     gethomepage.dev/group: Applications
     gethomepage.dev/name: Clutterstock
     gethomepage.dev/icon: mdi-image-multiple-outline
-    gethomepage.dev/description: Clutterstock web app (API under /api/)
+    gethomepage.dev/description: Clutterstock web app (API under /api/; Swagger under /swagger)
     # Ingress name ≠ single Deployment; both pods back this host (see gethomepage kubernetes.md)
     gethomepage.dev/pod-selector: app in (clutterstock-frontend, clutterstock-api)
 spec:
@@ -18,6 +18,13 @@ spec:
       http:
         paths:
           - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: clutterstock-api
+                port:
+                  number: 8080
+          - path: /swagger
             pathType: Prefix
             backend:
               service:
@@ -51,6 +58,13 @@ spec:
       http:
         paths:
           - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: clutterstock-api
+                port:
+                  number: 8080
+          - path: /swagger
             pathType: Prefix
             backend:
               service:
