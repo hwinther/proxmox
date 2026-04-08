@@ -37,10 +37,26 @@ jobs:
           if [ -n "$PREVIOUS_VERSION" ]; then
             CHANGELOG_URL="${CHANGELOG_URL}"$'\n'"https://github.com/fluxcd/flux2/compare/${PREVIOUS_VERSION}...${VERSION}"
           fi
+          RELEASE_NOTES=""
+          if RELEASE_JSON=$(curl -fsSL \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            "https://api.github.com/repos/fluxcd/flux2/releases/tags/${VERSION}"); then
+            RELEASE_NOTES=$(echo "$RELEASE_JSON" | jq -r '.body // empty')
+          fi
+          if [ -z "$RELEASE_NOTES" ]; then
+            RELEASE_NOTES="*No release notes available for ${VERSION}.*"
+          fi
+          DELIM="FLUX_RELEASE_NOTES_$(openssl rand -hex 16)"
           echo "flux_version=$VERSION" >> $GITHUB_OUTPUT
           echo "flux_changelog<<EOF" >> $GITHUB_OUTPUT
           echo "$CHANGELOG_URL" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
+          {
+            echo "flux_release_notes<<${DELIM}"
+            echo "$RELEASE_NOTES"
+            echo "${DELIM}"
+          } >> $GITHUB_OUTPUT
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
@@ -53,8 +69,18 @@ jobs:
           title: "chore(flux): update to ${{ steps.update.outputs.flux_version }} (production cluster)"
           body: |
             ${{ steps.update.outputs.flux_version }}
-            Changelog:
+
+            **Changelog / compare**
             ${{ steps.update.outputs.flux_changelog }}
+
+            <details>
+            <summary>Release notes</summary>
+
+            *Sourced from [fluxcd/flux2 `${{ steps.update.outputs.flux_version }}`](https://github.com/fluxcd/flux2/releases/tag/${{ steps.update.outputs.flux_version }}).*
+
+            ${{ steps.update.outputs.flux_release_notes }}
+
+            </details>
 
   update-test-cluster:
     runs-on: ubuntu-latest
@@ -85,10 +111,26 @@ jobs:
           if [ -n "$PREVIOUS_VERSION" ]; then
             CHANGELOG_URL="${CHANGELOG_URL}"$'\n'"https://github.com/fluxcd/flux2/compare/${PREVIOUS_VERSION}...${VERSION}"
           fi
+          RELEASE_NOTES=""
+          if RELEASE_JSON=$(curl -fsSL \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            "https://api.github.com/repos/fluxcd/flux2/releases/tags/${VERSION}"); then
+            RELEASE_NOTES=$(echo "$RELEASE_JSON" | jq -r '.body // empty')
+          fi
+          if [ -z "$RELEASE_NOTES" ]; then
+            RELEASE_NOTES="*No release notes available for ${VERSION}.*"
+          fi
+          DELIM="FLUX_RELEASE_NOTES_$(openssl rand -hex 16)"
           echo "flux_version=$VERSION" >> $GITHUB_OUTPUT
           echo "flux_changelog<<EOF" >> $GITHUB_OUTPUT
           echo "$CHANGELOG_URL" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
+          {
+            echo "flux_release_notes<<${DELIM}"
+            echo "$RELEASE_NOTES"
+            echo "${DELIM}"
+          } >> $GITHUB_OUTPUT
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
@@ -101,8 +143,18 @@ jobs:
           title: "chore(flux): update to ${{ steps.update.outputs.flux_version }} (test cluster)"
           body: |
             ${{ steps.update.outputs.flux_version }}
-            Changelog:
+
+            **Changelog / compare**
             ${{ steps.update.outputs.flux_changelog }}
+
+            <details>
+            <summary>Release notes</summary>
+
+            *Sourced from [fluxcd/flux2 `${{ steps.update.outputs.flux_version }}`](https://github.com/fluxcd/flux2/releases/tag/${{ steps.update.outputs.flux_version }}).*
+
+            ${{ steps.update.outputs.flux_release_notes }}
+
+            </details>
 
   update-edge-cluster:
     runs-on: ubuntu-latest
@@ -133,10 +185,26 @@ jobs:
           if [ -n "$PREVIOUS_VERSION" ]; then
             CHANGELOG_URL="${CHANGELOG_URL}"$'\n'"https://github.com/fluxcd/flux2/compare/${PREVIOUS_VERSION}...${VERSION}"
           fi
+          RELEASE_NOTES=""
+          if RELEASE_JSON=$(curl -fsSL \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            "https://api.github.com/repos/fluxcd/flux2/releases/tags/${VERSION}"); then
+            RELEASE_NOTES=$(echo "$RELEASE_JSON" | jq -r '.body // empty')
+          fi
+          if [ -z "$RELEASE_NOTES" ]; then
+            RELEASE_NOTES="*No release notes available for ${VERSION}.*"
+          fi
+          DELIM="FLUX_RELEASE_NOTES_$(openssl rand -hex 16)"
           echo "flux_version=$VERSION" >> $GITHUB_OUTPUT
           echo "flux_changelog<<EOF" >> $GITHUB_OUTPUT
           echo "$CHANGELOG_URL" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
+          {
+            echo "flux_release_notes<<${DELIM}"
+            echo "$RELEASE_NOTES"
+            echo "${DELIM}"
+          } >> $GITHUB_OUTPUT
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
@@ -149,5 +217,15 @@ jobs:
           title: "chore(flux): update to ${{ steps.update.outputs.flux_version }} (edge cluster)"
           body: |
             ${{ steps.update.outputs.flux_version }}
-            Changelog:
+
+            **Changelog / compare**
             ${{ steps.update.outputs.flux_changelog }}
+
+            <details>
+            <summary>Release notes</summary>
+
+            *Sourced from [fluxcd/flux2 `${{ steps.update.outputs.flux_version }}`](https://github.com/fluxcd/flux2/releases/tag/${{ steps.update.outputs.flux_version }}).*
+
+            ${{ steps.update.outputs.flux_release_notes }}
+
+            </details>
