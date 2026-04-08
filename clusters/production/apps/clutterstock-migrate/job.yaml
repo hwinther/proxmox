@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: clutterstock-migrate-v096
+  name: clutterstock-migrate-v097
   namespace: clutterstock-production
 spec:
   backoffLimit: 3
@@ -13,6 +13,12 @@ spec:
         app.kubernetes.io/component: clutterstock-migrate
     spec:
       restartPolicy: Never
+      # Same UID/fsGroup as clutterstock-api so SQLite files and /data stay readable/writable by the API.
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1654
+        fsGroup: 1654
+        fsGroupChangePolicy: OnRootMismatch
       # RWO PVC: scale clutterstock-api to 0 before this Job runs, or the volume stays attached to the API pod.
       initContainers:
       - name: ensure-data-writable
@@ -20,19 +26,24 @@ spec:
         command:
         - sh
         - -c
-        - mkdir -p /data && chmod 777 /data && ls -la /data
+        - mkdir -p /data && ls -la /data
         volumeMounts:
         - name: sqlite-data
           mountPath: /data
         securityContext:
-          runAsUser: 0
           allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
       containers:
       - name: migrator
         image: ghcr.io/hwinther/clutterstock/migrator@sha256:b6a8642d79f2ee69afd596c79b88f6063d96b78b75cc4ebf02b64851662322fc # 0.10.0
         imagePullPolicy: Always
         securityContext:
           allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
         env:
         - name: ConnectionStrings__ClutterStock
           value: Data Source=/data/clutterstock.db

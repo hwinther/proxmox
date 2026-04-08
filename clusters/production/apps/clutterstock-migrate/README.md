@@ -21,7 +21,7 @@ The migrator **shares the same RWO PVC** (`ceph-rbd`) as `clutterstock-api`. Onl
 
    ```bash
    flux reconcile kustomization clutterstock-migrate -n flux-system --with-source
-   kubectl -n clutterstock-production wait job/clutterstock-migrate-v091 --for=condition=complete --timeout=300s
+   kubectl -n clutterstock-production wait job/clutterstock-migrate-v097 --for=condition=complete --timeout=300s
    ```
 
 4. **Scale API back**:
@@ -32,7 +32,7 @@ The migrator **shares the same RWO PVC** (`ceph-rbd`) as `clutterstock-api`. Onl
 
 ## New migration image / reruns
 
-Kubernetes **Job** pod templates are immutable. Bump `metadata.name` in [`job.yaml`](job.yaml) (e.g. `v091` → `v092`) when you change the migrator image or job spec, then reconcile. Delete old completed Jobs if names clash with TTL.
+Kubernetes **Job** pod templates are immutable. Bump `metadata.name` in [`job.yaml`](job.yaml) (e.g. `v097` → `v098`) when you change the migrator image or job spec, then reconcile. Delete old completed Jobs if names clash with TTL.
 
 ## If you still see `SQLite Error 14`
 
