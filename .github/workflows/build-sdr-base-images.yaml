@@ -10,7 +10,10 @@ on:
       - "compose/templates/sdr-base/**"
 
 permissions:
+  contents: read
   packages: write
+  id-token: write
+  attestations: write
 
 concurrency:
   group: ${{ github.ref }}-sdr-base
@@ -70,6 +73,7 @@ jobs:
           working_directory: ${{ env.WORKING_DIRECTORY }}/${{ matrix.debian_release }}/base-image
           push_condition: ${{ github.event_name != 'pull_request' }}
           tag: ${{ steps.generate-tag.outputs.tag }}
+          attest_supply_chain: "true"
 
       - name: Check for changes in the specified path between tags
         id: git-tag-diff-build-image
@@ -88,3 +92,4 @@ jobs:
           working_directory: ${{ env.WORKING_DIRECTORY }}/${{ matrix.debian_release }}/build-image
           push_condition: ${{ github.event_name != 'pull_request' }}
           tag: ${{ steps.generate-tag.outputs.tag }}
+          attest_supply_chain: "true"

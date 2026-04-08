@@ -44,6 +44,12 @@ inputs:
     required: false
     description: Enable latest tag for default branch
     default: "false"
+  attest_supply_chain:
+    required: false
+    description: >-
+      After push, attach SLSA provenance (registry + GH API), Cosign CycloneDX SBOM, and Grype vuln
+      attestations for Kyverno verifyImages. Requires job permissions id-token:write, attestations:write.
+    default: "false"
 
 runs:
   using: "composite"
@@ -79,6 +85,7 @@ runs:
       password: ${{ env.GH_TOKEN }}
 
   - name: Build and Push Images
+    id: build
     uses: docker/build-push-action@v5
     with:
       context: ${{ inputs.working_directory }}
@@ -89,3 +96,42 @@ runs:
       outputs: type=image,name=target,annotation-index.org.opencontainers.image.description=${{ inputs.package_description }}
       # provenance: false # To simplify pruning
       # sbom: false
+
+  - name: Attest SLSA provenance (registry)
+    if: ${{ inputs.push_condition == 'true' && inputs.attest_supply_chain == 'true' }}
+    uses: actions/attest-build-provenance@v2.2.0
+    with:
+      subject-name: ghcr.io/${{ github.repository }}${{ inputs.package_path }}${{ inputs.package_name }}
+      subject-digest: ${{ steps.build.outputs.digest }}
+      push-to-registry: true
+
+  - name: Install Cosign
+    if: ${{ inputs.push_condition == 'true' && inputs.attest_supply_chain == 'true' }}
+    uses: sigstore/cosign-installer@v3.8.0
+
+  - name: Install Syft and Grype
+    if: ${{ inputs.push_condition == 'true' && inputs.attest_supply_chain == 'true' }}
+    shell: bash
+    env:
+      SYFT_VERSION: v1.38.0
+      GRYPE_VERSION: v0.87.0
+    run: |
+      set -euo pipefail
+      curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin "${SYFT_VERSION}"
+      curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin "${GRYPE_VERSION}"
+
+  - name: Cosign attest SBOM and vulnerability scan
+    if: ${{ inputs.push_condition == 'true' && inputs.attest_supply_chain == 'true' }}
+    shell: bash
+    env:
+      COSIGN_EXPERIMENTAL: "1"
+      REGISTRY_TOKEN: ${{ env.GH_TOKEN }}
+      REGISTRY_USER: ${{ github.actor }}
+      IMAGE_REF: ghcr.io/${{ github.repository }}${{ inputs.package_path }}${{ inputs.package_name }}@${{ steps.build.outputs.digest }}
+    run: |
+      set -euo pipefail
+      echo "${REGISTRY_TOKEN}" | cosign login ghcr.io -u "${REGISTRY_USER}" --password-stdin
+      syft "${IMAGE_REF}" -o cyclonedx-json=/tmp/sbom.cdx.json
+      cosign attest --yes --predicate /tmp/sbom.cdx.json --type cyclonedx "${IMAGE_REF}"
+      grype "${IMAGE_REF}" -o json > /tmp/grype.json
+      cosign attest --yes --predicate /tmp/grype.json --type vuln "${IMAGE_REF}"
