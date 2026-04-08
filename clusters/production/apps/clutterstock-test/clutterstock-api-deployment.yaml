@@ -21,7 +21,7 @@ spec:
         runAsNonRoot: true
       containers:
       - name: clutterstock-api
-        image: ghcr.io/hwinther/clutterstock/api@sha256:23570c124fa723cc2c969307e6ae2f58e733764cd6239163749223baa145c6bb # 0.10.0
+        image: ghcr.io/hwinther/clutterstock/api:0.10.0
         imagePullPolicy: Always
         securityContext:
           allowPrivilegeEscalation: false
