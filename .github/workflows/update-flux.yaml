@@ -23,11 +23,11 @@ jobs:
       - name: Check for updates
         id: update
         run: |
-          PREVIOUS_VERSION="$(rg -o 'v[0-9]+\.[0-9]+\.[0-9]+' ./clusters/production/flux-system/gotk-components.yaml -m1 || true)"
+          PREVIOUS_VERSION="$(grep -Eo 'v[0-9]+\.[0-9]+\.[0-9]+' ./clusters/production/flux-system/gotk-components.yaml | head -n1 || true)"
           flux install --components-extra=image-reflector-controller,image-automation-controller \
             --export > ./clusters/production/flux-system/gotk-components.yaml
 
-          VERSION="$(flux -v | rg -o 'v[0-9]+\.[0-9]+\.[0-9]+' -m1)"
+          VERSION="$(flux -v | grep -Eo 'v[0-9]+\.[0-9]+\.[0-9]+' | head -n1)"
           CHANGELOG_URL="https://github.com/fluxcd/flux2/releases/tag/${VERSION}"
           if [ -n "$PREVIOUS_VERSION" ]; then
             CHANGELOG_URL="${CHANGELOG_URL}"$'\n'"https://github.com/fluxcd/flux2/compare/${PREVIOUS_VERSION}...${VERSION}"
@@ -66,11 +66,11 @@ jobs:
       - name: Check for updates
         id: update
         run: |
-          PREVIOUS_VERSION="$(rg -o 'v[0-9]+\.[0-9]+\.[0-9]+' ./clusters/test-deployment/flux-system/gotk-components.yaml -m1 || true)"
+          PREVIOUS_VERSION="$(grep -Eo 'v[0-9]+\.[0-9]+\.[0-9]+' ./clusters/test-deployment/flux-system/gotk-components.yaml | head -n1 || true)"
           flux install --components-extra=image-reflector-controller,image-automation-controller \
           --export > ./clusters/test-deployment/flux-system/gotk-components.yaml
 
-          VERSION="$(flux -v | rg -o 'v[0-9]+\.[0-9]+\.[0-9]+' -m1)"
+          VERSION="$(flux -v | grep -Eo 'v[0-9]+\.[0-9]+\.[0-9]+' | head -n1)"
           CHANGELOG_URL="https://github.com/fluxcd/flux2/releases/tag/${VERSION}"
           if [ -n "$PREVIOUS_VERSION" ]; then
             CHANGELOG_URL="${CHANGELOG_URL}"$'\n'"https://github.com/fluxcd/flux2/compare/${PREVIOUS_VERSION}...${VERSION}"
@@ -109,11 +109,11 @@ jobs:
       - name: Check for updates
         id: update
         run: |
-          PREVIOUS_VERSION="$(rg -o 'v[0-9]+\.[0-9]+\.[0-9]+' ./clusters/edge-sdr/flux-system/gotk-components.yaml -m1 || true)"
+          PREVIOUS_VERSION="$(grep -Eo 'v[0-9]+\.[0-9]+\.[0-9]+' ./clusters/edge-sdr/flux-system/gotk-components.yaml | head -n1 || true)"
           flux install --components-extra=image-reflector-controller,image-automation-controller \
           --export > ./clusters/edge-sdr/flux-system/gotk-components.yaml
 
-          VERSION="$(flux -v | rg -o 'v[0-9]+\.[0-9]+\.[0-9]+' -m1)"
+          VERSION="$(flux -v | grep -Eo 'v[0-9]+\.[0-9]+\.[0-9]+' | head -n1)"
           CHANGELOG_URL="https://github.com/fluxcd/flux2/releases/tag/${VERSION}"
           if [ -n "$PREVIOUS_VERSION" ]; then
             CHANGELOG_URL="${CHANGELOG_URL}"$'\n'"https://github.com/fluxcd/flux2/compare/${PREVIOUS_VERSION}...${VERSION}"
