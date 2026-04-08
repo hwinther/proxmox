@@ -1,0 +1,19 @@
+# Headlamp chart initContainers copy plugins as root (chown to headlamp uid).
+apiVersion: kyverno.io/v2beta1
+kind: PolicyException
+metadata:
+  name: headlamp-init-root
+  namespace: headlamp-production
+spec:
+  exceptions:
+    - policyName: wsh-require-run-as-non-root
+      ruleNames:
+        - run-as-non-root
+        - autogen-run-as-non-root
+  match:
+    any:
+      - resources:
+          kinds:
+            - Pod
+          namespaces:
+            - headlamp-production

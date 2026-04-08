@@ -16,6 +16,8 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
       containers:
       - name: clutterstock-frontend
         image: ghcr.io/hwinther/clutterstock/frontend@sha256:966ed1a35beb440b34939ace6ec3cd96d641a67c7af251586d9b1864cb88a13f # 0.9.1
