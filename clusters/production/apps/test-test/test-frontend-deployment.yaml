@@ -14,32 +14,44 @@ spec:
         app: test-frontend
         app.kubernetes.io/name: test-frontend
     spec:
+      securityContext:
+        runAsNonRoot: true
       containers:
-        - name: test-frontend
-          image: ghcr.io/hwinther/test/frontend:0.59.0
-          imagePullPolicy: Always
-          resources:
-            requests:
-              cpu: 50m
-              memory: 128Mi
-            limits:
-              cpu: 200m
-              memory: 256Mi
-          ports:
-            - name: http
-              containerPort: 8080
-              protocol: TCP
-          env:
-            - name: PORT
-              value: "8080"
-            - name: SERVER_API_URL
-              value: "http://test-api:8080"
-            - name: PUBLIC_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
-              value: "https://otel.mgmt.wsh.no/v1/traces"
-            - name: PUBLIC_OTEL_SERVICE_NAME
-              value: "test-frontend"
-            - name: REDIS_URL
-              value: "redis://redis.shared-test.svc.cluster.local:6379"
+      - name: test-frontend
+        image: ghcr.io/hwinther/test/frontend:0.59.0
+        imagePullPolicy: Always
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        readinessProbe:
+          tcpSocket:
+            port: http
+          initialDelaySeconds: 3
+          periodSeconds: 10
+        env:
+        - name: PORT
+          value: "8080"
+        - name: SERVER_API_URL
+          value: "http://test-api:8080"
+        - name: PUBLIC_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
+          value: "https://otel.mgmt.wsh.no/v1/traces"
+        - name: PUBLIC_OTEL_SERVICE_NAME
+          value: "test-frontend"
+        - name: REDIS_URL
+          value: "redis://redis.shared-test.svc.cluster.local:6379"
 ---
 apiVersion: v1
 kind: Service
@@ -49,9 +61,9 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-    - port: 8080
-      targetPort: http
-      protocol: TCP
-      name: http
+  - port: 8080
+    targetPort: http
+    protocol: TCP
+    name: http
   selector:
     app: test-frontend
