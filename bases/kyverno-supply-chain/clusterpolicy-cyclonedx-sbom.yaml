@@ -1,5 +1,5 @@
 # Requires a CycloneDX SBOM attestation in the registry (cosign attest --type cyclonedx from the build).
-# Identity matches hwinther/reusable-workflows docker-container reusable workflow @ v1 (see clusterpolicy-github-slsa-provenance).
+# Identity: hwinther/reusable-workflows docker-container or dotnet-container @ refs/tags/v1 (see clusterpolicy-github-slsa-provenance).
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -39,7 +39,7 @@ spec:
         - entries:
           - keyless:
               issuer: https://token.actions.githubusercontent.com
-              subjectRegExp: ^https://github.com/hwinther/reusable-workflows/\.github/workflows/docker-container\.yml@refs/tags/v1$
+              subjectRegExp: ^https://github.com/hwinther/reusable-workflows/\.github/workflows/(docker|dotnet)-container\.yml@refs/tags/v1$
               rekor:
                 url: https://rekor.sigstore.dev
         conditions:
