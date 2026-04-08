@@ -30,8 +30,8 @@ spec:
     verifyImages:
     - imageReferences:
       - ghcr.io/hwinther/*
-      failureAction: Audit # Note: Enforce is required for mutateDigest: true
-      mutateDigest: false
+      failureAction: Enforce # Note: Enforce is required for mutateDigest: true
+      mutateDigest: true
       verifyDigest: true
       attestations:
       - predicateType: https://cyclonedx.org/schema
