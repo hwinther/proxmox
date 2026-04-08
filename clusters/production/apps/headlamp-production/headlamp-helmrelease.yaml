@@ -45,7 +45,7 @@ spec:
           - name: headlamp-plugins
             mountPath: /build/plugins
       - name: kubescape-plugin
-        image: quay.io/kubescape/headlamp-plugin@sha256:bd1a8a6b9b85985d3b2daa2af8e3fedb1a3d03b1caa10be417bdf508dc0ed999 # v0.10.6
+        image: quay.io/kubescape/headlamp-plugin@sha256:0f27541713d06763928edecb0db7acac4ebad033ba2cff1dee14b2a0cd320c80 # v0.10.6
         imagePullPolicy: IfNotPresent
         command:
           - /bin/sh
