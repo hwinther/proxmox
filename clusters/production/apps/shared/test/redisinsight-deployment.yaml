@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: redisinsight
-          image: docker.io/redis/redisinsight@sha256:55542a762210bb1cd681410282642bac0970f780f39bc134565394a81b1f1fd9 # latest as of pin
+          image: docker.io/redis/redisinsight:3.2.0
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:

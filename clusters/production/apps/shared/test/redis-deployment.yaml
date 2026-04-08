@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: redis
-          image: docker.io/library/redis@sha256:81b6f81d6a6c5b9019231a2e8eb10085e3a139a34f833dcc965a8a959b040b72 # 8-alpine
+          image: docker.io/library/redis:8-alpine
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:

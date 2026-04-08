@@ -160,8 +160,8 @@ spec:
       automountServiceAccountToken: true
       containers:
         - name: homepage
-          # Multi-arch manifest digest (amd64 + arm64) — Kyverno; bump when upgrading Homepage.
-          image: ghcr.io/gethomepage/homepage@sha256:cc84f2f5eb3c7734353701ccbaa24ed02dacb0d119114e50e4251e2005f3990a
+          # Semver tag for Dependabot; supply-chain / verifyImages policies may mutate to digest at admission.
+          image: ghcr.io/gethomepage/homepage:v1.12.3
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false

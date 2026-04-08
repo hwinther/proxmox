@@ -1,15 +1,16 @@
-# Based on kyverno/policies disallow-latest-tag + require-image-checksum.
-# Audit only; expect many findings until workloads pin digests and avoid :latest.
+# Based on kyverno/policies disallow-latest-tag. Tag-only refs are allowed (semver pins for Dependabot);
+# supply-chain verifyImages rules may still mutate tags to digests at admission where configured.
+# Audit only.
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
   name: wsh-disallow-latest-require-digest
   annotations:
-    policies.kyverno.io/title: Disallow latest tag and require image digest
+    policies.kyverno.io/title: Disallow latest container image tag
     policies.kyverno.io/category: Best Practices
     policies.kyverno.io/severity: medium
     policies.kyverno.io/description: >-
-      Containers must not use the :latest tag and must reference images by digest (e.g. repo@sha256:...).
+      Containers must not use the :latest tag. Pin a specific version tag (e.g. v1.2.3 or 1.2.3-alpine).
 spec:
   validationFailureAction: Audit
   background: true
@@ -30,7 +31,7 @@ spec:
                 - traefik
       validate:
         message: >-
-          Using a mutable image tag such as 'latest' is not allowed. Pin a specific version or digest.
+          Using a mutable image tag such as 'latest' is not allowed. Pin a specific version tag.
         foreach:
           - list: "request.object.spec.containers"
             pattern:
@@ -41,30 +42,3 @@ spec:
           - list: "request.object.spec.ephemeralContainers"
             pattern:
               image: "!*:latest"
-    - name: require-image-digest
-      match:
-        any:
-          - resources:
-              kinds:
-                - Pod
-      exclude:
-        any:
-          - resources:
-              namespaces:
-                - kube-system
-                - kyverno
-                - flux-system
-                - traefik
-      validate:
-        message: >-
-          Images must use a digest (image@sha256:...), not tag-only references.
-        foreach:
-          - list: "request.object.spec.containers"
-            pattern:
-              image: "*@*"
-          - list: "request.object.spec.initContainers"
-            pattern:
-              image: "*@*"
-          - list: "request.object.spec.ephemeralContainers"
-            pattern:
-              image: "*@*"

@@ -13,9 +13,9 @@ ClusterPolicies live under [`bases/kyverno-platform`](../../../bases/kyverno-pla
 ## Checklist for new workloads
 
 1. **Images**
-   - Prefer **`image: repo/name@sha256:<digest>`** for every container, initContainer, and ephemeralContainer. Kyverno **`wsh-disallow-latest-require-digest`** rejects `:latest` and tag-only refs (with known excludes such as `traefik`).
+   - Prefer **explicit version tags** (not `:latest`) for every container, initContainer, and ephemeralContainer so **Dependabot** can surface release notes. Kyverno **`wsh-disallow-latest-require-digest`** rejects `:latest` only (Audit); supply-chain **`verifyImages`** rules may **`mutateDigest: true`** to resolve tags to digests at admission where configured.
    - For **CI images** published from this repo to `ghcr.io/hwinther/...`, use [`.github/actions/docker`](../../../.github/actions/docker) with **`attest_supply_chain: "true"`** on the calling workflow and job permissions: `contents: read`, `packages: write`, `id-token: write`, `attestations: write`. That pushes SLSA provenance to the registry and attaches **CycloneDX** + **vuln** Cosign attestations expected by **`wsh-require-github-slsa-provenance`**, **`wsh-require-cyclonedx-sbom`**, and **`wsh-require-cosign-vuln-attestation`**.
-   - If a digest cannot be pinned yet, add a **narrow** [`PolicyException`](../../../clusters/edge-sdr/apps/adsb-edge-sdr/kyverno-policyexception-hostpath.yaml) (Kyverno `v2beta1`) scoped by **namespace + labels**, not a broad ClusterPolicy change.
+   - If an image cannot satisfy a policy yet, add a **narrow** [`PolicyException`](../../../clusters/edge-sdr/apps/adsb-edge-sdr/kyverno-policyexception-hostpath.yaml) (Kyverno `v2`) scoped by **namespace + labels**, not a broad ClusterPolicy change.
 
 2. **Pod and container security**
    - Pod or container: **`runAsNonRoot: true`** where the image supports it.
@@ -37,15 +37,15 @@ ClusterPolicies live under [`bases/kyverno-platform`](../../../bases/kyverno-pla
    - Avoid **`hostPath`**, **`hostNetwork`**, **`hostPID`**, **`hostIPC`** unless required (e.g. edge SDR). Use a scoped **PolicyException** for **`wsh-disallow-host-path`** / host-namespace policies and document the reason.
 
 7. **HelmRelease values**
-   - Mirror the same rules for **init containers**, **sidecars**, and **main** images: digests, limits, **`podLabels`**, **`securityContext`**, and chart-specific probe fields.
+   - Mirror the same rules for **init containers**, **sidecars**, and **main** images: explicit version tags (not `:latest`), limits, **`podLabels`**, **`securityContext`**, and chart-specific probe fields.
 
 ## Reference implementations (production)
 
 | Area | Location |
 |------|----------|
-| Digest-pinned app + security + probes + NetworkPolicy | [`clusters/production/apps/clutterstock`](../../../clusters/production/apps/clutterstock) |
-| Migrate Job + busybox digest + init exception | [`clusters/production/apps/clutterstock-migrate`](../../../clusters/production/apps/clutterstock-migrate) |
-| Headlamp init exceptions + plugin digest | [`clusters/production/apps/headlamp-production`](../../../clusters/production/apps/headlamp-production) |
+| Tagged app images + security + probes + NetworkPolicy | [`clusters/production/apps/clutterstock`](../../../clusters/production/apps/clutterstock) |
+| Migrate Job + busybox tag + init exception | [`clusters/production/apps/clutterstock-migrate`](../../../clusters/production/apps/clutterstock-migrate) |
+| Headlamp init exceptions + plugin tags | [`clusters/production/apps/headlamp-production`](../../../clusters/production/apps/headlamp-production) |
 | Shared Redis / RedisInsight + NP | [`clusters/production/apps/shared`](../../../clusters/production/apps/shared) |
 | Docker build + supply-chain attestations | [`.github/actions/docker/action.yaml`](../../../.github/actions/docker/action.yaml), `build-*.yaml` workflows |
 
@@ -56,4 +56,4 @@ ClusterPolicies live under [`bases/kyverno-platform`](../../../bases/kyverno-pla
 
 ## Related skills
 
-- [**k8s-deployments**](../k8s-deployments/SKILL.md) — base Deployment/Service layout; combine with this skill for **production** and **policy-clean** manifests (digests override tag-only examples where policies apply).
+- [**k8s-deployments**](../k8s-deployments/SKILL.md) — base Deployment/Service layout; combine with this skill for **production** and **policy-clean** manifests (explicit tags; supply-chain policies may mutate to digest at admission).

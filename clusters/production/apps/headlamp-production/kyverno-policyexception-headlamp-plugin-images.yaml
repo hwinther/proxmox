@@ -1,4 +1,4 @@
-# Third-party plugin image (Flux sidebar) has no stable digest pin in this repo; kubescape-plugin uses digest.
+# Headlamp Helm chart / plugin init images may use tags that tripped policy checks; scoped to this namespace.
 apiVersion: kyverno.io/v2
 kind: PolicyException
 metadata:
@@ -10,8 +10,6 @@ spec:
       ruleNames:
         - disallow-latest-tag
         - autogen-disallow-latest-tag
-        - require-image-digest
-        - autogen-require-image-digest
   match:
     any:
       - resources:
