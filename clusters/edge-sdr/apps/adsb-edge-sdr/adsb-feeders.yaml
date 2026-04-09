@@ -37,7 +37,7 @@ spec:
                       - sdr-edge
       containers:
         - name: piaware
-          image: ghcr.io/hwinther/proxmox/sdr/adsb/piaware-wsh:0.5.0
+          image: ghcr.io/hwinther/proxmox/sdr/adsb/piaware-wsh:0.6.0
           imagePullPolicy: IfNotPresent
           # env after envFrom so RECEIVER_* / MLAT_* override any accidental ConfigMap keys.
           envFrom:
