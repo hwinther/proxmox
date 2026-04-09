@@ -1,4 +1,5 @@
-# Cosign vulnerability scan attestation (grype SARIF / cosign attest --type vuln).
+# Cosign vulnerability scan attestation (Grype → SARIF predicate, cosign attest --type vuln).
+# Large Grype JSON predicates exceed Kyverno’s default maxContextSize (2Mi) when loaded into the policy engine.
 # Identity: reusable-workflows docker/dotnet-container @ refs/tags/v1, except ghcr.io/hwinther/proxmox/sdr/*
 # (hwinther/proxmox build-*.yaml — same as clusterpolicy-cyclonedx-sbom).
 # Remove this resource from bases/kyverno-supply-chain/kustomization.yaml if you do not publish vuln attestations.

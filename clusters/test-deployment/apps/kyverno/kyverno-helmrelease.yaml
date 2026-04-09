@@ -25,6 +25,8 @@ spec:
         name: kyverno
         namespace: kyverno
   values:
+    config:
+      maxContextSize: 8Mi
     features:
       controllerRuntimeMetrics:
         bindAddress: "0"

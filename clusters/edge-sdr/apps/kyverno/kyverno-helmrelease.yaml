@@ -25,6 +25,8 @@ spec:
         name: kyverno
         namespace: kyverno
   values:
+    config:
+      maxContextSize: 8Mi
     # With hostNetwork, declared container ports bind on the node. Traefik uses host port 8000 — Kyverno's
     # default metrics port 8000 then makes scheduling fail ("didn't have free ports"). Use a high port.
     features:
