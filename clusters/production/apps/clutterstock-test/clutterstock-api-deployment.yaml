@@ -73,6 +73,7 @@ metadata:
   name: clutterstock-api
   namespace: clutterstock-test
 spec:
+  clusterIP: None
   type: ClusterIP
   ports:
   - port: 8080

@@ -61,6 +61,7 @@ metadata:
   name: clutterstock-frontend
   namespace: clutterstock-production
 spec:
+  clusterIP: None
   type: ClusterIP
   ports:
   - port: 8080

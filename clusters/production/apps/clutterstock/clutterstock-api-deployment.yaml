@@ -76,6 +76,7 @@ metadata:
   name: clutterstock-api
   namespace: clutterstock-production
 spec:
+  clusterIP: None
   type: ClusterIP
   ports:
   - port: 8080

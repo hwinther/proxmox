@@ -6,3 +6,4 @@ resources:
 - test-frontend-deployment.yaml
 - test-ingress.yaml
 - networkpolicies.yaml
+- cilium-cluster-nodes-to-http.yaml
