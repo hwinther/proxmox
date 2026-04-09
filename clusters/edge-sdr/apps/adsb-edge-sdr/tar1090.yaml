@@ -43,7 +43,7 @@ spec:
               topologyKey: kubernetes.io/hostname
       containers:
         - name: tar1090
-          image: ghcr.io/hwinther/proxmox/sdr/adsb/tar1090-wsh:0.5.0
+          image: ghcr.io/hwinther/proxmox/sdr/adsb/tar1090-wsh:0.6.0
           imagePullPolicy: IfNotPresent
           envFrom:
             - configMapRef:
