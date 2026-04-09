@@ -1,5 +1,6 @@
 # Cosign vulnerability scan attestation (grype SARIF / cosign attest --type vuln).
-# Identity: docker-container or dotnet-container reusable workflow @ refs/tags/v1 (same as other ghcr.io/hwinther/* policies).
+# Identity: reusable-workflows docker/dotnet-container @ refs/tags/v1, except ghcr.io/hwinther/proxmox/sdr/*
+# (hwinther/proxmox build-*.yaml — same as clusterpolicy-cyclonedx-sbom).
 # Remove this resource from bases/kyverno-supply-chain/kustomization.yaml if you do not publish vuln attestations.
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
@@ -30,7 +31,23 @@ spec:
           - flux-system
     verifyImages:
     - imageReferences:
+      - ghcr.io/hwinther/proxmox/sdr/*
+      failureAction: Enforce # Note: Enforce is required for mutateDigest: true
+      mutateDigest: true
+      verifyDigest: true
+      attestations:
+      - predicateType: https://cosign.sigstore.dev/attestation/vuln/v1
+        attestors:
+        - entries:
+          - keyless:
+              issuer: https://token.actions.githubusercontent.com
+              subjectRegExp: ^https://github.com/hwinther/proxmox/\.github/workflows/build-[a-z0-9-]+\.ya?ml@refs/(heads/main|tags/.+)$
+              rekor:
+                url: https://rekor.sigstore.dev
+    - imageReferences:
       - ghcr.io/hwinther/*
+      skipImageReferences:
+      - ghcr.io/hwinther/proxmox/sdr/*
       failureAction: Enforce # Note: Enforce is required for mutateDigest: true
       mutateDigest: true
       verifyDigest: true

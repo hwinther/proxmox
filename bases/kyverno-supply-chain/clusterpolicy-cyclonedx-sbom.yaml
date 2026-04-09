@@ -1,5 +1,6 @@
 # Requires a CycloneDX SBOM attestation in the registry (cosign attest --type cyclonedx from the build).
-# Identity: hwinther/reusable-workflows docker-container or dotnet-container @ refs/tags/v1 (see clusterpolicy-github-slsa-provenance).
+# Identity: reusable-workflows docker/dotnet-container @ refs/tags/v1, except ghcr.io/hwinther/proxmox/sdr/*
+# which is signed from hwinther/proxmox .github/workflows/build-*.yaml (see clusterpolicy-github-slsa-provenance).
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -29,7 +30,28 @@ spec:
           - flux-system
     verifyImages:
     - imageReferences:
+      - ghcr.io/hwinther/proxmox/sdr/*
+      failureAction: Enforce # Note: Enforce is required for mutateDigest: true
+      mutateDigest: true
+      verifyDigest: true
+      attestations:
+      - predicateType: https://cyclonedx.org/schema
+        attestors:
+        - entries:
+          - keyless:
+              issuer: https://token.actions.githubusercontent.com
+              subjectRegExp: ^https://github.com/hwinther/proxmox/\.github/workflows/build-[a-z0-9-]+\.ya?ml@refs/(heads/main|tags/.+)$
+              rekor:
+                url: https://rekor.sigstore.dev
+        conditions:
+        - all:
+          - key: "{{ Data.bomFormat }}"
+            operator: Equals
+            value: CycloneDX
+    - imageReferences:
       - ghcr.io/hwinther/*
+      skipImageReferences:
+      - ghcr.io/hwinther/proxmox/sdr/*
       failureAction: Enforce # Note: Enforce is required for mutateDigest: true
       mutateDigest: true
       verifyDigest: true

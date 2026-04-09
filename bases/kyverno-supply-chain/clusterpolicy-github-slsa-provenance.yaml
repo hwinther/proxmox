@@ -2,6 +2,8 @@
 # Keyless identity is the reusable workflow ref (github.workflow_ref), e.g.
 # …/docker-container.yml@refs/tags/v1 (Node/web images) or …/dotnet-container.yml@refs/tags/v1 (.NET API).
 # Consumers must use uses: …@v1. Branch test runs use @refs/heads/… and will not match.
+# SDR images under ghcr.io/hwinther/proxmox/sdr/* are built from this repo’s build-*.yaml workflows
+# (composite docker action), not reusable-workflows — see the extra verifyImages entry + skip list below.
 # Scoped to ghcr.io/hwinther/* — other registries/images are not evaluated (no exception needed).
 #
 # Legacy org images without attestations: add skipImageReferences on each verifyImages entry, or create
@@ -35,10 +37,29 @@ spec:
           - flux-system
     verifyImages:
     - imageReferences:
+      - ghcr.io/hwinther/proxmox/sdr/*
+      failureAction: Enforce # Note: Enforce is required for mutateDigest: true
+      mutateDigest: true
+      verifyDigest: true
+      type: SigstoreBundle
+      attestations:
+      - predicateType: https://slsa.dev/provenance/v1
+        attestors:
+        - entries:
+          - keyless:
+              issuer: https://token.actions.githubusercontent.com
+              subjectRegExp: ^https://github.com/hwinther/proxmox/\.github/workflows/build-[a-z0-9-]+\.ya?ml@refs/(heads/main|tags/.+)$
+              rekor:
+                url: https://rekor.sigstore.dev
+        conditions:
+        - all:
+          - key: "{{ buildDefinition.buildType }}"
+            operator: Equals
+            value: https://actions.github.io/buildtypes/workflow/v1
+    - imageReferences:
       - ghcr.io/hwinther/*
-      # Optional central allowlist (same patterns on all three policies if you use it):
-      # skipImageReferences:
-      #   - ghcr.io/hwinther/legacy-service/*
+      skipImageReferences:
+      - ghcr.io/hwinther/proxmox/sdr/*
       failureAction: Enforce # Note: Enforce is required for mutateDigest: true
       mutateDigest: true
       verifyDigest: true
