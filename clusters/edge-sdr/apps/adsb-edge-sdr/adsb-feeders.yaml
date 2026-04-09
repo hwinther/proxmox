@@ -217,7 +217,7 @@ spec:
                       - sdr-edge
       containers:
         - name: opensky
-          image: ghcr.io/hwinther/proxmox/sdr/adsb/opensky-wsh:0.5.0
+          image: ghcr.io/hwinther/proxmox/sdr/adsb/opensky-wsh:0.6.0
           imagePullPolicy: IfNotPresent
           envFrom:
             - configMapRef:
