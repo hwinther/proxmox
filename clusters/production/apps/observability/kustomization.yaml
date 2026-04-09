@@ -9,6 +9,7 @@ resources:
   - tempo-helmrelease.yaml
   - otel-collector-helmrelease.yaml
   - observability-ingress.yaml
+  - cilium-host-to-otel-otlp-http.yaml
 configMapGenerator:
   # Picked up by kube-prometheus-stack Grafana sidecar (label grafana_dashboard=1).
   # Same JSON as test-deployment ASP.NET Core OTEL dashboard (patched gnet 19924).

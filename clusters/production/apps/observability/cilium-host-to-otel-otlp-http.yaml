@@ -1,0 +1,17 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-cluster-nodes-to-otel-otlp-http
+  namespace: observability-production
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: obs-otel-collector
+  ingress:
+    - fromEntities:
+        - host
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "4318"
+              protocol: TCP

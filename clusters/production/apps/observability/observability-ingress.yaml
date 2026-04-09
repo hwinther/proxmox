@@ -35,6 +35,7 @@ spec:
       - POST
       - OPTIONS
     accessControlAllowHeaders:
+      - Accept
       - Content-Type
       - Authorization
       # W3C Trace Context — browser may send these on OTLP or preflight; avoids dropped headers vs simple allowlist
