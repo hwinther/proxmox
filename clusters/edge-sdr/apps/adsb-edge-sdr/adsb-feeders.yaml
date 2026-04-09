@@ -103,7 +103,7 @@ spec:
                       - sdr-edge
       containers:
         - name: fr24
-          image: ghcr.io/hwinther/proxmox/sdr/adsb/fr24-wsh:0.1.0
+          image: ghcr.io/hwinther/proxmox/sdr/adsb/fr24-wsh:0.5.0
           imagePullPolicy: IfNotPresent
           # env after envFrom so RECEIVER_* overrides if those keys ever appear in the Secret.
           envFrom:
