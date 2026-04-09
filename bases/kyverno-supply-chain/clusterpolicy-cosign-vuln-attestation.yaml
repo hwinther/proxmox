@@ -36,6 +36,7 @@ spec:
       failureAction: Enforce # Note: Enforce is required for mutateDigest: true
       mutateDigest: true
       verifyDigest: true
+      useCache: true
       attestations:
       - predicateType: https://cosign.sigstore.dev/attestation/vuln/v1
         attestors:
@@ -52,6 +53,7 @@ spec:
       failureAction: Enforce # Note: Enforce is required for mutateDigest: true
       mutateDigest: true
       verifyDigest: true
+      useCache: true
       attestations:
       - predicateType: https://cosign.sigstore.dev/attestation/vuln/v1
         attestors:

@@ -1,4 +1,5 @@
 # Requires a CycloneDX SBOM attestation in the registry (cosign attest --type cyclonedx from the build).
+# Predicate type must match cosign v2.x / in-toto: https://cyclonedx.org/bom (not …/schema — see cosign #2596).
 # Identity: reusable-workflows docker/dotnet-container @ refs/tags/v1, except ghcr.io/hwinther/proxmox/sdr/*
 # which is signed from hwinther/proxmox .github/workflows/build-*.yaml (see clusterpolicy-github-slsa-provenance).
 apiVersion: kyverno.io/v1
@@ -34,8 +35,9 @@ spec:
       failureAction: Enforce # Note: Enforce is required for mutateDigest: true
       mutateDigest: true
       verifyDigest: true
+      useCache: true
       attestations:
-      - predicateType: https://cyclonedx.org/schema
+      - predicateType: https://cyclonedx.org/bom
         attestors:
         - entries:
           - keyless:
@@ -55,8 +57,9 @@ spec:
       failureAction: Enforce # Note: Enforce is required for mutateDigest: true
       mutateDigest: true
       verifyDigest: true
+      useCache: true
       attestations:
-      - predicateType: https://cyclonedx.org/schema
+      - predicateType: https://cyclonedx.org/bom
         attestors:
         - entries:
           - keyless:

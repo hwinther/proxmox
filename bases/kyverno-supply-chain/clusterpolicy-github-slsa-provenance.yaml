@@ -41,6 +41,7 @@ spec:
       failureAction: Enforce # Note: Enforce is required for mutateDigest: true
       mutateDigest: true
       verifyDigest: true
+      useCache: true
       type: SigstoreBundle
       attestations:
       - predicateType: https://slsa.dev/provenance/v1
@@ -63,6 +64,7 @@ spec:
       failureAction: Enforce # Note: Enforce is required for mutateDigest: true
       mutateDigest: true
       verifyDigest: true
+      useCache: true
       type: SigstoreBundle
       attestations:
       - predicateType: https://slsa.dev/provenance/v1
