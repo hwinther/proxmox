@@ -163,7 +163,7 @@ spec:
                       - sdr-edge
       containers:
         - name: adsbexchange
-          image: ghcr.io/hwinther/proxmox/sdr/adsb/adsbexchange-wsh:0.1.0
+          image: ghcr.io/hwinther/proxmox/sdr/adsb/adsbexchange-wsh:0.5.0
           imagePullPolicy: IfNotPresent
           envFrom:
             - configMapRef:
