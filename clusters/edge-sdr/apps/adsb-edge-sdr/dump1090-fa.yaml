@@ -37,7 +37,7 @@ spec:
                       - sdr-edge
       containers:
         - name: dump1090-fa
-          image: ghcr.io/hwinther/proxmox/sdr/adsb/dump1090-fa-wsh:0.1.0
+          image: ghcr.io/hwinther/proxmox/sdr/adsb/dump1090-fa-wsh:0.5.0
           imagePullPolicy: IfNotPresent
           # ConfigMap then Secret: shared keys (e.g. LAT/LON) in Secret override ConfigMap.
           envFrom:
