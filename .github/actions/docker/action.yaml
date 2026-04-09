@@ -47,8 +47,7 @@ inputs:
   attest_supply_chain:
     required: false
     description: >-
-      After push, attach SLSA provenance (registry + GH API), Cosign CycloneDX SBOM, and Grype vuln attestations for Kyverno verifyImages. Requires job permissions id-token:write, attestations:write.
-      Cosign is pinned to v2.x so attestations are stored as registry manifests compatible with Kyverno’s verifyImages fetch path (sha256-….att); Cosign v3+ prefers OCI referrers only, which Kyverno 1.17’s embedded cosign does not resolve.
+      After push, attach SLSA provenance (registry + GH API), Cosign CycloneDX SBOM, and Grype vuln attestations for Kyverno verifyImages. Requires job permissions id-token:write, attestations:write. Cosign is pinned to v2.x so attestations are stored as registry manifests compatible with Kyverno’s verifyImages fetch path (sha256-….att); Cosign v3+ prefers OCI referrers only, which Kyverno 1.17’s embedded cosign does not resolve.
     default: "false"
 
 runs:
@@ -110,6 +109,7 @@ runs:
     uses: sigstore/cosign-installer@cad07c2e89fa2edd6e2d7bab4c1aa38e53f76003 # v4.1.1
     with:
       # Kyverno 1.17 resolves attestations like cosign v2 (.att manifest). Cosign v3 publishes via referrers → 404 on cluster.
+      # See https://github.com/sigstore/cosign/issues/4708 for updates on the issues resolution.
       cosign-release: v2.4.3
 
   - name: Install Syft and Grype
