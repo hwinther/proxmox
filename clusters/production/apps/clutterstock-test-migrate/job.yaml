@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: clutterstock-test-migrate-v097
+  name: clutterstock-test-migrate-v098
   namespace: clutterstock-test
 spec:
   backoffLimit: 3
@@ -29,7 +29,7 @@ spec:
           allowPrivilegeEscalation: false
       containers:
       - name: migrator
-        image: ghcr.io/hwinther/clutterstock/migrator:0.13.0
+        image: ghcr.io/hwinther/clutterstock/migrator:0.14.0
         imagePullPolicy: Always
         securityContext:
           allowPrivilegeEscalation: false
