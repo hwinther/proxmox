@@ -4,6 +4,7 @@ resources:
   - namespace-platform-production.yaml
   - ceph-csi
   - traefik
+  - authelia-production
   - headlamp-production
   - policy-reporter-production
   - kubescape-production

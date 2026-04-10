@@ -1,0 +1,17 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-cluster-nodes-to-authelia-http
+  namespace: authelia-production
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: authelia
+  ingress:
+    - fromEntities:
+        - host
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "9091"
+              protocol: TCP

@@ -1,0 +1,15 @@
+# ForwardAuth to in-cluster Authelia (same namespace as Ingress avoids cross-namespace CRD refs).
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: authelia-forwardauth
+  namespace: headlamp-production
+spec:
+  forwardAuth:
+    address: http://authelia.authelia-production.svc.cluster.local/api/authz/forward-auth
+    trustForwardHeader: true
+    authResponseHeaders:
+      - Remote-User
+      - Remote-Name
+      - Remote-Email
+      - Remote-Groups
