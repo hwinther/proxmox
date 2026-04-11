@@ -77,6 +77,26 @@ spec:
                 name: obs-otel-collector
                 port:
                   number: 4318
+    - host: otel.test.wsh.no
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: obs-otel-collector
+                port:
+                  number: 4318
+    - host: otel.wsh.no
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: obs-otel-collector
+                port:
+                  number: 4318
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress

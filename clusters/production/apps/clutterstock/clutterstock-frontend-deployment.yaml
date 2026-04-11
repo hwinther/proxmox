@@ -49,7 +49,7 @@ spec:
         - name: SERVER_API_URL
           value: "http://clutterstock-api:8080"
         - name: PUBLIC_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
-          value: "https://otel.mgmt.wsh.no/v1/traces"
+          value: "https://otel.wsh.no/v1/traces"
         - name: PUBLIC_OTEL_SERVICE_NAME
           value: "clutterstock-frontend"
         - name: REDIS_URL
