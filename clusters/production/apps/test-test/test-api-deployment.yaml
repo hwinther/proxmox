@@ -18,7 +18,7 @@ spec:
         runAsNonRoot: true
       containers:
       - name: test-api
-        image: ghcr.io/hwinther/test/api:0.60.0
+        image: ghcr.io/hwinther/test/api:0.62.0
         imagePullPolicy: Always
         securityContext:
           allowPrivilegeEscalation: false
@@ -33,10 +33,24 @@ spec:
             cpu: 500m
             memory: 512Mi
         env:
+        - name: ASPNETCORE_URLS
+          value: "http://+:8080"
+        - name: ConnectionStrings__Blogging
+          value: "Server=sqlserver,1433;Initial Catalog=api;User=sa;Password=DevelopmentOnlyPassword1;TrustServerCertificate=True;"
         - name: OTEL_SERVICE_NAME
           value: "test-api"
         - name: OTEL_EXPORTER_OTLP_ENDPOINT
           value: "http://obs-otel-collector.observability-production.svc.cluster.local:4317"
+        - name: OTEL_EXPORTER_OTLP_PROTOCOL
+          value: "grpc"
+        - name: OTEL_TRACES_EXPORTER
+          value: "otlp"
+        - name: RabbitMq__HostName
+          value: "rabbitmq"
+        - name: RabbitMq__UserName
+          value: "guest"
+        - name: RabbitMq__Password
+          value: "guest"
         ports:
         - name: http
           containerPort: 8080
