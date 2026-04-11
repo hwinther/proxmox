@@ -1,10 +1,16 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: test-api
+  name: test
   namespace: test-test
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Applications
+    gethomepage.dev/name: Test (repo sample)
+    gethomepage.dev/icon: mdi-application-outline
+    gethomepage.dev/description: Sample test app — API under /api/; Swagger under /swagger
+    gethomepage.dev/pod-selector: app in (test-frontend, test-api)
 spec:
   rules:
     - host: test.test.wsh.no
@@ -17,25 +23,13 @@ spec:
                 name: test-api
                 port:
                   number: 8080
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: test-frontend
-  namespace: test-test
-  annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web
-    gethomepage.dev/enabled: "true"
-    gethomepage.dev/group: Applications
-    gethomepage.dev/name: Test (repo sample)
-    gethomepage.dev/icon: mdi-application-outline
-    gethomepage.dev/description: Sample test app — test.test.wsh.no (API under /api/)
-    gethomepage.dev/pod-selector: app in (test-frontend, test-api)
-spec:
-  rules:
-    - host: test.test.wsh.no
-      http:
-        paths:
+          - path: /swagger
+            pathType: Prefix
+            backend:
+              service:
+                name: test-api
+                port:
+                  number: 8080
           - path: /
             pathType: Prefix
             backend:
