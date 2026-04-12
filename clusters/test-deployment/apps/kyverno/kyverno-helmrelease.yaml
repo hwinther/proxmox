@@ -100,9 +100,25 @@ spec:
           memory: 256Mi
     reportsController:
       replicas: 1
+      rbac:
+        clusterRole:
+          extraResources:
+            - apiGroups: ["flowcontrol.apiserver.k8s.io"]
+              resources: ["flowschemas", "prioritylevelconfigurations"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["node.k8s.io"]
+              resources: ["runtimeclasses"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["storage.k8s.io"]
+              resources: ["csistoragecapacities"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["traefik.io"]
+              resources: ["tlsoptions"]
+              verbs: ["get", "list", "watch"]
       resources:
         requests:
           cpu: 50m
           memory: 128Mi
         limits:
-          memory: 256Mi
+          cpu: 500m
+          memory: 512Mi
