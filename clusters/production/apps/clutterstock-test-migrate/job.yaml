@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: clutterstock-test-migrate-v098
+  name: clutterstock-test-migrate-v099
   namespace: clutterstock-test
 spec:
   backoffLimit: 3
@@ -15,38 +15,38 @@ spec:
       restartPolicy: Never
       # RWO PVC: scale clutterstock-api to 0 before this Job runs, or the volume stays attached to the API pod.
       initContainers:
-      - name: ensure-data-writable
-        image: docker.io/library/busybox:1.37
-        command:
-        - sh
-        - -c
-        - mkdir -p /data && chmod 777 /data && ls -la /data
-        volumeMounts:
-        - name: sqlite-data
-          mountPath: /data
-        securityContext:
-          runAsUser: 0
-          allowPrivilegeEscalation: false
+        - name: ensure-data-writable
+          image: docker.io/library/busybox:1.37
+          command:
+            - sh
+            - -c
+            - mkdir -p /data && chmod 777 /data && ls -la /data
+          volumeMounts:
+            - name: sqlite-data
+              mountPath: /data
+          securityContext:
+            runAsUser: 0
+            allowPrivilegeEscalation: false
       containers:
-      - name: migrator
-        image: ghcr.io/hwinther/clutterstock/migrator:0.14.0
-        imagePullPolicy: Always
-        securityContext:
-          allowPrivilegeEscalation: false
-        env:
-        - name: ConnectionStrings__ClutterStock
-          value: Data Source=/data/clutterstock.db
-        volumeMounts:
-        - name: sqlite-data
-          mountPath: /data
-        resources:
-          requests:
-            cpu: 50m
-            memory: 128Mi
-          limits:
-            cpu: 500m
-            memory: 512Mi
+        - name: migrator
+          image: ghcr.io/hwinther/clutterstock/migrator:0.14.0
+          imagePullPolicy: Always
+          securityContext:
+            allowPrivilegeEscalation: false
+          env:
+            - name: ConnectionStrings__ClutterStock
+              value: Data Source=/data/clutterstock.db
+          volumeMounts:
+            - name: sqlite-data
+              mountPath: /data
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
       volumes:
-      - name: sqlite-data
-        persistentVolumeClaim:
-          claimName: clutterstock-api-sqlite
+        - name: sqlite-data
+          persistentVolumeClaim:
+            claimName: clutterstock-api-sqlite
