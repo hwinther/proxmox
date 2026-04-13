@@ -41,7 +41,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       containers:
       - name: backup
-        image: ghcr.io/hwinther/proxmox/proxmox/pbs/backup-client:0.1.0
+        image: ghcr.io/hwinther/proxmox/proxmox/pbs/backup-client:0.6.1
         imagePullPolicy: IfNotPresent
         args:
         - backup
