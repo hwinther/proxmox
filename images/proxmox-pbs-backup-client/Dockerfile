@@ -17,20 +17,20 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN set -eux; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
-        build-essential \
-        ca-certificates \
-        clang \
-        cmake \
-        curl \
-        git \
-        libacl1-dev \
-        libclang-dev \
-        libfuse3-dev \
-        libssl-dev \
-        libsystemd-dev \
-        libudev-dev \
-        pkg-config \
-        uuid-dev; \
+    build-essential \
+    ca-certificates \
+    clang \
+    cmake \
+    curl \
+    git \
+    libacl1-dev \
+    libclang-dev \
+    libfuse3-dev \
+    libssl-dev \
+    libsystemd-dev \
+    libudev-dev \
+    pkg-config \
+    uuid-dev; \
     rm -rf /var/lib/apt/lists/*
 
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
@@ -49,14 +49,14 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN set -eux; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
-        ca-certificates \
-        libacl1 \
-        libfuse3-3 \
-        libssl3t64 \
-        libsystemd0 \
-        libudev1 \
-        libuuid1 \
-        libzstd1; \
+    ca-certificates \
+    libacl1 \
+    libfuse3-4 \
+    libssl3t64 \
+    libsystemd0 \
+    libudev1 \
+    libuuid1 \
+    libzstd1; \
     rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /build/target/release/proxmox-backup-client /usr/bin/proxmox-backup-client
