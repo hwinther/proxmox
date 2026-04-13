@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: test-frontend
-        image: ghcr.io/hwinther/test/frontend:0.60.0
+        image: ghcr.io/hwinther/test/frontend:0.62.0
         imagePullPolicy: Always
         resources:
           requests:
