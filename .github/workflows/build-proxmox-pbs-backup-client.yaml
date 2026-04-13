@@ -23,7 +23,7 @@ env:
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   PACKAGE_NAME: backup-client
   PACKAGE_PATH: /proxmox/pbs/
-  PACKAGE_DESCRIPTION: "Proxmox Backup Server client (Debian Trixie, multi-arch)"
+  PACKAGE_DESCRIPTION: "Proxmox Backup Server client"
   PACKAGE_VENDOR: WSH
   WORKING_DIRECTORY: images/proxmox-pbs-backup-client
 
