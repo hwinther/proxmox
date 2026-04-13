@@ -53,6 +53,8 @@ jobs:
           package_description: ${{ env.PACKAGE_DESCRIPTION }}
           package_vendor: ${{ env.PACKAGE_VENDOR }}
           working_directory: ${{ env.WORKING_DIRECTORY }}
+          # amd64 image only: arm64 lacks pbs-client debs and Proxmox devel rust build-deps (e.g. librust-apt-pkg-native).
+          platforms: linux/amd64
           push_condition: ${{ github.event_name != 'pull_request' }}
           latest_tag_enabled: ${{ !startsWith(github.ref, 'refs/tags/') }}
           tag: ${{ startsWith(github.ref, 'refs/tags/') && steps.remove-v-prefix.outputs.tag || '0.1.0' }}
