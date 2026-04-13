@@ -32,6 +32,10 @@ flake8 --statistics src/ scripts/
 npx prettier --check "**/*.{yaml,yml,json,md}"
 ```
 
+### Kubernetes secrets documentation
+
+When documenting how operators should create credentials for a workload (API tokens, connection strings, etc.), **prefer a Markdown file** in the relevant app directory (for example `pbs-backup-secrets.md`) that lists required keys and gives **`kubectl` CLI examples** (`create secret generic`, `patch`, `describe`). **Do not add committed `Secret` manifests** such as `*.secret.example.yaml` with placeholder `stringData`: they are easy to confuse with real manifests, invite accidental `kubectl apply`, and do not belong in Kustomize `resources`. Link to that doc from Job or Deployment header comments where helpful.
+
 ### Key caveats
 
 - The `scripts/example.py` entry point requires a live Proxmox host (calls `pvesh`); it cannot be run locally.

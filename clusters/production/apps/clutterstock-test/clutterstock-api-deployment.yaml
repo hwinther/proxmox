@@ -19,6 +19,9 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
+        runAsUser: 1654
+        fsGroup: 1654
+        fsGroupChangePolicy: OnRootMismatch
       containers:
       - name: clutterstock-api
         image: ghcr.io/hwinther/clutterstock/api:0.14.0
