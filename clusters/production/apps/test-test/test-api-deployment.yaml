@@ -35,6 +35,8 @@ spec:
         env:
         - name: ASPNETCORE_URLS
           value: "http://+:8080"
+        - name: ASPNETCORE_ENVIRONMENT
+          value: "Development"
         - name: ConnectionStrings__Blogging
           value: "Server=sqlserver,1433;Initial Catalog=api;User=sa;Password=DevelopmentOnlyPassword1;TrustServerCertificate=True;"
         - name: OTEL_SERVICE_NAME
