@@ -11,7 +11,9 @@
 # Re-runs: delete the Job (`kubectl delete job -n clutterstock-test clutterstock-test-pbs-backup-v001`)
 # or bump `metadata.name` when you change pod template fields (Job spec is immutable).
 #
-# Image tag 0.1.0 is published by .github/workflows/build-proxmox-pbs-backup-client.yaml on main.
+# Image tag: GitVersion MajorMinorPatch from .github/workflows/build-proxmox-pbs-backup-client.yaml
+# (calls reusable-workflows docker-container@v1). Builds run on workflow_dispatch or push of v* tags
+# touching images/proxmox-pbs-backup-client (see workflow paths); pin the tag from the run summary.
 # Image is linux/amd64 only (official static client from pbs-client); see images/proxmox-pbs-backup-client/Dockerfile.
 apiVersion: batch/v1
 kind: Job
