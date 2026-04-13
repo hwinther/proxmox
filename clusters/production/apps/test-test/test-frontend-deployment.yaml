@@ -49,7 +49,7 @@ spec:
         - name: PUBLIC_API_BASE_URL
           value: "https://test.test.wsh.no/api"
         - name: PUBLIC_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
-          value: "https://otel.test.wsh.no/v1/traces"
+          value: "https://test.test.wsh.no/v1/traces"
         - name: PUBLIC_OTEL_SERVICE_NAME
           value: "test-frontend"
         - name: REDIS_HOST
