@@ -8,8 +8,9 @@
 #   4. After the Job completes successfully:
 #        kubectl -n clutterstock-test scale deployment clutterstock-api --replicas=1
 #
-# Re-runs: delete the Job (`kubectl delete job -n clutterstock-test clutterstock-test-pbs-backup-v001`)
-# or bump `metadata.name` when you change pod template fields (Job spec is immutable).
+# Re-runs / image bumps: `spec.template` is immutable. Either
+#   `kubectl delete job -n clutterstock-test clutterstock-test-pbs-backup-v002`
+# or bump `metadata.name` (e.g. v002 → v003) so apply creates a new Job instead of patching.
 #
 # Image tag: GitVersion MajorMinorPatch from .github/workflows/build-proxmox-pbs-backup-client.yaml
 # (calls reusable-workflows docker-container@v1). Builds run on workflow_dispatch or push of v* tags
@@ -18,7 +19,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: clutterstock-test-pbs-backup-v001
+  name: clutterstock-test-pbs-backup-v002
   namespace: clutterstock-test
 spec:
   backoffLimit: 2
