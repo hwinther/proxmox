@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dump1090-fa
+  namespace: adsb-edge-sdr
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Applications
+    gethomepage.dev/name: dump1090 SkyAware (edge / Pi)
+    gethomepage.dev/icon: mdi-radar
+    gethomepage.dev/description: FlightAware dump1090-fa web UI (/skyaware/)
+spec:
+  rules:
+    - host: dump1090-fa.edge-sdr.wsh.no
+      http:
+        paths:
+          - path: /skyaware
+            pathType: Prefix
+            backend:
+              service:
+                name: dump1090-fa
+                port:
+                  number: 80

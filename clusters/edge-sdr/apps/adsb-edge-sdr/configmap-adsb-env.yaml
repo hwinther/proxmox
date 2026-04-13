@@ -14,5 +14,5 @@ data:
   EXTRA_ARGS: "--quiet --wisdom /opt/dump1090-fa/wisdom.rpi3b"
   AISCATCHER_SERVER: "https://ais.edge-sdr.wsh.no"
   AISCATCHER_REFRESH: "15"
-  SKYAWARE_URL: ""
+  SKYAWARE_URL: "https://dump1090-fa.edge-sdr.wsh.no/skyaware/"
   DEBUG: "false"

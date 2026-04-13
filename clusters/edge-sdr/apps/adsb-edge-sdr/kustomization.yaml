@@ -4,6 +4,7 @@ resources:
   - namespace.yaml
   - configmap-adsb-env.yaml
   - dump1090-fa.yaml
+  - dump1090-fa-ingress.yaml
   - tar1090.yaml
   - tar1090-ingress.yaml
   - adsb-feeders.yaml
