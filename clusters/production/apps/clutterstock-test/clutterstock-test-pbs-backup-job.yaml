@@ -1,0 +1,68 @@
+# Manual backup of clutterstock-api SQLite PVC to Proxmox Backup Server.
+#
+# Prerequisites:
+#   1. Create Secret `clutterstock-test-pbs-backup` (see pbs-backup-secrets.md).
+#   2. Scale API off the RWO volume so the Job can mount it:
+#        kubectl -n clutterstock-test scale deployment clutterstock-api --replicas=0
+#   3. Wait until no pod is using PVC `clutterstock-api-sqlite`, then apply this Job or let Flux create it.
+#   4. After the Job completes successfully:
+#        kubectl -n clutterstock-test scale deployment clutterstock-api --replicas=1
+#
+# Re-runs: delete the Job (`kubectl delete job -n clutterstock-test clutterstock-test-pbs-backup-v001`)
+# or bump `metadata.name` when you change pod template fields (Job spec is immutable).
+#
+# Image tag 0.1.0 is published by .github/workflows/build-proxmox-pbs-backup-client.yaml on main.
+# Image is linux/amd64 only (official static client from pbs-client); see images/proxmox-pbs-backup-client/Dockerfile.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: clutterstock-test-pbs-backup-v001
+  namespace: clutterstock-test
+spec:
+  backoffLimit: 2
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: clutterstock-pbs-backup
+        app.kubernetes.io/component: clutterstock-pbs-backup
+    spec:
+      # Image is linux/amd64; avoid arm64 nodes on mixed clusters.
+      nodeSelector:
+        kubernetes.io/arch: amd64
+      hostname: clutterstock-test-sqlite
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1654
+        fsGroup: 1654
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+      - name: backup
+        image: ghcr.io/hwinther/proxmox/proxmox/pbs/backup-client:0.1.0
+        imagePullPolicy: IfNotPresent
+        args:
+        - backup
+        - sqlite-data.pxar:/data
+        envFrom:
+        - secretRef:
+            name: clutterstock-test-pbs-backup
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: "1"
+            memory: 512Mi
+        volumeMounts:
+        - name: sqlite-data
+          mountPath: /data
+      volumes:
+      - name: sqlite-data
+        persistentVolumeClaim:
+          claimName: clutterstock-api-sqlite
