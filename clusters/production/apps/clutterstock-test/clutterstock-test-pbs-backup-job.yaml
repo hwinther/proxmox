@@ -23,6 +23,7 @@ metadata:
   namespace: clutterstock-test
 spec:
   backoffLimit: 2
+  # Job object (and finished Pods) are deleted this many seconds after Complete/Failed — expect `kubectl get jobs` to be empty afterward.
   ttlSecondsAfterFinished: 86400
   template:
     metadata:

@@ -1,0 +1,73 @@
+# Restore sqlite-data.pxar from a PBS snapshot into the clutterstock-api PVC (overwrites /data).
+# Same amd64-only client image and tag as the backup Job (see clutterstock-test-pbs-backup-job.yaml).
+#
+# Not in kustomization.yaml: apply manually when needed, e.g.
+#   kubectl apply -f clusters/production/apps/clutterstock-test/clutterstock-test-pbs-restore-job.yaml
+#
+# Prerequisites:
+#   1. Secret `clutterstock-test-pbs-backup`: PBS_REPOSITORY, PBS_PASSWORD, and for restore
+#      PBS_RESTORE_SNAPSHOT (see pbs-backup-secrets.md). List snapshots via a debug pod or
+#      `proxmox-backup-client list` with the same credentials.
+#   2. Scale API to zero and confirm the PVC is free (same as backup Job).
+#   3. Apply this Job; when it completes, verify files under /data then scale API back to 1.
+#
+# WARNING: Restore replaces content under /data for paths present in the archive. Test on a clone first.
+#
+# Re-runs: `spec.template` is immutable — delete the Job or bump `metadata.name` when the pod spec changes.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: clutterstock-test-pbs-restore-v002
+  namespace: clutterstock-test
+spec:
+  backoffLimit: 1
+  # Job object (and finished Pods) are deleted this many seconds after Complete/Failed — expect `kubectl get jobs` to be empty afterward.
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: clutterstock-pbs-restore
+        app.kubernetes.io/component: clutterstock-pbs-backup
+    spec:
+      nodeSelector:
+        kubernetes.io/arch: amd64
+      hostname: clutterstock-test-sqlite
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1654
+        fsGroup: 1654
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+        - name: restore
+          image: ghcr.io/hwinther/proxmox/proxmox/pbs/backup-client:0.6.1
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -eu
+              : "${PBS_RESTORE_SNAPSHOT:?set PBS_RESTORE_SNAPSHOT in Secret clutterstock-test-pbs-backup}"
+              exec /usr/bin/proxmox-backup-client restore "$PBS_RESTORE_SNAPSHOT" sqlite-data.pxar /data/
+          envFrom:
+            - secretRef:
+                name: clutterstock-test-pbs-backup
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          volumeMounts:
+            - name: sqlite-data
+              mountPath: /data
+      volumes:
+        - name: sqlite-data
+          persistentVolumeClaim:
+            claimName: clutterstock-api-sqlite
