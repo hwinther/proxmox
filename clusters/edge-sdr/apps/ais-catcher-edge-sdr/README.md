@@ -1,6 +1,14 @@
 # AIS-Catcher (edge-sdr)
 
-GitOps manifests for **ais-catcher** on Raspberry Pi workers (`role=sdr-edge`, taint `node-type=edge-sdr`). Non-sensitive defaults live in ConfigMap **`ais-catcher-env`**; optional overrides and secrets live in **`ais-catcher-secret`**.
+GitOps manifests for **ais-catcher** on Raspberry Pi workers. Non-sensitive defaults live in ConfigMap **`ais-catcher-env`**; optional overrides and secrets live in **`ais-catcher-secret`**.
+
+## Scheduling (hardware)
+
+The Deployment requires **`role=sdr-edge`**, toleration for taint **`node-type=edge-sdr:NoSchedule`**, and node label **`edge-sdr/ais-antenna=true`** on the Pi that has the AIS antenna/SDR. See [raspberry-pi-worker.md](../../../../infra/k0s/raspberry-pi-worker.md) for the full join, label, and taint steps.
+
+```bash
+kubectl label node <pi-hostname> edge-sdr/ais-antenna=true --overwrite
+```
 
 ## Secret: `ais-catcher-secret`
 
@@ -10,11 +18,11 @@ Use the Secret for **exact positions** (`LAT`, `LON`) so coordinates are not com
 
 ### Keys you can set
 
-| Key | Purpose |
-|-----|---------|
-| `LAT` | Station latitude (decimal degrees); overrides ConfigMap. |
-| `LON` | Station longitude (decimal degrees); overrides ConfigMap. |
-| `EXTRA_ARGS` | Extra CLI flags for AIS-catcher (e.g. `-u host port key`, `-Q mqtt://...`). |
+| Key                     | Purpose                                                                                                                           |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `LAT`                   | Station latitude (decimal degrees); overrides ConfigMap.                                                                          |
+| `LON`                   | Station longitude (decimal degrees); overrides ConfigMap.                                                                         |
+| `EXTRA_ARGS`            | Extra CLI flags for AIS-catcher (e.g. `-u host port key`, `-Q mqtt://...`).                                                       |
 | Any other ConfigMap key | Same names as in **`ais-catcher-env`** (`DEVICE_INDEX`, `STATION_URL`, `BIASTEE`, …) if you need to override without editing Git. |
 
 ### Example: create the Secret

@@ -4,24 +4,32 @@ GitOps manifests for **dump1090-fa**, **tar1090**, and feeders (**piaware**, **f
 
 Each workload that needs config uses **`envFrom`**: ConfigMap **`adsb-env`** first, then Secret **`adsb-secret`** (`optional: true`). If the same variable exists in both, the **Secret** value wins.
 
+## Scheduling (hardware)
+
+Pods schedule only on edge workers with **`role=sdr-edge`**, toleration for taint **`node-type=edge-sdr:NoSchedule`**, and node label **`edge-sdr/adsb-antenna=true`** on the Pi that actually has the ADS-B antenna/SDR. See [raspberry-pi-worker.md](../../../../infra/k0s/raspberry-pi-worker.md) for the full join, label, and taint steps.
+
+```bash
+kubectl label node <pi-hostname> edge-sdr/adsb-antenna=true --overwrite
+```
+
 ## Secret: `adsb-secret`
 
 Namespace: **`adsb-edge-sdr`**. **Piaware** still requires **`FEEDER_ID`** at runtime: without it, the container exits. Other feeders may stay unhealthy until their keys are set.
 
 ### Keys you can set
 
-| Key | Used by | Notes |
-|-----|---------|--------|
-| `LAT` | dump1090-fa, piaware, adsbexchange, opensky | Overrides ConfigMap; use to avoid committing exact coordinates in Git. |
-| `LON` | dump1090-fa, piaware, adsbexchange, opensky | Same as `LAT`. |
-| `ALT` | opensky | Antenna altitude; overrides ConfigMap if set. |
-| `FEEDER_ID` | Piaware | FlightAware feeder ID (required for Piaware to run). |
-| `FR24_KEY` | FR24 | Flightradar24 sharing key. |
-| `ADSBX_UUID` | adsbexchange | ADSB Exchange UUID. |
-| `OPENSKY_USERNAME` | OpenSky | OpenSky account username. |
-| `OPENSKY_SERIAL` | OpenSky | Device serial (optional after first registration). |
-| `HEYWHATSTHAT_ID` | tar1090 | HeyWhatsThat panorama id for tar1090. |
-| Any other ConfigMap key | All pods that `envFrom` the ConfigMap | Same name overrides the Git-tracked default (e.g. `EXTRA_ARGS`, `DEVICE_INDEX`). |
+| Key                     | Used by                                     | Notes                                                                            |
+| ----------------------- | ------------------------------------------- | -------------------------------------------------------------------------------- |
+| `LAT`                   | dump1090-fa, piaware, adsbexchange, opensky | Overrides ConfigMap; use to avoid committing exact coordinates in Git.           |
+| `LON`                   | dump1090-fa, piaware, adsbexchange, opensky | Same as `LAT`.                                                                   |
+| `ALT`                   | opensky                                     | Antenna altitude; overrides ConfigMap if set.                                    |
+| `FEEDER_ID`             | Piaware                                     | FlightAware feeder ID (required for Piaware to run).                             |
+| `FR24_KEY`              | FR24                                        | Flightradar24 sharing key.                                                       |
+| `ADSBX_UUID`            | adsbexchange                                | ADSB Exchange UUID.                                                              |
+| `OPENSKY_USERNAME`      | OpenSky                                     | OpenSky account username.                                                        |
+| `OPENSKY_SERIAL`        | OpenSky                                     | Device serial (optional after first registration).                               |
+| `HEYWHATSTHAT_ID`       | tar1090                                     | HeyWhatsThat panorama id for tar1090.                                            |
+| Any other ConfigMap key | All pods that `envFrom` the ConfigMap       | Same name overrides the Git-tracked default (e.g. `EXTRA_ARGS`, `DEVICE_INDEX`). |
 
 **tar1090** `envFrom` loads the full ConfigMap; extra keys there are harmless. **FR24** only `envFrom` the Secret (for `FR24_KEY` and any future keys you add).
 
