@@ -1,0 +1,15 @@
+# Cross-cluster remote_write from edge-sdr Prometheus Agent. In-cluster scraping unchanged (ClusterIP Service).
+apiVersion: v1
+kind: Service
+metadata:
+  name: obs-kps-prometheus-nodeport
+  namespace: observability-production
+spec:
+  type: NodePort
+  selector:
+    app.kubernetes.io/name: prometheus
+    operator.prometheus.io/name: obs-kps-kube-prometheus-st-prometheus
+  ports:
+    - port: 9090
+      targetPort: http-web
+      nodePort: 30081

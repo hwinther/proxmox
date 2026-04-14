@@ -15,9 +15,9 @@ If the cluster uses k0s **`nodeLocalLoadBalancing`**, each worker runs an **NLLB
 
 From the Pi to **each controller** (or the VIP / address embedded in the join token), allow **outbound**:
 
-| Port | Typical use |
-|------|-------------|
-| **6443** | Kubernetes API |
+| Port     | Typical use                          |
+| -------- | ------------------------------------ |
+| **6443** | Kubernetes API                       |
 | **8132** | Konnectivity (worker agent → server) |
 
 If you use **nodeLocalLoadBalancing** with Envoy (see [cilium-k0s-setup.md](cilium-k0s-setup.md) and [k0s.yaml.example](k0s.yaml.example)), workers still need a working path to the API and Konnectivity endpoints your cluster advertises; align host firewalls with your live `/etc/k0s/k0s.yaml` on controllers.
@@ -212,6 +212,39 @@ kubectl label node <pi-hostname> edge-sdr/ais-antenna=true --overwrite
 Use only the label(s) that match physical hardware on that node (both are fine on one Pi if it runs both systems).
 
 Repeat for each Pi. General workloads without tolerations will not schedule here; edge workloads need the taint **toleration** and **nodeAffinity** (or `nodeSelector`) for `role=sdr-edge`.
+
+## Kubelet log rotation (optional worker profile)
+
+To cap **per-container** log file size on edge workers (default is larger), define a **worker profile** on controllers in `/etc/k0s/k0s.yaml` and join (or reinstall) the worker with that profile. Example profile name **`edge-sdr`** matching this repo’s edge pattern:
+
+```yaml
+spec:
+  workerProfiles:
+    - name: edge-sdr
+      values:
+        containerLogMaxSize: "5Mi"
+        containerLogMaxFiles: 3
+```
+
+Then on the Pi (new install or after aligning with k0s docs for profile changes):
+
+```bash
+sudo k0s install worker --profile edge-sdr --token-file /path/to/worker.token
+```
+
+See [k0s worker profiles](https://docs.k0sproject.io/stable/worker-node-config/#worker-profiles) for precedence and validation (`k0s config validate`). Central log retention for AIS/ADSB workloads is described alongside [Fluent Bit](../../clusters/edge-sdr/apps/fluent-bit-edge-sdr/fluent-bit-edge-sdr-secrets.md) on the edge-sdr cluster.
+
+## Optional: tmpfs for `/var/log` on the Pi
+
+If you want container logs (under `/var/log/pods`) to live in **RAM** with a fixed cap—so SD wear and disk growth stay bounded—mount a small **tmpfs** on `/var/log`. Logs are **lost on reboot**; that is acceptable when shipping to **Loki** on another cluster.
+
+Example **`/etc/fstab`** line (64 MiB cap; tune to taste):
+
+```fstab
+tmpfs /var/log tmpfs defaults,noatime,size=64M 0 0
+```
+
+Apply after editing fstab (`sudo mount -a` or reboot). **Trade-off:** the rest of `/var/log` (e.g. host syslog) also becomes ephemeral unless you use a more selective layout (for example bind-mounting only `/var/log/pods`, which is more fiddly).
 
 ## kube-system DaemonSets and the edge taint
 

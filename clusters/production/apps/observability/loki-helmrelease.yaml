@@ -56,6 +56,11 @@ spec:
       limits_config:
         allow_structured_metadata: true
         volume_enabled: true
+        retention_period: 336h
+      compactor:
+        compaction_interval: 10m
+        delete_request_cancel_period: 0s
+        retention_enabled: true
       ruler:
         enable_api: true
     singleBinary:

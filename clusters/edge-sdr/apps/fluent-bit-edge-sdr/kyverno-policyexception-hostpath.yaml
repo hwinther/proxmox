@@ -1,0 +1,21 @@
+# Fluent Bit reads /var/log/pods and (via chart defaults) may reference host log paths.
+apiVersion: kyverno.io/v2
+kind: PolicyException
+metadata:
+  name: fluent-bit-hostpath-logs
+  namespace: fluent-bit-edge-sdr
+spec:
+  exceptions:
+    - policyName: wsh-disallow-host-path
+      ruleNames:
+        - host-path
+  match:
+    any:
+      - resources:
+          kinds:
+            - Pod
+          namespaces:
+            - fluent-bit-edge-sdr
+          selector:
+            matchLabels:
+              app.kubernetes.io/name: fluent-bit
