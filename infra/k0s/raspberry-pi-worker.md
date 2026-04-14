@@ -202,6 +202,15 @@ kubectl label node <pi-hostname> role=sdr-edge --overwrite
 kubectl taint nodes <pi-hostname> node-type=edge-sdr:NoSchedule
 ```
 
+**Hardware-specific stacks** ([adsb-edge-sdr](../../clusters/edge-sdr/apps/adsb-edge-sdr/), [ais-catcher-edge-sdr](../../clusters/edge-sdr/apps/ais-catcher-edge-sdr/)) also require the matching antenna label on the Pi that has that RF path:
+
+```bash
+kubectl label node <pi-hostname> edge-sdr/adsb-antenna=true --overwrite
+kubectl label node <pi-hostname> edge-sdr/ais-antenna=true --overwrite
+```
+
+Use only the label(s) that match physical hardware on that node (both are fine on one Pi if it runs both systems).
+
 Repeat for each Pi. General workloads without tolerations will not schedule here; edge workloads need the taint **toleration** and **nodeAffinity** (or `nodeSelector`) for `role=sdr-edge`.
 
 ## kube-system DaemonSets and the edge taint

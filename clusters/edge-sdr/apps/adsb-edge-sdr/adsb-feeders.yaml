@@ -1,4 +1,5 @@
 # Piaware / FR24 / adsbexchange / opensky — reach dump1090-fa via in-namespace Service (beast ports).
+# Requires node label edge-sdr/adsb-antenna=true (hardware with ADS-B antenna/SDR).
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -22,48 +23,52 @@ spec:
         app.kubernetes.io/part-of: adsb-edge-sdr
     spec:
       tolerations:
-        - key: node-type
-          operator: Equal
-          value: edge-sdr
-          effect: NoSchedule
+      - key: node-type
+        operator: Equal
+        value: edge-sdr
+        effect: NoSchedule
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
-              - matchExpressions:
-                  - key: role
-                    operator: In
-                    values:
-                      - sdr-edge
+            - matchExpressions:
+              - key: role
+                operator: In
+                values:
+                - sdr-edge
+              - key: edge-sdr/adsb-antenna
+                operator: In
+                values:
+                - "true"
       containers:
-        - name: piaware
-          image: ghcr.io/hwinther/proxmox/sdr/adsb/piaware-wsh:0.6.0
-          imagePullPolicy: IfNotPresent
-          # env after envFrom so RECEIVER_* / MLAT_* override any accidental ConfigMap keys.
-          envFrom:
-            - configMapRef:
-                name: adsb-env
-            - secretRef:
-                name: adsb-secret
-                optional: true
-          env:
-            - name: RECEIVER_TYPE
-              value: other
-            - name: RECEIVER_HOST
-              value: localhost
-            - name: RECEIVER_PORT
-              value: "30005"
-            - name: MLAT_BEAST_HOST
-              value: dump1090-fa
-            - name: MLAT_BEAST_PORT
-              value: "30104"
-          resources:
-            requests:
-              cpu: 50m
-              memory: 32Mi
-            limits:
-              cpu: 500m
-              memory: 256Mi
+      - name: piaware
+        image: ghcr.io/hwinther/proxmox/sdr/adsb/piaware-wsh:0.6.0
+        imagePullPolicy: IfNotPresent
+        # env after envFrom so RECEIVER_* / MLAT_* override any accidental ConfigMap keys.
+        envFrom:
+        - configMapRef:
+            name: adsb-env
+        - secretRef:
+            name: adsb-secret
+            optional: true
+        env:
+        - name: RECEIVER_TYPE
+          value: other
+        - name: RECEIVER_HOST
+          value: localhost
+        - name: RECEIVER_PORT
+          value: "30005"
+        - name: MLAT_BEAST_HOST
+          value: dump1090-fa
+        - name: MLAT_BEAST_PORT
+          value: "30104"
+        resources:
+          requests:
+            cpu: 50m
+            memory: 32Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -88,42 +93,46 @@ spec:
         app.kubernetes.io/part-of: adsb-edge-sdr
     spec:
       tolerations:
-        - key: node-type
-          operator: Equal
-          value: edge-sdr
-          effect: NoSchedule
+      - key: node-type
+        operator: Equal
+        value: edge-sdr
+        effect: NoSchedule
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
-              - matchExpressions:
-                  - key: role
-                    operator: In
-                    values:
-                      - sdr-edge
+            - matchExpressions:
+              - key: role
+                operator: In
+                values:
+                - sdr-edge
+              - key: edge-sdr/adsb-antenna
+                operator: In
+                values:
+                - "true"
       containers:
-        - name: fr24
-          image: ghcr.io/hwinther/proxmox/sdr/adsb/fr24-wsh:0.6.0
-          imagePullPolicy: IfNotPresent
-          # env after envFrom so RECEIVER_* overrides if those keys ever appear in the Secret.
-          envFrom:
-            - secretRef:
-                name: adsb-secret
-                optional: true
-          env:
-            - name: RECEIVER_TYPE
-              value: avr-tcp
-            - name: RECEIVER_HOST
-              value: dump1090-fa
-            - name: RECEIVER_PORT
-              value: "30002"
-          resources:
-            requests:
-              cpu: 50m
-              memory: 32Mi
-            limits:
-              cpu: 500m
-              memory: 192Mi
+      - name: fr24
+        image: ghcr.io/hwinther/proxmox/sdr/adsb/fr24-wsh:0.6.0
+        imagePullPolicy: IfNotPresent
+        # env after envFrom so RECEIVER_* overrides if those keys ever appear in the Secret.
+        envFrom:
+        - secretRef:
+            name: adsb-secret
+            optional: true
+        env:
+        - name: RECEIVER_TYPE
+          value: avr-tcp
+        - name: RECEIVER_HOST
+          value: dump1090-fa
+        - name: RECEIVER_PORT
+          value: "30002"
+        resources:
+          requests:
+            cpu: 50m
+            memory: 32Mi
+          limits:
+            cpu: 500m
+            memory: 192Mi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -148,36 +157,40 @@ spec:
         app.kubernetes.io/part-of: adsb-edge-sdr
     spec:
       tolerations:
-        - key: node-type
-          operator: Equal
-          value: edge-sdr
-          effect: NoSchedule
+      - key: node-type
+        operator: Equal
+        value: edge-sdr
+        effect: NoSchedule
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
-              - matchExpressions:
-                  - key: role
-                    operator: In
-                    values:
-                      - sdr-edge
+            - matchExpressions:
+              - key: role
+                operator: In
+                values:
+                - sdr-edge
+              - key: edge-sdr/adsb-antenna
+                operator: In
+                values:
+                - "true"
       containers:
-        - name: adsbexchange
-          image: ghcr.io/hwinther/proxmox/sdr/adsb/adsbexchange-wsh:0.6.0
-          imagePullPolicy: IfNotPresent
-          envFrom:
-            - configMapRef:
-                name: adsb-env
-            - secretRef:
-                name: adsb-secret
-                optional: true
-          resources:
-            requests:
-              cpu: 50m
-              memory: 32Mi
-            limits:
-              cpu: 500m
-              memory: 256Mi
+      - name: adsbexchange
+        image: ghcr.io/hwinther/proxmox/sdr/adsb/adsbexchange-wsh:0.6.0
+        imagePullPolicy: IfNotPresent
+        envFrom:
+        - configMapRef:
+            name: adsb-env
+        - secretRef:
+            name: adsb-secret
+            optional: true
+        resources:
+          requests:
+            cpu: 50m
+            memory: 32Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -202,33 +215,37 @@ spec:
         app.kubernetes.io/part-of: adsb-edge-sdr
     spec:
       tolerations:
-        - key: node-type
-          operator: Equal
-          value: edge-sdr
-          effect: NoSchedule
+      - key: node-type
+        operator: Equal
+        value: edge-sdr
+        effect: NoSchedule
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
-              - matchExpressions:
-                  - key: role
-                    operator: In
-                    values:
-                      - sdr-edge
+            - matchExpressions:
+              - key: role
+                operator: In
+                values:
+                - sdr-edge
+              - key: edge-sdr/adsb-antenna
+                operator: In
+                values:
+                - "true"
       containers:
-        - name: opensky
-          image: ghcr.io/hwinther/proxmox/sdr/adsb/opensky-wsh:0.6.0
-          imagePullPolicy: IfNotPresent
-          envFrom:
-            - configMapRef:
-                name: adsb-env
-            - secretRef:
-                name: adsb-secret
-                optional: true
-          resources:
-            requests:
-              cpu: 50m
-              memory: 32Mi
-            limits:
-              cpu: 500m
-              memory: 192Mi
+      - name: opensky
+        image: ghcr.io/hwinther/proxmox/sdr/adsb/opensky-wsh:0.6.0
+        imagePullPolicy: IfNotPresent
+        envFrom:
+        - configMapRef:
+            name: adsb-env
+        - secretRef:
+            name: adsb-secret
+            optional: true
+        resources:
+          requests:
+            cpu: 50m
+            memory: 32Mi
+          limits:
+            cpu: 500m
+            memory: 192Mi

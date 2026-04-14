@@ -1,5 +1,5 @@
-# Schedules on Raspberry Pi edge workers: label role=sdr-edge and taint
-# node-type=edge-sdr:NoSchedule. USB via hostPath /dev/bus/usb (see PolicyException).
+# Schedules on Raspberry Pi edge workers: label role=sdr-edge, edge-sdr/ais-antenna=true,
+# and taint node-type=edge-sdr:NoSchedule. USB via hostPath /dev/bus/usb (see PolicyException).
 # Image from compose servers/radio-pi02/ais/docker-compose.yaml (GHCR publish workflow).
 apiVersion: apps/v1
 kind: Deployment
@@ -36,6 +36,10 @@ spec:
                 operator: In
                 values:
                 - sdr-edge
+              - key: edge-sdr/ais-antenna
+                operator: In
+                values:
+                - "true"
       containers:
       - name: ais-catcher
         image: ghcr.io/hwinther/proxmox/sdr/ais/ais-catcher-wsh:0.6.0
