@@ -77,6 +77,8 @@ spec:
         [FILTER]
             Name                kubernetes
             Match               kube.*
+            # Tail uses /var/log/pods/ (containerd/k0s); tags are kube.var.log.pods.* not containers.*
+            Kube_Tag_Prefix     kube.var.log.pods.
             Merge_Log           On
             Keep_Log            Off
             K8S-Logging.Parser  On
