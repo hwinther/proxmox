@@ -62,6 +62,13 @@ spec:
         mountPath: /etc/machine-id
         readOnly: true
     config:
+      # CRI log paths yield tags like kube.var.log.pods.<ns>_<pod>_<uid>.<container>.<restart>.log;
+      # the kubernetes filter's built-in regex expects docker's -<64hex>.log suffix — use Regex_Parser.
+      customParsers: |
+        [PARSER]
+            Name              kube-var-log-pods-tag
+            Format            regex
+            Regex             ^(?<namespace_name>[^_]+)_(?<pod_name>[^_]+)_(?:[^.]+)\.(?<container_name>[^.]+)\.(?<docker_id>[0-9]+)\.log$
       inputs: |
         [INPUT]
             Name                tail
@@ -79,6 +86,7 @@ spec:
             Match               kube.*
             # Tail uses /var/log/pods/ (containerd/k0s); tags are kube.var.log.pods.* not containers.*
             Kube_Tag_Prefix     kube.var.log.pods.
+            Regex_Parser        kube-var-log-pods-tag
             Merge_Log           On
             Keep_Log            Off
             K8S-Logging.Parser  On
