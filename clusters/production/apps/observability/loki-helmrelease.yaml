@@ -60,6 +60,7 @@ spec:
       compactor:
         compaction_interval: 10m
         delete_request_cancel_period: 0s
+        delete_request_store: s3
         retention_enabled: true
       ruler:
         enable_api: true
