@@ -1,0 +1,107 @@
+# AIS/ADSB container logs -> production Loki (see fluent-bit-edge-sdr-secrets.md).
+# Requires Secret fluent-bit-loki-endpoint (LOKI_HOST, LOKI_PORT).
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: fluent-bit
+  namespace: fluent-bit-edge-sdr
+spec:
+  interval: 30m
+  timeout: 10m
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  chart:
+    spec:
+      chart: fluent-bit
+      version: "0.55.0"
+      sourceRef:
+        kind: HelmRepository
+        name: fluent
+        namespace: fluent-bit-edge-sdr
+  values:
+    kind: DaemonSet
+    nameOverride: fluent-bit
+    logLevel: info
+    flush: 5
+    testFramework:
+      enabled: false
+    rbac:
+      create: true
+      nodeAccess: true
+    tolerations:
+      - key: node-type
+        operator: Equal
+        value: edge-sdr
+        effect: NoSchedule
+    resources:
+      requests:
+        cpu: 50m
+        memory: 32Mi
+      limits:
+        memory: 64Mi
+    envFrom:
+      - secretRef:
+          name: fluent-bit-loki-endpoint
+    # k0s/containerd: real files live under /var/log/pods; no docker bind mount on Pis.
+    daemonSetVolumes:
+      - name: varlog
+        hostPath:
+          path: /var/log
+      - name: etcmachineid
+        hostPath:
+          path: /etc/machine-id
+          type: File
+    daemonSetVolumeMounts:
+      - name: varlog
+        mountPath: /var/log
+      - name: etcmachineid
+        mountPath: /etc/machine-id
+        readOnly: true
+    config:
+      inputs: |
+        [INPUT]
+            Name                tail
+            Path                /var/log/pods/*/*/*.log
+            multiline.parser    docker, cri
+            Tag                 kube.*
+            Mem_Buf_Limit       5MB
+            Skip_Long_Lines     On
+            Read_From_Head      Off
+            DB                  /var/log/fluent-bit-edge-pos.db
+            DB.locking          true
+      filters: |
+        [FILTER]
+            Name                kubernetes
+            Match               kube.*
+            Merge_Log           On
+            Keep_Log            Off
+            K8S-Logging.Parser  On
+            K8S-Logging.Exclude On
+
+        [FILTER]
+            Name                nest
+            Match               kube.*
+            Operation           lift
+            Nested_under        kubernetes
+            Add_prefix          kubernetes_
+
+        [FILTER]
+            Name                grep
+            Match               kube.*
+            Regex               kubernetes_namespace_name ^(ais-catcher-edge-sdr|adsb-edge-sdr)$
+      outputs: |
+        [OUTPUT]
+            Name                loki
+            Match               kube.*
+            Host                ${LOKI_HOST}
+            Port                ${LOKI_PORT}
+            compress            gzip
+            tenant_id           foo
+            labels              job=fluent-bit-edge-sdr, cluster=edge-sdr, namespace=$kubernetes_namespace_name
+            structured_metadata pod=$kubernetes_pod_name, container=$kubernetes_container_name
+            line_format         json
+            drop_single_key     raw

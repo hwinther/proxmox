@@ -11,4 +11,7 @@ resources:
   - podinfo-edge-sdr
   - ais-catcher-edge-sdr
   - adsb-edge-sdr
+  - fluent-bit-edge-sdr
+  - node-exporter-edge-sdr
+  - prometheus-agent-edge-sdr
   - ingress.yaml

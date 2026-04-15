@@ -6,6 +6,8 @@ resources:
   - helmrepositories.yaml
   - kube-prometheus-stack-helmrelease.yaml
   - loki-helmrelease.yaml
+  - loki-gateway-nodeport.yaml
+  - prometheus-nodeport.yaml
   - tempo-helmrelease.yaml
   - otel-collector-helmrelease.yaml
   - observability-ingress.yaml

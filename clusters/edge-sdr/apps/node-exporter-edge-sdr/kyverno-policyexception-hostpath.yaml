@@ -1,0 +1,21 @@
+# prometheus-node-exporter mounts host rootfs, proc, and sys for hardware metrics.
+apiVersion: kyverno.io/v2
+kind: PolicyException
+metadata:
+  name: node-exporter-hostpath
+  namespace: node-exporter-edge-sdr
+spec:
+  exceptions:
+    - policyName: wsh-disallow-host-path
+      ruleNames:
+        - host-path
+  match:
+    any:
+      - resources:
+          kinds:
+            - Pod
+          namespaces:
+            - node-exporter-edge-sdr
+          selector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus-node-exporter

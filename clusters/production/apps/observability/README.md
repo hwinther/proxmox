@@ -9,12 +9,14 @@ Namespace: **`observability-production`**. Flux installs **kube-prometheus-stack
 
 ## In-cluster endpoints (apps)
 
-| Signal | Endpoint |
-|--------|----------|
-| OTLP gRPC | `obs-otel-collector.observability-production.svc.cluster.local:4317` |
-| OTLP HTTP | `http://obs-otel-collector.observability-production.svc.cluster.local:4318` |
-| OTLP HTTP (via ingress) | `https://otel.mgmt.wsh.no` (path `/v1/traces`, etc.) |
-| Prometheus | `http://obs-kps-kube-prometheus-st-prometheus.observability-production.svc.cluster.local:9090` |
+| Signal                        | Endpoint                                                                                       |
+| ----------------------------- | ---------------------------------------------------------------------------------------------- |
+| OTLP gRPC                     | `obs-otel-collector.observability-production.svc.cluster.local:4317`                           |
+| OTLP HTTP                     | `http://obs-otel-collector.observability-production.svc.cluster.local:4318`                    |
+| OTLP HTTP (via ingress)       | `https://otel.mgmt.wsh.no` (path `/v1/traces`, etc.)                                           |
+| Prometheus                    | `http://obs-kps-kube-prometheus-st-prometheus.observability-production.svc.cluster.local:9090` |
+| Prometheus remote_write (LAN) | `http://<any-prod-node-ip>:30081/api/v1/write` (Service `obs-kps-prometheus-nodeport`)         |
+| Loki push (LAN)               | `http://<any-prod-node-ip>:30080` (Service `obs-loki-gateway-nodeport`)                        |
 
 ## Grafana
 
@@ -25,12 +27,12 @@ Namespace: **`observability-production`**. Flux installs **kube-prometheus-stack
 
 ## Helm releases
 
-| HelmRelease | Purpose |
-|-------------|---------|
-| `obs-kps` | kube-prometheus-stack |
-| `obs-loki` | Loki + gateway + MinIO |
-| `obs-tempo` | Tempo + metrics generator → Prometheus remote_write |
-| `obs-otel-collector` | OTLP → Tempo / Loki / Prometheus OTLP |
+| HelmRelease          | Purpose                                             |
+| -------------------- | --------------------------------------------------- |
+| `obs-kps`            | kube-prometheus-stack                               |
+| `obs-loki`           | Loki + gateway + MinIO                              |
+| `obs-tempo`          | Tempo + metrics generator → Prometheus remote_write |
+| `obs-otel-collector` | OTLP → Tempo / Loki / Prometheus OTLP               |
 
 ### Where are the Deployments?
 

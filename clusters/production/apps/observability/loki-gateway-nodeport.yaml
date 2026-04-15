@@ -1,0 +1,15 @@
+# LAN / cross-cluster access to Loki push (e.g. edge-sdr Fluent Bit). In-cluster clients keep using ClusterIP obs-loki-gateway.
+apiVersion: v1
+kind: Service
+metadata:
+  name: obs-loki-gateway-nodeport
+  namespace: observability-production
+spec:
+  type: NodePort
+  selector:
+    app.kubernetes.io/name: loki
+    app.kubernetes.io/component: gateway
+  ports:
+    - port: 80
+      targetPort: http-metrics
+      nodePort: 30080
