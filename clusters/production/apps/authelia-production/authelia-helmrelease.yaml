@@ -26,8 +26,6 @@ spec:
     pod:
       kind: Deployment
       replicas: 1
-      labels:
-        app.kubernetes.io/name: authelia
       extraVolumeMounts:
         - name: authelia-data
           mountPath: /config
