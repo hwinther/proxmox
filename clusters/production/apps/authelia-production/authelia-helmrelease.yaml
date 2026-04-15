@@ -74,8 +74,8 @@ spec:
         remember_me: 1 month
         cookies:
           - domain: wsh.no
-            authelia_url: http://auth.mgmt.wsh.no
-            default_redirection_url: http://headlamp.mgmt.wsh.no/
+            authelia_url: https://auth.mgmt.wsh.no
+            default_redirection_url: https://headlamp.mgmt.wsh.no/
       access_control:
         default_policy: deny
         rules:
@@ -116,7 +116,7 @@ spec:
               consent_mode: pre-configured
               pre_configured_consent_duration: 1 year
               redirect_uris:
-                - http://headlamp.mgmt.wsh.no/oidc-callback
+                - https://headlamp.mgmt.wsh.no/oidc-callback
               scopes:
                 - openid
                 - profile

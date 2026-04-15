@@ -29,9 +29,9 @@ spec:
           create: true
           name: headlamp-oidc
         clientID: headlamp
-        issuerURL: http://auth.mgmt.wsh.no
+        issuerURL: https://auth.mgmt.wsh.no
         scopes: openid profile email groups
-        callbackURL: http://headlamp.mgmt.wsh.no/oidc-callback
+        callbackURL: https://headlamp.mgmt.wsh.no/oidc-callback
         usePKCE: true
     initContainers:
       - name: headlamp-plugins
