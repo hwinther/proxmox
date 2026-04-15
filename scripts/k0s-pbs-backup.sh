@@ -11,10 +11,11 @@
 #   PBS_FINGERPRINT — optional (self-signed / pinned cert)
 #
 # Optional:
-#   K0S_BIN         — path to k0s (default: k0s)
-#   ARCHIVE_NAME    — pxar archive basename without .pxar (default: k0s-cluster)
-#   PBS_BACKUP_ID   — passed to proxmox-backup-client --backup-id (default: host name)
-#   LOCK_FILE       — flock lock path (default: /var/lock/k0s-pbs-backup.lock)
+#   K0S_BIN              — path to k0s (default: k0s)
+#   ARCHIVE_NAME         — pxar archive basename for the k0s tarball (default: k0s-cluster)
+#   PBS_BACKUP_ID        — passed to proxmox-backup-client --backup-id (default: host name)
+#   LOCK_FILE            — flock lock path (default: /var/lock/k0s-pbs-backup.lock)
+#   SKIP_USR_LOCAL_BIN   — if set to 1, do not add usr-local-bin.pxar:/usr/local/bin
 #
 # Load credentials into the same shell (do not run the env file as a program):
 #   Wrong:  /root/.pbs-env; script.sh   # exports apply only to a subshell, script.sh sees nothing
@@ -73,11 +74,19 @@ mkdir -p "$STAGE"
 # Stable name inside the archive for restores.
 mv "$BACKUP_TAR" "$STAGE/k0s_backup.tar.gz"
 
-pbs_cmd=(proxmox-backup-client backup "${ARCHIVE_NAME}.pxar:${STAGE}")
+pbs_cmd=(proxmox-backup-client backup)
 if [[ -n "${PBS_BACKUP_ID:-}" ]]; then
 	pbs_cmd+=(--backup-id "$PBS_BACKUP_ID")
 fi
+pbs_cmd+=("${ARCHIVE_NAME}.pxar:${STAGE}")
+if [[ "${SKIP_USR_LOCAL_BIN:-0}" != "1" ]]; then
+	if [[ -d /usr/local/bin ]]; then
+		pbs_cmd+=(usr-local-bin.pxar:/usr/local/bin)
+	else
+		log "SKIP /usr/local/bin (not a directory)"
+	fi
+fi
 
-log "uploading ${ARCHIVE_NAME}.pxar to PBS"
+log "uploading pxar archive(s) to PBS"
 "${pbs_cmd[@]}"
-log "finished OK ($(basename "$STAGE/k0s_backup.tar.gz"))"
+log "finished OK (k0s: $(basename "$STAGE/k0s_backup.tar.gz"))"

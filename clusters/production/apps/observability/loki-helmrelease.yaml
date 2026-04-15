@@ -30,6 +30,11 @@ spec:
       allocatedCPU: 100m
     minio:
       enabled: true
+      # Buckets already exist on the MinIO PVC; chart v5.4 `mc mb` is not idempotent and fails
+      # post-upgrade when chunks/ruler/admin are present. Empty list omits the make-bucket hook
+      # container (users/policies still run). New cluster: remove `buckets: []` for first install
+      # or create buckets once manually, then restore this guard.
+      buckets: []
       replicas: 1
       persistence:
         enabled: true
