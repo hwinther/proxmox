@@ -55,7 +55,8 @@ spec:
     ingress:
       enabled: true
       annotations:
-        traefik.ingress.kubernetes.io/router.entrypoints: web
+        traefik.ingress.kubernetes.io/router.entrypoints: websecure
+        traefik.ingress.kubernetes.io/router.tls: "true"
         gethomepage.dev/enabled: "true"
         gethomepage.dev/group: Management
         gethomepage.dev/name: Authelia

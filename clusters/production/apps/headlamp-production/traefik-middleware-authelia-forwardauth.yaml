@@ -8,6 +8,7 @@ metadata:
 spec:
   forwardAuth:
     address: http://authelia.authelia-production.svc.cluster.local/api/authz/forward-auth
+    maxResponseBodySize: 1048576
     trustForwardHeader: true
     authResponseHeaders:
       - Remote-User
