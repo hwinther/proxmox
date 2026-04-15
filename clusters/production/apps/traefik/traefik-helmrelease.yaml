@@ -55,6 +55,9 @@ spec:
         port: 8000
         expose:
           default: true
+        forwardedHeaders:
+          trustedIPs:
+            - 10.20.0.0/16
       websecure:
         port: 8444
         expose:

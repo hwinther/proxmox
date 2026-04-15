@@ -4,8 +4,7 @@ metadata:
   name: headlamp
   namespace: headlamp-production
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.entrypoints: web
     traefik.ingress.kubernetes.io/router.middlewares: headlamp-production-authelia-forwardauth@kubernetescrd
     gethomepage.dev/enabled: "true"
     gethomepage.dev/group: Management
