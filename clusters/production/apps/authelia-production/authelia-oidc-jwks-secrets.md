@@ -1,6 +1,6 @@
 # Authelia OIDC signing key (`authelia-oidc-jwks`)
 
-Authelia’s OIDC provider uses an **RS256** key pair. The HelmRelease mounts a Kubernetes Secret named `authelia-oidc-jwks` with a PEM file at key `oidc-jwk-rsa.pem` (see `spec.values.secret.additionalSecrets` in `authelia-helmrelease.yaml`).
+Authelia’s OIDC provider uses an **RS256** key pair. The HelmRelease mounts a Kubernetes Secret named `authelia-oidc-jwks` with a PEM file at key `oidc-jwk-rsa.pem` (see `spec.values.secret.additionalSecrets` in `authelia-helmrelease.yaml`). The chart exposes that file at **`/secrets/authelia-oidc-jwks/oidc-jwk-rsa.pem`** in the container; `identity_providers.oidc.jwks[].key.path` must use that **absolute** path so Authelia’s `secret` filter can open it (relative paths are resolved from the process working directory, not from `/secrets`).
 
 That Secret is **not** stored in Git. Create or rotate it on the cluster with the steps below.
 

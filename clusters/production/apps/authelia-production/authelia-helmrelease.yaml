@@ -105,7 +105,7 @@ spec:
               algorithm: RS256
               use: sig
               key:
-                path: authelia-oidc-jwks/oidc-jwk-rsa.pem
+                path: /secrets/authelia-oidc-jwks/oidc-jwk-rsa.pem
           clients:
             - client_id: headlamp
               client_name: Headlamp
