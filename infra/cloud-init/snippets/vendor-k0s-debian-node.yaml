@@ -23,6 +23,8 @@ packages:
 - locales
 - openssh-server
 - qemu-guest-agent
+# NTP client for etcd / Kubernetes (avoids multi-second skew between control-plane nodes).
+- chrony
 - curl
 - ca-certificates
 - iptables
@@ -76,6 +78,7 @@ runcmd:
 # qemu-guest-agent.service on Debian often has no [Install] — `systemctl enable` exits 1 and breaks cloud-init.
 - systemctl start qemu-guest-agent.service || true
 - systemctl enable --now ssh
+- systemctl enable --now chrony.service
 # After `locales` is installed: enable UTF-8 locale, then set default (replaces broken `locale:` key).
 - sed -i 's/^# \(en_US.UTF-8 UTF-8\)/\1/' /etc/locale.gen
 - locale-gen en_US.UTF-8
