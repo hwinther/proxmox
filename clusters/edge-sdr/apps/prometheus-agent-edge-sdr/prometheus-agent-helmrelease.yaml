@@ -66,7 +66,7 @@ spec:
       persistentVolume:
         enabled: false
       defaultFlagsOverride:
-        - --enable-feature=agent
+        - --agent
         - --config.file=/etc/config/prometheus.yml
         - --web.enable-lifecycle
         - --storage.agent.path=/prometheus
