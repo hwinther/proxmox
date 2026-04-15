@@ -25,6 +25,9 @@ spec:
     # Edge Traefik uses hostNetwork; avoid hostPort 9100 clashes (matches production kps pattern).
     hostNetwork: false
     dnsPolicy: ClusterFirst
+    # Avoid requiring shared/slave mount propagation on host `/`.
+    hostRootFsMount:
+      mountPropagation: None
     resources:
       requests:
         cpu: 10m
