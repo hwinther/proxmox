@@ -26,7 +26,13 @@ spec:
       pluginsDir: /build/plugins
       oidc:
         secret:
-          create: false
+          create: true
+          name: headlamp-oidc
+        clientID: headlamp
+        issuerURL: http://auth.mgmt.wsh.no
+        scopes: openid profile email groups
+        callbackURL: http://headlamp.mgmt.wsh.no/oidc-callback
+        usePKCE: true
     initContainers:
       - name: headlamp-plugins
         image: ghcr.io/headlamp-k8s/headlamp-plugin-flux:v0.6.0

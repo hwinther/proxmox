@@ -1,0 +1,19 @@
+# Bootstrap user for file auth. Password is "ChangeMeNow!" — replace the hash after first login
+# (see https://www.authelia.com/reference/guides/passwords.md).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: authelia-users
+  namespace: authelia-production
+  labels:
+    app.kubernetes.io/name: authelia
+data:
+  users.yml: |
+    ---
+    users:
+      admin:
+        displayname: "Cluster Admin"
+        password: "$argon2id$v=19$m=65536,t=3,p=4$WcWTJ6sZ8/+hKYHF+P4CXA$krkn/HrUtafNFPQ1xSM+YTOqcbuSA5Djv6QQld4a1lI"
+        email: admin@wsh.no
+        groups:
+          - admins

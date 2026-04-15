@@ -4,6 +4,7 @@ resources:
   - namespace-headlamp-production.yaml
   - helmrepository.yaml
   - headlamp-helmrelease.yaml
+  - traefik-middleware-authelia-forwardauth.yaml
   - headlamp-ingress.yaml
   - kyverno-policyexception-headlamp-inits.yaml
   - kyverno-policyexception-headlamp-plugin-images.yaml
