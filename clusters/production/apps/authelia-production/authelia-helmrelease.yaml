@@ -74,7 +74,7 @@ spec:
         remember_me: 1 month
         cookies:
           - domain: wsh.no
-            authelia_url: https://auth.mgmt.wsh.no
+            subdomain: auth.mgmt
             default_redirection_url: https://headlamp.mgmt.wsh.no/
       access_control:
         default_policy: deny
