@@ -37,6 +37,7 @@ spec:
   values:
     deployment:
       kind: DaemonSet
+      dnsPolicy: ClusterFirstWithHostNet
     updateStrategy:
       type: RollingUpdate
       rollingUpdate:
