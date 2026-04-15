@@ -20,6 +20,31 @@ spec:
         kind: HelmRepository
         name: headlamp
         namespace: headlamp-production
+  ## Headlamp fetches OIDC discovery against issuerURL from inside the pod. If public DNS for
+  ## *.mgmt.wsh.no is not visible to cluster DNS (CoreDNS → forwarder SERVFAIL / "server misbehaving"),
+  ## map auth.mgmt.wsh.no to the LAN address where HTTPS terminates for those hostnames (same host as
+  ## nginx in templates/nginx/internal-reverse-proxy.conf when co-located with Traefik, often the
+  ## first wsh_general upstream IP). Adjust the IP in postRenderers if your TLS edge differs.
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: Deployment
+              name: headlamp
+              namespace: headlamp-production
+            patch: |
+              apiVersion: apps/v1
+              kind: Deployment
+              metadata:
+                name: headlamp
+                namespace: headlamp-production
+              spec:
+                template:
+                  spec:
+                    hostAliases:
+                      - ip: 10.20.13.11
+                        hostnames:
+                          - auth.mgmt.wsh.no
   values:
     ## Flux sidebar plugin — copy baked image into shared emptyDir (see headlamp-k8s/plugins flux README).
     config:
