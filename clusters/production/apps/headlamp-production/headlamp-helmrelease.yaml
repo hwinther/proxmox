@@ -20,31 +20,31 @@ spec:
         kind: HelmRepository
         name: headlamp
         namespace: headlamp-production
-  ## Headlamp fetches OIDC discovery against issuerURL from inside the pod. If public DNS for
-  ## *.mgmt.wsh.no is not visible to cluster DNS (CoreDNS → forwarder SERVFAIL / "server misbehaving"),
-  ## map auth.mgmt.wsh.no to the LAN address where HTTPS terminates for those hostnames (same host as
-  ## nginx in templates/nginx/internal-reverse-proxy.conf when co-located with Traefik, often the
-  ## first wsh_general upstream IP). Adjust the IP in postRenderers if your TLS edge differs.
+  ## Headlamp loads OIDC discovery from inside the pod (https://auth.mgmt.wsh.no/...). That must hit
+  ## whatever serves TLS on :443 for *.mgmt.wsh.no — in this repo that is nginx
+  ## (templates/nginx/internal-reverse-proxy.conf), not Traefik (hostNetwork :8000 / :8444 only). Using a
+  ## Traefik node IP yields "connection refused" on :443. Set hostAliases.ip to the LAN IPv4 of the nginx
+  ## host (OPNsense/VM/etc.); 10.20.13.1 is a common /24 gateway default — change if your proxy is elsewhere.
   postRenderers:
-    - kustomize:
-        patches:
-          - target:
-              kind: Deployment
-              name: headlamp
-              namespace: headlamp-production
-            patch: |
-              apiVersion: apps/v1
-              kind: Deployment
-              metadata:
-                name: headlamp
-                namespace: headlamp-production
+  - kustomize:
+      patches:
+      - target:
+          kind: Deployment
+          name: headlamp
+          namespace: headlamp-production
+        patch: |
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: headlamp
+            namespace: headlamp-production
+          spec:
+            template:
               spec:
-                template:
-                  spec:
-                    hostAliases:
-                      - ip: 10.20.13.11
-                        hostnames:
-                          - auth.mgmt.wsh.no
+                hostAliases:
+                  - ip: 10.20.11.149
+                    hostnames:
+                      - auth.mgmt.wsh.no
   values:
     ## Flux sidebar plugin — copy baked image into shared emptyDir (see headlamp-k8s/plugins flux README).
     config:
@@ -59,44 +59,44 @@ spec:
         callbackURL: https://headlamp.mgmt.wsh.no/oidc-callback
         usePKCE: true
     initContainers:
-      - name: headlamp-plugins
-        image: ghcr.io/headlamp-k8s/headlamp-plugin-flux:v0.6.0
-        imagePullPolicy: IfNotPresent
-        command:
-          - /bin/sh
-          - -c
-          - mkdir -p /build/plugins && cp -r /plugins/* /build/plugins/ && chown -R 100:101 /build
-        securityContext:
-          runAsNonRoot: false
-          privileged: false
-          runAsUser: 0
-          runAsGroup: 0
-          allowPrivilegeEscalation: false
-        volumeMounts:
-          - name: headlamp-plugins
-            mountPath: /build/plugins
-      - name: kubescape-plugin
-        image: quay.io/kubescape/headlamp-plugin:v0.10.6
-        imagePullPolicy: IfNotPresent
-        command:
-          - /bin/sh
-          - -c
-          - cp -r /plugins/* /build/plugins/ && chown -R 100:101 /build/plugins
-        securityContext:
-          runAsNonRoot: false
-          privileged: false
-          runAsUser: 0
-          runAsGroup: 0
-          allowPrivilegeEscalation: false
-        volumeMounts:
-          - name: headlamp-plugins
-            mountPath: /build/plugins
-    volumeMounts:
+    - name: headlamp-plugins
+      image: ghcr.io/headlamp-k8s/headlamp-plugin-flux:v0.6.0
+      imagePullPolicy: IfNotPresent
+      command:
+      - /bin/sh
+      - -c
+      - mkdir -p /build/plugins && cp -r /plugins/* /build/plugins/ && chown -R 100:101 /build
+      securityContext:
+        runAsNonRoot: false
+        privileged: false
+        runAsUser: 0
+        runAsGroup: 0
+        allowPrivilegeEscalation: false
+      volumeMounts:
       - name: headlamp-plugins
         mountPath: /build/plugins
-    volumes:
+    - name: kubescape-plugin
+      image: quay.io/kubescape/headlamp-plugin:v0.10.6
+      imagePullPolicy: IfNotPresent
+      command:
+      - /bin/sh
+      - -c
+      - cp -r /plugins/* /build/plugins/ && chown -R 100:101 /build/plugins
+      securityContext:
+        runAsNonRoot: false
+        privileged: false
+        runAsUser: 0
+        runAsGroup: 0
+        allowPrivilegeEscalation: false
+      volumeMounts:
       - name: headlamp-plugins
-        emptyDir: {}
+        mountPath: /build/plugins
+    volumeMounts:
+    - name: headlamp-plugins
+      mountPath: /build/plugins
+    volumes:
+    - name: headlamp-plugins
+      emptyDir: {}
     ingress:
       enabled: false
     resources:
