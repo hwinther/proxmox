@@ -26,6 +26,21 @@ spec:
     pod:
       kind: Deployment
       replicas: 1
+      # Satisfy Kyverno (wsh-require-run-as-non-root, wsh-disallow-privilege-escalation) so Helm upgrades
+      # can roll the Deployment; chart defaults omit securityContext and admission warns / blocks rollout.
+      securityContext:
+        pod:
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          fsGroup: 1000
+          seccompProfile:
+            type: RuntimeDefault
+        container:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
       extraVolumeMounts:
       - name: authelia-data
         mountPath: /config
