@@ -27,19 +27,12 @@ spec:
       kind: Deployment
       replicas: 1
       extraVolumeMounts:
-        - name: authelia-data
-          mountPath: /config
-        - name: users-database
-          mountPath: /config/users.yml
-          subPath: users.yml
-          readOnly: true
+      - name: authelia-data
+        mountPath: /config
       extraVolumes:
-        - name: authelia-data
-          emptyDir:
-            sizeLimit: 256Mi
-        - name: users-database
-          configMap:
-            name: authelia-users
+      - name: authelia-data
+        emptyDir:
+          sizeLimit: 256Mi
       resources:
         requests:
           cpu: 50m
@@ -50,8 +43,12 @@ spec:
       additionalSecrets:
         authelia-oidc-jwks:
           items:
-            - key: oidc-jwk-rsa.pem
-              path: oidc-jwk-rsa.pem
+          - key: oidc-jwk-rsa.pem
+            path: oidc-jwk-rsa.pem
+        authelia-ldap-bind:
+          items:
+          - key: authentication.ldap.password.txt
+            path: authentication.ldap.password.txt
     ingress:
       enabled: true
       annotations:
@@ -62,8 +59,8 @@ spec:
         gethomepage.dev/icon: mdi-shield-account
         gethomepage.dev/description: SSO login portal (Headlamp OIDC + Traefik forward auth)
       rulesOverride:
-        - host: auth.mgmt.wsh.no
-          path: /
+      - host: auth.mgmt.wsh.no
+        path: /
     configMap:
       theme: auto
       session:
@@ -73,21 +70,51 @@ spec:
         inactivity: 45 minutes
         remember_me: 1 month
         cookies:
-          - domain: wsh.no
-            subdomain: auth.mgmt
-            default_redirection_url: https://headlamp.mgmt.wsh.no/
+        - domain: wsh.no
+          subdomain: auth.mgmt
+          default_redirection_url: https://headlamp.mgmt.wsh.no/
       access_control:
         default_policy: deny
         rules:
-          - domain: auth.mgmt.wsh.no
-            policy: bypass
-          - domain: headlamp.mgmt.wsh.no
-            policy: one_factor
+        - domain: auth.mgmt.wsh.no
+          policy: bypass
+        - domain: headlamp.mgmt.wsh.no
+          policy: one_factor
       authentication_backend:
-        file:
+        password_change:
+          disable: true
+        ldap:
           enabled: true
-          path: /config/users.yml
-          watch: false
+          implementation: custom
+          address: ldap://auth.oh.wsh.no:389
+          start_tls: true
+          timeout: 5 seconds
+          permit_referrals: false
+          permit_unauthenticated_bind: false
+          permit_feature_detection_failure: false
+          base_dn: dc=oh,dc=wsh,dc=no
+          additional_users_dn: ou=People
+          users_filter: (&(objectClass=inetOrgPerson)(uid={input}))
+          user: uid=authelia,ou=services,dc=oh,dc=wsh,dc=no
+          password:
+            secret_name: authelia-ldap-bind
+            disabled: false
+          # LDAP TLS option 1: rely on the container image CA bundle (no chart `certificates` / extra PEM mounts).
+          # If slapd uses a private CA and Authelia logs x509 unknown authority, add Helm `certificates.existingSecret`.
+          tls:
+            server_name: auth.oh.wsh.no
+            skip_verify: false
+            minimum_version: TLS1.2
+            maximum_version: TLS1.3
+          attributes:
+            distinguished_name: dn
+            username: uid
+            display_name: displayName
+            mail: mail
+            member_of: ""
+            group_name: ""
+        file:
+          enabled: false
       storage:
         local:
           enabled: true
@@ -101,24 +128,24 @@ spec:
         oidc:
           enabled: true
           jwks:
-            - key_id: authelia-headlamp
-              algorithm: RS256
-              use: sig
-              key:
-                path: /secrets/authelia-oidc-jwks/oidc-jwk-rsa.pem
+          - key_id: authelia-headlamp
+            algorithm: RS256
+            use: sig
+            key:
+              path: /secrets/authelia-oidc-jwks/oidc-jwk-rsa.pem
           clients:
-            - client_id: headlamp
-              client_name: Headlamp
-              public: true
-              require_pkce: true
-              pkce_challenge_method: S256
-              authorization_policy: one_factor
-              consent_mode: pre-configured
-              pre_configured_consent_duration: 1 year
-              redirect_uris:
-                - https://headlamp.mgmt.wsh.no/oidc-callback
-              scopes:
-                - openid
-                - profile
-                - email
-                - groups
+          - client_id: headlamp
+            client_name: Headlamp
+            public: true
+            require_pkce: true
+            pkce_challenge_method: S256
+            authorization_policy: one_factor
+            consent_mode: pre-configured
+            pre_configured_consent_duration: 1 year
+            redirect_uris:
+            - https://headlamp.mgmt.wsh.no/oidc-callback
+            scopes:
+            - openid
+            - profile
+            - email
+            - groups

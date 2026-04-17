@@ -1,0 +1,20 @@
+# Allow Authelia to reach LDAP (ldap://auth.oh.wsh.no — StartTLS on 389 / optional LDAPS on 636).
+# 10.20.1.11 should match the A/AAAA record for auth.oh.wsh.no from cluster DNS; update if it moves.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-authelia-egress-to-ldap
+  namespace: authelia-production
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: authelia
+  egress:
+  - toCIDR:
+    - 10.20.1.11/32
+    toPorts:
+    - ports:
+      - port: "389"
+        protocol: TCP
+      - port: "636"
+        protocol: TCP

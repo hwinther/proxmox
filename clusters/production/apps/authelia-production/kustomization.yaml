@@ -3,6 +3,6 @@ kind: Kustomization
 resources:
 - namespace-authelia-production.yaml
 - helmrepository.yaml
-- configmap-authelia-users.yaml
 - authelia-helmrelease.yaml
 - cilium-cluster-nodes-to-authelia-http.yaml
+- cilium-authelia-egress-ldap.yaml
