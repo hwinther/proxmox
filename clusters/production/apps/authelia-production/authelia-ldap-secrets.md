@@ -2,7 +2,7 @@
 
 Authelia needs a **read-capable service account** on your directory to resolve users and (optionally) groups. The Helm chart mounts Kubernetes Secret **`authelia-ldap-bind`** so the bind password is available at the path Authelia expects (see `spec.values.secret.additionalSecrets` in `authelia-helmrelease.yaml`).
 
-That Secret is **not** stored in Git. Create it on the cluster after you set **`ldap.user`** to your real service-account DN (replace `REPLACE_BIND_USER` in `authelia-helmrelease.yaml` if that layout does not match your tree).
+That Secret is **not** stored in Git. Create it on the cluster after **`ldap.user`** in `authelia-helmrelease.yaml` matches your real service-account DN.
 
 LDAP in Git is aligned with **Dovecot** and **SSSD** on this estate:
 
@@ -76,11 +76,12 @@ In `authelia-helmrelease.yaml`, adjust at least:
 | `ldap.tls.server_name` | **`auth.oh.wsh.no`** — should match the name on the LDAP server certificate |
 | Helm `certificates` | **Unset (option 1)** — default image CA trust only; add `certificates.existingSecret` if a private CA breaks verification |
 | `ldap.implementation` | **`custom`** for OpenLDAP-style trees; use **`activedirectory`** for AD |
-| `ldap.user` | Service account bind DN (replace **`REPLACE_BIND_USER`** in Git) |
+| `ldap.user` | Service account bind DN (e.g. **`uid=authelia,ou=services,…`**) |
 | `ldap.base_dn` | **`dc=oh,dc=wsh,dc=no`** |
 | `ldap.additional_users_dn` | **`ou=People`** (with Dovecot-style `uid=%u,ou=People,…`) |
-| `ldap.users_filter` | **`(&(objectClass=inetOrgPerson)(uid={input}))`** |
-| `ldap.additional_groups_dn` / `ldap.groups_filter` | Add when you need OIDC **`groups`** / group-based access |
+| `ldap.users_filter` | **`(&(objectClass=inetOrgPerson)({username_attribute}={input}))`** — Authelia **4.39+** requires **`{username_attribute}`** (not `uid={input}` alone) |
+| `ldap.groups_filter` | **Required in 4.39+**; here **`(|(&(objectClass=posixGroup)(memberUid={username}))(&(objectClass=groupOfNames)(member={dn})))`** — `posixGroup` / `memberUid` plus **`groupOfNames`** / **`member`** (see [replacements](https://www.authelia.com/integration/ldap/introduction/#groups-filter-replacements)); `member` values must match the user’s real LDAP DN |
+| `ldap.additional_groups_dn` | Optional; set (e.g. **`ou=groups`**) to narrow group searches |
 | `ldap.attributes.*` | Tune if your schema uses different attribute names |
 
 Dovecot used **client** certs (`tls_cert_file` / `tls_key_file`) to LDAP; Authelia’s chart values here do **not** add client-cert LDAP auth. If slapd requires mTLS for the bind user, you will need a different approach or relax mTLS for that account.

@@ -94,7 +94,10 @@ spec:
           permit_feature_detection_failure: false
           base_dn: dc=oh,dc=wsh,dc=no
           additional_users_dn: ou=People
-          users_filter: (&(objectClass=inetOrgPerson)(uid={input}))
+          # Authelia 4.39+: users_filter must include {username_attribute} (see attributes.username → uid).
+          users_filter: (&(objectClass=inetOrgPerson)({username_attribute}={input}))
+          # 4.39+ requires groups_filter. OR: posixGroup+memberUid (uid) vs groupOfNames+member (entry DN, e.g. cn=…,ou=…).
+          groups_filter: (|(&(objectClass=posixGroup)(memberUid={username}))(&(objectClass=groupOfNames)(member={dn})))
           user: uid=authelia,ou=services,dc=oh,dc=wsh,dc=no
           password:
             secret_name: authelia-ldap-bind
@@ -112,7 +115,7 @@ spec:
             display_name: displayName
             mail: mail
             member_of: ""
-            group_name: ""
+            group_name: cn
         file:
           enabled: false
       storage:
