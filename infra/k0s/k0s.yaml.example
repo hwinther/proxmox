@@ -18,10 +18,10 @@ spec:
       enable-aggregator-routing: "true"
       # OIDC for Headlamp (Authelia as IdP): issuer must match JWT `iss` and Headlamp `issuerURL` (https://auth.wsh.no).
       # Controllers need outbound HTTPS to this host for JWKS/discovery. Uncomment when DNS/TLS for auth.wsh.no is live.
-      # oidc-issuer-url: https://auth.wsh.no
-      # oidc-client-id: headlamp
-      # oidc-username-claim: preferred_username
-      # oidc-groups-claim: groups
+      oidc-issuer-url: https://auth.wsh.no
+      oidc-client-id: headlamp
+      oidc-username-claim: preferred_username
+      oidc-groups-claim: groups
       # If issuer TLS is not in the controller image default CA bundle, add a PEM path on the controller host:
       # oidc-ca-file: /etc/k0s/ssl/auth-wsh-no-ca.pem
     k0sApiPort: 9443
