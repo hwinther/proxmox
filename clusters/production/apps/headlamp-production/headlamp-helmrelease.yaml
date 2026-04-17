@@ -20,11 +20,11 @@ spec:
         kind: HelmRepository
         name: headlamp
         namespace: headlamp-production
-  ## Headlamp loads OIDC discovery from inside the pod (https://auth.mgmt.wsh.no/...). That must hit
-  ## whatever serves TLS on :443 for *.mgmt.wsh.no — in this repo that is nginx
-  ## (templates/nginx/internal-reverse-proxy.conf), not Traefik (hostNetwork :8000 / :8444 only). Using a
-  ## Traefik node IP yields "connection refused" on :443. Set hostAliases.ip to the LAN IPv4 of the nginx
-  ## host (OPNsense/VM/etc.); 10.20.13.1 is a common /24 gateway default — change if your proxy is elsewhere.
+  ## Headlamp loads OIDC discovery inside the pod (https://auth.mgmt.wsh.no/...). That must reach nginx
+  ## TLS (:443) for *.mgmt.wsh.no (templates/nginx/internal-reverse-proxy.conf), not Traefik :8000.
+  ## hostAliases force the hostname to the nginx LAN IP (e.g. 10.20.11.149). Egress is usually SNAT to the
+  ## node running the pod, so OPNsense (or your L3 firewall) must allow: k0s node subnet(s) → nginx:443 TCP
+  ## (and replies), not “pod IPs” as sources. If nginx sits on another VLAN, open that path explicitly.
   postRenderers:
   - kustomize:
       patches:
@@ -42,7 +42,7 @@ spec:
             template:
               spec:
                 hostAliases:
-                  - ip: 10.20.11.149
+                  - ip: 10.20.13.201
                     hostnames:
                       - auth.mgmt.wsh.no
   values:
