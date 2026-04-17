@@ -12,10 +12,10 @@ description: >-
 
 Kubernetes GitOps uses **one folder per cluster** under `clusters/`. Production and test share this repo but **never** share the same Flux `path:` on the cluster.
 
-| Path | Purpose |
-|------|---------|
-| `clusters/test-deployment/` | Test cluster |
-| `clusters/production/` | Production k0s cluster |
+| Path                        | Purpose                |
+| --------------------------- | ---------------------- |
+| `clusters/test-deployment/` | Test cluster           |
+| `clusters/production/`      | Production k0s cluster |
 
 See [`clusters/README.md`](../../../clusters/README.md) for when to split into a second repository (compliance, org boundaries).
 
@@ -41,15 +41,18 @@ Guidelines:
 
 **Ingress `spec.rules.host`** (and public DNS) use the domain **`wsh.no`**, separate from in-cluster DNS (`*.svc.cluster.local`). Namespaces do not allocate IPs or public names; map workloads with Ingress (e.g. Traefik) + DNS records.
 
-| Environment | Host pattern | Example |
-|-------------|----------------|---------|
-| **Production (apps)** | `{service}.wsh.no` | `clutterstock.wsh.no` (API at `/api/`) |
-| **Production (management)** | Homepage: `mgmt.wsh.no`; other services: `{service}.mgmt.wsh.no` | `mgmt.wsh.no`, `grafana.mgmt.wsh.no` |
-| **Test** | `appname.test.wsh.no` or cluster-specific zones (e.g. `*.kt.wsh.no`) | `clutterstock.test.wsh.no`, `grafana.mgmt-kt.wsh.no` |
-| **Test-tier DNS (on prod cluster)** | `*.test.wsh.no` | `test.test.wsh.no` — namespace **`test-test`** (app **test** + env **test**); ([`clusters/production/apps/test-test/`](../../../clusters/production/apps/test-test/README.md)) |
-| **PR / preview** | `appname-<pr-number>.preview.wsh.no` | `clutterstock-184.preview.wsh.no` |
+| Environment                         | Host pattern                                                         | Example                                                                                                                                                                                                                                                                                     |
+| ----------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Production (apps)**               | `{service}.wsh.no`                                                   | `clutterstock.wsh.no` (API at `/api/`)                                                                                                                                                                                                                                                      |
+| **Production (management)**         | Homepage: `mgmt.wsh.no`; other services: `{service}.mgmt.wsh.no`     | `mgmt.wsh.no`, `grafana.mgmt.wsh.no`, `headlamp.mgmt.wsh.no`                                                                                                                                                                                                                                |
+| **Production (SSO / OIDC issuer)**  | **Canonical:** `auth.wsh.no` only                                    | `https://auth.wsh.no` — Authelia (`iss`, session URL) + apiserver `oidc-issuer-url`; see [`authelia-helmrelease.yaml`](../../../clusters/production/apps/authelia-production/authelia-helmrelease.yaml). Keep **`*.mgmt.wsh.no`** private; public apps redirect login to **`auth.wsh.no`**. |
+| **Test**                            | `appname.test.wsh.no` or cluster-specific zones (e.g. `*.kt.wsh.no`) | `clutterstock.test.wsh.no`, `grafana.mgmt-kt.wsh.no`                                                                                                                                                                                                                                        |
+| **Test-tier DNS (on prod cluster)** | `*.test.wsh.no`                                                      | `test.test.wsh.no` — namespace **`test-test`** (app **test** + env **test**); ([`clusters/production/apps/test-test/`](../../../clusters/production/apps/test-test/README.md))                                                                                                              |
+| **PR / preview**                    | `appname-<pr-number>.preview.wsh.no`                                 | `clutterstock-184.preview.wsh.no`                                                                                                                                                                                                                                                           |
 
 **PR/preview shape:** put **`appname`** and **`pr-number`** in one DNS label left of `preview.wsh.no` (`clutterstock-184`), not `184.clutterstock.preview.wsh.no`, so **`*.preview.wsh.no`** covers all preview hosts without per-app wildcards.
+
+**Kubernetes API + Authelia OIDC (production):** After adding **`oidc-*`** `extraArgs` on controllers (see commented template in [`infra/k0s/k0s.yaml.example`](../../../infra/k0s/k0s.yaml.example)), grant access with **`ClusterRoleBinding`** subjects that match JWT claims. The LDAP-backed admin group is **`k8s-admins`** (bind `kind: Group`, `name: k8s-admins` to a `ClusterRole` such as `cluster-admin` or a narrower role). Usernames typically align with LDAP **`uid`** (`oidc-username-claim: preferred_username`).
 
 Use lowercase slugs; **do not** put raw Git branch names in host labels (sanitize to `[a-z0-9-]`). Keep the first label ≤63 characters.
 
@@ -116,7 +119,7 @@ For apps with multiple manifests (HelmRelease, namespace, configmaps):
 ```yaml
 resources:
   - existing-file.yaml
-  - my-stack          # directory name, not the kustomization.yaml path
+  - my-stack # directory name, not the kustomization.yaml path
 ```
 
 4. Commit to `main`.
@@ -128,7 +131,7 @@ Deployments pin semver tags (never `latest`). To roll out a new version:
 1. Update the `image:` field in the relevant `*-deployment.yaml`, e.g.:
 
 ```yaml
-image: ghcr.io/hwinther/test/api:0.54.0   # was 0.53.1
+image: ghcr.io/hwinther/test/api:0.54.0 # was 0.53.1
 ```
 
 2. Commit to `main`. Flux reconciles and Kubernetes performs a rolling update.

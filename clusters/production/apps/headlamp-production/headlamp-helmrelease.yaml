@@ -20,11 +20,10 @@ spec:
         kind: HelmRepository
         name: headlamp
         namespace: headlamp-production
-  ## Headlamp loads OIDC discovery inside the pod (https://auth.mgmt.wsh.no/...). That must reach nginx
-  ## TLS (:443) for *.mgmt.wsh.no (templates/nginx/internal-reverse-proxy.conf), not Traefik :8000.
-  ## hostAliases force the hostname to the nginx LAN IP (e.g. 10.20.11.149). Egress is usually SNAT to the
-  ## node running the pod, so OPNsense (or your L3 firewall) must allow: k0s node subnet(s) → nginx:443 TCP
-  ## (and replies), not “pod IPs” as sources. If nginx sits on another VLAN, open that path explicitly.
+  ## Headlamp loads OIDC discovery inside the pod (https://auth.wsh.no/...). Issuer TLS must be reachable
+  ## from the pod (public DNS, split-horizon, or hostAliases to your TLS front-end LAN IP — not Traefik :8000).
+  ## hostAliases pin auth.wsh.no to the IP where HTTPS for that hostname terminates (adjust if yours differs).
+  ## Egress is usually SNAT to the node running the pod; allow node subnet(s) → that:443 (and replies).
   postRenderers:
   - kustomize:
       patches:
@@ -42,9 +41,9 @@ spec:
             template:
               spec:
                 hostAliases:
-                  - ip: 10.20.13.201
+                  - ip: 10.20.1.11
                     hostnames:
-                      - auth.mgmt.wsh.no
+                      - auth.wsh.no
   values:
     ## Flux sidebar plugin — copy baked image into shared emptyDir (see headlamp-k8s/plugins flux README).
     config:
@@ -54,7 +53,7 @@ spec:
           create: true
           name: headlamp-oidc
         clientID: headlamp
-        issuerURL: https://auth.mgmt.wsh.no
+        issuerURL: https://auth.wsh.no
         scopes: openid profile email groups
         callbackURL: https://headlamp.mgmt.wsh.no/oidc-callback
         usePKCE: true
