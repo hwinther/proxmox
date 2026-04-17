@@ -41,7 +41,7 @@ spec:
             template:
               spec:
                 hostAliases:
-                  - ip: 10.20.1.11
+                  - ip: 10.20.13.201
                     hostnames:
                       - auth.wsh.no
   values:
