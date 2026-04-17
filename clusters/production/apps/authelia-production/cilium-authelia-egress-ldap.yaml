@@ -1,5 +1,5 @@
-# Egress for Authelia: cluster DNS (required before ldap://auth.oh.wsh.no can be resolved) + LDAP host.
-# LDAP CIDR must match the A/AAAA for auth.oh.wsh.no (or replace address with IP in Helm); update if it moves.
+# Egress for Authelia: cluster DNS, internal NTP (Authelia startup clock check), LDAP.
+# LDAP CIDR must match the A/AAAA for auth.oh.wsh.no; NTP is Authelia `configMap.ntp.address` (lan gateway / ntpd).
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -20,6 +20,12 @@ spec:
         protocol: UDP
       - port: "53"
         protocol: TCP
+  - toCIDR:
+    - 10.20.13.1/32
+    toPorts:
+    - ports:
+      - port: "123"
+        protocol: UDP
   - toCIDR:
     - 10.20.1.11/32
     toPorts:
