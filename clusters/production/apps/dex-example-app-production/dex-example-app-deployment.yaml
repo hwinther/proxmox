@@ -16,8 +16,8 @@ spec:
         app: dex-example-app
         app.kubernetes.io/name: dex-example-app
     spec:
+      # Image runs as root; pod-level runAsNonRoot causes CreateContainerConfigError on kubelet.
       securityContext:
-        runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
       containers:

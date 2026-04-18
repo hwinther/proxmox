@@ -1,0 +1,22 @@
+# ghcr.io/dexidp/example-app only publishes `latest` on GHCR; no semver tag to pin for Dependabot.
+apiVersion: kyverno.io/v2
+kind: PolicyException
+metadata:
+  name: dex-example-app-image-latest
+  namespace: dex-example-app-production
+spec:
+  exceptions:
+    - policyName: wsh-disallow-latest-require-digest
+      ruleNames:
+        - disallow-latest-tag
+        - autogen-disallow-latest-tag
+  match:
+    any:
+      - resources:
+          kinds:
+            - Pod
+          namespaces:
+            - dex-example-app-production
+          selector:
+            matchLabels:
+              app: dex-example-app
