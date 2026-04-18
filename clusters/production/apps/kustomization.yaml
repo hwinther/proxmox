@@ -6,6 +6,7 @@ resources:
   - traefik
   - authelia-production
   - headlamp-production
+  - oidc-k8s-admins-rbac
   - policy-reporter-production
   - kubescape-production
   - observability

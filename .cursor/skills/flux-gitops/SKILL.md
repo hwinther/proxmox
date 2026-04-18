@@ -52,7 +52,7 @@ Guidelines:
 
 **PR/preview shape:** put **`appname`** and **`pr-number`** in one DNS label left of `preview.wsh.no` (`clutterstock-184`), not `184.clutterstock.preview.wsh.no`, so **`*.preview.wsh.no`** covers all preview hosts without per-app wildcards.
 
-**Kubernetes API + Authelia OIDC (production):** After adding **`oidc-*`** `extraArgs` on controllers (see commented template in [`infra/k0s/k0s.yaml.example`](../../../infra/k0s/k0s.yaml.example)), grant access with **`ClusterRoleBinding`** subjects that match JWT claims. The LDAP-backed admin group is **`k8s-admins`** (bind `kind: Group`, `name: k8s-admins` to a `ClusterRole` such as `cluster-admin` or a narrower role). Usernames typically align with LDAP **`uid`** (`oidc-username-claim: preferred_username`).
+**Kubernetes API + Authelia OIDC (production):** After adding **`oidc-*`** `extraArgs` on controllers (see commented template in [`infra/k0s/k0s.yaml.example`](../../../infra/k0s/k0s.yaml.example)), grant access with **`ClusterRoleBinding`** subjects that match JWT claims. Production GitOps includes [`clusters/production/apps/oidc-k8s-admins-rbac/`](../../../clusters/production/apps/oidc-k8s-admins-rbac/) (**`Group` `k8s-admins`** → **`cluster-admin`**). Adjust or replace that binding if you use a different LDAP group name or want a narrower `ClusterRole`. Usernames typically align with LDAP **`uid`** (`oidc-username-claim: preferred_username`).
 
 Use lowercase slugs; **do not** put raw Git branch names in host labels (sanitize to `[a-z0-9-]`). Keep the first label ≤63 characters.
 

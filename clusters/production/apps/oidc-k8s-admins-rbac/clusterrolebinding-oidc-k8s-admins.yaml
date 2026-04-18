@@ -1,0 +1,17 @@
+# Grants full cluster access to identities whose OIDC JWT includes group "k8s-admins"
+# (Authelia groups claim + LDAP group cn; must match token "groups" exactly).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: oidc-k8s-admins
+  labels:
+    app.kubernetes.io/name: oidc-k8s-admins-rbac
+    app.kubernetes.io/part-of: production
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: Group
+    name: k8s-admins
