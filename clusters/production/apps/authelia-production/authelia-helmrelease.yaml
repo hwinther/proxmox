@@ -125,8 +125,9 @@ spec:
           additional_users_dn: ou=People
           # Authelia 4.39+: users_filter must include {username_attribute} (see attributes.username → uid).
           users_filter: (&(objectClass=inetOrgPerson)({username_attribute}={input}))
-          # 4.39+ requires groups_filter. OR: posixGroup+memberUid (uid) vs groupOfNames+member (entry DN, e.g. cn=…,ou=…).
-          groups_filter: (|(&(objectClass=posixGroup)(memberUid={username}))(&(objectClass=groupOfNames)(member={dn})))
+          # 4.39+ requires groups_filter. Covers: posixGroup+memberUid, groupOfNames+member,
+          # groupOfUniqueNames+uniqueMember (slapd uniqueMember holds full user DN, as in ou=Groups k8s-admins).
+          groups_filter: (|(&(objectClass=posixGroup)(memberUid={username}))(&(objectClass=groupOfNames)(member={dn}))(&(objectClass=groupOfUniqueNames)(uniqueMember={dn})))
           user: uid=authelia,ou=services,dc=oh,dc=wsh,dc=no
           password:
             secret_name: authelia-ldap-bind
