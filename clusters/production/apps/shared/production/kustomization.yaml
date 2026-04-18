@@ -3,7 +3,7 @@ kind: Kustomization
 resources:
 - namespace.yaml
 - valkey-pvc.yaml
-- redis-deployment.yaml
+- valkey-deployment.yaml
 - networkpolicy-redis.yaml
 - redisinsight-deployment.yaml
 - redisinsight-ingress.yaml
