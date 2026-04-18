@@ -30,7 +30,7 @@ flake8 --statistics src/ scripts/
 
 # Prettier formatting check (JSON, Markdown). YAML is listed in `.prettierignore`
 # because Prettier’s YAML style (indented list dashes) differs from this repo’s
-# editor default (`kennylong.kubernetes-yaml-formatter`).
+# editor default (`joseph-ravenwolfe.kubernetes-yaml-formatter`).
 npx prettier --check "**/*.{json,md}"
 ```
 
