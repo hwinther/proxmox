@@ -25,6 +25,9 @@ spec:
           # ghcr.io/dexidp/example-app only publishes a single moving `latest` tag; pin digest after `docker pull` / `crane digest` if you want immutability.
           image: ghcr.io/dexidp/example-app:latest
           imagePullPolicy: IfNotPresent
+          # Image has CMD ["example-app"] only; Kubernetes args replace CMD, so flags must follow an explicit command.
+          command:
+            - /usr/local/bin/example-app
           args:
             - --issuer=https://auth.wsh.no
             - --listen=http://0.0.0.0:5555
