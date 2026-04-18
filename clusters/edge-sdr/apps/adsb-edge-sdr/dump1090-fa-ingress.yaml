@@ -12,13 +12,13 @@ metadata:
     gethomepage.dev/description: FlightAware dump1090-fa web UI (/skyaware/)
 spec:
   rules:
-    - host: dump1090-fa.edge-sdr.wsh.no
-      http:
-        paths:
-          - path: /skyaware
-            pathType: Prefix
-            backend:
-              service:
-                name: dump1090-fa
-                port:
-                  number: 80
+  - host: dump1090-fa.edge-sdr.wsh.no
+    http:
+      paths:
+      - path: /skyaware
+        pathType: Prefix
+        backend:
+          service:
+            name: dump1090-fa
+            port:
+              number: 80

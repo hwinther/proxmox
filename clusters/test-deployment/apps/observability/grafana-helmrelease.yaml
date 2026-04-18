@@ -7,12 +7,12 @@ spec:
   interval: 30m
   timeout: 10m
   dependsOn:
-    - name: obs-prometheus
-      namespace: test
-    - name: obs-loki
-      namespace: test
-    - name: obs-tempo
-      namespace: test
+  - name: obs-prometheus
+    namespace: test
+  - name: obs-loki
+    namespace: test
+  - name: obs-tempo
+    namespace: test
   chart:
     spec:
       chart: grafana
@@ -41,55 +41,55 @@ spec:
       datasources.yaml:
         apiVersion: 1
         datasources:
-          - name: Prometheus
-            uid: prometheus
-            type: prometheus
-            access: proxy
-            url: http://obs-prometheus-server.test.svc.cluster.local
-            isDefault: true
-          - name: Loki
-            uid: loki
-            type: loki
-            access: proxy
-            url: http://obs-loki-gateway.test.svc.cluster.local
-            jsonData:
-              httpHeaderName1: X-Scope-OrgID
-            secureJsonData:
-              httpHeaderValue1: foo
-          - name: Tempo
-            uid: tempo
-            type: tempo
-            access: proxy
-            url: http://obs-tempo.test.svc.cluster.local:3200
-            jsonData:
-              httpMethod: GET
-              ## Service graph uses metrics from Tempo metrics-generator → Prometheus remote_write.
-              serviceMap:
-                datasourceUid: prometheus
-              tracesToLogs:
-                datasourceUid: loki
-                tags: ["service.name"]
+        - name: Prometheus
+          uid: prometheus
+          type: prometheus
+          access: proxy
+          url: http://obs-prometheus-server.test.svc.cluster.local
+          isDefault: true
+        - name: Loki
+          uid: loki
+          type: loki
+          access: proxy
+          url: http://obs-loki-gateway.test.svc.cluster.local
+          jsonData:
+            httpHeaderName1: X-Scope-OrgID
+          secureJsonData:
+            httpHeaderValue1: foo
+        - name: Tempo
+          uid: tempo
+          type: tempo
+          access: proxy
+          url: http://obs-tempo.test.svc.cluster.local:3200
+          jsonData:
+            httpMethod: GET
+            ## Service graph uses metrics from Tempo metrics-generator → Prometheus remote_write.
+            serviceMap:
+              datasourceUid: prometheus
+            tracesToLogs:
+              datasourceUid: loki
+              tags: [ "service.name" ]
     dashboardProviders:
       dashboardproviders.yaml:
         apiVersion: 1
         providers:
-          - name: default
-            orgId: 1
-            folder: ""
-            type: file
-            disableDeletion: false
-            editable: true
-            options:
-              path: /var/lib/grafana/dashboards/default
-          ## Separate path so dashboardsConfigMaps does not collide with the default provider volume (gnet downloads).
-          - name: custom
-            orgId: 1
-            folder: Custom
-            type: file
-            disableDeletion: false
-            editable: true
-            options:
-              path: /var/lib/grafana/dashboards/custom
+        - name: default
+          orgId: 1
+          folder: ""
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards/default
+        ## Separate path so dashboardsConfigMaps does not collide with the default provider volume (gnet downloads).
+        - name: custom
+          orgId: 1
+          folder: Custom
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards/custom
     ## Patched ASP.NET OTEL dashboard (see kustomization configMapGenerator).
     dashboardsConfigMaps:
       custom: grafana-dashboard-aspnet-otel

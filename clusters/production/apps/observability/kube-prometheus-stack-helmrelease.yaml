@@ -56,42 +56,42 @@ spec:
       testFramework:
         enabled: false
       additionalDataSources:
-        - name: Loki
-          uid: loki
-          type: loki
-          access: proxy
-          url: http://obs-loki-gateway.observability-production.svc.cluster.local
-          jsonData:
-            httpHeaderName1: X-Scope-OrgID
-          secureJsonData:
-            httpHeaderValue1: foo
-        - name: Tempo
-          uid: tempo
-          type: tempo
-          access: proxy
-          url: http://obs-tempo.observability-production.svc.cluster.local:3200
-          jsonData:
-            httpMethod: GET
-            serviceMap:
-              datasourceUid: prometheus
-            tracesToLogs:
-              datasourceUid: loki
-              tags: ["service.name"]
+      - name: Loki
+        uid: loki
+        type: loki
+        access: proxy
+        url: http://obs-loki-gateway.observability-production.svc.cluster.local
+        jsonData:
+          httpHeaderName1: X-Scope-OrgID
+        secureJsonData:
+          httpHeaderValue1: foo
+      - name: Tempo
+        uid: tempo
+        type: tempo
+        access: proxy
+        url: http://obs-tempo.observability-production.svc.cluster.local:3200
+        jsonData:
+          httpMethod: GET
+          serviceMap:
+            datasourceUid: prometheus
+          tracesToLogs:
+            datasourceUid: loki
+            tags: [ "service.name" ]
 
     prometheus:
       enabled: true
       additionalServiceMonitors:
-        - name: obs-otel-collector
-          selector:
-            matchLabels:
-              app.kubernetes.io/name: opentelemetry-collector
-          namespaceSelector:
-            matchNames:
-              - observability-production
-          endpoints:
-            - port: metrics
-              interval: 15s
-              scrapeTimeout: 10s
+      - name: obs-otel-collector
+        selector:
+          matchLabels:
+            app.kubernetes.io/name: opentelemetry-collector
+        namespaceSelector:
+          matchNames:
+          - observability-production
+        endpoints:
+        - port: metrics
+          interval: 15s
+          scrapeTimeout: 10s
       prometheusSpec:
         replicas: 1
         retention: 15d
@@ -108,7 +108,7 @@ spec:
             spec:
               storageClassName: ceph-rbd
               accessModes:
-                - ReadWriteOnce
+              - ReadWriteOnce
               resources:
                 requests:
                   storage: 20Gi

@@ -15,32 +15,32 @@ apt:
       keyid: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
 
 packages:
-  - ssh
-  - qemu-guest-agent
-  - docker-ce
-  - docker-ce-cli
-  - containerd.io
-  - docker-buildx-plugin
-  - docker-compose-plugin
-  - git
-  - apt-transport-https
-  - ca-certificates
-  - curl
-  - gnupg
-  - openssh-server
+- ssh
+- qemu-guest-agent
+- docker-ce
+- docker-ce-cli
+- containerd.io
+- docker-buildx-plugin
+- docker-compose-plugin
+- git
+- apt-transport-https
+- ca-certificates
+- curl
+- gnupg
+- openssh-server
 
 write_files:
-  - path: /etc/sysctl.d/99-ipv4-forward.conf
-    content: |
-      net.ipv4.ip_forward = 1
+- path: /etc/sysctl.d/99-ipv4-forward.conf
+  content: |
+    net.ipv4.ip_forward = 1
 
 runcmd:
-  - systemctl enable --now qemu-guest-agent
-  - systemctl enable --now ssh
+- systemctl enable --now qemu-guest-agent
+- systemctl enable --now ssh
 
 groups:
-  - docker
+- docker
 
 system_info:
   default_user:
-    groups: [docker]
+    groups: [ docker ]

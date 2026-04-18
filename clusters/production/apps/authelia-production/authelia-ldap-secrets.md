@@ -6,12 +6,12 @@ That Secret is **not** stored in Git. Create it on the cluster after **`ldap.use
 
 LDAP in Git is aligned with **Dovecot** and **SSSD** on this estate:
 
-| SSSD / Dovecot | Authelia (`authelia-helmrelease.yaml`) |
-| --- | --- |
-| `ldap_uri = ldap://auth.oh.wsh.no` | `ldap.address: ldap://auth.oh.wsh.no:389` |
-| `ldap_search_base = dc=oh,dc=wsh,dc=no` | `ldap.base_dn` (same) + `ldap.additional_users_dn: ou=People` (Dovecot `uid=…,ou=People,…`) |
-| `ldap_id_use_start_tls = True` | `ldap.start_tls: true` |
-| `ldap_tls_reqcert = hard` | `ldap.tls.skip_verify: false` + `ldap.tls.server_name: auth.oh.wsh.no` |
+| SSSD / Dovecot                                            | Authelia (`authelia-helmrelease.yaml`)                                                                                                                                                                                                                                              |
+| --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ldap_uri = ldap://auth.oh.wsh.no`                        | `ldap.address: ldap://auth.oh.wsh.no:389`                                                                                                                                                                                                                                           |
+| `ldap_search_base = dc=oh,dc=wsh,dc=no`                   | `ldap.base_dn` (same) + `ldap.additional_users_dn: ou=People` (Dovecot `uid=…,ou=People,…`)                                                                                                                                                                                         |
+| `ldap_id_use_start_tls = True`                            | `ldap.start_tls: true`                                                                                                                                                                                                                                                              |
+| `ldap_tls_reqcert = hard`                                 | `ldap.tls.skip_verify: false` + `ldap.tls.server_name: auth.oh.wsh.no`                                                                                                                                                                                                              |
 | `ldap_tls_cacert = …/chain.pem` (explicit CA on the host) | **Option 1 (current):** Authelia uses the **container image CA bundle** only — no chart `certificates` block. Matches public chains (e.g. Let’s Encrypt for `auth.oh.wsh.no`). SSSD’s explicit `chain.pem` is not mounted in-cluster unless you later need it for a **private** CA. |
 
 ## LDAP TLS trust — option 1 (current)
@@ -69,20 +69,20 @@ kubectl rollout restart deployment/authelia --namespace authelia-production
 
 In `authelia-helmrelease.yaml`, adjust at least:
 
-| Value | Purpose |
-| --- | --- |
-| `ldap.address` | **`ldap://auth.oh.wsh.no:389`** (hostname for cert verification) or **`ldaps://…:636`** if you switch to LDAPS |
-| `ldap.start_tls` | **`true`** with `ldap://` when the server requires TLS on 389 (Dovecot `tls = yes`) |
-| `ldap.tls.server_name` | **`auth.oh.wsh.no`** — should match the name on the LDAP server certificate |
-| Helm `certificates` | **Unset (option 1)** — default image CA trust only; add `certificates.existingSecret` if a private CA breaks verification |
-| `ldap.implementation` | **`custom`** for OpenLDAP-style trees; use **`activedirectory`** for AD |
-| `ldap.user` | Service account bind DN (e.g. **`uid=authelia,ou=services,…`**) |
-| `ldap.base_dn` | **`dc=oh,dc=wsh,dc=no`** |
-| `ldap.additional_users_dn` | **`ou=People`** (with Dovecot-style `uid=%u,ou=People,…`) |
-| `ldap.users_filter` | **`(&(objectClass=inetOrgPerson)({username_attribute}={input}))`** — Authelia **4.39+** requires **`{username_attribute}`** (not `uid={input}` alone) |
-| `ldap.groups_filter` | **Required in 4.39+**; here **`(|(&(objectClass=posixGroup)(memberUid={username}))(&(objectClass=groupOfNames)(member={dn})))`** — `posixGroup` / `memberUid` plus **`groupOfNames`** / **`member`** (see [replacements](https://www.authelia.com/integration/ldap/introduction/#groups-filter-replacements)); `member` values must match the user’s real LDAP DN |
-| `ldap.additional_groups_dn` | Optional; set (e.g. **`ou=groups`**) to narrow group searches |
-| `ldap.attributes.*` | Tune if your schema uses different attribute names |
+| Value                       | Purpose                                                                                                                                               |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `ldap.address`              | **`ldap://auth.oh.wsh.no:389`** (hostname for cert verification) or **`ldaps://…:636`** if you switch to LDAPS                                        |
+| `ldap.start_tls`            | **`true`** with `ldap://` when the server requires TLS on 389 (Dovecot `tls = yes`)                                                                   |
+| `ldap.tls.server_name`      | **`auth.oh.wsh.no`** — should match the name on the LDAP server certificate                                                                           |
+| Helm `certificates`         | **Unset (option 1)** — default image CA trust only; add `certificates.existingSecret` if a private CA breaks verification                             |
+| `ldap.implementation`       | **`custom`** for OpenLDAP-style trees; use **`activedirectory`** for AD                                                                               |
+| `ldap.user`                 | Service account bind DN (e.g. **`uid=authelia,ou=services,…`**)                                                                                       |
+| `ldap.base_dn`              | **`dc=oh,dc=wsh,dc=no`**                                                                                                                              |
+| `ldap.additional_users_dn`  | **`ou=People`** (with Dovecot-style `uid=%u,ou=People,…`)                                                                                             |
+| `ldap.users_filter`         | **`(&(objectClass=inetOrgPerson)({username_attribute}={input}))`** — Authelia **4.39+** requires **`{username_attribute}`** (not `uid={input}` alone) |
+| `ldap.groups_filter`        | **Required in 4.39+**; here \*\*`(                                                                                                                    | (&(objectClass=posixGroup)(memberUid={username}))(&(objectClass=groupOfNames)(member={dn})))`** — `posixGroup`/`memberUid` plus **`groupOfNames`** / **`member`** (see [replacements](https://www.authelia.com/integration/ldap/introduction/#groups-filter-replacements)); `member` values must match the user’s real LDAP DN |
+| `ldap.additional_groups_dn` | Optional; set (e.g. **`ou=groups`**) to narrow group searches                                                                                         |
+| `ldap.attributes.*`         | Tune if your schema uses different attribute names                                                                                                    |
 
 Dovecot used **client** certs (`tls_cert_file` / `tls_key_file`) to LDAP; Authelia’s chart values here do **not** add client-cert LDAP auth. If slapd requires mTLS for the bind user, you will need a different approach or relax mTLS for that account.
 

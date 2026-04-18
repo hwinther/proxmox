@@ -10,6 +10,6 @@ spec:
     app.kubernetes.io/name: loki
     app.kubernetes.io/component: gateway
   ports:
-    - port: 80
-      targetPort: http-metrics
-      nodePort: 30080
+  - port: 80
+    targetPort: http-metrics
+    nodePort: 30080

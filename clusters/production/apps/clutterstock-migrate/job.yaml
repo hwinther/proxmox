@@ -34,7 +34,7 @@ spec:
           allowPrivilegeEscalation: false
           capabilities:
             drop:
-              - ALL
+            - ALL
       containers:
       - name: migrator
         image: ghcr.io/hwinther/clutterstock/migrator:0.14.0
@@ -43,7 +43,7 @@ spec:
           allowPrivilegeEscalation: false
           capabilities:
             drop:
-              - ALL
+            - ALL
         env:
         - name: ConnectionStrings__ClutterStock
           value: Data Source=/data/clutterstock.db

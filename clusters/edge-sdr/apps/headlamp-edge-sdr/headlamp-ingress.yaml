@@ -12,13 +12,13 @@ metadata:
     gethomepage.dev/description: Kubernetes UI with Flux GitOps plugin
 spec:
   rules:
-    - host: headlamp.mgmt-edge-sdr.wsh.no
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: headlamp
-                port:
-                  number: 80
+  - host: headlamp.mgmt-edge-sdr.wsh.no
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: headlamp
+            port:
+              number: 80

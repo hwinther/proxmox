@@ -13,12 +13,12 @@ spec:
     remediation:
       retries: 3
   dependsOn:
-    - name: obs-prometheus
-      namespace: test
-    - name: obs-loki
-      namespace: test
-    - name: obs-tempo
-      namespace: test
+  - name: obs-prometheus
+    namespace: test
+  - name: obs-loki
+    namespace: test
+  - name: obs-tempo
+    namespace: test
   chart:
     spec:
       chart: opentelemetry-collector
@@ -90,23 +90,23 @@ spec:
         telemetry:
           metrics:
             readers:
-              - pull:
-                  exporter:
-                    prometheus:
-                      host: ${env:MY_POD_IP}
-                      port: 8888
+            - pull:
+                exporter:
+                  prometheus:
+                    host: ${env:MY_POD_IP}
+                    port: 8888
         extensions:
-          - health_check
+        - health_check
         pipelines:
           traces:
-            receivers: [otlp]
-            processors: [memory_limiter, batch]
-            exporters: [otlp]
+            receivers: [ otlp ]
+            processors: [ memory_limiter, batch ]
+            exporters: [ otlp ]
           metrics:
-            receivers: [otlp]
-            processors: [memory_limiter, batch]
-            exporters: [otlphttp/prometheus]
+            receivers: [ otlp ]
+            processors: [ memory_limiter, batch ]
+            exporters: [ otlphttp/prometheus ]
           logs:
-            receivers: [otlp]
-            processors: [memory_limiter, batch]
-            exporters: [otlphttp/loki]
+            receivers: [ otlp ]
+            processors: [ memory_limiter, batch ]
+            exporters: [ otlphttp/loki ]

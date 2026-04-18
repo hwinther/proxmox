@@ -11,35 +11,35 @@ spec:
     matchLabels:
       app.kubernetes.io/name: authelia
   egress:
-    - toEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: kube-system
-            k8s:k8s-app: kube-dns
-      toPorts:
-        - ports:
-            - port: "53"
-              protocol: UDP
-            - port: "53"
-              protocol: TCP
-    - toCIDR:
-        - 10.20.13.1/32
-      toPorts:
-        - ports:
-            - port: "123"
-              protocol: UDP
-    - toCIDR:
-        - 10.20.1.11/32
-      toPorts:
-        - ports:
-            - port: "389"
-              protocol: TCP
-            - port: "636"
-              protocol: TCP
-    - toEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: shared-production
-            app: redis
-      toPorts:
-        - ports:
-            - port: "6379"
-              protocol: TCP
+  - toEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: kube-system
+        k8s:k8s-app: kube-dns
+    toPorts:
+    - ports:
+      - port: "53"
+        protocol: UDP
+      - port: "53"
+        protocol: TCP
+  - toCIDR:
+    - 10.20.13.1/32
+    toPorts:
+    - ports:
+      - port: "123"
+        protocol: UDP
+  - toCIDR:
+    - 10.20.1.11/32
+    toPorts:
+    - ports:
+      - port: "389"
+        protocol: TCP
+      - port: "636"
+        protocol: TCP
+  - toEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: shared-production
+        app: redis
+    toPorts:
+    - ports:
+      - port: "6379"
+        protocol: TCP

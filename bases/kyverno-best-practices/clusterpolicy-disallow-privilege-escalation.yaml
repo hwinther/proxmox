@@ -14,25 +14,24 @@ spec:
   validationFailureAction: Audit
   background: true
   rules:
-    - name: privilege-escalation
-      match:
-        any:
-          - resources:
-              kinds:
-                - Pod
-      exclude:
-        any:
-          - resources:
-              namespaces:
-                - kube-system
-                - kyverno
-                - flux-system
-      validate:
-        message: >-
-          Privilege escalation is disallowed. Set
-          spec.containers[*].securityContext.allowPrivilegeEscalation to false.
-        pattern:
-          spec:
-            containers:
-              - securityContext:
-                  allowPrivilegeEscalation: false
+  - name: privilege-escalation
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    exclude:
+      any:
+      - resources:
+          namespaces:
+          - kube-system
+          - kyverno
+          - flux-system
+    validate:
+      message: >-
+        Privilege escalation is disallowed. Set spec.containers[*].securityContext.allowPrivilegeEscalation to false.
+      pattern:
+        spec:
+          containers:
+          - securityContext:
+              allowPrivilegeEscalation: false

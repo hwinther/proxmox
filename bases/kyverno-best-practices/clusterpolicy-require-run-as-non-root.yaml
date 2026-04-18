@@ -14,29 +14,27 @@ spec:
   validationFailureAction: Audit
   background: true
   rules:
-    - name: run-as-non-root
-      match:
-        any:
-          - resources:
-              kinds:
-                - Pod
-      exclude:
-        any:
-          - resources:
-              namespaces:
-                - kube-system
-                - kyverno
-                - flux-system
-      validate:
-        message: >-
-          Running as root is not allowed. Set
-          spec.securityContext.runAsNonRoot to true or
-          spec.containers[*].securityContext.runAsNonRoot to true.
-        anyPattern:
-          - spec:
-              securityContext:
-                runAsNonRoot: true
-          - spec:
-              containers:
-                - securityContext:
-                    runAsNonRoot: true
+  - name: run-as-non-root
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    exclude:
+      any:
+      - resources:
+          namespaces:
+          - kube-system
+          - kyverno
+          - flux-system
+    validate:
+      message: >-
+        Running as root is not allowed. Set spec.securityContext.runAsNonRoot to true or spec.containers[*].securityContext.runAsNonRoot to true.
+      anyPattern:
+      - spec:
+          securityContext:
+            runAsNonRoot: true
+      - spec:
+          containers:
+          - securityContext:
+              runAsNonRoot: true

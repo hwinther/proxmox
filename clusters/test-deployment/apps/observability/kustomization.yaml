@@ -2,17 +2,17 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: test
 resources:
-  - namespace-test.yaml
-  - helmrepositories.yaml
-  - prometheus-helmrelease.yaml
-  - loki-helmrelease.yaml
-  - tempo-helmrelease.yaml
-  - grafana-helmrelease.yaml
-  - otel-collector-helmrelease.yaml
-  - observability-ingress.yaml
+- namespace-test.yaml
+- helmrepositories.yaml
+- prometheus-helmrelease.yaml
+- loki-helmrelease.yaml
+- tempo-helmrelease.yaml
+- grafana-helmrelease.yaml
+- otel-collector-helmrelease.yaml
+- observability-ingress.yaml
 configMapGenerator:
-  - name: grafana-dashboard-aspnet-otel
-    files:
-      - dashboards/aspnet-core-otel.json
-    options:
-      disableNameSuffixHash: true
+- name: grafana-dashboard-aspnet-otel
+  files:
+  - dashboards/aspnet-core-otel.json
+  options:
+    disableNameSuffixHash: true

@@ -6,17 +6,17 @@ metadata:
   namespace: clutterstock-test
 spec:
   exceptions:
-    - policyName: wsh-require-run-as-non-root
-      ruleNames:
-        - run-as-non-root
-        - autogen-run-as-non-root
+  - policyName: wsh-require-run-as-non-root
+    ruleNames:
+    - run-as-non-root
+    - autogen-run-as-non-root
   match:
     any:
-      - resources:
-          kinds:
-            - Pod
-          namespaces:
-            - clutterstock-test
-          selector:
-            matchLabels:
-              app.kubernetes.io/component: clutterstock-migrate
+    - resources:
+        kinds:
+        - Pod
+        namespaces:
+        - clutterstock-test
+        selector:
+          matchLabels:
+            app.kubernetes.io/component: clutterstock-migrate

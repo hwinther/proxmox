@@ -46,13 +46,13 @@ spec:
         replication_factor: 1
       schemaConfig:
         configs:
-          - from: "2024-04-01"
-            store: tsdb
-            object_store: s3
-            schema: v13
-            index:
-              prefix: loki_index_
-              period: 24h
+        - from: "2024-04-01"
+          store: tsdb
+          object_store: s3
+          schema: v13
+          index:
+            prefix: loki_index_
+            period: 24h
       pattern_ingester:
         enabled: true
       limits_config:
@@ -66,11 +66,11 @@ spec:
         enabled: false
       ## Chart only mounts /var/loki when persistence is on; without this, Loki hits read-only root FS.
       extraVolumes:
-        - name: var-loki-data
-          emptyDir: {}
+      - name: var-loki-data
+        emptyDir: {}
       extraVolumeMounts:
-        - name: var-loki-data
-          mountPath: /var/loki
+      - name: var-loki-data
+        mountPath: /var/loki
       resources:
         requests:
           cpu: 100m

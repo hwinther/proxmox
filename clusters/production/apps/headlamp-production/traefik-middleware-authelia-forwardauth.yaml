@@ -11,7 +11,7 @@ spec:
     maxResponseBodySize: 1048576
     trustForwardHeader: true
     authResponseHeaders:
-      - Remote-User
-      - Remote-Name
-      - Remote-Email
-      - Remote-Groups
+    - Remote-User
+    - Remote-Name
+    - Remote-Email
+    - Remote-Groups

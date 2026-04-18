@@ -33,10 +33,10 @@ spec:
       create: true
       nodeAccess: true
     tolerations:
-      - key: node-type
-        operator: Equal
-        value: edge-sdr
-        effect: NoSchedule
+    - key: node-type
+      operator: Equal
+      value: edge-sdr
+      effect: NoSchedule
     resources:
       requests:
         cpu: 50m
@@ -44,23 +44,23 @@ spec:
       limits:
         memory: 64Mi
     envFrom:
-      - secretRef:
-          name: fluent-bit-loki-endpoint
+    - secretRef:
+        name: fluent-bit-loki-endpoint
     # k0s/containerd: real files live under /var/log/pods; no docker bind mount on Pis.
     daemonSetVolumes:
-      - name: varlog
-        hostPath:
-          path: /var/log
-      - name: etcmachineid
-        hostPath:
-          path: /etc/machine-id
-          type: File
+    - name: varlog
+      hostPath:
+        path: /var/log
+    - name: etcmachineid
+      hostPath:
+        path: /etc/machine-id
+        type: File
     daemonSetVolumeMounts:
-      - name: varlog
-        mountPath: /var/log
-      - name: etcmachineid
-        mountPath: /etc/machine-id
-        readOnly: true
+    - name: varlog
+      mountPath: /var/log
+    - name: etcmachineid
+      mountPath: /etc/machine-id
+      readOnly: true
     config:
       # CRI log paths yield tags like kube.var.log.pods.<ns>_<pod>_<uid>.<container>.<restart>.log;
       # the kubernetes filter's built-in regex expects docker's -<64hex>.log suffix — use Regex_Parser.

@@ -393,8 +393,7 @@ spec:
                 - name
                 type: object
               endpoint:
-                description: Endpoint is the object storage address the BucketName
-                  is located at.
+                description: Endpoint is the object storage address the BucketName is located at.
                 type: string
               ignore:
                 description: |-
@@ -413,8 +412,7 @@ spec:
                 pattern: ^([0-9]+(\.[0-9]+)?(ms|s|m|h))+$
                 type: string
               prefix:
-                description: Prefix to use for server-side filtering of files in the
-                  Bucket.
+                description: Prefix to use for server-side filtering of files in the Bucket.
                 type: string
               provider:
                 default: generic
@@ -440,8 +438,7 @@ spec:
                 - name
                 type: object
               region:
-                description: Region of the Endpoint where the BucketName is located
-                  in.
+                description: Region of the Endpoint where the BucketName is located in.
                 type: string
               secretRef:
                 description: |-
@@ -536,23 +533,17 @@ spec:
             - interval
             type: object
             x-kubernetes-validations:
-            - message: STS configuration is only supported for the 'aws' and 'generic'
-                Bucket providers
+            - message: STS configuration is only supported for the 'aws' and 'generic' Bucket providers
               rule: self.provider == 'aws' || self.provider == 'generic' || !has(self.sts)
-            - message: '''aws'' is the only supported STS provider for the ''aws''
-                Bucket provider'
-              rule: self.provider != 'aws' || !has(self.sts) || self.sts.provider
-                == 'aws'
-            - message: '''ldap'' is the only supported STS provider for the ''generic''
-                Bucket provider'
-              rule: self.provider != 'generic' || !has(self.sts) || self.sts.provider
-                == 'ldap'
+            - message: '''aws'' is the only supported STS provider for the ''aws'' Bucket provider'
+              rule: self.provider != 'aws' || !has(self.sts) || self.sts.provider == 'aws'
+            - message: '''ldap'' is the only supported STS provider for the ''generic'' Bucket provider'
+              rule: self.provider != 'generic' || !has(self.sts) || self.sts.provider == 'ldap'
             - message: spec.sts.secretRef is not required for the 'aws' STS provider
               rule: '!has(self.sts) || self.sts.provider != ''aws'' || !has(self.sts.secretRef)'
             - message: spec.sts.certSecretRef is not required for the 'aws' STS provider
               rule: '!has(self.sts) || self.sts.provider != ''aws'' || !has(self.sts.certSecretRef)'
-            - message: ServiceAccountName is not supported for the 'generic' Bucket
-                provider
+            - message: ServiceAccountName is not supported for the 'generic' Bucket provider
               rule: self.provider != 'generic' || !has(self.serviceAccountName)
             - message: cannot set both .spec.secretRef and .spec.serviceAccountName
               rule: '!has(self.secretRef) || !has(self.serviceAccountName)'
@@ -610,8 +601,7 @@ spec:
               conditions:
                 description: Conditions holds the conditions for the Bucket.
                 items:
-                  description: Condition contains details for one aspect of the current
-                    state of this API Resource.
+                  description: Condition contains details for one aspect of the current state of this API Resource.
                   properties:
                     lastTransitionTime:
                       description: |-
@@ -671,8 +661,7 @@ spec:
                   can be detected.
                 type: string
               observedGeneration:
-                description: ObservedGeneration is the last observed generation of
-                  the Bucket object.
+                description: ObservedGeneration is the last observed generation of the Bucket object.
                 format: int64
                 type: integer
               observedIgnore:
@@ -757,8 +746,7 @@ spec:
                   which the artifact is generated.
                 properties:
                   apiVersion:
-                    description: API version of the referent, if not specified the
-                      Kubernetes preferred version will be used.
+                    description: API version of the referent, if not specified the Kubernetes preferred version will be used.
                     type: string
                   kind:
                     description: Kind of the referent.
@@ -767,8 +755,7 @@ spec:
                     description: Name of the referent.
                     type: string
                   namespace:
-                    description: Namespace of the referent, when not specified it
-                      acts as LocalObjectReference.
+                    description: Namespace of the referent, when not specified it acts as LocalObjectReference.
                     type: string
                 required:
                 - kind
@@ -779,8 +766,7 @@ spec:
             description: ExternalArtifactStatus defines the observed state of ExternalArtifact
             properties:
               artifact:
-                description: Artifact represents the output of an ExternalArtifact
-                  reconciliation.
+                description: Artifact represents the output of an ExternalArtifact reconciliation.
                 properties:
                   digest:
                     description: Digest is the digest of the file in the form of '<algorithm>:<checksum>'.
@@ -828,8 +814,7 @@ spec:
               conditions:
                 description: Conditions holds the conditions for the ExternalArtifact.
                 items:
-                  description: Condition contains details for one aspect of the current
-                    state of this API Resource.
+                  description: Condition contains details for one aspect of the current state of this API Resource.
                   properties:
                     lastTransitionTime:
                       description: |-
@@ -1029,8 +1014,7 @@ spec:
                   changes, defaults to the 'master' branch.
                 properties:
                   branch:
-                    description: Branch to check out, defaults to 'master' if no other
-                      field is defined.
+                    description: Branch to check out, defaults to 'master' if no other field is defined.
                     type: string
                   commit:
                     description: |-
@@ -1047,8 +1031,7 @@ spec:
                       Examples: "refs/heads/main", "refs/tags/v0.1.0", "refs/pull/420/head", "refs/merge-requests/1/head"
                     type: string
                   semver:
-                    description: SemVer tag expression to check out, takes precedence
-                      over Tag.
+                    description: SemVer tag expression to check out, takes precedence over Tag.
                     type: string
                   tag:
                     description: Tag to check out, takes precedence over Branch.
@@ -1089,13 +1072,11 @@ spec:
                 type: boolean
               timeout:
                 default: 60s
-                description: Timeout for Git operations like cloning, defaults to
-                  60s.
+                description: Timeout for Git operations like cloning, defaults to 60s.
                 pattern: ^([0-9]+(\.[0-9]+)?(ms|s|m))+$
                 type: string
               url:
-                description: URL specifies the Git repository URL, it can be an HTTP/S
-                  or SSH address.
+                description: URL specifies the Git repository URL, it can be an HTTP/S or SSH address.
                 pattern: ^(http|https|ssh)://.*$
                 type: string
               verify:
@@ -1137,16 +1118,14 @@ spec:
             type: object
             x-kubernetes-validations:
             - message: serviceAccountName can only be set when provider is 'azure'
-              rule: '!has(self.serviceAccountName) || (has(self.provider) && self.provider
-                == ''azure'')'
+              rule: '!has(self.serviceAccountName) || (has(self.provider) && self.provider == ''azure'')'
           status:
             default:
               observedGeneration: -1
             description: GitRepositoryStatus records the observed state of a Git repository.
             properties:
               artifact:
-                description: Artifact represents the last successful GitRepository
-                  reconciliation.
+                description: Artifact represents the last successful GitRepository reconciliation.
                 properties:
                   digest:
                     description: Digest is the digest of the file in the form of '<algorithm>:<checksum>'.
@@ -1194,8 +1173,7 @@ spec:
               conditions:
                 description: Conditions holds the conditions for the GitRepository.
                 items:
-                  description: Condition contains details for one aspect of the current
-                    state of this API Resource.
+                  description: Condition contains details for one aspect of the current state of this API Resource.
                   properties:
                     lastTransitionTime:
                       description: |-
@@ -1256,8 +1234,7 @@ spec:
                   description: Artifact represents the output of a Source reconciliation.
                   properties:
                     digest:
-                      description: Digest is the digest of the file in the form of
-                        '<algorithm>:<checksum>'.
+                      description: Digest is the digest of the file in the form of '<algorithm>:<checksum>'.
                       pattern: ^[a-z0-9]+(?:[.+_-][a-z0-9]+)*:[a-zA-Z0-9=_-]+$
                       type: string
                     lastUpdateTime:
@@ -1269,8 +1246,7 @@ spec:
                     metadata:
                       additionalProperties:
                         type: string
-                      description: Metadata holds upstream information such as OCI
-                        annotations.
+                      description: Metadata holds upstream information such as OCI annotations.
                       type: object
                     path:
                       description: |-
@@ -1474,8 +1450,7 @@ spec:
                 - Revision
                 type: string
               sourceRef:
-                description: SourceRef is the reference to the Source the chart is
-                  available at.
+                description: SourceRef is the reference to the Source the chart is available at.
                 properties:
                   apiVersion:
                     description: APIVersion of the referent.
@@ -1549,8 +1524,7 @@ spec:
                     type: array
                   provider:
                     default: cosign
-                    description: Provider specifies the technology used to sign the
-                      OCI Artifact.
+                    description: Provider specifies the technology used to sign the OCI Artifact.
                     enum:
                     - cosign
                     - notation
@@ -1589,8 +1563,7 @@ spec:
             description: HelmChartStatus records the observed state of the HelmChart.
             properties:
               artifact:
-                description: Artifact represents the output of the last successful
-                  reconciliation.
+                description: Artifact represents the output of the last successful reconciliation.
                 properties:
                   digest:
                     description: Digest is the digest of the file in the form of '<algorithm>:<checksum>'.
@@ -1638,8 +1611,7 @@ spec:
               conditions:
                 description: Conditions holds the conditions for the HelmChart.
                 items:
-                  description: Condition contains details for one aspect of the current
-                    state of this API Resource.
+                  description: Condition contains details for one aspect of the current state of this API Resource.
                   properties:
                     lastTransitionTime:
                       description: |-
@@ -1933,8 +1905,7 @@ spec:
             description: HelmRepositoryStatus records the observed state of the HelmRepository.
             properties:
               artifact:
-                description: Artifact represents the last successful HelmRepository
-                  reconciliation.
+                description: Artifact represents the last successful HelmRepository reconciliation.
                 properties:
                   digest:
                     description: Digest is the digest of the file in the form of '<algorithm>:<checksum>'.
@@ -1982,8 +1953,7 @@ spec:
               conditions:
                 description: Conditions holds the conditions for the HelmRepository.
                 items:
-                  description: Condition contains details for one aspect of the current
-                    state of this API Resource.
+                  description: Condition contains details for one aspect of the current state of this API Resource.
                   properties:
                     lastTransitionTime:
                       description: |-
@@ -2149,8 +2119,7 @@ spec:
                   consult the documentation for your version to find out what those are.
                 type: string
               insecure:
-                description: Insecure allows connecting to a non-TLS HTTP container
-                  registry.
+                description: Insecure allows connecting to a non-TLS HTTP container registry.
                 type: boolean
               interval:
                 description: |-
@@ -2219,8 +2188,7 @@ spec:
                       the range, takes precedence over Tag.
                     type: string
                   semverFilter:
-                    description: SemverFilter is a regex pattern to filter the tags
-                      within the SemVer range.
+                    description: SemverFilter is a regex pattern to filter the tags within the SemVer range.
                     type: string
                   tag:
                     description: Tag is the image tag to pull, defaults to latest.
@@ -2245,13 +2213,11 @@ spec:
                   https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#add-imagepullsecrets-to-a-service-account
                 type: string
               suspend:
-                description: This flag tells the controller to suspend the reconciliation
-                  of this source.
+                description: This flag tells the controller to suspend the reconciliation of this source.
                 type: boolean
               timeout:
                 default: 60s
-                description: The timeout for remote OCI Repository operations like
-                  pulling, defaults to 60s.
+                description: The timeout for remote OCI Repository operations like pulling, defaults to 60s.
                 pattern: ^([0-9]+(\.[0-9]+)?(ms|s|m))+$
                 type: string
               url:
@@ -2296,8 +2262,7 @@ spec:
                     type: array
                   provider:
                     default: cosign
-                    description: Provider specifies the technology used to sign the
-                      OCI Artifact.
+                    description: Provider specifies the technology used to sign the OCI Artifact.
                     enum:
                     - cosign
                     - notation
@@ -2326,8 +2291,7 @@ spec:
             description: OCIRepositoryStatus defines the observed state of OCIRepository
             properties:
               artifact:
-                description: Artifact represents the output of the last successful
-                  OCI Repository sync.
+                description: Artifact represents the output of the last successful OCI Repository sync.
                 properties:
                   digest:
                     description: Digest is the digest of the file in the form of '<algorithm>:<checksum>'.
@@ -2375,8 +2339,7 @@ spec:
               conditions:
                 description: Conditions holds the conditions for the OCIRepository.
                 items:
-                  description: Condition contains details for one aspect of the current
-                    state of this API Resource.
+                  description: Condition contains details for one aspect of the current state of this API Resource.
                   properties:
                     lastTransitionTime:
                       description: |-
@@ -2467,8 +2430,7 @@ spec:
                     type: string
                 type: object
               url:
-                description: URL is the download link for the artifact output of the
-                  last OCI Repository sync.
+                description: URL is the download link for the artifact output of the last OCI Repository sync.
                 type: string
             type: object
         type: object
@@ -2697,8 +2659,7 @@ spec:
                   type: string
                 type: array
               decryption:
-                description: Decrypt Kubernetes secrets before applying them on the
-                  cluster.
+                description: Decrypt Kubernetes secrets before applying them on the cluster.
                 properties:
                   provider:
                     description: Provider is the name of the decryption engine.
@@ -2747,8 +2708,7 @@ spec:
                   with references to Kustomization resources that must be ready before this
                   Kustomization can be reconciled.
                 items:
-                  description: DependencyReference defines a Kustomization dependency
-                    on another Kustomization resource.
+                  description: DependencyReference defines a Kustomization dependency on another Kustomization resource.
                   properties:
                     name:
                       description: Name of the referent.
@@ -2782,8 +2742,7 @@ spec:
                   health of custom resources using Common Expression Language (CEL).
                   The expressions are evaluated only when Wait or HealthChecks are specified.
                 items:
-                  description: CustomHealthCheck defines the health check for custom
-                    resources.
+                  description: CustomHealthCheck defines the health check for custom resources.
                   properties:
                     apiVersion:
                       description: APIVersion of the custom resource under evaluation.
@@ -2820,8 +2779,7 @@ spec:
                     in any namespace.
                   properties:
                     apiVersion:
-                      description: API version of the referent, if not specified the
-                        Kubernetes preferred version will be used.
+                      description: API version of the referent, if not specified the Kubernetes preferred version will be used.
                       type: string
                     kind:
                       description: Kind of the referent.
@@ -2830,8 +2788,7 @@ spec:
                       description: Name of the referent.
                       type: string
                     namespace:
-                      description: Namespace of the referent, when not specified it
-                        acts as LocalObjectReference.
+                      description: Namespace of the referent, when not specified it acts as LocalObjectReference.
                       type: string
                   required:
                   - kind
@@ -2850,8 +2807,7 @@ spec:
                   for changing image names, tags or digests. This can also be achieved with a
                   patch, but this operator is simpler to specify.
                 items:
-                  description: Image contains an image name, a new name, a new tag
-                    or digest, which will replace the original name and tag.
+                  description: Image contains an image name, a new name, a new tag or digest, which will replace the original name and tag.
                   properties:
                     digest:
                       description: |-
@@ -2862,12 +2818,10 @@ spec:
                       description: Name is a tag-less image name.
                       type: string
                     newName:
-                      description: NewName is the value used to replace the original
-                        name.
+                      description: NewName is the value used to replace the original name.
                       type: string
                     newTag:
-                      description: NewTag is the value used to replace the original
-                        tag.
+                      description: NewTag is the value used to replace the original tag.
                       type: string
                   required:
                   - name
@@ -2940,8 +2894,7 @@ spec:
                       Kubernetes resources. Supported only for the generic provider.
                     properties:
                       key:
-                        description: Key in the Secret, when not specified an implementation-specific
-                          default key is used.
+                        description: Key in the Secret, when not specified an implementation-specific default key is used.
                         type: string
                       name:
                         description: Name of the Secret.
@@ -2951,11 +2904,9 @@ spec:
                     type: object
                 type: object
                 x-kubernetes-validations:
-                - message: exactly one of spec.kubeConfig.configMapRef or spec.kubeConfig.secretRef
-                    must be specified
+                - message: exactly one of spec.kubeConfig.configMapRef or spec.kubeConfig.secretRef must be specified
                   rule: has(self.configMapRef) || has(self.secretRef)
-                - message: exactly one of spec.kubeConfig.configMapRef or spec.kubeConfig.secretRef
-                    must be specified
+                - message: exactly one of spec.kubeConfig.configMapRef or spec.kubeConfig.secretRef must be specified
                   rule: '!has(self.configMapRef) || !has(self.secretRef)'
               namePrefix:
                 description: NamePrefix will prefix the names of all managed resources.
@@ -2982,8 +2933,7 @@ spec:
                         an array of operation objects.
                       type: string
                     target:
-                      description: Target points to the resources that the patch document
-                        should be applied to.
+                      description: Target points to the resources that the patch document should be applied to.
                       properties:
                         annotationSelector:
                           description: |-
@@ -3061,8 +3011,7 @@ spec:
                         the variables name and value.
                       properties:
                         kind:
-                          description: Kind of the values referent, valid values are
-                            ('Secret', 'ConfigMap').
+                          description: Kind of the values referent, valid values are ('Secret', 'ConfigMap').
                           enum:
                           - Secret
                           - ConfigMap
@@ -3103,8 +3052,7 @@ spec:
                   when reconciling this Kustomization.
                 type: string
               sourceRef:
-                description: Reference of the source where the kustomization file
-                  is.
+                description: Reference of the source where the kustomization file is.
                 properties:
                   apiVersion:
                     description: API version of the referent.
@@ -3164,8 +3112,7 @@ spec:
             properties:
               conditions:
                 items:
-                  description: Condition contains details for one aspect of the current
-                    state of this API Resource.
+                  description: Condition contains details for one aspect of the current state of this API Resource.
                   properties:
                     lastTransitionTime:
                       description: |-
@@ -3228,36 +3175,29 @@ spec:
                     including timing information, status, and a unique digest identifier.
                   properties:
                     digest:
-                      description: Digest is the checksum in the format `<algo>:<hex>`
-                        of the resources in this snapshot.
+                      description: Digest is the checksum in the format `<algo>:<hex>` of the resources in this snapshot.
                       type: string
                     firstReconciled:
-                      description: FirstReconciled is the time when this revision
-                        was first reconciled to the cluster.
+                      description: FirstReconciled is the time when this revision was first reconciled to the cluster.
                       format: date-time
                       type: string
                     lastReconciled:
-                      description: LastReconciled is the time when this revision was
-                        last reconciled to the cluster.
+                      description: LastReconciled is the time when this revision was last reconciled to the cluster.
                       format: date-time
                       type: string
                     lastReconciledDuration:
-                      description: LastReconciledDuration is time it took to reconcile
-                        the resources in this revision.
+                      description: LastReconciledDuration is time it took to reconcile the resources in this revision.
                       type: string
                     lastReconciledStatus:
-                      description: LastReconciledStatus is the status of the last
-                        reconciliation.
+                      description: LastReconciledStatus is the status of the last reconciliation.
                       type: string
                     metadata:
                       additionalProperties:
                         type: string
-                      description: Metadata contains additional information about
-                        the snapshot.
+                      description: Metadata contains additional information about the snapshot.
                       type: object
                     totalReconciliations:
-                      description: TotalReconciliations is the total number of reconciliations
-                        that have occurred for this snapshot.
+                      description: TotalReconciliations is the total number of reconciliations that have occurred for this snapshot.
                       format: int64
                       type: integer
                   required:
@@ -3277,8 +3217,7 @@ spec:
                   entries:
                     description: Entries of Kubernetes resource object references.
                     items:
-                      description: ResourceRef contains the information necessary
-                        to locate a resource within a cluster.
+                      description: ResourceRef contains the information necessary to locate a resource within a cluster.
                       properties:
                         id:
                           description: |-
@@ -3286,8 +3225,7 @@ spec:
                             in the format '<namespace>_<name>_<group>_<kind>'.
                           type: string
                         v:
-                          description: Version is the API version of the Kubernetes
-                            resource object's kind.
+                          description: Version is the API version of the Kubernetes resource object's kind.
                           type: string
                       required:
                       - id
@@ -3311,8 +3249,7 @@ spec:
                   Equals the Revision of the applied Artifact from the referenced Source.
                 type: string
               lastAttemptedRevision:
-                description: LastAttemptedRevision is the revision of the last reconciliation
-                  attempt.
+                description: LastAttemptedRevision is the revision of the last reconciliation attempt.
                 type: string
               lastHandledReconcileAt:
                 description: |-
@@ -3498,8 +3435,7 @@ spec:
                   for this HelmRelease.
                 properties:
                   metadata:
-                    description: ObjectMeta holds the template for metadata like labels
-                      and annotations.
+                    description: ObjectMeta holds the template for metadata like labels and annotations.
                     properties:
                       annotations:
                         additionalProperties:
@@ -3520,18 +3456,15 @@ spec:
                         type: object
                     type: object
                   spec:
-                    description: Spec holds the template for the v1.HelmChartSpec
-                      for this HelmRelease.
+                    description: Spec holds the template for the v1.HelmChartSpec for this HelmRelease.
                     properties:
                       chart:
-                        description: The name or path the Helm chart is available
-                          at in the SourceRef.
+                        description: The name or path the Helm chart is available at in the SourceRef.
                         maxLength: 2048
                         minLength: 1
                         type: string
                       ignoreMissingValuesFiles:
-                        description: IgnoreMissingValuesFiles controls whether to
-                          silently ignore missing values files rather than failing.
+                        description: IgnoreMissingValuesFiles controls whether to silently ignore missing values files rather than failing.
                         type: boolean
                       interval:
                         description: |-
@@ -3551,8 +3484,7 @@ spec:
                         - Revision
                         type: string
                       sourceRef:
-                        description: The name and namespace of the v1.Source the chart
-                          is available at.
+                        description: The name and namespace of the v1.Source the chart is available at.
                         properties:
                           apiVersion:
                             description: APIVersion of the referent.
@@ -3598,8 +3530,7 @@ spec:
                         properties:
                           provider:
                             default: cosign
-                            description: Provider specifies the technology used to
-                              sign the OCI Helm chart.
+                            description: Provider specifies the technology used to sign the OCI Helm chart.
                             enum:
                             - cosign
                             - notation
@@ -3685,8 +3616,7 @@ spec:
                   references to HelmRelease resources that must be ready before this HelmRelease
                   can be reconciled.
                 items:
-                  description: DependencyReference defines a HelmRelease dependency
-                    on another HelmRelease resource.
+                  description: DependencyReference defines a HelmRelease dependency on another HelmRelease resource.
                   properties:
                     name:
                       description: Name of the referent.
@@ -3798,8 +3728,7 @@ spec:
                   taking place has wait enabled, i.e. DisableWait is false, and the
                   'poller' WaitStrategy is used.
                 items:
-                  description: CustomHealthCheck defines the health check for custom
-                    resources.
+                  description: CustomHealthCheck defines the health check for custom resources.
                   properties:
                     apiVersion:
                       description: APIVersion of the custom resource under evaluation.
@@ -3829,8 +3758,7 @@ spec:
                   type: object
                 type: array
               install:
-                description: Install holds the configuration for Helm install actions
-                  for this HelmRelease.
+                description: Install holds the configuration for Helm install actions for this HelmRelease.
                 properties:
                   crds:
                     description: |-
@@ -3862,8 +3790,7 @@ spec:
                       On uninstall, the namespace will not be garbage collected.
                     type: boolean
                   disableHooks:
-                    description: DisableHooks prevents hooks from running during the
-                      Helm install action.
+                    description: DisableHooks prevents hooks from running during the Helm install action.
                     type: boolean
                   disableOpenAPIValidation:
                     description: |-
@@ -4027,8 +3954,7 @@ spec:
                       Kubernetes resources. Supported only for the generic provider.
                     properties:
                       key:
-                        description: Key in the Secret, when not specified an implementation-specific
-                          default key is used.
+                        description: Key in the Secret, when not specified an implementation-specific default key is used.
                         type: string
                       name:
                         description: Name of the Secret.
@@ -4038,11 +3964,9 @@ spec:
                     type: object
                 type: object
                 x-kubernetes-validations:
-                - message: exactly one of spec.kubeConfig.configMapRef or spec.kubeConfig.secretRef
-                    must be specified
+                - message: exactly one of spec.kubeConfig.configMapRef or spec.kubeConfig.secretRef must be specified
                   rule: has(self.configMapRef) || has(self.secretRef)
-                - message: exactly one of spec.kubeConfig.configMapRef or spec.kubeConfig.secretRef
-                    must be specified
+                - message: exactly one of spec.kubeConfig.configMapRef or spec.kubeConfig.secretRef must be specified
                   rule: '!has(self.configMapRef) || !has(self.secretRef)'
               maxHistory:
                 description: |-
@@ -4079,9 +4003,7 @@ spec:
                             for changing image names, tags or digests. This can also be achieved with a
                             patch, but this operator is simpler to specify.
                           items:
-                            description: Image contains an image name, a new name,
-                              a new tag or digest, which will replace the original
-                              name and tag.
+                            description: Image contains an image name, a new name, a new tag or digest, which will replace the original name and tag.
                             properties:
                               digest:
                                 description: |-
@@ -4092,12 +4014,10 @@ spec:
                                 description: Name is a tag-less image name.
                                 type: string
                               newName:
-                                description: NewName is the value used to replace
-                                  the original name.
+                                description: NewName is the value used to replace the original name.
                                 type: string
                               newTag:
-                                description: NewTag is the value used to replace the
-                                  original tag.
+                                description: NewTag is the value used to replace the original tag.
                                 type: string
                             required:
                             - name
@@ -4118,8 +4038,7 @@ spec:
                                   an array of operation objects.
                                 type: string
                               target:
-                                description: Target points to the resources that the
-                                  patch document should be applied to.
+                                description: Target points to the resources that the patch document should be applied to.
                                 properties:
                                   annotationSelector:
                                     description: |-
@@ -4174,8 +4093,7 @@ spec:
                 minLength: 1
                 type: string
               rollback:
-                description: Rollback holds the configuration for Helm rollback actions
-                  for this HelmRelease.
+                description: Rollback holds the configuration for Helm rollback actions for this HelmRelease.
                 properties:
                   cleanupOnFail:
                     description: |-
@@ -4183,8 +4101,7 @@ spec:
                       rollback action when it fails.
                     type: boolean
                   disableHooks:
-                    description: DisableHooks prevents hooks from running during the
-                      Helm rollback action.
+                    description: DisableHooks prevents hooks from running during the Helm rollback action.
                     type: boolean
                   disableWait:
                     description: |-
@@ -4197,8 +4114,7 @@ spec:
                       rollback has been performed.
                     type: boolean
                   force:
-                    description: Force forces resource updates through a replacement
-                      strategy.
+                    description: Force forces resource updates through a replacement strategy.
                     type: boolean
                   recreate:
                     description: |-
@@ -4258,8 +4174,7 @@ spec:
                 minLength: 1
                 type: string
               test:
-                description: Test holds the configuration for Helm test actions for
-                  this HelmRelease.
+                description: Test holds the configuration for Helm test actions for this HelmRelease.
                 properties:
                   enable:
                     description: |-
@@ -4267,15 +4182,12 @@ spec:
                       or upgrade action has been performed.
                     type: boolean
                   filters:
-                    description: Filters is a list of tests to run or exclude from
-                      running.
+                    description: Filters is a list of tests to run or exclude from running.
                     items:
-                      description: Filter holds the configuration for individual Helm
-                        test filters.
+                      description: Filter holds the configuration for individual Helm test filters.
                       properties:
                         exclude:
-                          description: Exclude specifies whether the named test should
-                            be excluded.
+                          description: Exclude specifies whether the named test should be excluded.
                           type: boolean
                         name:
                           description: Name is the name of the test.
@@ -4306,8 +4218,7 @@ spec:
                 pattern: ^([0-9]+(\.[0-9]+)?(ms|s|m|h))+$
                 type: string
               uninstall:
-                description: Uninstall holds the configuration for Helm uninstall
-                  actions for this HelmRelease.
+                description: Uninstall holds the configuration for Helm uninstall actions for this HelmRelease.
                 properties:
                   deletionPropagation:
                     default: background
@@ -4320,8 +4231,7 @@ spec:
                     - orphan
                     type: string
                   disableHooks:
-                    description: DisableHooks prevents hooks from running during the
-                      Helm rollback action.
+                    description: DisableHooks prevents hooks from running during the Helm rollback action.
                     type: boolean
                   disableWait:
                     description: |-
@@ -4342,8 +4252,7 @@ spec:
                     type: string
                 type: object
               upgrade:
-                description: Upgrade holds the configuration for Helm upgrade actions
-                  for this HelmRelease.
+                description: Upgrade holds the configuration for Helm upgrade actions for this HelmRelease.
                 properties:
                   cleanupOnFail:
                     description: |-
@@ -4373,8 +4282,7 @@ spec:
                     - CreateReplace
                     type: string
                   disableHooks:
-                    description: DisableHooks prevents hooks from running during the
-                      Helm upgrade action.
+                    description: DisableHooks prevents hooks from running during the Helm upgrade action.
                     type: boolean
                   disableOpenAPIValidation:
                     description: |-
@@ -4402,8 +4310,7 @@ spec:
                       upgrade has been performed.
                     type: boolean
                   force:
-                    description: Force forces resource updates through a replacement
-                      strategy.
+                    description: Force forces resource updates through a replacement strategy.
                     type: boolean
                   preserveValues:
                     description: |-
@@ -4434,8 +4341,7 @@ spec:
                           Defaults to '0', a negative integer equals to unlimited retries.
                         type: integer
                       strategy:
-                        description: Strategy to use for failure remediation. Defaults
-                          to 'rollback'.
+                        description: Strategy to use for failure remediation. Defaults to 'rollback'.
                         enum:
                         - rollback
                         - uninstall
@@ -4498,8 +4404,7 @@ spec:
                     and optionally the key they can be found at.
                   properties:
                     kind:
-                      description: Kind of the values referent, valid values are ('Secret',
-                        'ConfigMap').
+                      description: Kind of the values referent, valid values are ('Secret', 'ConfigMap').
                       enum:
                       - Secret
                       - ConfigMap
@@ -4562,8 +4467,7 @@ spec:
             type: object
             x-kubernetes-validations:
             - message: either chart or chartRef must be set
-              rule: (has(self.chart) && !has(self.chartRef)) || (!has(self.chart)
-                && has(self.chartRef))
+              rule: (has(self.chart) && !has(self.chartRef)) || (!has(self.chart) && has(self.chartRef))
           status:
             default:
               observedGeneration: -1
@@ -4572,8 +4476,7 @@ spec:
               conditions:
                 description: Conditions holds the conditions for the HelmRelease.
                 items:
-                  description: Condition contains details for one aspect of the current
-                    state of this API Resource.
+                  description: Condition contains details for one aspect of the current state of this API Resource.
                   properties:
                     lastTransitionTime:
                       description: |-
@@ -4647,8 +4550,7 @@ spec:
                     as managed by the controller.
                   properties:
                     action:
-                      description: Action is the action that resulted in this snapshot
-                        being created.
+                      description: Action is the action that resulted in this snapshot being created.
                       type: string
                     apiVersion:
                       description: |-
@@ -4657,12 +4559,10 @@ spec:
                         field will be used to distinguish between the old and new methods.
                       type: string
                     appVersion:
-                      description: AppVersion is the chart app version of the release
-                        object in storage.
+                      description: AppVersion is the chart app version of the release object in storage.
                       type: string
                     chartName:
-                      description: ChartName is the chart name of the release object
-                        in storage.
+                      description: ChartName is the chart name of the release object in storage.
                       type: string
                     chartVersion:
                       description: |-
@@ -4696,12 +4596,10 @@ spec:
                       description: Name is the name of the release.
                       type: string
                     namespace:
-                      description: Namespace is the namespace the release is deployed
-                        to.
+                      description: Namespace is the namespace the release is deployed to.
                       type: string
                     ociDigest:
-                      description: OCIDigest is the digest of the OCI artifact associated
-                        with the release.
+                      description: OCIDigest is the digest of the OCI artifact associated with the release.
                       type: string
                     status:
                       description: Status is the current state of the release.
@@ -4713,13 +4611,11 @@ spec:
                           to be run by the controller.
                         properties:
                           lastCompleted:
-                            description: LastCompleted is the time the test hook last
-                              completed.
+                            description: LastCompleted is the time the test hook last completed.
                             format: date-time
                             type: string
                           lastStarted:
-                            description: LastStarted is the time the test hook was
-                              last started.
+                            description: LastStarted is the time the test hook was last started.
                             format: date-time
                             type: string
                           phase:
@@ -4731,8 +4627,7 @@ spec:
                         run by the controller.
                       type: object
                     version:
-                      description: Version is the version of the release object in
-                        storage.
+                      description: Version is the version of the release object in storage.
                       type: integer
                   required:
                   - chartName
@@ -4761,8 +4656,7 @@ spec:
                   entries:
                     description: Entries of Kubernetes resource object references.
                     items:
-                      description: ResourceRef contains the information necessary
-                        to locate a resource within a cluster.
+                      description: ResourceRef contains the information necessary to locate a resource within a cluster.
                       properties:
                         id:
                           description: |-
@@ -4770,8 +4664,7 @@ spec:
                             in the format '<namespace>_<name>_<group>_<kind>'.
                           type: string
                         v:
-                          description: Version is the API version of the Kubernetes
-                            resource object's kind.
+                          description: Version is the API version of the Kubernetes resource object's kind.
                           type: string
                       required:
                       - id
@@ -5040,8 +4933,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: AlertSpec defines an alerting rule for events involving a
-              list of objects.
+            description: AlertSpec defines an alerting rule for events involving a list of objects.
             properties:
               eventMetadata:
                 additionalProperties:
@@ -5131,8 +5023,7 @@ spec:
                   type: string
                 type: array
               providerRef:
-                description: ProviderRef specifies which Provider this Alert should
-                  use.
+                description: ProviderRef specifies which Provider this Alert should use.
                 properties:
                   name:
                     description: Name of the referent.
@@ -5141,8 +5032,7 @@ spec:
                 - name
                 type: object
               summary:
-                description: Summary holds a short description of the impact and affected
-                  cluster.
+                description: Summary holds a short description of the impact and affected cluster.
                 maxLength: 255
                 type: string
               suspend:
@@ -5162,8 +5052,7 @@ spec:
               conditions:
                 description: Conditions holds the conditions for the Alert.
                 items:
-                  description: Condition contains details for one aspect of the current
-                    state of this API Resource.
+                  description: Condition contains details for one aspect of the current state of this API Resource.
                   properties:
                     lastTransitionTime:
                       description: |-
@@ -5259,8 +5148,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: AlertSpec defines an alerting rule for events involving a
-              list of objects.
+            description: AlertSpec defines an alerting rule for events involving a list of objects.
             properties:
               eventMetadata:
                 additionalProperties:
@@ -5350,8 +5238,7 @@ spec:
                   type: string
                 type: array
               providerRef:
-                description: ProviderRef specifies which Provider this Alert should
-                  use.
+                description: ProviderRef specifies which Provider this Alert should use.
                 properties:
                   name:
                     description: Name of the referent.
@@ -5459,13 +5346,11 @@ spec:
                 - name
                 type: object
               channel:
-                description: Channel specifies the destination channel where events
-                  should be posted.
+                description: Channel specifies the destination channel where events should be posted.
                 maxLength: 2048
                 type: string
               interval:
-                description: Interval at which to reconcile the Provider with its
-                  Secret references.
+                description: Interval at which to reconcile the Provider with its Secret references.
                 pattern: ^([0-9]+(\.[0-9]+)?(ms|s|m|h))+$
                 type: string
               proxy:
@@ -5538,8 +5423,7 @@ spec:
               conditions:
                 description: Conditions holds the conditions for the Provider.
                 items:
-                  description: Condition contains details for one aspect of the current
-                    state of this API Resource.
+                  description: Condition contains details for one aspect of the current state of this API Resource.
                   properties:
                     lastTransitionTime:
                       description: |-
@@ -5664,8 +5548,7 @@ spec:
                 - name
                 type: object
               channel:
-                description: Channel specifies the destination channel where events
-                  should be posted.
+                description: Channel specifies the destination channel where events should be posted.
                 maxLength: 2048
                 type: string
               commitStatusExpr:
@@ -5784,11 +5667,8 @@ spec:
             - type
             type: object
             x-kubernetes-validations:
-            - message: spec.commitStatusExpr is only supported for the 'github', 'gitlab',
-                'gitea', 'bitbucketserver', 'bitbucket', 'azuredevops' provider types
-              rule: self.type == 'github' || self.type == 'gitlab' || self.type ==
-                'gitea' || self.type == 'bitbucketserver' || self.type == 'bitbucket'
-                || self.type == 'azuredevops' || !has(self.commitStatusExpr)
+            - message: spec.commitStatusExpr is only supported for the 'github', 'gitlab', 'gitea', 'bitbucketserver', 'bitbucket', 'azuredevops' provider types
+              rule: self.type == 'github' || self.type == 'gitlab' || self.type == 'gitea' || self.type == 'bitbucketserver' || self.type == 'bitbucket' || self.type == 'azuredevops' || !has(self.commitStatusExpr)
         type: object
     served: true
     storage: true
@@ -5858,8 +5738,7 @@ spec:
                 type: array
               interval:
                 default: 10m
-                description: Interval at which to reconcile the Receiver with its
-                  Secret references.
+                description: Interval at which to reconcile the Receiver with its Secret references.
                 pattern: ^([0-9]+(\.[0-9]+)?(ms|s|m|h))+$
                 type: string
               resourceFilter:
@@ -5975,8 +5854,7 @@ spec:
               conditions:
                 description: Conditions holds the conditions for the Receiver.
                 items:
-                  description: Condition contains details for one aspect of the current
-                    state of this API Resource.
+                  description: Condition contains details for one aspect of the current state of this API Resource.
                   properties:
                     lastTransitionTime:
                       description: |-
@@ -6036,8 +5914,7 @@ spec:
                   can be detected.
                 type: string
               observedGeneration:
-                description: ObservedGeneration is the last observed generation of
-                  the Receiver object.
+                description: ObservedGeneration is the last observed generation of the Receiver object.
                 format: int64
                 type: integer
               webhookPath:
@@ -6096,8 +5973,7 @@ spec:
                   type: string
                 type: array
               interval:
-                description: Interval at which to reconcile the Receiver with its
-                  Secret references.
+                description: Interval at which to reconcile the Receiver with its Secret references.
                 pattern: ^([0-9]+(\.[0-9]+)?(ms|s|m|h))+$
                 type: string
               resources:
@@ -6198,8 +6074,7 @@ spec:
               conditions:
                 description: Conditions holds the conditions for the Receiver.
                 items:
-                  description: Condition contains details for one aspect of the current
-                    state of this API Resource.
+                  description: Condition contains details for one aspect of the current state of this API Resource.
                   properties:
                     lastTransitionTime:
                       description: |-
@@ -6259,8 +6134,7 @@ spec:
                   can be detected.
                 type: string
               observedGeneration:
-                description: ObservedGeneration is the last observed generation of
-                  the Receiver object.
+                description: ObservedGeneration is the last observed generation of the Receiver object.
                 format: int64
                 type: integer
               url:
@@ -6542,8 +6416,7 @@ spec:
                     description: Name of the referent.
                     type: string
                   namespace:
-                    description: Namespace of the referent, when not specified it
-                      acts as LocalObjectReference.
+                    description: Namespace of the referent, when not specified it acts as LocalObjectReference.
                     type: string
                 required:
                 - name
@@ -6563,8 +6436,7 @@ spec:
                   selecting the most recent image
                 properties:
                   alphabetical:
-                    description: Alphabetical set of rules to use for alphabetical
-                      ordering of the tags.
+                    description: Alphabetical set of rules to use for alphabetical ordering of the tags.
                     properties:
                       order:
                         default: asc
@@ -6578,8 +6450,7 @@ spec:
                         type: string
                     type: object
                   numerical:
-                    description: Numerical set of rules to use for numerical ordering
-                      of the tags.
+                    description: Numerical set of rules to use for numerical ordering of the tags.
                     properties:
                       order:
                         default: asc
@@ -6616,14 +6487,10 @@ spec:
             - policy
             type: object
             x-kubernetes-validations:
-            - message: spec.interval is only accepted when spec.digestReflectionPolicy
-                is set to 'Always'
-              rule: '!has(self.interval) || (has(self.digestReflectionPolicy) && self.digestReflectionPolicy
-                == ''Always'')'
-            - message: spec.interval must be set when spec.digestReflectionPolicy
-                is set to 'Always'
-              rule: has(self.interval) || !has(self.digestReflectionPolicy) || self.digestReflectionPolicy
-                != 'Always'
+            - message: spec.interval is only accepted when spec.digestReflectionPolicy is set to 'Always'
+              rule: '!has(self.interval) || (has(self.digestReflectionPolicy) && self.digestReflectionPolicy == ''Always'')'
+            - message: spec.interval must be set when spec.digestReflectionPolicy is set to 'Always'
+              rule: has(self.interval) || !has(self.digestReflectionPolicy) || self.digestReflectionPolicy != 'Always'
           status:
             default:
               observedGeneration: -1
@@ -6631,8 +6498,7 @@ spec:
             properties:
               conditions:
                 items:
-                  description: Condition contains details for one aspect of the current
-                    state of this API Resource.
+                  description: Condition contains details for one aspect of the current state of this API Resource.
                   properties:
                     lastTransitionTime:
                       description: |-
@@ -6827,8 +6693,7 @@ spec:
                     description: Name of the referent.
                     type: string
                   namespace:
-                    description: Namespace of the referent, when not specified it
-                      acts as LocalObjectReference.
+                    description: Namespace of the referent, when not specified it acts as LocalObjectReference.
                     type: string
                 required:
                 - name
@@ -6848,8 +6713,7 @@ spec:
                   selecting the most recent image
                 properties:
                   alphabetical:
-                    description: Alphabetical set of rules to use for alphabetical
-                      ordering of the tags.
+                    description: Alphabetical set of rules to use for alphabetical ordering of the tags.
                     properties:
                       order:
                         default: asc
@@ -6863,8 +6727,7 @@ spec:
                         type: string
                     type: object
                   numerical:
-                    description: Numerical set of rules to use for numerical ordering
-                      of the tags.
+                    description: Numerical set of rules to use for numerical ordering of the tags.
                     properties:
                       order:
                         default: asc
@@ -6901,14 +6764,10 @@ spec:
             - policy
             type: object
             x-kubernetes-validations:
-            - message: spec.interval is only accepted when spec.digestReflectionPolicy
-                is set to 'Always'
-              rule: '!has(self.interval) || (has(self.digestReflectionPolicy) && self.digestReflectionPolicy
-                == ''Always'')'
-            - message: spec.interval must be set when spec.digestReflectionPolicy
-                is set to 'Always'
-              rule: has(self.interval) || !has(self.digestReflectionPolicy) || self.digestReflectionPolicy
-                != 'Always'
+            - message: spec.interval is only accepted when spec.digestReflectionPolicy is set to 'Always'
+              rule: '!has(self.interval) || (has(self.digestReflectionPolicy) && self.digestReflectionPolicy == ''Always'')'
+            - message: spec.interval must be set when spec.digestReflectionPolicy is set to 'Always'
+              rule: has(self.interval) || !has(self.digestReflectionPolicy) || self.digestReflectionPolicy != 'Always'
           status:
             default:
               observedGeneration: -1
@@ -6916,8 +6775,7 @@ spec:
             properties:
               conditions:
                 items:
-                  description: Condition contains details for one aspect of the current
-                    state of this API Resource.
+                  description: Condition contains details for one aspect of the current state of this API Resource.
                   properties:
                     lastTransitionTime:
                       description: |-
@@ -7158,8 +7016,7 @@ spec:
                 description: Image is the name of the image repository
                 type: string
               insecure:
-                description: Insecure allows connecting to a non-TLS HTTP container
-                  registry.
+                description: Insecure allows connecting to a non-TLS HTTP container registry.
                 type: boolean
               interval:
                 description: |-
@@ -7236,8 +7093,7 @@ spec:
                 type: string
               conditions:
                 items:
-                  description: Condition contains details for one aspect of the current
-                    state of this API Resource.
+                  description: Condition contains details for one aspect of the current state of this API Resource.
                   properties:
                     lastTransitionTime:
                       description: |-
@@ -7315,8 +7171,7 @@ spec:
                     format: date-time
                     type: string
                   tagCount:
-                    description: TagCount is the number of tags found in the last
-                      scan.
+                    description: TagCount is the number of tags found in the last scan.
                     type: integer
                 required:
                 - tagCount
@@ -7453,8 +7308,7 @@ spec:
                 description: Image is the name of the image repository
                 type: string
               insecure:
-                description: Insecure allows connecting to a non-TLS HTTP container
-                  registry.
+                description: Insecure allows connecting to a non-TLS HTTP container registry.
                 type: boolean
               interval:
                 description: |-
@@ -7531,8 +7385,7 @@ spec:
                 type: string
               conditions:
                 items:
-                  description: Condition contains details for one aspect of the current
-                    state of this API Resource.
+                  description: Condition contains details for one aspect of the current state of this API Resource.
                   properties:
                     lastTransitionTime:
                       description: |-
@@ -7610,8 +7463,7 @@ spec:
                     format: date-time
                     type: string
                   tagCount:
-                    description: TagCount is the number of tags found in the last
-                      scan.
+                    description: TagCount is the number of tags found in the last scan.
                     type: integer
                 required:
                 - tagCount
@@ -7783,8 +7635,7 @@ spec:
     name: v1
     schema:
       openAPIV3Schema:
-        description: ImageUpdateAutomation is the Schema for the imageupdateautomations
-          API
+        description: ImageUpdateAutomation is the Schema for the imageupdateautomations API
         properties:
           apiVersion:
             description: |-
@@ -7824,8 +7675,7 @@ spec:
                           repository.
                         properties:
                           branch:
-                            description: Branch to check out, defaults to 'master'
-                              if no other field is defined.
+                            description: Branch to check out, defaults to 'master' if no other field is defined.
                             type: string
                           commit:
                             description: |-
@@ -7842,8 +7692,7 @@ spec:
                               Examples: "refs/heads/main", "refs/tags/v0.1.0", "refs/pull/420/head", "refs/merge-requests/1/head"
                             type: string
                           semver:
-                            description: SemVer tag expression to check out, takes
-                              precedence over Tag.
+                            description: SemVer tag expression to check out, takes precedence over Tag.
                             type: string
                           tag:
                             description: Tag to check out, takes precedence over Branch.
@@ -7861,12 +7710,10 @@ spec:
                           author of commits.
                         properties:
                           email:
-                            description: Email gives the email to provide when making
-                              a commit.
+                            description: Email gives the email to provide when making a commit.
                             type: string
                           name:
-                            description: Name gives the name to provide when making
-                              a commit.
+                            description: Name gives the name to provide when making a commit.
                             type: string
                         required:
                         - email
@@ -7885,8 +7732,7 @@ spec:
                           templating rendering.
                         type: object
                       signingKey:
-                        description: SigningKey provides the option to sign commits
-                          with a GPG key
+                        description: SigningKey provides the option to sign commits with a GPG key
                         properties:
                           secretRef:
                             description: |-
@@ -7951,16 +7797,14 @@ spec:
                   By default includes all policies in namespace.
                 properties:
                   matchExpressions:
-                    description: matchExpressions is a list of label selector requirements.
-                      The requirements are ANDed.
+                    description: matchExpressions is a list of label selector requirements. The requirements are ANDed.
                     items:
                       description: |-
                         A label selector requirement is a selector that contains values, a key, and an operator that
                         relates the key and values.
                       properties:
                         key:
-                          description: key is the label key that the selector applies
-                            to.
+                          description: key is the label key that the selector applies to.
                           type: string
                         operator:
                           description: |-
@@ -8011,8 +7855,7 @@ spec:
                     description: Name of the referent.
                     type: string
                   namespace:
-                    description: Namespace of the referent, defaults to the namespace
-                      of the Kubernetes resource object that contains the reference.
+                    description: Namespace of the referent, defaults to the namespace of the Kubernetes resource object that contains the reference.
                     type: string
                 required:
                 - kind
@@ -8051,13 +7894,11 @@ spec:
           status:
             default:
               observedGeneration: -1
-            description: ImageUpdateAutomationStatus defines the observed state of
-              ImageUpdateAutomation
+            description: ImageUpdateAutomationStatus defines the observed state of ImageUpdateAutomation
             properties:
               conditions:
                 items:
-                  description: Condition contains details for one aspect of the current
-                    state of this API Resource.
+                  description: Condition contains details for one aspect of the current state of this API Resource.
                   properties:
                     lastTransitionTime:
                       description: |-
@@ -8187,8 +8028,7 @@ spec:
     name: v1beta2
     schema:
       openAPIV3Schema:
-        description: ImageUpdateAutomation is the Schema for the imageupdateautomations
-          API
+        description: ImageUpdateAutomation is the Schema for the imageupdateautomations API
         properties:
           apiVersion:
             description: |-
@@ -8228,8 +8068,7 @@ spec:
                           repository.
                         properties:
                           branch:
-                            description: Branch to check out, defaults to 'master'
-                              if no other field is defined.
+                            description: Branch to check out, defaults to 'master' if no other field is defined.
                             type: string
                           commit:
                             description: |-
@@ -8246,8 +8085,7 @@ spec:
                               Examples: "refs/heads/main", "refs/tags/v0.1.0", "refs/pull/420/head", "refs/merge-requests/1/head"
                             type: string
                           semver:
-                            description: SemVer tag expression to check out, takes
-                              precedence over Tag.
+                            description: SemVer tag expression to check out, takes precedence over Tag.
                             type: string
                           tag:
                             description: Tag to check out, takes precedence over Branch.
@@ -8265,12 +8103,10 @@ spec:
                           author of commits.
                         properties:
                           email:
-                            description: Email gives the email to provide when making
-                              a commit.
+                            description: Email gives the email to provide when making a commit.
                             type: string
                           name:
-                            description: Name gives the name to provide when making
-                              a commit.
+                            description: Name gives the name to provide when making a commit.
                             type: string
                         required:
                         - email
@@ -8289,8 +8125,7 @@ spec:
                           templating rendering.
                         type: object
                       signingKey:
-                        description: SigningKey provides the option to sign commits
-                          with a GPG key
+                        description: SigningKey provides the option to sign commits with a GPG key
                         properties:
                           secretRef:
                             description: |-
@@ -8355,16 +8190,14 @@ spec:
                   By default includes all policies in namespace.
                 properties:
                   matchExpressions:
-                    description: matchExpressions is a list of label selector requirements.
-                      The requirements are ANDed.
+                    description: matchExpressions is a list of label selector requirements. The requirements are ANDed.
                     items:
                       description: |-
                         A label selector requirement is a selector that contains values, a key, and an operator that
                         relates the key and values.
                       properties:
                         key:
-                          description: key is the label key that the selector applies
-                            to.
+                          description: key is the label key that the selector applies to.
                           type: string
                         operator:
                           description: |-
@@ -8415,8 +8248,7 @@ spec:
                     description: Name of the referent.
                     type: string
                   namespace:
-                    description: Namespace of the referent, defaults to the namespace
-                      of the Kubernetes resource object that contains the reference.
+                    description: Namespace of the referent, defaults to the namespace of the Kubernetes resource object that contains the reference.
                     type: string
                 required:
                 - kind
@@ -8455,13 +8287,11 @@ spec:
           status:
             default:
               observedGeneration: -1
-            description: ImageUpdateAutomationStatus defines the observed state of
-              ImageUpdateAutomation
+            description: ImageUpdateAutomationStatus defines the observed state of ImageUpdateAutomation
             properties:
               conditions:
                 items:
-                  description: Condition contains details for one aspect of the current
-                    state of this API Resource.
+                  description: Condition contains details for one aspect of the current state of this API Resource.
                   properties:
                     lastTransitionTime:
                       description: |-

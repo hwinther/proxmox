@@ -23,34 +23,34 @@ spec:
         app.kubernetes.io/name: podinfo-edge
     spec:
       tolerations:
-        - key: node-type
-          operator: Equal
-          value: edge-sdr
-          effect: NoSchedule
+      - key: node-type
+        operator: Equal
+        value: edge-sdr
+        effect: NoSchedule
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
-              - matchExpressions:
-                  - key: role
-                    operator: In
-                    values:
-                      - sdr-edge
+            - matchExpressions:
+              - key: role
+                operator: In
+                values:
+                - sdr-edge
       containers:
-        - name: podinfod
-          image: ghcr.io/stefanprodan/podinfo:6.11.2
-          imagePullPolicy: IfNotPresent
-          ports:
-            - name: http
-              containerPort: 9898
-              protocol: TCP
-          resources:
-            requests:
-              cpu: 25m
-              memory: 32Mi
-            limits:
-              cpu: 200m
-              memory: 128Mi
+      - name: podinfod
+        image: ghcr.io/stefanprodan/podinfo:6.11.2
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 9898
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 25m
+            memory: 32Mi
+          limits:
+            cpu: 200m
+            memory: 128Mi
 ---
 apiVersion: v1
 kind: Service
@@ -60,9 +60,9 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-    - port: 9898
-      targetPort: http
-      protocol: TCP
-      name: http
+  - port: 9898
+    targetPort: http
+    protocol: TCP
+    name: http
   selector:
     app: podinfo-edge

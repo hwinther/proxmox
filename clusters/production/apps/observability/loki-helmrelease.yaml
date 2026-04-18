@@ -50,23 +50,23 @@ spec:
           nodeAffinity:
             requiredDuringSchedulingIgnoredDuringExecution:
               nodeSelectorTerms:
-                - matchExpressions:
-                    - key: kubernetes.io/hostname
-                      operator: NotIn
-                      values:
-                        - k0s-prod03.k0s.wsh.no
+              - matchExpressions:
+                - key: kubernetes.io/hostname
+                  operator: NotIn
+                  values:
+                  - k0s-prod03.k0s.wsh.no
     loki:
       commonConfig:
         replication_factor: 1
       schemaConfig:
         configs:
-          - from: "2024-04-01"
-            store: tsdb
-            object_store: s3
-            schema: v13
-            index:
-              prefix: loki_index_
-              period: 24h
+        - from: "2024-04-01"
+          store: tsdb
+          object_store: s3
+          schema: v13
+          index:
+            prefix: loki_index_
+            period: 24h
       pattern_ingester:
         enabled: true
       limits_config:

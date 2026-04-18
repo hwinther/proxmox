@@ -19,10 +19,10 @@ spec:
     server:
       replicaCount: 1
       extraFlags:
-        - web.enable-lifecycle
-        - web.enable-otlp-receiver
-        ## Required for Tempo metrics-generator remote_write → service graph metrics in Prometheus.
-        - web.enable-remote-write-receiver
+      - web.enable-lifecycle
+      - web.enable-otlp-receiver
+      ## Required for Tempo metrics-generator remote_write → service graph metrics in Prometheus.
+      - web.enable-remote-write-receiver
       retention: 7d
       ## No StorageClass on this cluster — use emptyDir (data lost on pod delete)
       persistentVolume:

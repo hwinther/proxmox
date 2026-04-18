@@ -13,13 +13,13 @@ metadata:
     gethomepage.dev/description: Cilium Hubble service map & flows
 spec:
   rules:
-    - host: hubble.mgmt.wsh.no
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: hubble-ui
-                port:
-                  number: 80
+  - host: hubble.mgmt.wsh.no
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: hubble-ui
+            port:
+              number: 80

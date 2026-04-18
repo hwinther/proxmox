@@ -13,26 +13,25 @@ spec:
   validationFailureAction: Audit
   background: true
   rules:
-    - name: host-namespaces
-      match:
-        any:
-          - resources:
-              kinds:
-                - Pod
-      exclude:
-        any:
-          - resources:
-              namespaces:
-                - kube-system
-                - kyverno
-                - flux-system
-                - traefik
-      validate:
-        message: >-
-          Sharing the host PID, IPC, or network namespace is disallowed. Set hostPID, hostIPC, and
-          hostNetwork to false or omit them.
-        pattern:
-          spec:
-            =(hostPID): "false"
-            =(hostIPC): "false"
-            =(hostNetwork): "false"
+  - name: host-namespaces
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    exclude:
+      any:
+      - resources:
+          namespaces:
+          - kube-system
+          - kyverno
+          - flux-system
+          - traefik
+    validate:
+      message: >-
+        Sharing the host PID, IPC, or network namespace is disallowed. Set hostPID, hostIPC, and hostNetwork to false or omit them.
+      pattern:
+        spec:
+          =(hostPID): "false"
+          =(hostIPC): "false"
+          =(hostNetwork): "false"

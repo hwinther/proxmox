@@ -12,13 +12,13 @@ metadata:
     gethomepage.dev/description: Service dashboard
 spec:
   rules:
-    - host: mgmt-edge-sdr.wsh.no
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: homepage
-                port:
-                  number: 3000
+  - host: mgmt-edge-sdr.wsh.no
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: homepage
+            port:
+              number: 3000

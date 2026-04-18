@@ -4,10 +4,10 @@ Flux installs Prometheus (with OTLP metrics ingest), Loki (SingleBinary + bundle
 
 ## In-cluster endpoints (apps use these from the other repos)
 
-| Signal | Where to send |
-|--------|----------------|
-| OTLP gRPC | `obs-otel-collector.test.svc.cluster.local:4317` |
-| OTLP HTTP | `http://obs-otel-collector.test.svc.cluster.local:4318` |
+| Signal                            | Where to send                                                     |
+| --------------------------------- | ----------------------------------------------------------------- |
+| OTLP gRPC                         | `obs-otel-collector.test.svc.cluster.local:4317`                  |
+| OTLP HTTP                         | `http://obs-otel-collector.test.svc.cluster.local:4318`           |
 | Prometheus OTLP (optional direct) | `http://obs-prometheus-server.test.svc.cluster.local/api/v1/otlp` |
 
 ## Ingress (adjust hosts in `observability-ingress.yaml` / DNS)
@@ -50,7 +50,7 @@ SingleBinary Loki with **`persistence.enabled: false`** does not mount `/var/lok
 
 ### Storage / Scheduling (k0s or clusters without a StorageClass)
 
-If PVCs show `FailedBinding` / *no storage class is set*, this repo disables durable volumes for the observability charts and turns off `prometheus-node-exporter` (hostPort 9100 often conflicts with hostNetwork ingress). For production, add a default **StorageClass** (e.g. local-path) and re-enable persistence in the HelmRelease values.
+If PVCs show `FailedBinding` / _no storage class is set_, this repo disables durable volumes for the observability charts and turns off `prometheus-node-exporter` (hostPort 9100 often conflicts with hostNetwork ingress). For production, add a default **StorageClass** (e.g. local-path) and re-enable persistence in the HelmRelease values.
 
 ## Resource and connection visualization
 

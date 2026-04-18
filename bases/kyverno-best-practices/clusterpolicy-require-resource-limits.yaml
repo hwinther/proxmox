@@ -14,26 +14,25 @@ spec:
   validationFailureAction: Audit
   background: true
   rules:
-    - name: memory-limits
-      match:
-        any:
+  - name: memory-limits
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    exclude:
+      any:
+      - resources:
+          namespaces:
+          - kube-system
+          - kyverno
+          - flux-system
+    validate:
+      message: >-
+        Memory limits are required. Set spec.containers[*].resources.limits.memory.
+      pattern:
+        spec:
+          containers:
           - resources:
-              kinds:
-                - Pod
-      exclude:
-        any:
-          - resources:
-              namespaces:
-                - kube-system
-                - kyverno
-                - flux-system
-      validate:
-        message: >-
-          Memory limits are required. Set
-          spec.containers[*].resources.limits.memory.
-        pattern:
-          spec:
-            containers:
-              - resources:
-                  limits:
-                    memory: "?*"
+              limits:
+                memory: "?*"

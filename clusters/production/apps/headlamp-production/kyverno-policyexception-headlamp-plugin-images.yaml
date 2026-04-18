@@ -6,14 +6,14 @@ metadata:
   namespace: headlamp-production
 spec:
   exceptions:
-    - policyName: wsh-disallow-latest-require-digest
-      ruleNames:
-        - disallow-latest-tag
-        - autogen-disallow-latest-tag
+  - policyName: wsh-disallow-latest-require-digest
+    ruleNames:
+    - disallow-latest-tag
+    - autogen-disallow-latest-tag
   match:
     any:
-      - resources:
-          kinds:
-            - Pod
-          namespaces:
-            - headlamp-production
+    - resources:
+        kinds:
+        - Pod
+        namespaces:
+        - headlamp-production

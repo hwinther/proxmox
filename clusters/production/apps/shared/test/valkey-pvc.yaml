@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/name: valkey
 spec:
   accessModes:
-    - ReadWriteOnce
+  - ReadWriteOnce
   storageClassName: ceph-rbd
   resources:
     requests:
