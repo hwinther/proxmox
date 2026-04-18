@@ -32,8 +32,8 @@ spec:
             - --issuer=https://auth.wsh.no
             # Must match Authelia OIDC client redirect_uris; default is 127.0.0.1 which breaks browser flow via ingress.
             - --redirect-uri=https://oidc-debug.mgmt.wsh.no/callback
-            # Align with Authelia client require_pkce: false (confidential client; avoids PKCE loss across consent).
-            - --pkce=false
+            # ghcr.io/dexidp/example-app:latest predates --pkce; OIDC PKCE is optional here because Authelia
+            # `example-app` client sets require_pkce: false.
             - --listen=http://0.0.0.0:5555
           ports:
             - name: http
