@@ -13,11 +13,16 @@ spec:
       labels:
         app: redis
         app.kubernetes.io/component: cache
-        app.kubernetes.io/name: redis
+        app.kubernetes.io/name: valkey
     spec:
+      securityContext:
+        fsGroup: 1000
       containers:
         - name: redis
-          image: docker.io/library/redis:8-alpine
+          image: docker.io/valkey/valkey:8-alpine
+          args:
+            - --appendonly
+            - "yes"
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
@@ -41,6 +46,13 @@ spec:
             limits:
               cpu: 200m
               memory: 128Mi
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: valkey-data
 ---
 apiVersion: v1
 kind: Service

@@ -18,6 +18,18 @@ spec:
       ports:
         - port: 6379
           protocol: TCP
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: authelia-production
+      ports:
+        - port: 6379
+          protocol: TCP
+    - from:
+        - podSelector: {}
+      ports:
+        - port: 6379
+          protocol: TCP
   egress:
     - to:
         - namespaceSelector:

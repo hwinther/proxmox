@@ -86,6 +86,17 @@ spec:
         expiration: 12 hours
         inactivity: 45 minutes
         remember_me: 1 month
+        redis:
+          enabled: true
+          host: redis.shared-production.svc.cluster.local
+          port: 6379
+          database_index: 15
+          tls:
+            enabled: false
+          high_availability:
+            enabled: false
+          password:
+            disabled: true
         cookies:
           - domain: wsh.no
             subdomain: auth
@@ -198,7 +209,7 @@ spec:
             - client_id: example-app
               client_name: Dex example-app (local OIDC debug)
               client_secret:
-                value: '$plaintext$ZXhhbXBsZS1hcHAtc2VjcmV0'
+                value: "$plaintext$ZXhhbXBsZS1hcHAtc2VjcmV0"
               authorization_policy: one_factor
               consent_mode: pre-configured
               pre_configured_consent_duration: 1 year
