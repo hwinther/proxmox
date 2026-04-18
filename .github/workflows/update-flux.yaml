@@ -1,234 +1,237 @@
 name: Update Flux installation (production and test cluster)
 
 on:
-  workflow_dispatch:
-  schedule:
-    - cron: "11 8 * * *"
+    workflow_dispatch:
+    schedule:
+        - cron: "11 8 * * *"
 
 permissions: {}
 
 jobs:
-  update-production-cluster:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-    steps:
-      - name: Check out code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    update-production-cluster:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+            pull-requests: write
+        steps:
+            - name: Check out code
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Setup Flux CLI
-        uses: fluxcd/flux2/action@5adad89dcce7b79f20274ae8e112bcec7bd46764 # v2.8.5
+            - name: Setup Flux CLI
+              uses: fluxcd/flux2/action@5adad89dcce7b79f20274ae8e112bcec7bd46764 # v2.8.5
 
-      - name: Check for updates
-        id: update
-        run: |
-          PREVIOUS_VERSION_RAW="$(grep -Eo 'v?[0-9]+\.[0-9]+\.[0-9]+' ./clusters/production/flux-system/gotk-components.yaml | head -n1 || true)"
-          PREVIOUS_VERSION=""
-          if [ -n "$PREVIOUS_VERSION_RAW" ]; then
-            PREVIOUS_VERSION="v${PREVIOUS_VERSION_RAW#v}"
-          fi
-          flux install --components-extra=image-reflector-controller,image-automation-controller \
-            --export > ./clusters/production/flux-system/gotk-components.yaml
+            - name: Check for updates
+              id: update
+              run: |
+                  PREVIOUS_VERSION_RAW="$(grep -Eo 'v?[0-9]+\.[0-9]+\.[0-9]+' ./clusters/production/flux-system/gotk-components.yaml | head -n1 || true)"
+                  PREVIOUS_VERSION=""
+                  if [ -n "$PREVIOUS_VERSION_RAW" ]; then
+                    PREVIOUS_VERSION="v${PREVIOUS_VERSION_RAW#v}"
+                  fi
+                  flux install --components-extra=image-reflector-controller,image-automation-controller \
+                    --export > ./clusters/production/flux-system/gotk-components.yaml
 
-          VERSION_RAW="$(flux -v | grep -Eo 'v?[0-9]+\.[0-9]+\.[0-9]+' | head -n1)"
-          VERSION="v${VERSION_RAW#v}"
-          CHANGELOG_URL="https://github.com/fluxcd/flux2/releases/tag/${VERSION}"
-          if [ -n "$PREVIOUS_VERSION" ]; then
-            CHANGELOG_URL="${CHANGELOG_URL}"$'\n'"https://github.com/fluxcd/flux2/compare/${PREVIOUS_VERSION}...${VERSION}"
-          fi
-          # Public repo: do not send GITHUB_TOKEN — cross-repo API calls with the workflow
-          # token can be rejected (403) for other orgs, which leaves body empty.
-          RELEASE_NOTES=""
-          if RELEASE_JSON=$(curl -fsSL --connect-timeout 20 \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/fluxcd/flux2/releases/tags/${VERSION}"); then
-            RELEASE_NOTES=$(printf '%s\n' "$RELEASE_JSON" | jq -r '.body // empty')
-          fi
-          if [ -z "$RELEASE_NOTES" ]; then
-            RELEASE_NOTES="*No release notes available for ${VERSION}.*"
-          fi
-          DELIM="FLUX_RELEASE_NOTES_$(openssl rand -hex 16)"
-          echo "flux_version=$VERSION" >> $GITHUB_OUTPUT
-          echo "flux_changelog<<EOF" >> $GITHUB_OUTPUT
-          echo "$CHANGELOG_URL" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-          {
-            echo "flux_release_notes<<${DELIM}"
-            echo "$RELEASE_NOTES"
-            echo "${DELIM}"
-          } >> $GITHUB_OUTPUT
+                  VERSION_RAW="$(flux -v | grep -Eo 'v?[0-9]+\.[0-9]+\.[0-9]+' | head -n1)"
+                  VERSION="v${VERSION_RAW#v}"
+                  CHANGELOG_URL="https://github.com/fluxcd/flux2/releases/tag/${VERSION}"
+                  if [ -n "$PREVIOUS_VERSION" ]; then
+                    CHANGELOG_URL="${CHANGELOG_URL}"$'\n'"https://github.com/fluxcd/flux2/compare/${PREVIOUS_VERSION}...${VERSION}"
+                  fi
+                  # Public repo: do not send GITHUB_TOKEN — cross-repo API calls with the workflow
+                  # token can be rejected (403) for other orgs, which leaves body empty.
+                  RELEASE_NOTES=""
+                  if RELEASE_JSON=$(curl -fsSL --connect-timeout 20 \
+                    -H "Accept: application/vnd.github+json" \
+                    "https://api.github.com/repos/fluxcd/flux2/releases/tags/${VERSION}"); then
+                    RELEASE_NOTES=$(printf '%s\n' "$RELEASE_JSON" | jq -r '.body // empty')
+                  fi
+                  if [ -z "$RELEASE_NOTES" ]; then
+                    RELEASE_NOTES="*No release notes available for ${VERSION}.*"
+                  fi
+                  DELIM="FLUX_RELEASE_NOTES_$(openssl rand -hex 16)"
+                  echo "flux_version=$VERSION" >> $GITHUB_OUTPUT
+                  echo "flux_changelog<<EOF" >> $GITHUB_OUTPUT
+                  echo "$CHANGELOG_URL" >> $GITHUB_OUTPUT
+                  echo "EOF" >> $GITHUB_OUTPUT
+                  {
+                    echo "flux_release_notes<<${DELIM}"
+                    echo "$RELEASE_NOTES"
+                    echo "${DELIM}"
+                  } >> $GITHUB_OUTPUT
 
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
-        with:
-          branch: chore/update-flux-production
-          commit-message: |
-            chore(flux): update to ${{ steps.update.outputs.flux_version }} (production cluster)
-            Changelog:
-            ${{ steps.update.outputs.flux_changelog }}
-          title: "chore(flux): update to ${{ steps.update.outputs.flux_version }} (production cluster)"
-          body: |
-            ${{ steps.update.outputs.flux_version }}
+            - name: Create Pull Request
+              uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
+              with:
+                  branch: chore/update-flux-production
+                  commit-message: |
+                      chore(flux): update to ${{ steps.update.outputs.flux_version }} (production cluster)
+                      Changelog:
+                      ${{ steps.update.outputs.flux_changelog }}
+                  title: "chore(flux): update to ${{ steps.update.outputs.flux_version }}
+                      (production cluster)"
+                  body: |
+                      ${{ steps.update.outputs.flux_version }}
 
-            **Changelog / compare**
-            ${{ steps.update.outputs.flux_changelog }}
+                      **Changelog / compare**
+                      ${{ steps.update.outputs.flux_changelog }}
 
-            <details>
-            <summary>Release notes</summary>
+                      <details>
+                      <summary>Release notes</summary>
 
-            *Sourced from [fluxcd/flux2 `${{ steps.update.outputs.flux_version }}`](https://github.com/fluxcd/flux2/releases/tag/${{ steps.update.outputs.flux_version }}).*
+                      *Sourced from [fluxcd/flux2 `${{ steps.update.outputs.flux_version }}`](https://github.com/fluxcd/flux2/releases/tag/${{ steps.update.outputs.flux_version }}).*
 
-            ${{ steps.update.outputs.flux_release_notes }}
+                      ${{ steps.update.outputs.flux_release_notes }}
 
-            </details>
+                      </details>
 
-  update-test-cluster:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-    steps:
-      - name: Check out code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    update-test-cluster:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+            pull-requests: write
+        steps:
+            - name: Check out code
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Setup Flux CLI
-        uses: fluxcd/flux2/action@5adad89dcce7b79f20274ae8e112bcec7bd46764 # v2.8.5
+            - name: Setup Flux CLI
+              uses: fluxcd/flux2/action@5adad89dcce7b79f20274ae8e112bcec7bd46764 # v2.8.5
 
-      - name: Check for updates
-        id: update
-        run: |
-          PREVIOUS_VERSION_RAW="$(grep -Eo 'v?[0-9]+\.[0-9]+\.[0-9]+' ./clusters/test-deployment/flux-system/gotk-components.yaml | head -n1 || true)"
-          PREVIOUS_VERSION=""
-          if [ -n "$PREVIOUS_VERSION_RAW" ]; then
-            PREVIOUS_VERSION="v${PREVIOUS_VERSION_RAW#v}"
-          fi
-          flux install --components-extra=image-reflector-controller,image-automation-controller \
-          --export > ./clusters/test-deployment/flux-system/gotk-components.yaml
+            - name: Check for updates
+              id: update
+              run: |
+                  PREVIOUS_VERSION_RAW="$(grep -Eo 'v?[0-9]+\.[0-9]+\.[0-9]+' ./clusters/test-deployment/flux-system/gotk-components.yaml | head -n1 || true)"
+                  PREVIOUS_VERSION=""
+                  if [ -n "$PREVIOUS_VERSION_RAW" ]; then
+                    PREVIOUS_VERSION="v${PREVIOUS_VERSION_RAW#v}"
+                  fi
+                  flux install --components-extra=image-reflector-controller,image-automation-controller \
+                  --export > ./clusters/test-deployment/flux-system/gotk-components.yaml
 
-          VERSION_RAW="$(flux -v | grep -Eo 'v?[0-9]+\.[0-9]+\.[0-9]+' | head -n1)"
-          VERSION="v${VERSION_RAW#v}"
-          CHANGELOG_URL="https://github.com/fluxcd/flux2/releases/tag/${VERSION}"
-          if [ -n "$PREVIOUS_VERSION" ]; then
-            CHANGELOG_URL="${CHANGELOG_URL}"$'\n'"https://github.com/fluxcd/flux2/compare/${PREVIOUS_VERSION}...${VERSION}"
-          fi
-          # Public repo: do not send GITHUB_TOKEN — cross-repo API calls with the workflow
-          # token can be rejected (403) for other orgs, which leaves body empty.
-          RELEASE_NOTES=""
-          if RELEASE_JSON=$(curl -fsSL --connect-timeout 20 \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/fluxcd/flux2/releases/tags/${VERSION}"); then
-            RELEASE_NOTES=$(printf '%s\n' "$RELEASE_JSON" | jq -r '.body // empty')
-          fi
-          if [ -z "$RELEASE_NOTES" ]; then
-            RELEASE_NOTES="*No release notes available for ${VERSION}.*"
-          fi
-          DELIM="FLUX_RELEASE_NOTES_$(openssl rand -hex 16)"
-          echo "flux_version=$VERSION" >> $GITHUB_OUTPUT
-          echo "flux_changelog<<EOF" >> $GITHUB_OUTPUT
-          echo "$CHANGELOG_URL" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-          {
-            echo "flux_release_notes<<${DELIM}"
-            echo "$RELEASE_NOTES"
-            echo "${DELIM}"
-          } >> $GITHUB_OUTPUT
+                  VERSION_RAW="$(flux -v | grep -Eo 'v?[0-9]+\.[0-9]+\.[0-9]+' | head -n1)"
+                  VERSION="v${VERSION_RAW#v}"
+                  CHANGELOG_URL="https://github.com/fluxcd/flux2/releases/tag/${VERSION}"
+                  if [ -n "$PREVIOUS_VERSION" ]; then
+                    CHANGELOG_URL="${CHANGELOG_URL}"$'\n'"https://github.com/fluxcd/flux2/compare/${PREVIOUS_VERSION}...${VERSION}"
+                  fi
+                  # Public repo: do not send GITHUB_TOKEN — cross-repo API calls with the workflow
+                  # token can be rejected (403) for other orgs, which leaves body empty.
+                  RELEASE_NOTES=""
+                  if RELEASE_JSON=$(curl -fsSL --connect-timeout 20 \
+                    -H "Accept: application/vnd.github+json" \
+                    "https://api.github.com/repos/fluxcd/flux2/releases/tags/${VERSION}"); then
+                    RELEASE_NOTES=$(printf '%s\n' "$RELEASE_JSON" | jq -r '.body // empty')
+                  fi
+                  if [ -z "$RELEASE_NOTES" ]; then
+                    RELEASE_NOTES="*No release notes available for ${VERSION}.*"
+                  fi
+                  DELIM="FLUX_RELEASE_NOTES_$(openssl rand -hex 16)"
+                  echo "flux_version=$VERSION" >> $GITHUB_OUTPUT
+                  echo "flux_changelog<<EOF" >> $GITHUB_OUTPUT
+                  echo "$CHANGELOG_URL" >> $GITHUB_OUTPUT
+                  echo "EOF" >> $GITHUB_OUTPUT
+                  {
+                    echo "flux_release_notes<<${DELIM}"
+                    echo "$RELEASE_NOTES"
+                    echo "${DELIM}"
+                  } >> $GITHUB_OUTPUT
 
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
-        with:
-          branch: chore/update-flux-test
-          commit-message: |
-            chore(flux): update to ${{ steps.update.outputs.flux_version }} (test cluster)
-            Changelog:
-            ${{ steps.update.outputs.flux_changelog }}
-          title: "chore(flux): update to ${{ steps.update.outputs.flux_version }} (test cluster)"
-          body: |
-            ${{ steps.update.outputs.flux_version }}
+            - name: Create Pull Request
+              uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
+              with:
+                  branch: chore/update-flux-test
+                  commit-message: |
+                      chore(flux): update to ${{ steps.update.outputs.flux_version }} (test cluster)
+                      Changelog:
+                      ${{ steps.update.outputs.flux_changelog }}
+                  title: "chore(flux): update to ${{ steps.update.outputs.flux_version }} (test
+                      cluster)"
+                  body: |
+                      ${{ steps.update.outputs.flux_version }}
 
-            **Changelog / compare**
-            ${{ steps.update.outputs.flux_changelog }}
+                      **Changelog / compare**
+                      ${{ steps.update.outputs.flux_changelog }}
 
-            <details>
-            <summary>Release notes</summary>
+                      <details>
+                      <summary>Release notes</summary>
 
-            *Sourced from [fluxcd/flux2 `${{ steps.update.outputs.flux_version }}`](https://github.com/fluxcd/flux2/releases/tag/${{ steps.update.outputs.flux_version }}).*
+                      *Sourced from [fluxcd/flux2 `${{ steps.update.outputs.flux_version }}`](https://github.com/fluxcd/flux2/releases/tag/${{ steps.update.outputs.flux_version }}).*
 
-            ${{ steps.update.outputs.flux_release_notes }}
+                      ${{ steps.update.outputs.flux_release_notes }}
 
-            </details>
+                      </details>
 
-  update-edge-cluster:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-    steps:
-      - name: Check out code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    update-edge-cluster:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+            pull-requests: write
+        steps:
+            - name: Check out code
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Setup Flux CLI
-        uses: fluxcd/flux2/action@5adad89dcce7b79f20274ae8e112bcec7bd46764 # v2.8.5
+            - name: Setup Flux CLI
+              uses: fluxcd/flux2/action@5adad89dcce7b79f20274ae8e112bcec7bd46764 # v2.8.5
 
-      - name: Check for updates
-        id: update
-        run: |
-          PREVIOUS_VERSION_RAW="$(grep -Eo 'v?[0-9]+\.[0-9]+\.[0-9]+' ./clusters/edge-sdr/flux-system/gotk-components.yaml | head -n1 || true)"
-          PREVIOUS_VERSION=""
-          if [ -n "$PREVIOUS_VERSION_RAW" ]; then
-            PREVIOUS_VERSION="v${PREVIOUS_VERSION_RAW#v}"
-          fi
-          flux install --components-extra=image-reflector-controller,image-automation-controller \
-          --export > ./clusters/edge-sdr/flux-system/gotk-components.yaml
+            - name: Check for updates
+              id: update
+              run: |
+                  PREVIOUS_VERSION_RAW="$(grep -Eo 'v?[0-9]+\.[0-9]+\.[0-9]+' ./clusters/edge-sdr/flux-system/gotk-components.yaml | head -n1 || true)"
+                  PREVIOUS_VERSION=""
+                  if [ -n "$PREVIOUS_VERSION_RAW" ]; then
+                    PREVIOUS_VERSION="v${PREVIOUS_VERSION_RAW#v}"
+                  fi
+                  flux install --components-extra=image-reflector-controller,image-automation-controller \
+                  --export > ./clusters/edge-sdr/flux-system/gotk-components.yaml
 
-          VERSION_RAW="$(flux -v | grep -Eo 'v?[0-9]+\.[0-9]+\.[0-9]+' | head -n1)"
-          VERSION="v${VERSION_RAW#v}"
-          CHANGELOG_URL="https://github.com/fluxcd/flux2/releases/tag/${VERSION}"
-          if [ -n "$PREVIOUS_VERSION" ]; then
-            CHANGELOG_URL="${CHANGELOG_URL}"$'\n'"https://github.com/fluxcd/flux2/compare/${PREVIOUS_VERSION}...${VERSION}"
-          fi
-          # Public repo: do not send GITHUB_TOKEN — cross-repo API calls with the workflow
-          # token can be rejected (403) for other orgs, which leaves body empty.
-          RELEASE_NOTES=""
-          if RELEASE_JSON=$(curl -fsSL --connect-timeout 20 \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/fluxcd/flux2/releases/tags/${VERSION}"); then
-            RELEASE_NOTES=$(printf '%s\n' "$RELEASE_JSON" | jq -r '.body // empty')
-          fi
-          if [ -z "$RELEASE_NOTES" ]; then
-            RELEASE_NOTES="*No release notes available for ${VERSION}.*"
-          fi
-          DELIM="FLUX_RELEASE_NOTES_$(openssl rand -hex 16)"
-          echo "flux_version=$VERSION" >> $GITHUB_OUTPUT
-          echo "flux_changelog<<EOF" >> $GITHUB_OUTPUT
-          echo "$CHANGELOG_URL" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-          {
-            echo "flux_release_notes<<${DELIM}"
-            echo "$RELEASE_NOTES"
-            echo "${DELIM}"
-          } >> $GITHUB_OUTPUT
+                  VERSION_RAW="$(flux -v | grep -Eo 'v?[0-9]+\.[0-9]+\.[0-9]+' | head -n1)"
+                  VERSION="v${VERSION_RAW#v}"
+                  CHANGELOG_URL="https://github.com/fluxcd/flux2/releases/tag/${VERSION}"
+                  if [ -n "$PREVIOUS_VERSION" ]; then
+                    CHANGELOG_URL="${CHANGELOG_URL}"$'\n'"https://github.com/fluxcd/flux2/compare/${PREVIOUS_VERSION}...${VERSION}"
+                  fi
+                  # Public repo: do not send GITHUB_TOKEN — cross-repo API calls with the workflow
+                  # token can be rejected (403) for other orgs, which leaves body empty.
+                  RELEASE_NOTES=""
+                  if RELEASE_JSON=$(curl -fsSL --connect-timeout 20 \
+                    -H "Accept: application/vnd.github+json" \
+                    "https://api.github.com/repos/fluxcd/flux2/releases/tags/${VERSION}"); then
+                    RELEASE_NOTES=$(printf '%s\n' "$RELEASE_JSON" | jq -r '.body // empty')
+                  fi
+                  if [ -z "$RELEASE_NOTES" ]; then
+                    RELEASE_NOTES="*No release notes available for ${VERSION}.*"
+                  fi
+                  DELIM="FLUX_RELEASE_NOTES_$(openssl rand -hex 16)"
+                  echo "flux_version=$VERSION" >> $GITHUB_OUTPUT
+                  echo "flux_changelog<<EOF" >> $GITHUB_OUTPUT
+                  echo "$CHANGELOG_URL" >> $GITHUB_OUTPUT
+                  echo "EOF" >> $GITHUB_OUTPUT
+                  {
+                    echo "flux_release_notes<<${DELIM}"
+                    echo "$RELEASE_NOTES"
+                    echo "${DELIM}"
+                  } >> $GITHUB_OUTPUT
 
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
-        with:
-          branch: chore/update-flux-edge
-          commit-message: |
-            chore(flux): update to ${{ steps.update.outputs.flux_version }} (edge cluster)
-            Changelog:
-            ${{ steps.update.outputs.flux_changelog }}
-          title: "chore(flux): update to ${{ steps.update.outputs.flux_version }} (edge cluster)"
-          body: |
-            ${{ steps.update.outputs.flux_version }}
+            - name: Create Pull Request
+              uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
+              with:
+                  branch: chore/update-flux-edge
+                  commit-message: |
+                      chore(flux): update to ${{ steps.update.outputs.flux_version }} (edge cluster)
+                      Changelog:
+                      ${{ steps.update.outputs.flux_changelog }}
+                  title: "chore(flux): update to ${{ steps.update.outputs.flux_version }} (edge
+                      cluster)"
+                  body: |
+                      ${{ steps.update.outputs.flux_version }}
 
-            **Changelog / compare**
-            ${{ steps.update.outputs.flux_changelog }}
+                      **Changelog / compare**
+                      ${{ steps.update.outputs.flux_changelog }}
 
-            <details>
-            <summary>Release notes</summary>
+                      <details>
+                      <summary>Release notes</summary>
 
-            *Sourced from [fluxcd/flux2 `${{ steps.update.outputs.flux_version }}`](https://github.com/fluxcd/flux2/releases/tag/${{ steps.update.outputs.flux_version }}).*
+                      *Sourced from [fluxcd/flux2 `${{ steps.update.outputs.flux_version }}`](https://github.com/fluxcd/flux2/releases/tag/${{ steps.update.outputs.flux_version }}).*
 
-            ${{ steps.update.outputs.flux_release_notes }}
+                      ${{ steps.update.outputs.flux_release_notes }}
 
-            </details>
+                      </details>

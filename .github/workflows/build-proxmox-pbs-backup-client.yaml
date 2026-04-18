@@ -1,41 +1,44 @@
 name: Publish Proxmox PBS backup client container to GHCR
 
 on:
-  workflow_dispatch:
-    inputs:
-      grype_fail_build:
-        description: "Fail the build if Grype finds vulnerabilities"
-        type: boolean
-        default: true
-  push:
-    tags:
-      - "v*"
-    paths:
-      - "images/proxmox-pbs-backup-client/**"
-      - ".github/workflows/build-proxmox-pbs-backup-client.yaml"
-      - "GitVersion.yml"
+    workflow_dispatch:
+        inputs:
+            grype_fail_build:
+                description: "Fail the build if Grype finds vulnerabilities"
+                type: boolean
+                default: true
+    push:
+        tags:
+            - "v*"
+        paths:
+            - "images/proxmox-pbs-backup-client/**"
+            - ".github/workflows/build-proxmox-pbs-backup-client.yaml"
+            - "GitVersion.yml"
 
 permissions:
-  contents: read
-  packages: write
-  id-token: write
-  attestations: write
-  actions: write
-  security-events: write
+    contents: read
+    packages: write
+    id-token: write
+    attestations: write
+    actions: write
+    security-events: write
 
 concurrency:
-  group: "${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}"
-  cancel-in-progress: true
+    group: "${{ github.workflow }} @ ${{ github.event.pull_request.head.label ||
+        github.head_ref || github.ref }}"
+    cancel-in-progress: true
 
 jobs:
-  proxmox_pbs_backup_client:
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
-    uses: hwinther/reusable-workflows/.github/workflows/docker-container.yml@v1
-    secrets: inherit
-    with:
-      container_registry: ghcr.io
-      # ghcr.io/<repo-owner>/<repo>/<postfix> → ghcr.io/hwinther/proxmox/proxmox/pbs/backup-client
-      container_image_name_postfix: proxmox/pbs/backup-client
-      build_context: images/proxmox-pbs-backup-client
-      dockerfile: images/proxmox-pbs-backup-client/Dockerfile
-      grype_fail_build: ${{ github.event_name != 'workflow_dispatch' || fromJSON(github.event.inputs.grype_fail_build || 'true') }}
+    proxmox_pbs_backup_client:
+        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' &&
+            startsWith(github.ref, 'refs/tags/v'))
+        uses: hwinther/reusable-workflows/.github/workflows/docker-container.yml@v1
+        secrets: inherit
+        with:
+            container_registry: ghcr.io
+            # ghcr.io/<repo-owner>/<repo>/<postfix> → ghcr.io/hwinther/proxmox/proxmox/pbs/backup-client
+            container_image_name_postfix: proxmox/pbs/backup-client
+            build_context: images/proxmox-pbs-backup-client
+            dockerfile: images/proxmox-pbs-backup-client/Dockerfile
+            grype_fail_build: ${{ github.event_name != 'workflow_dispatch' ||
+                fromJSON(github.event.inputs.grype_fail_build || 'true') }}

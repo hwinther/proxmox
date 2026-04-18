@@ -1,95 +1,99 @@
 name: Publish sdr-base docker images
 
 on:
-  workflow_dispatch:
-  push:
-    branches: ["main"]
-    tags: ["v*"]
-    paths:
-      - ".github/workflows/build-sdr-base-images.yaml"
-      - "compose/templates/sdr-base/**"
+    workflow_dispatch:
+    push:
+        branches: [ "main" ]
+        tags: [ "v*" ]
+        paths:
+            - ".github/workflows/build-sdr-base-images.yaml"
+            - "compose/templates/sdr-base/**"
 
 permissions:
-  contents: read
-  packages: write
-  id-token: write
-  attestations: write
+    contents: read
+    packages: write
+    id-token: write
+    attestations: write
 
 concurrency:
-  group: ${{ github.ref }}-sdr-base
-  cancel-in-progress: true
+    group: ${{ github.ref }}-sdr-base
+    cancel-in-progress: true
 
 env:
-  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  PACKAGE_PATH: /sdr/
-  PACKAGE_VENDOR: WSH
-  WORKING_DIRECTORY: compose/templates/sdr-base
+    GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    PACKAGE_PATH: /sdr/
+    PACKAGE_VENDOR: WSH
+    WORKING_DIRECTORY: compose/templates/sdr-base
 
 jobs:
-  publish-docker-image:
-    strategy:
-      fail-fast: false
-      matrix:
-        debian_release: ["bookworm", "bullseye", "buster"]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          fetch-depth: 0
+    publish-docker-image:
+        strategy:
+            fail-fast: false
+            matrix:
+                debian_release: [ "bookworm", "bullseye", "buster" ]
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+              with:
+                  fetch-depth: 0
 
-      - name: Generate tag with or without version prefix
-        id: generate-tag
-        env:
-          MATRIX_DEBIAN_RELEASE: ${{ matrix.debian_release }}
-        run: |
-          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
-            # Remove the 'v' prefix from the tag and append the Debian release
-            tag="${GITHUB_REF#refs/tags/v}-${MATRIX_DEBIAN_RELEASE}"
-          elif [[ "${GITHUB_REF}" == refs/tags/* ]]; then
-            # Use the tag without 'v' prefix and append the Debian release
-            tag="${GITHUB_REF#refs/tags/}-${MATRIX_DEBIAN_RELEASE}"
-          else
-            # Default to just the Debian release if not triggered by a tag
-            tag="${MATRIX_DEBIAN_RELEASE}"
-          fi
+            - name: Generate tag with or without version prefix
+              id: generate-tag
+              env:
+                  MATRIX_DEBIAN_RELEASE: ${{ matrix.debian_release }}
+              run: |
+                  if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+                    # Remove the 'v' prefix from the tag and append the Debian release
+                    tag="${GITHUB_REF#refs/tags/v}-${MATRIX_DEBIAN_RELEASE}"
+                  elif [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+                    # Use the tag without 'v' prefix and append the Debian release
+                    tag="${GITHUB_REF#refs/tags/}-${MATRIX_DEBIAN_RELEASE}"
+                  else
+                    # Default to just the Debian release if not triggered by a tag
+                    tag="${MATRIX_DEBIAN_RELEASE}"
+                  fi
 
-          echo "Constructed tag: $tag"
-          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+                  echo "Constructed tag: $tag"
+                  echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
-      - name: Check for changes in the specified path between tags
-        id: git-tag-diff-base-image
-        uses: ./.github/actions/git-tag-diff
-        with:
-          file_path: ${{ env.WORKING_DIRECTORY }}/${{ matrix.debian_release }}/base-image
+            - name: Check for changes in the specified path between tags
+              id: git-tag-diff-base-image
+              uses: ./.github/actions/git-tag-diff
+              with:
+                  file_path: ${{ env.WORKING_DIRECTORY }}/${{ matrix.debian_release }}/base-image
 
-      - name: Build and push runtime docker image
-        uses: ./.github/actions/docker
-        # if: ${{ steps.git-tag-diff-base-image.outputs.skip == 'false' }}
-        with:
-          package_name: sdr-base-wsh
-          package_path: ${{ env.PACKAGE_PATH }}
-          package_description: "WSH SDR base runtime image (for ${{ matrix.debian_release }})"
-          package_vendor: ${{ env.PACKAGE_VENDOR }}
-          working_directory: ${{ env.WORKING_DIRECTORY }}/${{ matrix.debian_release }}/base-image
-          push_condition: ${{ github.event_name != 'pull_request' }}
-          tag: ${{ steps.generate-tag.outputs.tag }}
-          attest_supply_chain: "true"
+            - name: Build and push runtime docker image
+              uses: ./.github/actions/docker
+              # if: ${{ steps.git-tag-diff-base-image.outputs.skip == 'false' }}
+              with:
+                  package_name: sdr-base-wsh
+                  package_path: ${{ env.PACKAGE_PATH }}
+                  package_description: "WSH SDR base runtime image (for ${{ matrix.debian_release
+                      }})"
+                  package_vendor: ${{ env.PACKAGE_VENDOR }}
+                  working_directory: ${{ env.WORKING_DIRECTORY }}/${{ matrix.debian_release
+                      }}/base-image
+                  push_condition: ${{ github.event_name != 'pull_request' }}
+                  tag: ${{ steps.generate-tag.outputs.tag }}
+                  attest_supply_chain: "true"
 
-      - name: Check for changes in the specified path between tags
-        id: git-tag-diff-build-image
-        uses: ./.github/actions/git-tag-diff
-        with:
-          file_path: ${{ env.WORKING_DIRECTORY }}/${{ matrix.debian_release }}/build-image
+            - name: Check for changes in the specified path between tags
+              id: git-tag-diff-build-image
+              uses: ./.github/actions/git-tag-diff
+              with:
+                  file_path: ${{ env.WORKING_DIRECTORY }}/${{ matrix.debian_release }}/build-image
 
-      - name: Build and push build docker image
-        uses: ./.github/actions/docker
-        # if: ${{ steps.git-tag-diff-build-image.outputs.skip == 'false' }}
-        with:
-          package_name: sdr-build-wsh
-          package_path: ${{ env.PACKAGE_PATH }}
-          package_description: "WSH SDR base build image (for ${{ matrix.debian_release }})"
-          package_vendor: ${{ env.PACKAGE_VENDOR }}
-          working_directory: ${{ env.WORKING_DIRECTORY }}/${{ matrix.debian_release }}/build-image
-          push_condition: ${{ github.event_name != 'pull_request' }}
-          tag: ${{ steps.generate-tag.outputs.tag }}
-          attest_supply_chain: "true"
+            - name: Build and push build docker image
+              uses: ./.github/actions/docker
+              # if: ${{ steps.git-tag-diff-build-image.outputs.skip == 'false' }}
+              with:
+                  package_name: sdr-build-wsh
+                  package_path: ${{ env.PACKAGE_PATH }}
+                  package_description: "WSH SDR base build image (for ${{ matrix.debian_release
+                      }})"
+                  package_vendor: ${{ env.PACKAGE_VENDOR }}
+                  working_directory: ${{ env.WORKING_DIRECTORY }}/${{ matrix.debian_release
+                      }}/build-image
+                  push_condition: ${{ github.event_name != 'pull_request' }}
+                  tag: ${{ steps.generate-tag.outputs.tag }}
+                  attest_supply_chain: "true"
