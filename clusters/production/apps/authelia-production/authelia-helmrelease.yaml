@@ -203,7 +203,6 @@ spec:
               consent_mode: pre-configured
               pre_configured_consent_duration: 1 year
               redirect_uris:
-                - http://127.0.0.1:5555/callback
                 - https://oidc-debug.mgmt.wsh.no/callback
               scopes:
                 - openid
