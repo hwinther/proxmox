@@ -48,6 +48,10 @@ spec:
     ## Flux sidebar plugin — copy baked image into shared emptyDir (see headlamp-k8s/plugins flux README).
     config:
       pluginsDir: /build/plugins
+      # Without -oidc-ca-file, Headlamp passes a non-nil empty OIDC CA to the OIDC client (GetInClusterContext),
+      # which logs "couldn't add custom cert to context" on every /oidc request. Point at the image CA bundle.
+      extraArgs:
+        - "-oidc-ca-file=/etc/ssl/certs/ca-certificates.crt"
       oidc:
         secret:
           create: true
