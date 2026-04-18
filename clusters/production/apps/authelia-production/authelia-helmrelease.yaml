@@ -199,5 +199,6 @@ spec:
                 - profile
                 - email
                 - groups
-              require_pkce: true
-              pkce_challenge_method: S256
+              # Confidential client; PKCE optional. Authelia can emit invalid_request (missing
+              # code_challenge) after consent if PKCE session is not preserved across login hops.
+              require_pkce: false
