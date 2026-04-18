@@ -20,7 +20,7 @@ spec:
         runAsGroup: 1000
       containers:
       - name: test-frontend
-        image: ghcr.io/hwinther/test/frontend:0.62.0
+        image: ghcr.io/hwinther/test/frontend:0.63.0
         imagePullPolicy: Always
         securityContext:
           allowPrivilegeEscalation: false
