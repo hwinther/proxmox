@@ -108,6 +108,8 @@ For **test**, use `clusters/test-deployment/apps/`:
 
 For **production**, mirror the same pattern under `clusters/production/apps/` and list resources in `clusters/production/apps/kustomization.yaml`.
 
+Before opening the PR, reconcile **Kyverno / Cilium / image policy** in the same change when needed: see [**.cursor/skills/k8s-kyverno-kubescape-compliance/SKILL.md**](../k8s-kyverno-kubescape-compliance/SKILL.md) (**“Before the first commit”**, **PolicyExceptions**, Traefik host ingress) so Flux does not apply a broken Deployment first and require follow-up commits for exceptions or `CiliumNetworkPolicy` fixes.
+
 ## Adding a new sub-kustomization
 
 For apps with multiple manifests (HelmRelease, namespace, configmaps):
