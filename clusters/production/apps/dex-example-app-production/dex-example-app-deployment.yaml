@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dex-example-app
+  namespace: dex-example-app-production
+  labels:
+    app.kubernetes.io/name: dex-example-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dex-example-app
+  template:
+    metadata:
+      labels:
+        app: dex-example-app
+        app.kubernetes.io/name: dex-example-app
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: example-app
+          # ghcr.io/dexidp/example-app only publishes a single moving `latest` tag; pin digest after `docker pull` / `crane digest` if you want immutability.
+          image: ghcr.io/dexidp/example-app:latest
+          imagePullPolicy: IfNotPresent
+          args:
+            - --issuer=https://auth.wsh.no
+            - --listen=http://0.0.0.0:5555
+          ports:
+            - name: http
+              containerPort: 5555
+              protocol: TCP
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20

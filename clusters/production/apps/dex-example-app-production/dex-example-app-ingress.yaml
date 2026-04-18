@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dex-example-app
+  namespace: dex-example-app-production
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Management
+    gethomepage.dev/name: OIDC debug (Dex example-app)
+    gethomepage.dev/icon: mdi-bug-outline
+    gethomepage.dev/description: Dex example-app against Authelia — unauthenticated at edge; lock down *.mgmt or add Traefik forward-auth if exposing beyond lab
+    gethomepage.dev/pod-selector: app=dex-example-app
+spec:
+  rules:
+    - host: oidc-debug.mgmt.wsh.no
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: dex-example-app
+                port:
+                  number: 5555

@@ -181,3 +181,23 @@ spec:
                 - profile
                 - email
                 - groups
+            # Dex example-app (ghcr.io/dexidp/example-app): local OIDC debugger only. Redirect is loopback.
+            # Secret must match Dex's default flag value exactly (opaque string ZXhhbXBsZS1hcHAtc2VjcmV0, not decoded).
+            # Do not reuse this client_id/secret for anything reachable from untrusted hosts.
+            - client_id: example-app
+              client_name: Dex example-app (local OIDC debug)
+              client_secret:
+                value: '$plaintext$ZXhhbXBsZS1hcHAtc2VjcmV0'
+              authorization_policy: one_factor
+              consent_mode: pre-configured
+              pre_configured_consent_duration: 1 year
+              redirect_uris:
+                - http://127.0.0.1:5555/callback
+                - https://oidc-debug.mgmt.wsh.no/callback
+              scopes:
+                - openid
+                - profile
+                - email
+                - groups
+              require_pkce: true
+              pkce_challenge_method: S256
