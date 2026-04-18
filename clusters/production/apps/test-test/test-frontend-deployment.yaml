@@ -52,10 +52,11 @@ spec:
           value: "https://test.test.wsh.no/v1/traces"
         - name: PUBLIC_OTEL_SERVICE_NAME
           value: "test-frontend"
-        - name: REDIS_HOST
-          value: "redis.shared-test.svc.cluster.local"
-        - name: REDIS_PORT
-          value: "6379"
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: test-frontend-valkey
+              key: redis-url
 ---
 apiVersion: v1
 kind: Service

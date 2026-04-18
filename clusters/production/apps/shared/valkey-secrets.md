@@ -30,6 +30,15 @@ kubectl create secret generic valkey-auth \
   --from-literal=password="$PW_TEST"
 ```
 
+**Test frontend** (`test-test` namespace) reads **`REDIS_URL`** from Secret **`test-frontend-valkey`** / key **`redis-url`**. Create it with the **same** password as `shared-test/valkey-auth` (URL-encode the password if it contains reserved characters):
+
+```bash
+# After valkey-auth exists in shared-test with password PW_TEST:
+kubectl create secret generic test-frontend-valkey \
+  --namespace test-test \
+  --from-literal=redis-url="redis://:${PW_TEST}@redis.shared-test.svc.cluster.local:6379/0"
+```
+
 RedisInsight in each shared namespace reads **`valkey-auth`** / key **`password`** via `RI_REDIS_PASSWORD` (see [Redis Insight preconfigure connections](https://redis.io/docs/latest/operate/redisinsight/install/install-on-docker/)).
 
 ## 2. Authelia
