@@ -64,6 +64,10 @@ spec:
           items:
           - key: authentication.ldap.password.txt
             path: authentication.ldap.password.txt
+        authelia-session-valkey:
+          items:
+          - key: session.redis.password.txt
+            path: session.redis.password.txt
     ingress:
       enabled: true
       annotations:
@@ -96,7 +100,9 @@ spec:
           high_availability:
             enabled: false
           password:
-            disabled: true
+            disabled: false
+            secret_name: authelia-session-valkey
+            path: session.redis.password.txt
         cookies:
         - domain: wsh.no
           subdomain: auth

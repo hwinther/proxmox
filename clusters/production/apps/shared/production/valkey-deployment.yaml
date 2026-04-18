@@ -20,9 +20,16 @@ spec:
       containers:
       - name: redis
         image: docker.io/valkey/valkey:8-alpine
-        args:
-        - --appendonly
-        - "yes"
+        command:
+        - /bin/sh
+        - -c
+        - exec valkey-server --appendonly yes --dir /data --requirepass "$VALKEY_PASSWORD"
+        env:
+        - name: VALKEY_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: valkey-auth
+              key: password
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:

@@ -50,7 +50,12 @@ spec:
         - name: RI_REDIS_PORT
           value: "6379"
         - name: RI_REDIS_ALIAS
-          value: "Default-Redis"
+          value: "Default-Valkey"
+        - name: RI_REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: valkey-auth
+              key: password
 ---
 apiVersion: v1
 kind: Service
