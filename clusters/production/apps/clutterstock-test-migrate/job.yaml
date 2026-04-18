@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: clutterstock-test-migrate-v099
+  name: clutterstock-test-migrate-v100
   namespace: clutterstock-test
 spec:
   backoffLimit: 3
