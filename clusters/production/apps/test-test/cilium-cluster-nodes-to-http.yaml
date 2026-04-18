@@ -6,16 +6,16 @@ metadata:
 spec:
   endpointSelector:
     matchExpressions:
-      - key: app
-        operator: In
-        values:
-          - test-api
-          - test-frontend
+    - key: app
+      operator: In
+      values:
+      - test-api
+      - test-frontend
   ingress:
-    - fromEntities:
-        - host
-        - remote-node
-      toPorts:
-        - ports:
-            - port: "8080"
-              protocol: TCP
+  - fromEntities:
+    - host
+    - remote-node
+    toPorts:
+    - ports:
+      - port: "8080"
+        protocol: TCP

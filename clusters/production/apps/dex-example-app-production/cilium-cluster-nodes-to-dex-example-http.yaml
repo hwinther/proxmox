@@ -8,10 +8,10 @@ spec:
     matchLabels:
       app: dex-example-app
   ingress:
-    - fromEntities:
-        - host
-        - remote-node
-      toPorts:
-        - ports:
-            - port: "5555"
-              protocol: TCP
+  - fromEntities:
+    - host
+    - remote-node
+    toPorts:
+    - ports:
+      - port: "5555"
+        protocol: TCP

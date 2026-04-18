@@ -6,13 +6,13 @@ metadata:
   namespace: adsb-edge-sdr
 spec:
   exceptions:
-    - policyName: wsh-disallow-host-path
-      ruleNames:
-        - host-path
+  - policyName: wsh-disallow-host-path
+    ruleNames:
+    - host-path
   match:
     any:
-      - resources:
-          kinds:
-            - Pod
-          namespaces:
-            - adsb-edge-sdr
+    - resources:
+        kinds:
+        - Pod
+        namespaces:
+        - adsb-edge-sdr

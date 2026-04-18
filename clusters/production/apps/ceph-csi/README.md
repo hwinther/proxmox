@@ -5,7 +5,6 @@ Flux installs **`ceph-csi-rbd`** into **`ceph-csi-production`**. This is separat
 ## Before Flux can succeed
 
 1. **Ceph** (on Proxmox or shell with `ceph` CLI):
-
    - Pool for Kubernetes RBD, e.g. `k8s-rbd`, with `rbd` application enabled.
    - CephX user (example name `csi-k8s`):
 
@@ -19,7 +18,6 @@ Flux installs **`ceph-csi-rbd`** into **`ceph-csi-production`**. This is separat
    - Note **`ceph fsid`** and monitor addresses (often **`:3300`** for msgr2 on the public network). Use IPs your k0s nodes can reach (**ceph_public** in your network plan).
 
 2. **Edit** [`ceph-csi-rbd-helmrelease.yaml`](ceph-csi-rbd-helmrelease.yaml):
-
    - Replace **`CHANGEME_CEPH_FSID`** with the real FSID in **both** `csiConfig[0].clusterID` and `storageClass.clusterID` (must match).
    - Replace the **`10.10.30.x:3300`** monitor list with your real mon IPs (trim to one line if you have a single mon).
 

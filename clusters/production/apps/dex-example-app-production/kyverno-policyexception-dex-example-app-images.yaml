@@ -7,21 +7,21 @@ metadata:
   namespace: dex-example-app-production
 spec:
   exceptions:
-    - policyName: wsh-disallow-latest-require-digest
-      ruleNames:
-        - disallow-latest-tag
-        - autogen-disallow-latest-tag
-    - policyName: wsh-require-run-as-non-root
-      ruleNames:
-        - run-as-non-root
-        - autogen-run-as-non-root
+  - policyName: wsh-disallow-latest-require-digest
+    ruleNames:
+    - disallow-latest-tag
+    - autogen-disallow-latest-tag
+  - policyName: wsh-require-run-as-non-root
+    ruleNames:
+    - run-as-non-root
+    - autogen-run-as-non-root
   match:
     any:
-      - resources:
-          kinds:
-            - Pod
-          namespaces:
-            - dex-example-app-production
-          selector:
-            matchLabels:
-              app: dex-example-app
+    - resources:
+        kinds:
+        - Pod
+        namespaces:
+        - dex-example-app-production
+        selector:
+          matchLabels:
+            app: dex-example-app

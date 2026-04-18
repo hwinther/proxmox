@@ -12,13 +12,13 @@ metadata:
     gethomepage.dev/description: AIS receiver on SDR edge nodes (USB RTL-AIS), matches compose radio-pi02/ais
 spec:
   rules:
-    - host: ais.edge-sdr.wsh.no
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: ais-catcher
-                port:
-                  number: 8080
+  - host: ais.edge-sdr.wsh.no
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ais-catcher
+            port:
+              number: 8080

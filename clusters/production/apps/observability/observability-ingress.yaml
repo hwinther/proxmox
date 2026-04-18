@@ -12,16 +12,16 @@ metadata:
     gethomepage.dev/description: Observability dashboards
 spec:
   rules:
-    - host: grafana.mgmt.wsh.no
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: obs-kps-grafana
-                port:
-                  number: 80
+  - host: grafana.mgmt.wsh.no
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: obs-kps-grafana
+            port:
+              number: 80
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
@@ -31,23 +31,23 @@ metadata:
 spec:
   headers:
     accessControlAllowMethods:
-      - GET
-      - POST
-      - OPTIONS
+    - GET
+    - POST
+    - OPTIONS
     accessControlAllowHeaders:
-      - Accept
-      - Content-Type
-      - Authorization
-      # W3C Trace Context — browser may send these on OTLP or preflight; avoids dropped headers vs simple allowlist
-      - traceparent
-      - tracestate
-      - baggage
+    - Accept
+    - Content-Type
+    - Authorization
+    # W3C Trace Context — browser may send these on OTLP or preflight; avoids dropped headers vs simple allowlist
+    - traceparent
+    - tracestate
+    - baggage
     accessControlAllowOriginList:
-      - https://clutterstock.wsh.no
-      - https://clutterstock.test.wsh.no
-      - https://redis-prod.mgmt.wsh.no
-      - https://redis-test.mgmt.wsh.no
-      - https://test.test.wsh.no
+    - https://clutterstock.wsh.no
+    - https://clutterstock.test.wsh.no
+    - https://redis-prod.mgmt.wsh.no
+    - https://redis-test.mgmt.wsh.no
+    - https://test.test.wsh.no
     accessControlMaxAge: 3600
 ---
 apiVersion: networking.k8s.io/v1
@@ -67,37 +67,36 @@ metadata:
     gethomepage.dev/pod-selector: app.kubernetes.io/instance=obs-otel-collector
 spec:
   rules:
-    - host: otel.mgmt.wsh.no
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: obs-otel-collector
-                port:
-                  number: 4318
-    - host: otel.test.wsh.no
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: obs-otel-collector
-                port:
-                  number: 4318
-    - host: otel.wsh.no
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: obs-otel-collector
-                port:
-                  number: 4318
-
+  - host: otel.mgmt.wsh.no
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: obs-otel-collector
+            port:
+              number: 4318
+  - host: otel.test.wsh.no
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: obs-otel-collector
+            port:
+              number: 4318
+  - host: otel.wsh.no
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: obs-otel-collector
+            port:
+              number: 4318
 
 # Same-host OTLP HTTP traces: browser POSTs to https://<app-host>/v1/traces → collector :4318 (no CORS).
 ---
@@ -110,36 +109,36 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: web
 spec:
   rules:
-    - host: test.test.wsh.no
-      http:
-        paths:
-          - path: /v1/traces
-            pathType: Prefix
-            backend:
-              service:
-                name: obs-otel-collector
-                port:
-                  number: 4318
-    - host: clutterstock.test.wsh.no
-      http:
-        paths:
-          - path: /v1/traces
-            pathType: Prefix
-            backend:
-              service:
-                name: obs-otel-collector
-                port:
-                  number: 4318
-    - host: clutterstock.wsh.no
-      http:
-        paths:
-          - path: /v1/traces
-            pathType: Prefix
-            backend:
-              service:
-                name: obs-otel-collector
-                port:
-                  number: 4318
+  - host: test.test.wsh.no
+    http:
+      paths:
+      - path: /v1/traces
+        pathType: Prefix
+        backend:
+          service:
+            name: obs-otel-collector
+            port:
+              number: 4318
+  - host: clutterstock.test.wsh.no
+    http:
+      paths:
+      - path: /v1/traces
+        pathType: Prefix
+        backend:
+          service:
+            name: obs-otel-collector
+            port:
+              number: 4318
+  - host: clutterstock.wsh.no
+    http:
+      paths:
+      - path: /v1/traces
+        pathType: Prefix
+        backend:
+          service:
+            name: obs-otel-collector
+            port:
+              number: 4318
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -155,13 +154,13 @@ metadata:
     gethomepage.dev/description: Prometheus alerts
 spec:
   rules:
-    - host: alertmanager.mgmt.wsh.no
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: obs-kps-kube-prometheus-st-alertmanager
-                port:
-                  number: 9093
+  - host: alertmanager.mgmt.wsh.no
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: obs-kps-kube-prometheus-st-alertmanager
+            port:
+              number: 9093

@@ -12,16 +12,16 @@ metadata:
     gethomepage.dev/description: Observability dashboards
 spec:
   rules:
-    - host: grafana.mgmt-kt.wsh.no
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: obs-grafana
-                port:
-                  number: 80
+  - host: grafana.mgmt-kt.wsh.no
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: obs-grafana
+            port:
+              number: 80
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
@@ -31,18 +31,18 @@ metadata:
 spec:
   headers:
     accessControlAllowMethods:
-      - GET
-      - POST
-      - OPTIONS
+    - GET
+    - POST
+    - OPTIONS
     accessControlAllowHeaders:
-      - Content-Type
-      - Authorization
-      - traceparent
-      - tracestate
-      - baggage
+    - Content-Type
+    - Authorization
+    - traceparent
+    - tracestate
+    - baggage
     accessControlAllowOriginList:
-      - https://clutterstock.kt.wsh.no
-      - https://test.kt.wsh.no
+    - https://clutterstock.kt.wsh.no
+    - https://test.kt.wsh.no
     accessControlMaxAge: 3600
 ---
 apiVersion: networking.k8s.io/v1
@@ -61,13 +61,13 @@ metadata:
     gethomepage.dev/pod-selector: app.kubernetes.io/instance=obs-otel-collector
 spec:
   rules:
-    - host: otel.kt.wsh.no
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: obs-otel-collector
-                port:
-                  number: 4318
+  - host: otel.kt.wsh.no
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: obs-otel-collector
+            port:
+              number: 4318

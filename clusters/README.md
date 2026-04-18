@@ -19,10 +19,10 @@ Use **`appname-environment`** (lowercase, hyphenated): always include the enviro
 
 ## Public hostnames (`wsh.no`)
 
-| Environment | Pattern | Example |
-|-------------|---------|---------|
-| Production | `appname.wsh.no` | `clutterstock.wsh.no` |
-| Test | `appname.test.wsh.no` | `clutterstock.test.wsh.no` |
+| Environment  | Pattern                              | Example                           |
+| ------------ | ------------------------------------ | --------------------------------- |
+| Production   | `appname.wsh.no`                     | `clutterstock.wsh.no`             |
+| Test         | `appname.test.wsh.no`                | `clutterstock.test.wsh.no`        |
 | PR / preview | `appname-<pr-number>.preview.wsh.no` | `clutterstock-184.preview.wsh.no` |
 
 Preview hosts use **`{appname}-{pr}`** as a single label before `preview.wsh.no` so one wildcard **`*.preview.wsh.no`** suffices. Details: [.cursor/skills/flux-gitops/SKILL.md](../.cursor/skills/flux-gitops/SKILL.md).

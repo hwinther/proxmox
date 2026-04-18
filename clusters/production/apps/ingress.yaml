@@ -14,30 +14,30 @@ metadata:
     gethomepage.dev/pod-selector: app in (clutterstock-frontend, clutterstock-api)
 spec:
   rules:
-    - host: clutterstock.wsh.no
-      http:
-        paths:
-          - path: /api
-            pathType: Prefix
-            backend:
-              service:
-                name: clutterstock-api
-                port:
-                  number: 8080
-          - path: /swagger
-            pathType: Prefix
-            backend:
-              service:
-                name: clutterstock-api
-                port:
-                  number: 8080
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: clutterstock-frontend
-                port:
-                  number: 8080
+  - host: clutterstock.wsh.no
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: clutterstock-api
+            port:
+              number: 8080
+      - path: /swagger
+        pathType: Prefix
+        backend:
+          service:
+            name: clutterstock-api
+            port:
+              number: 8080
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: clutterstock-frontend
+            port:
+              number: 8080
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -54,30 +54,30 @@ metadata:
     gethomepage.dev/pod-selector: app in (clutterstock-frontend, clutterstock-api)
 spec:
   rules:
-    - host: clutterstock.test.wsh.no
-      http:
-        paths:
-          - path: /api
-            pathType: Prefix
-            backend:
-              service:
-                name: clutterstock-api
-                port:
-                  number: 8080
-          - path: /swagger
-            pathType: Prefix
-            backend:
-              service:
-                name: clutterstock-api
-                port:
-                  number: 8080
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: clutterstock-frontend
-                port:
-                  number: 8080
+  - host: clutterstock.test.wsh.no
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: clutterstock-api
+            port:
+              number: 8080
+      - path: /swagger
+        pathType: Prefix
+        backend:
+          service:
+            name: clutterstock-api
+            port:
+              number: 8080
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: clutterstock-frontend
+            port:
+              number: 8080
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -93,13 +93,13 @@ metadata:
     gethomepage.dev/description: Service dashboard
 spec:
   rules:
-    - host: mgmt.wsh.no
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: homepage
-                port:
-                  number: 3000
+  - host: mgmt.wsh.no
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: homepage
+            port:
+              number: 3000

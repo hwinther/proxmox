@@ -7,8 +7,8 @@ spec:
   interval: 30m
   timeout: 10m
   dependsOn:
-    - name: obs-kps
-      namespace: observability-production
+  - name: obs-kps
+    namespace: observability-production
   chart:
     spec:
       chart: tempo
@@ -31,14 +31,14 @@ spec:
         enabled: true
         storage:
           remote_write:
-            - url: http://obs-kps-kube-prometheus-st-prometheus.observability-production.svc.cluster.local:9090/api/v1/write
-              send_exemplars: true
+          - url: http://obs-kps-kube-prometheus-st-prometheus.observability-production.svc.cluster.local:9090/api/v1/write
+            send_exemplars: true
       overrides:
         defaults:
           metrics_generator:
             processors:
-              - service-graphs
-              - span-metrics
+            - service-graphs
+            - span-metrics
     persistence:
       enabled: true
       storageClassName: ceph-rbd

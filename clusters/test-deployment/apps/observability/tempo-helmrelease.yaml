@@ -29,14 +29,14 @@ spec:
         enabled: true
         storage:
           remote_write:
-            - url: http://obs-prometheus-server.test.svc.cluster.local:9090/api/v1/write
-              send_exemplars: true
+          - url: http://obs-prometheus-server.test.svc.cluster.local:9090/api/v1/write
+            send_exemplars: true
       overrides:
         defaults:
           metrics_generator:
             processors:
-              - service-graphs
-              - span-metrics
+            - service-graphs
+            - span-metrics
     ## No cluster StorageClass — use ephemeral storage
     persistence:
       enabled: false

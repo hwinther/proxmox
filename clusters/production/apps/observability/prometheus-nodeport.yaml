@@ -10,6 +10,6 @@ spec:
     app.kubernetes.io/name: prometheus
     operator.prometheus.io/name: obs-kps-kube-prometheus-st-prometheus
   ports:
-    - port: 9090
-      targetPort: http-web
-      nodePort: 30081
+  - port: 9090
+    targetPort: http-web
+    nodePort: 30081

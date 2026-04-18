@@ -88,18 +88,18 @@ spec:
       rbac:
         clusterRole:
           extraResources:
-            - apiGroups: ["flowcontrol.apiserver.k8s.io"]
-              resources: ["flowschemas", "prioritylevelconfigurations"]
-              verbs: ["get", "list", "watch"]
-            - apiGroups: ["node.k8s.io"]
-              resources: ["runtimeclasses"]
-              verbs: ["get", "list", "watch"]
-            - apiGroups: ["storage.k8s.io"]
-              resources: ["csistoragecapacities"]
-              verbs: ["get", "list", "watch"]
-            - apiGroups: ["traefik.io"]
-              resources: ["tlsoptions"]
-              verbs: ["get", "list", "watch"]
+          - apiGroups: [ "flowcontrol.apiserver.k8s.io" ]
+            resources: [ "flowschemas", "prioritylevelconfigurations" ]
+            verbs: [ "get", "list", "watch" ]
+          - apiGroups: [ "node.k8s.io" ]
+            resources: [ "runtimeclasses" ]
+            verbs: [ "get", "list", "watch" ]
+          - apiGroups: [ "storage.k8s.io" ]
+            resources: [ "csistoragecapacities" ]
+            verbs: [ "get", "list", "watch" ]
+          - apiGroups: [ "traefik.io" ]
+            resources: [ "tlsoptions" ]
+            verbs: [ "get", "list", "watch" ]
       resources:
         requests:
           cpu: 50m

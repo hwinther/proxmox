@@ -16,8 +16,8 @@ spec:
     remediation:
       retries: 3
   dependsOn:
-    - name: kyverno
-      namespace: kyverno
+  - name: kyverno
+    namespace: kyverno
   chart:
     spec:
       chart: policy-reporter
@@ -37,11 +37,11 @@ spec:
     ui:
       enabled: true
       clusters:
-        - name: Test cluster
-          host: http://policy-reporter.policy-reporter-test.svc.cluster.local:8080
-          plugins:
-            - name: kyverno
-              host: http://policy-reporter-kyverno-plugin.policy-reporter-test.svc.cluster.local:8080
+      - name: Test cluster
+        host: http://policy-reporter.policy-reporter-test.svc.cluster.local:8080
+        plugins:
+        - name: kyverno
+          host: http://policy-reporter-kyverno-plugin.policy-reporter-test.svc.cluster.local:8080
       resources:
         requests:
           cpu: 25m

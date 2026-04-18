@@ -12,13 +12,13 @@ metadata:
     gethomepage.dev/description: Kyverno policy reports dashboard
 spec:
   rules:
-    - host: policy-reporter.mgmt-kt.wsh.no
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: policy-reporter-ui
-                port:
-                  number: 8080
+  - host: policy-reporter.mgmt-kt.wsh.no
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: policy-reporter-ui
+            port:
+              number: 8080

@@ -13,13 +13,13 @@ metadata:
     gethomepage.dev/weight: "5"
 spec:
   rules:
-    - host: redis-prod.mgmt.wsh.no
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: redisinsight
-                port:
-                  number: 5540
+  - host: redis-prod.mgmt.wsh.no
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: redisinsight
+            port:
+              number: 5540

@@ -13,12 +13,12 @@ spec:
     remediation:
       retries: 3
   dependsOn:
-    - name: obs-kps
-      namespace: observability-production
-    - name: obs-loki
-      namespace: observability-production
-    - name: obs-tempo
-      namespace: observability-production
+  - name: obs-kps
+    namespace: observability-production
+  - name: obs-loki
+    namespace: observability-production
+  - name: obs-tempo
+    namespace: observability-production
   chart:
     spec:
       chart: opentelemetry-collector
@@ -88,23 +88,23 @@ spec:
         telemetry:
           metrics:
             readers:
-              - pull:
-                  exporter:
-                    prometheus:
-                      host: ${env:MY_POD_IP}
-                      port: 8888
+            - pull:
+                exporter:
+                  prometheus:
+                    host: ${env:MY_POD_IP}
+                    port: 8888
         extensions:
-          - health_check
+        - health_check
         pipelines:
           traces:
-            receivers: [otlp]
-            processors: [memory_limiter, batch]
-            exporters: [otlp]
+            receivers: [ otlp ]
+            processors: [ memory_limiter, batch ]
+            exporters: [ otlp ]
           metrics:
-            receivers: [otlp]
-            processors: [memory_limiter, batch]
-            exporters: [otlphttp/prometheus]
+            receivers: [ otlp ]
+            processors: [ memory_limiter, batch ]
+            exporters: [ otlphttp/prometheus ]
           logs:
-            receivers: [otlp]
-            processors: [memory_limiter, batch]
-            exporters: [otlphttp/loki]
+            receivers: [ otlp ]
+            processors: [ memory_limiter, batch ]
+            exporters: [ otlphttp/loki ]

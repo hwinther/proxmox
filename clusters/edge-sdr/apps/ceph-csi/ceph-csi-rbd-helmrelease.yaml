@@ -41,10 +41,10 @@ spec:
     # Pi / edge workers: node-type=edge-sdr:NoSchedule (see infra/k0s/raspberry-pi-worker.md).
     nodeplugin:
       tolerations:
-        - key: node-type
-          operator: Equal
-          value: edge-sdr
-          effect: NoSchedule
+      - key: node-type
+        operator: Equal
+        value: edge-sdr
+        effect: NoSchedule
       # hostNetwork: metrics on :8080 collides with liveness-prometheus on the same host IP.
       httpMetrics:
         enabled: false
@@ -53,10 +53,10 @@ spec:
       # Single worker + anti-affinity cannot place a second replica on the edge node.
       replicaCount: 1
       tolerations:
-        - key: node-type
-          operator: Equal
-          value: edge-sdr
-          effect: NoSchedule
+      - key: node-type
+        operator: Equal
+        value: edge-sdr
+        effect: NoSchedule
 
     secret:
       create: false

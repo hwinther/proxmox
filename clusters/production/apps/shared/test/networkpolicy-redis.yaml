@@ -8,35 +8,35 @@ spec:
     matchLabels:
       app: redis
   policyTypes:
-    - Ingress
-    - Egress
+  - Ingress
+  - Egress
   ingress:
-    - from:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: clutterstock-test
-      ports:
-        - port: 6379
-          protocol: TCP
-    - from:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: test-test
-      ports:
-        - port: 6379
-          protocol: TCP
-    - from:
-        - podSelector: {}
-      ports:
-        - port: 6379
-          protocol: TCP
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: clutterstock-test
+    ports:
+    - port: 6379
+      protocol: TCP
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: test-test
+    ports:
+    - port: 6379
+      protocol: TCP
+  - from:
+    - podSelector: {}
+    ports:
+    - port: 6379
+      protocol: TCP
   egress:
-    - to:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: kube-system
-      ports:
-        - port: 53
-          protocol: UDP
-        - port: 53
-          protocol: TCP
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+    ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP

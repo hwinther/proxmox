@@ -13,18 +13,18 @@ spec:
   validationFailureAction: Audit
   background: false
   rules:
-    - name: disallow-default-tlsoptions
-      match:
-        any:
-          - resources:
-              kinds:
-                - traefik.io/v1alpha1/TLSOption
-              names:
-                - default
-      exclude:
-        clusterRoles:
-          - cluster-admin
-      validate:
-        message: >-
-          Only cluster administrators may create a TLSOption named default.
-        deny: {}
+  - name: disallow-default-tlsoptions
+    match:
+      any:
+      - resources:
+          kinds:
+          - traefik.io/v1alpha1/TLSOption
+          names:
+          - default
+    exclude:
+      clusterRoles:
+      - cluster-admin
+    validate:
+      message: >-
+        Only cluster administrators may create a TLSOption named default.
+      deny: {}

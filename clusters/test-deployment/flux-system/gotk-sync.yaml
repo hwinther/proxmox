@@ -50,7 +50,7 @@ spec:
   path: ./clusters/test-deployment/apps/kyverno-policies
   prune: true
   dependsOn:
-    - name: kyverno
+  - name: kyverno
   sourceRef:
     kind: GitRepository
     name: flux-system

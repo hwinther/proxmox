@@ -8,10 +8,10 @@ spec:
     matchLabels:
       app.kubernetes.io/name: authelia
   ingress:
-    - fromEntities:
-        - host
-        - remote-node
-      toPorts:
-        - ports:
-            - port: "9091"
-              protocol: TCP
+  - fromEntities:
+    - host
+    - remote-node
+    toPorts:
+    - ports:
+      - port: "9091"
+        protocol: TCP

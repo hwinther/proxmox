@@ -13,13 +13,13 @@ metadata:
     gethomepage.dev/pod-selector: app=dex-example-app
 spec:
   rules:
-    - host: oidc-debug.mgmt.wsh.no
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: dex-example-app
-                port:
-                  number: 5555
+  - host: oidc-debug.mgmt.wsh.no
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: dex-example-app
+            port:
+              number: 5555

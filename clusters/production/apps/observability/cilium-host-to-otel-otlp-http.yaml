@@ -8,10 +8,10 @@ spec:
     matchLabels:
       app.kubernetes.io/instance: obs-otel-collector
   ingress:
-    - fromEntities:
-        - host
-        - remote-node
-      toPorts:
-        - ports:
-            - port: "4318"
-              protocol: TCP
+  - fromEntities:
+    - host
+    - remote-node
+    toPorts:
+    - ports:
+      - port: "4318"
+        protocol: TCP

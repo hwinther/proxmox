@@ -3,12 +3,12 @@
 chpasswd:
   expire: false
 users:
-  - default
-  - name: user
-    gecos: k0s node admin
-    groups: adm, users, sudo
-    lock_passwd: true
-    sudo: ALL=(ALL) NOPASSWD:ALL
-    shell: /bin/bash
-    ssh_authorized_keys:
-      - ssh-ed25519 AAAA...your-key-here
+- default
+- name: user
+  gecos: k0s node admin
+  groups: adm, users, sudo
+  lock_passwd: true
+  sudo: ALL=(ALL) NOPASSWD:ALL
+  shell: /bin/bash
+  ssh_authorized_keys:
+  - ssh-ed25519 AAAA...your-key-here

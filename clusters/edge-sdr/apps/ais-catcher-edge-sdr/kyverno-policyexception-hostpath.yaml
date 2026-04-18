@@ -6,16 +6,16 @@ metadata:
   namespace: ais-catcher-edge-sdr
 spec:
   exceptions:
-    - policyName: wsh-disallow-host-path
-      ruleNames:
-        - host-path
+  - policyName: wsh-disallow-host-path
+    ruleNames:
+    - host-path
   match:
     any:
-      - resources:
-          kinds:
-            - Pod
-          namespaces:
-            - ais-catcher-edge-sdr
-          selector:
-            matchLabels:
-              app: ais-catcher
+    - resources:
+        kinds:
+        - Pod
+        namespaces:
+        - ais-catcher-edge-sdr
+        selector:
+          matchLabels:
+            app: ais-catcher

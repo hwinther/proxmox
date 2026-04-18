@@ -8,47 +8,46 @@ metadata:
     policies.kyverno.io/category: Flux
     policies.kyverno.io/severity: medium
     policies.kyverno.io/description: >-
-      GitRepository URLs must be under github.com/hwinther (HTTPS, SSH, or git@ form).
-      HelmRepository and OCIRepository URLs must use https:// or oci:// (not plain http).
+      GitRepository URLs must be under github.com/hwinther (HTTPS, SSH, or git@ form). HelmRepository and OCIRepository URLs must use https:// or oci:// (not plain http).
 spec:
   validationFailureAction: Audit
   background: true
   rules:
-    - name: flux-github-repositories
-      match:
-        any:
-          - resources:
-              kinds:
-                - source.toolkit.fluxcd.io/v1/GitRepository
-      validate:
-        message: >-
-          GitRepository spec.url must point to github.com/hwinther (adjust org in this policy if you fork).
-        pattern:
-          spec:
-            url: "https://github.com/hwinther/* | ssh://git@github.com/hwinther/* | git@github.com:hwinther/*"
-    - name: flux-helm-repositories
-      match:
-        any:
-          - resources:
-              kinds:
-                - source.toolkit.fluxcd.io/v1/HelmRepository
-      validate:
-        message: >-
-          HelmRepository spec.url must use https:// or oci://.
-        anyPattern:
-          - spec:
-              url: "https://*"
-          - spec:
-              url: "oci://*"
-    - name: flux-oci-repositories
-      match:
-        any:
-          - resources:
-              kinds:
-                - source.toolkit.fluxcd.io/v1/OCIRepository
-      validate:
-        message: >-
-          OCIRepository spec.url must use the oci:// scheme.
-        pattern:
-          spec:
-            url: "oci://*"
+  - name: flux-github-repositories
+    match:
+      any:
+      - resources:
+          kinds:
+          - source.toolkit.fluxcd.io/v1/GitRepository
+    validate:
+      message: >-
+        GitRepository spec.url must point to github.com/hwinther (adjust org in this policy if you fork).
+      pattern:
+        spec:
+          url: "https://github.com/hwinther/* | ssh://git@github.com/hwinther/* | git@github.com:hwinther/*"
+  - name: flux-helm-repositories
+    match:
+      any:
+      - resources:
+          kinds:
+          - source.toolkit.fluxcd.io/v1/HelmRepository
+    validate:
+      message: >-
+        HelmRepository spec.url must use https:// or oci://.
+      anyPattern:
+      - spec:
+          url: "https://*"
+      - spec:
+          url: "oci://*"
+  - name: flux-oci-repositories
+    match:
+      any:
+      - resources:
+          kinds:
+          - source.toolkit.fluxcd.io/v1/OCIRepository
+    validate:
+      message: >-
+        OCIRepository spec.url must use the oci:// scheme.
+      pattern:
+        spec:
+          url: "oci://*"

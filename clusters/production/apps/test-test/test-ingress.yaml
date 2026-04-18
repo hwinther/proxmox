@@ -13,27 +13,27 @@ metadata:
     gethomepage.dev/pod-selector: app in (test-frontend, test-api)
 spec:
   rules:
-    - host: test.test.wsh.no
-      http:
-        paths:
-          - path: /api
-            pathType: Prefix
-            backend:
-              service:
-                name: test-api
-                port:
-                  number: 8080
-          - path: /swagger
-            pathType: Prefix
-            backend:
-              service:
-                name: test-api
-                port:
-                  number: 8080
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: test-frontend
-                port:
-                  number: 8080
+  - host: test.test.wsh.no
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: test-api
+            port:
+              number: 8080
+      - path: /swagger
+        pathType: Prefix
+        backend:
+          service:
+            name: test-api
+            port:
+              number: 8080
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: test-frontend
+            port:
+              number: 8080

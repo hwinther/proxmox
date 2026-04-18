@@ -39,35 +39,35 @@ spec:
         fsGroup: 1654
         fsGroupChangePolicy: OnRootMismatch
       containers:
-        - name: restore
-          image: ghcr.io/hwinther/proxmox/proxmox/pbs/backup-client:0.6.1
-          imagePullPolicy: IfNotPresent
-          command:
-            - /bin/sh
-            - -c
-            - |
-              set -eu
-              : "${PBS_RESTORE_SNAPSHOT:?set PBS_RESTORE_SNAPSHOT in Secret clutterstock-test-pbs-backup}"
-              exec /usr/bin/proxmox-backup-client restore "$PBS_RESTORE_SNAPSHOT" sqlite-data.pxar /data/
-          envFrom:
-            - secretRef:
-                name: clutterstock-test-pbs-backup
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-          resources:
-            requests:
-              cpu: 100m
-              memory: 256Mi
-            limits:
-              cpu: "1"
-              memory: 512Mi
-          volumeMounts:
-            - name: sqlite-data
-              mountPath: /data
-      volumes:
+      - name: restore
+        image: ghcr.io/hwinther/proxmox/proxmox/pbs/backup-client:0.6.1
+        imagePullPolicy: IfNotPresent
+        command:
+        - /bin/sh
+        - -c
+        - |
+          set -eu
+          : "${PBS_RESTORE_SNAPSHOT:?set PBS_RESTORE_SNAPSHOT in Secret clutterstock-test-pbs-backup}"
+          exec /usr/bin/proxmox-backup-client restore "$PBS_RESTORE_SNAPSHOT" sqlite-data.pxar /data/
+        envFrom:
+        - secretRef:
+            name: clutterstock-test-pbs-backup
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: "1"
+            memory: 512Mi
+        volumeMounts:
         - name: sqlite-data
-          persistentVolumeClaim:
-            claimName: clutterstock-api-sqlite
+          mountPath: /data
+      volumes:
+      - name: sqlite-data
+        persistentVolumeClaim:
+          claimName: clutterstock-api-sqlite

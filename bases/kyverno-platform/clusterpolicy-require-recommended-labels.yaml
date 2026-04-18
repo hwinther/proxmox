@@ -13,25 +13,24 @@ spec:
   validationFailureAction: Audit
   background: true
   rules:
-    - name: require-app-kubernetes-io-name
-      match:
-        any:
-          - resources:
-              kinds:
-                - Pod
-      exclude:
-        any:
-          - resources:
-              namespaces:
-                - kube-system
-                - kyverno
-                - flux-system
-                - traefik
-      validate:
-        message: >-
-          Set metadata.labels app.kubernetes.io/name to identify the application (see Kubernetes
-          recommended labels).
-        pattern:
-          metadata:
-            labels:
-              app.kubernetes.io/name: "?*"
+  - name: require-app-kubernetes-io-name
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    exclude:
+      any:
+      - resources:
+          namespaces:
+          - kube-system
+          - kyverno
+          - flux-system
+          - traefik
+    validate:
+      message: >-
+        Set metadata.labels app.kubernetes.io/name to identify the application (see Kubernetes recommended labels).
+      pattern:
+        metadata:
+          labels:
+            app.kubernetes.io/name: "?*"

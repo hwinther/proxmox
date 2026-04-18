@@ -15,8 +15,8 @@ spec:
     remediation:
       retries: 3
   dependsOn:
-    - name: node-exporter
-      namespace: node-exporter-edge-sdr
+  - name: node-exporter
+    namespace: node-exporter-edge-sdr
   chart:
     spec:
       chart: prometheus
@@ -26,10 +26,10 @@ spec:
         name: prometheus-community
         namespace: prometheus-agent-edge-sdr
   valuesFrom:
-    - kind: Secret
-      name: prometheus-agent-remote-write
-      valuesKey: values.yaml
-      optional: false
+  - kind: Secret
+    name: prometheus-agent-remote-write
+    valuesKey: values.yaml
+    optional: false
   values:
     alertmanager:
       enabled: false
@@ -66,10 +66,10 @@ spec:
       persistentVolume:
         enabled: false
       defaultFlagsOverride:
-        - --agent
-        - --config.file=/etc/config/prometheus.yml
-        - --web.enable-lifecycle
-        - --storage.agent.path=/prometheus
+      - --agent
+      - --config.file=/etc/config/prometheus.yml
+      - --web.enable-lifecycle
+      - --storage.agent.path=/prometheus
       resources:
         requests:
           cpu: 100m
@@ -87,27 +87,27 @@ spec:
             cluster: edge-sdr
         rule_files: []
         scrape_configs:
-          - job_name: kubernetes-endpoints-node-exporter
-            kubernetes_sd_configs:
-              - role: endpoints
-                namespaces:
-                  names:
-                    - node-exporter-edge-sdr
-            relabel_configs:
-              - source_labels: [__meta_kubernetes_service_name]
-                action: keep
-                regex: node-exporter-prometheus-node-exporter
-              - source_labels: [__meta_kubernetes_endpoint_port_name]
-                action: keep
-                regex: metrics
-              - action: labelmap
-                regex: __meta_kubernetes_service_label_(.+)
-              - source_labels: [__meta_kubernetes_pod_node_name]
-                action: replace
-                target_label: node
-              - source_labels: [__meta_kubernetes_namespace]
-                action: replace
-                target_label: kubernetes_namespace
-              - source_labels: [__meta_kubernetes_service_name]
-                action: replace
-                target_label: kubernetes_name
+        - job_name: kubernetes-endpoints-node-exporter
+          kubernetes_sd_configs:
+          - role: endpoints
+            namespaces:
+              names:
+              - node-exporter-edge-sdr
+          relabel_configs:
+          - source_labels: [ __meta_kubernetes_service_name ]
+            action: keep
+            regex: node-exporter-prometheus-node-exporter
+          - source_labels: [ __meta_kubernetes_endpoint_port_name ]
+            action: keep
+            regex: metrics
+          - action: labelmap
+            regex: __meta_kubernetes_service_label_(.+)
+          - source_labels: [ __meta_kubernetes_pod_node_name ]
+            action: replace
+            target_label: node
+          - source_labels: [ __meta_kubernetes_namespace ]
+            action: replace
+            target_label: kubernetes_namespace
+          - source_labels: [ __meta_kubernetes_service_name ]
+            action: replace
+            target_label: kubernetes_name

@@ -14,8 +14,8 @@ spec:
     remediation:
       retries: 3
   dependsOn:
-    - name: ceph-csi-rbd
-      namespace: ceph-csi-edge-sdr
+  - name: ceph-csi-rbd
+    namespace: ceph-csi-edge-sdr
   chart:
     spec:
       chart: kubescape-operator
@@ -34,21 +34,21 @@ spec:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
-              - matchExpressions:
-                  - key: role
-                    operator: DoesNotExist
-              - matchExpressions:
-                  - key: role
-                    operator: NotIn
-                    values:
-                      - sdr-edge
+            - matchExpressions:
+              - key: role
+                operator: DoesNotExist
+            - matchExpressions:
+              - key: role
+                operator: NotIn
+                values:
+                - sdr-edge
       tolerations:
-        - key: node-role.kubernetes.io/control-plane
-          operator: Exists
-          effect: NoSchedule
-        - key: node-role.kubernetes.io/master
-          operator: Exists
-          effect: NoSchedule
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
     clusterName: edge-sdr
     ksNamespace: kubescape-edge-sdr
     excludeNamespaces: "kubescape,kubescape-edge-sdr,kube-system,kube-public,kube-node-lease,kubeconfig,gmp-system,gmp-public"
