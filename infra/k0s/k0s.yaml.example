@@ -21,6 +21,8 @@ spec:
       oidc-issuer-url: https://auth.wsh.no
       oidc-client-id: headlamp
       oidc-username-claim: preferred_username
+      # Requires `groups` (and username claim) in the ID token — see Authelia `claims_policies` for client `headlamp`
+      # in `clusters/production/apps/authelia-production/authelia-helmrelease.yaml`.
       oidc-groups-claim: groups
       # If issuer TLS is not in the controller image default CA bundle, add a PEM path on the controller host:
       # oidc-ca-file: /etc/k0s/ssl/auth-wsh-no-ca.pem

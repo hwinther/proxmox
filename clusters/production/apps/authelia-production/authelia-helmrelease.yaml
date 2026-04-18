@@ -166,12 +166,22 @@ spec:
               use: sig
               key:
                 path: /secrets/authelia-oidc-jwks/oidc-jwk-rsa.pem
+          # kube-apiserver reads group membership from the ID token JWT (--oidc-groups-claim), not UserInfo.
+          claims_policies:
+            headlamp-kube-apiserver:
+              id_token:
+                - groups
+                - preferred_username
+                - name
+                - email
+                - email_verified
           clients:
             - client_id: headlamp
               client_name: Headlamp
               public: true
               require_pkce: true
               pkce_challenge_method: S256
+              claims_policy: headlamp-kube-apiserver
               authorization_policy: one_factor
               consent_mode: pre-configured
               pre_configured_consent_duration: 1 year
