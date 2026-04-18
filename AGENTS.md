@@ -28,8 +28,10 @@ A `config.ini` file (copied from `scripts/config.ini.example`) must exist at the
 # Python linting (project uses --exit-zero in CI, warnings are expected)
 flake8 --statistics src/ scripts/
 
-# Prettier formatting check (YAML, JSON, Markdown)
-npx prettier --check "**/*.{yaml,yml,json,md}"
+# Prettier formatting check (JSON, Markdown). YAML is listed in `.prettierignore`
+# because Prettier’s YAML style (indented list dashes) differs from this repo’s
+# editor default (`kennylong.kubernetes-yaml-formatter`).
+npx prettier --check "**/*.{json,md}"
 ```
 
 ### Kubernetes secrets documentation

@@ -1,6 +1,12 @@
 {
   "files.autoSave": "onWindowChange",
   "editor.formatOnSave": true,
+  "[yaml]": {
+    "editor.defaultFormatter": "kennylong.kubernetes-yaml-formatter"
+  },
+  "[github-actions-workflow]": {
+    "editor.defaultFormatter": "kennylong.kubernetes-yaml-formatter"
+  },
   "cSpell.words": [
     "adsb",
     "adsbexchange",

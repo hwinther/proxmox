@@ -1,0 +1,4 @@
+# Prettier indents list markers ("  - item"); this repo uses compact YAML
+# (e.g. kennylong.kubernetes-yaml-formatter / "Better YAML Formatter").
+**/*.yml
+**/*.yaml
