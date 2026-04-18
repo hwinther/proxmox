@@ -29,7 +29,7 @@ spec:
           allowPrivilegeEscalation: false
       containers:
       - name: migrator
-        image: ghcr.io/hwinther/clutterstock/migrator:0.14.0
+        image: ghcr.io/hwinther/clutterstock/migrator:0.15.0
         imagePullPolicy: Always
         securityContext:
           allowPrivilegeEscalation: false
