@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: adminer
+  namespace: postgres-test
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: postgres-test-authelia-forwardauth@kubernetescrd
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Management
+    gethomepage.dev/name: Adminer (Postgres test tier)
+    gethomepage.dev/icon: mdi-database-outline
+    gethomepage.dev/description: Web SQL UI for CNPG clusters in postgres-test (testdb, cluttertestdb); default testdb-rw
+    gethomepage.dev/weight: "12"
+spec:
+  rules:
+  - host: adminer-pg-test.mgmt.wsh.no
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: adminer
+            port:
+              number: 8080

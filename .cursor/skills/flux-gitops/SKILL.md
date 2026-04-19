@@ -3,7 +3,8 @@ name: flux-gitops
 description: >-
   Manage the Flux GitOps workflow for the Kubernetes cluster in this repo.
   Use when adding, removing, or updating apps synced by Flux, working with
-  Kustomization resources, or troubleshooting Flux reconciliation.
+  Kustomization resources, troubleshooting Flux reconciliation, or placing
+  workloads relative to shared platform pieces (Postgres tiers, Valkey, etc.).
 ---
 
 # Flux GitOps Workflow
@@ -76,6 +77,40 @@ clusters/<name>/
 **Test cluster** (`clusters/test-deployment/apps/`) includes raw deployments, `ingress.yaml`, `traefik-helmrelease.yaml`, `observability/`, `kubevious/`, `homepage/`, `clutterstock-migrate/`, etc.
 
 **Production** (`clusters/production/apps/`) lists **`shared/production`** and **`shared/test`** before app bundles so **`shared-production`** / **`shared-test`** (Redis, etc.) exist first — see [`clusters/production/apps/shared/README.md`](../../../clusters/production/apps/shared/README.md).
+
+## PostgreSQL (CloudNative-PG)
+
+**Preferred relational database** on Kubernetes in this repo is **[CloudNative-PG](https://cloudnative-pg.io/)** (CNPG): GitOps-managed `Cluster` resources under shared namespaces, with the operator installed from **`clusters/production/apps/cnpg-system/`** (HelmRelease in **`cnpg-system`**). Avoid ad-hoc single-replica Postgres Deployments unless there is a strong reason.
+
+### Tiering on the production k0s cluster (`clusters/production/`)
+
+| Namespace / bundle | Tier | Purpose |
+| ------------------ | ---- | ------- |
+| **`postgres-test`** | **Test** | CNPG `Cluster`s for workloads on the **test line** (namespaces like **`test-test`**, **`clutterstock-test`**): e.g. `testdb`, `cluttertestdb`. |
+| **`postgres-production`** | **Production** | CNPG `Cluster`s for **production-line** apps (e.g. **`clutterstock-production`**): e.g. `clutterstockdb`. |
+
+**Rule:** test-tier apps use Postgres **only** from **`postgres-test`**; production-tier apps use Postgres **only** from **`postgres-production`**. Do not cross-wire tiers (same cluster, different namespaces and PVCs).
+
+### Connection strings and Secrets
+
+- CNPG creates **`<cluster>-app`** Secrets in the **same namespace** as the `Cluster` (e.g. `testdb-app` in `postgres-test`).
+- Pods in **app** namespaces cannot `secretKeyRef` across namespaces; this repo uses **Kyverno** `ClusterPolicy` rules to **clone** the `-app` Secret into the consumer namespace (`test-test`, `clutterstock-test`, `clutterstock-production`, …).
+- Document operator-created credentials and clone behavior in **[`postgres-test-secrets.md`](../../../clusters/production/apps/postgres-test/postgres-test-secrets.md)** and **[`postgres-production-secrets.md`](../../../clusters/production/apps/postgres-production/postgres-production-secrets.md)** (not committed `Secret` manifests).
+- **NetworkPolicy:** allow app namespace → **`postgres-test:5432`** or **`postgres-production:5432`** as appropriate; CNPG pods allow ingress from listed client namespaces and from **Adminer** where deployed.
+
+### Adminer (SQL UI)
+
+- **Test tier:** Ingress **`adminer-pg-test.mgmt.wsh.no`** (namespace **`postgres-test`**, Authelia).
+- **Production tier:** **`adminer-pg-prod.mgmt.wsh.no`** (namespace **`postgres-production`**).
+- Both register on **Homepage** via **`gethomepage.dev/*`** Ingress annotations while [`homepage.yaml`](../../../clusters/production/apps/homepage/homepage.yaml) keeps **`kubernetes.yaml`** `ingress: true`.
+
+### Separate test Kubernetes cluster (`clusters/test-deployment/`)
+
+That Flux root targets a **different** cluster: CNPG operator under **`cnpg-system/`** and a **`Cluster`** (e.g. **`testdb`** in namespace **`test`**, `local-path` storage) under **`cnpg-test/`**. It is **not** the same Postgres instance as production k0s `postgres-test` / `postgres-production`.
+
+### PR / ephemeral previews
+
+For **`appname-preview`** namespaces, either provision a **dedicated small `Cluster`** per preview (RAM cost scales with cluster count), reuse a shared preview Postgres with **strict DB/user naming**, or defer Postgres until requirements are clear — see [Namespace naming](#namespace-naming) for hostname patterns.
 
 ## Sync configuration
 

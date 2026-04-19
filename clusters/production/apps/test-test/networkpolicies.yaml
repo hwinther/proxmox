@@ -62,6 +62,13 @@ spec:
     - port: 15671
       protocol: TCP
   - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: postgres-test
+    ports:
+    - port: 5432
+      protocol: TCP
+  - to:
     - ipBlock:
         cidr: 0.0.0.0/0
         except:

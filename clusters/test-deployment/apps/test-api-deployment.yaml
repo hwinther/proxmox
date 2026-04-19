@@ -39,8 +39,12 @@ spec:
         env:
         - name: ASPNETCORE_URLS
           value: "http://+:8080"
+        # Npgsql URI from CNPG Secret testdb-app in namespace test (see ../../../production/apps/postgres-test/postgres-test-secrets.md).
         - name: ConnectionStrings__Blogging
-          value: "Server=sqlserver,1433;Initial Catalog=api;User=sa;Password=DevelopmentOnlyPassword1;TrustServerCertificate=True;"
+          valueFrom:
+            secretKeyRef:
+              name: testdb-app
+              key: uri
         - name: OTEL_SERVICE_NAME
           value: "WebApi"
         - name: OTEL_EXPORTER_OTLP_ENDPOINT

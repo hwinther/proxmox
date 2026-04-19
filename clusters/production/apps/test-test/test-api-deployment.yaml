@@ -41,8 +41,12 @@ spec:
           value: "http://+:8080"
         - name: ASPNETCORE_ENVIRONMENT
           value: "Development"
+        # Npgsql URI from CNPG Secret (see ../postgres-test/postgres-test-secrets.md); Kyverno clones testdb-app into test-test.
         - name: ConnectionStrings__Blogging
-          value: "Server=sqlserver,1433;Initial Catalog=api;User=sa;Password=DevelopmentOnlyPassword1;TrustServerCertificate=True;"
+          valueFrom:
+            secretKeyRef:
+              name: testdb-app
+              key: uri
         - name: OTEL_SERVICE_NAME
           value: "test-api"
         - name: OTEL_EXPORTER_OTLP_ENDPOINT

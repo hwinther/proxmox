@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- namespace.yaml
+- cluster-clutterstockdb.yaml
+- networkpolicy-cnpg-clutterstockdb.yaml
+- networkpolicy-adminer.yaml
+- adminer-deployment.yaml
+- adminer-service.yaml
+- traefik-middleware-authelia-forwardauth.yaml
+- adminer-ingress.yaml
+- cilium-cluster-nodes-to-adminer-http.yaml
+- kyverno-clusterpolicy-clone-clutterstockdb-app.yaml

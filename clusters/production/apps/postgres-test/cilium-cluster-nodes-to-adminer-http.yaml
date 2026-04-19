@@ -1,0 +1,18 @@
+# Traefik uses hostNetwork on this cluster; allow node-originated traffic to Adminer (see test-test Cilium policy).
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-cluster-nodes-to-adminer-http
+  namespace: postgres-test
+spec:
+  endpointSelector:
+    matchLabels:
+      app: adminer
+  ingress:
+  - fromEntities:
+    - host
+    - remote-node
+    toPorts:
+    - ports:
+      - port: "8080"
+        protocol: TCP

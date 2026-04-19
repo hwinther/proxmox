@@ -1,0 +1,22 @@
+# CloudNative-PG Cluster — operator creates Secret testdb-app (basic-auth + uri) in this namespace.
+# Credentials: postgres-test-secrets.md
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: testdb
+  namespace: postgres-test
+spec:
+  instances: 1
+  storage:
+    storageClass: ceph-rbd
+    size: 5Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+  bootstrap:
+    initdb:
+      database: api
+      owner: app

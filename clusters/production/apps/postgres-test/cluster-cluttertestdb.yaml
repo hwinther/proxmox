@@ -1,0 +1,21 @@
+# Clutterstock test tier — Secret cluttertestdb-app in postgres-test; Kyverno clones to clutterstock-test.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: cluttertestdb
+  namespace: postgres-test
+spec:
+  instances: 1
+  storage:
+    storageClass: ceph-rbd
+    size: 5Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+  bootstrap:
+    initdb:
+      database: clutterstock
+      owner: app

@@ -120,6 +120,10 @@ For apps that also need trace-specific config (e.g. .NET), add:
 - Service type: `ClusterIP` (Traefik Ingress handles external access)
 - Service `targetPort` references the named port `http`, not the number
 
+### PostgreSQL (production k0s)
+
+For **`clusters/production/apps/`** workloads, **relational data** should use **CloudNative-PG** with **tier-correct namespaces**: test-line apps → **`postgres-test`** `Cluster`s; production-line apps → **`postgres-production`** `Cluster`s. **`secretKeyRef`** targets the Kyverno-cloned **`<cluster>-app`** Secret in the **app** namespace (see [**.cursor/skills/flux-gitops/SKILL.md**](../flux-gitops/SKILL.md) → **PostgreSQL (CloudNative-PG)**). The standalone **`clusters/test-deployment/`** cluster has its own CNPG **`Cluster`** in namespace **`test`**.
+
 ## Checklist for New Deployments
 
 1. Create `<app>-deployment.yaml` from the template above.

@@ -1,0 +1,31 @@
+# Clone CNPG application Secret into clutterstock-test for secretKeyRef on the API Deployment.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: clone-cluttertestdb-app-secret-to-clutterstock-test
+  annotations:
+    policies.kyverno.io/title: Clone cluttertestdb-app secret to clutterstock-test
+    policies.kyverno.io/category: CNPG
+    policies.kyverno.io/severity: low
+spec:
+  generateExisting: true
+  rules:
+  - name: clone-cluttertestdb-app
+    match:
+      any:
+      - resources:
+          kinds:
+          - Secret
+          namespaces:
+          - postgres-test
+          names:
+          - cluttertestdb-app
+    generate:
+      apiVersion: v1
+      kind: Secret
+      name: cluttertestdb-app
+      namespace: clutterstock-test
+      synchronize: true
+      clone:
+        namespace: postgres-test
+        name: cluttertestdb-app

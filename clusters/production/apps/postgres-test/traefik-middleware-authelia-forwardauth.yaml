@@ -1,0 +1,17 @@
+# Same Authelia forward-auth pattern as headlamp-production; Ingress references
+# postgres-test-authelia-forwardauth@kubernetescrd.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: authelia-forwardauth
+  namespace: postgres-test
+spec:
+  forwardAuth:
+    address: http://authelia.authelia-production.svc.cluster.local/api/authz/forward-auth
+    maxResponseBodySize: 1048576
+    trustForwardHeader: true
+    authResponseHeaders:
+    - Remote-User
+    - Remote-Name
+    - Remote-Email
+    - Remote-Groups

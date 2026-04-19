@@ -1,0 +1,31 @@
+# Clone CNPG application Secret into test-test so Pods there can use secretKeyRef (same-namespace only).
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: clone-testdb-app-secret-to-test-test
+  annotations:
+    policies.kyverno.io/title: Clone testdb-app secret to test-test
+    policies.kyverno.io/category: CNPG
+    policies.kyverno.io/severity: low
+spec:
+  generateExisting: true
+  rules:
+  - name: clone-testdb-app
+    match:
+      any:
+      - resources:
+          kinds:
+          - Secret
+          namespaces:
+          - postgres-test
+          names:
+          - testdb-app
+    generate:
+      apiVersion: v1
+      kind: Secret
+      name: testdb-app
+      namespace: test-test
+      synchronize: true
+      clone:
+        namespace: postgres-test
+        name: testdb-app

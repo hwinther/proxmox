@@ -1,0 +1,21 @@
+# Clutterstock production tier — Secret clutterstockdb-app; Kyverno clones to clutterstock-production.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: clutterstockdb
+  namespace: postgres-production
+spec:
+  instances: 1
+  storage:
+    storageClass: ceph-rbd
+    size: 5Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+  bootstrap:
+    initdb:
+      database: clutterstock
+      owner: app
