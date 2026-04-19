@@ -87,6 +87,7 @@ spec:
       auth_oauth2.issuer = https://auth.wsh.no
       auth_oauth2.https.hostname_verification = wildcard
       auth_oauth2.verify_aud = false
+      auth_oauth2.extra_scopes_source = groups
       # Order matters: plugin appends sub + client_id. Prefer stable claims before client_id.
       auth_oauth2.preferred_username_claims.1 = sub
       auth_oauth2.preferred_username_claims.2 = email
@@ -95,4 +96,17 @@ spec:
       management.oauth_enabled = true
       management.oauth_disable_basic_auth = true
       management.oauth_client_id = rabbitmq-management
-      management.oauth_scopes = openid profile email groups rabbitmq.tag:administrator rabbitmq.read:*/* rabbitmq.write:*/* rabbitmq.configure:*/*
+      management.oauth_scopes = openid profile email groups
+    advancedConfig: |
+      [
+        {rabbitmq_auth_backend_oauth2, [
+          {scope_aliases, #{
+            <<"k8s-admins">> => [
+              <<"rabbitmq.tag:administrator">>,
+              <<"rabbitmq.read:*/*">>,
+              <<"rabbitmq.write:*/*">>,
+              <<"rabbitmq.configure:*/*">>
+            ]
+          }}
+        ]}
+      ].
