@@ -51,6 +51,17 @@ spec:
     - port: 4318
       protocol: TCP
   - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: rabbitmq-production
+    ports:
+    - port: 5672
+      protocol: TCP
+    - port: 5671
+      protocol: TCP
+    - port: 15671
+      protocol: TCP
+  - to:
     - ipBlock:
         cidr: 0.0.0.0/0
         except:

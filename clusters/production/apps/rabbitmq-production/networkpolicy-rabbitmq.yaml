@@ -1,5 +1,6 @@
 # Ingress-only: allow clustering in-namespace, AMQP from test-test, management from topology operator.
 # Traefik (hostNetwork) hits backends as Cilium host/remote-node — see cilium-cluster-nodes-to-rabbitmq-management.yaml.
+# With spec.tls: management HTTPS is 15671 in-cluster (topology operator); plain UI remains 15672 (Traefik).
 # With spec.tls: Prometheus scrapes rabbitmq_prometheus on TLS port 15691 (Service port name prometheus-tls).
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -25,6 +26,8 @@ spec:
       protocol: TCP
     - port: 15672
       protocol: TCP
+    - port: 15671
+      protocol: TCP
     - port: 25672
       protocol: TCP
   - from:
@@ -35,6 +38,8 @@ spec:
     - port: 5672
       protocol: TCP
     - port: 5671
+      protocol: TCP
+    - port: 15671
       protocol: TCP
   - from:
     - namespaceSelector:
@@ -60,6 +65,8 @@ spec:
           kubernetes.io/metadata.name: rabbitmq-system
     ports:
     - port: 15672
+      protocol: TCP
+    - port: 15671
       protocol: TCP
     - port: 5672
       protocol: TCP
