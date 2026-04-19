@@ -1,0 +1,15 @@
+# user must match the "username" key in Secret test-api-rabbitmq-credentials.
+apiVersion: rabbitmq.com/v1beta1
+kind: Permission
+metadata:
+  name: test-api-test-test
+  namespace: rabbitmq-production
+spec:
+  vhost: test-test
+  user: test-api
+  permissions:
+    configure: ".*"
+    write: ".*"
+    read: ".*"
+  rabbitmqClusterReference:
+    name: rabbitmq
