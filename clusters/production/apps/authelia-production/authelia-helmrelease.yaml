@@ -197,22 +197,6 @@ spec:
             allowed_origins:
             - https://rabbitmq.mgmt.wsh.no
             - https://headlamp.mgmt.wsh.no
-          # Broker permission strings (RFC 6749 scopes). Register them here so client `scopes` validate;
-          # keys must be quoted so YAML does not treat `:` or `*` as syntax. Claims are satisfied by
-          # claims_policy rabbitmq-management on the rabbitmq-management client.
-          scopes:
-            "rabbitmq.tag:administrator":
-              claims:
-              - groups
-            "rabbitmq.read:*/*":
-              claims:
-              - groups
-            "rabbitmq.write:*/*":
-              claims:
-              - groups
-            "rabbitmq.configure:*/*":
-              claims:
-              - groups
           authorization_policies:
             rabbitmq-management-admins:
               default_policy: deny
@@ -242,8 +226,8 @@ spec:
               - email
               access_token:
               # Broker reads only the access token for the management UI username (not the id_token).
-              # Include sub so RabbitMQ never falls through to client_id (management.oauth_client_id).
-              - sub
+              # `sub` is a standard OIDC claim and must not appear in claims_policy (Authelia 4.39+); it is
+              # still emitted on the access token. RabbitMQ auth_oauth2.preferred_username_claims lists sub first.
               - groups
               - preferred_username
               - name
