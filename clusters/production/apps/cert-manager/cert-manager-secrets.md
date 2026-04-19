@@ -30,7 +30,7 @@ cert-manager expects the key referenced by **`tsigSecretSecretRef.key`** (`tsig-
 1. **`spec.acme.email`** — Let’s Encrypt account contact; must be deliverable mail for expiry/security notices.
 2. **`spec.acme.solvers[].dns01.rfc2136.nameserver`** — Address of the DNS server that accepts **signed updates** for `wsh.no` (often the same host you configured for nginx RFC2136). Include port if not `53`, e.g. `10.0.0.1:53`.
 3. **`tsigKeyName`** — Exact TSIG key name on the server (trailing dot is conventional for absolute names).
-4. **`tsigAlgorithm`** — Must match the server (`HMACSHA256`, `HMACSHA512`, etc.).
+4. **`tsigAlgorithm`** — Must match the server. Production issuer uses **`HMACSHA512`** (BIND `algorithm hmac-sha512;`).
 
 After changing the issuer or secret, watch challenges:
 
