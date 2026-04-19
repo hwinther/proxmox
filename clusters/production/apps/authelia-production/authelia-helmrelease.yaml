@@ -242,6 +242,9 @@ spec:
             pkce_challenge_method: S256
             claims_policy: rabbitmq-management
             authorization_policy: rabbitmq-management-admins
+            # Management UI sends audience = auth_oauth2.resource_server_id (RFC 8707).
+            audience:
+            - rabbitmq
             consent_mode: pre-configured
             pre_configured_consent_duration: 1 year
             access_token_signed_response_key_id: authelia-headlamp
