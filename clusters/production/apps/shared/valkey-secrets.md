@@ -39,6 +39,24 @@ kubectl create secret generic test-frontend-valkey \
   --from-literal=redis-url="redis://:${PW_TEST}@redis.shared-test.svc.cluster.local:6379/0"
 ```
 
+**Clutterstock frontend** (prod and test) reads **`REDIS_URL`** from Secret **`clutterstock-valkey`** / key **`redis-url`** in its own namespace — same shape as **`test-frontend-valkey`**, but the hostname and password match that tier’s shared Valkey.
+
+**Production** (`clutterstock-production`): same password as `shared-production/valkey-auth` (`$PW_PROD`).
+
+```bash
+kubectl create secret generic clutterstock-valkey \
+  --namespace clutterstock-production \
+  --from-literal=redis-url="redis://:${PW_PROD}@redis.shared-production.svc.cluster.local:6379/0"
+```
+
+**Test** (`clutterstock-test`): same password as `shared-test/valkey-auth` (`$PW_TEST`).
+
+```bash
+kubectl create secret generic clutterstock-valkey \
+  --namespace clutterstock-test \
+  --from-literal=redis-url="redis://:${PW_TEST}@redis.shared-test.svc.cluster.local:6379/0"
+```
+
 RedisInsight in each shared namespace reads **`valkey-auth`** / key **`password`** via `RI_REDIS_PASSWORD` (see [Redis Insight preconfigure connections](https://redis.io/docs/latest/operate/redisinsight/install/install-on-docker/)).
 
 ### RedisInsight: `Cannot GET /api/databases/0/connect` (404)
@@ -67,7 +85,7 @@ Use logical DB **`0`** for app cache unless you intentionally share another DB i
 
 **Alternative:** keep `REDIS_HOST` / `REDIS_PORT` and add a **`REDIS_PASSWORD`** (or app-specific) env from a Secret — `ioredis` accepts `password` in the constructor options.
 
-**Per-namespace Secrets:** client workloads cannot mount `shared-production/valkey-auth`; give each namespace its own Secret (e.g. `clutterstock-valkey` with key `redis-url` or `password`) created from the same `$PW_PROD`.
+**Per-namespace Secrets:** client workloads cannot mount `shared-production/valkey-auth` or `shared-test/valkey-auth`; give each app namespace its own Secret (e.g. **`clutterstock-valkey`** with key **`redis-url`**) created from the matching tier password.
 
 ## 4. Rollout order
 
