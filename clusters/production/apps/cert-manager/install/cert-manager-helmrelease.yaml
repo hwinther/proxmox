@@ -1,5 +1,6 @@
 # cert-manager: TLS certificates for RabbitMQ, Traefik, and other in-cluster consumers.
 # Chart: https://github.com/cert-manager/cert-manager/tree/master/deploy/charts/cert-manager
+# Installed via Flux Kustomization cert-manager-install so CRDs exist before ./clusters/production applies Certificates.
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:

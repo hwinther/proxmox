@@ -1,6 +1,6 @@
 # cert-manager credentials (production)
 
-TLS for cluster workloads uses **cert-manager** in namespace **`cert-manager`**. This directory ships a **`ClusterIssuer`** `letsencrypt-dns` that completes **ACME DNS-01** using **RFC2136** (TSIG), the same mechanism as nginx DNS challenges and Proxmox ACME when pointed at BIND / PowerDNS / similar.
+TLS for cluster workloads uses **cert-manager** in namespace **`cert-manager`**. The **HelmRelease** is reconciled by Flux **`Kustomization` `cert-manager-install`** (`./clusters/production/apps/cert-manager/install`) so CRDs exist before the main production kustomization applies `Certificate` / `ClusterIssuer` objects. This directory’s **`ClusterIssuer`** `letsencrypt-dns` completes **ACME DNS-01** using **RFC2136** (TSIG), the same mechanism as nginx DNS challenges and Proxmox ACME when pointed at BIND / PowerDNS / similar.
 
 ## 1. CA scope (what this issuer is for)
 

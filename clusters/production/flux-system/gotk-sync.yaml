@@ -68,6 +68,20 @@ spec:
     kind: GitRepository
     name: flux-system
 ---
+# cert-manager CRDs + controller must exist before ./clusters/production can server-dry-run Certificate / ClusterIssuer.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: cert-manager-install
+  namespace: flux-system
+spec:
+  interval: 10m0s
+  path: ./clusters/production/apps/cert-manager/install
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
@@ -77,6 +91,8 @@ spec:
   interval: 10m0s
   path: ./clusters/production
   prune: true
+  dependsOn:
+    - name: cert-manager-install
   ## Do not dependsOn clutterstock-migrate here: if the migrate PVC/Job is not Ready (e.g. Ceph secret missing),
   ## that would block the entire production tree (observability, Traefik, Homepage). Clutterstock ordering is
   ## best-effort: run or re-run the migrator Job before relying on the API, or apply migrate first manually.
