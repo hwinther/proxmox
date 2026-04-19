@@ -41,6 +41,16 @@ kubectl create secret generic test-frontend-valkey \
 
 RedisInsight in each shared namespace reads **`valkey-auth`** / key **`password`** via `RI_REDIS_PASSWORD` (see [Redis Insight preconfigure connections](https://redis.io/docs/latest/operate/redisinsight/install/install-on-docker/)).
 
+### RedisInsight: `Cannot GET /api/databases/0/connect` (404)
+
+Git manifests are the same for **prod** and **test**; this is almost always **state**, not a missing Ingress rule.
+
+1. **Browser cache / local app data for that host** — RedisInsight keeps connection UI state in the browser. For **`redis-test.mgmt.wsh.no`**, do a **hard refresh**, **private window**, or clear **site data** for that origin, then open the UI again. (Prod can “work” while test fails if only test’s origin has stale DB id `0`.)
+2. **Wrong `valkey-auth` in `shared-test`** — If `RI_REDIS_PASSWORD` does not match Valkey’s `requirepass`, pre-registration can fail and the server-side DB list may not match what the UI requests → **404** on connect. Re-check the Secret in **`shared-test`** (not only `test-test`).
+3. **Startup order** — The RedisInsight Deployment includes an **init container** that loops until `valkey-cli … ping` succeeds against **`redis:6379`** with the same password, so the main container starts only after Valkey accepts AUTH.
+
+If it still fails, check RedisInsight pod logs: `kubectl logs -n shared-test deploy/redisinsight -c redisinsight --tail=100`.
+
 ## 2. Authelia
 
 The HelmRelease mounts **`authelia-session-valkey`** with key **`session.redis.password.txt`** and sets `configMap.session.redis.password.secret_name` to that Secret. The file content must match **`requirepass`** on Valkey in `shared-production`.
