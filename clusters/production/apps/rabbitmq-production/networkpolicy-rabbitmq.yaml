@@ -19,6 +19,8 @@ spec:
       protocol: TCP
     - port: 5672
       protocol: TCP
+    - port: 5671
+      protocol: TCP
     - port: 15672
       protocol: TCP
     - port: 25672
@@ -30,6 +32,8 @@ spec:
     ports:
     - port: 5672
       protocol: TCP
+    - port: 5671
+      protocol: TCP
   - from:
     - namespaceSelector:
         matchLabels:
@@ -38,4 +42,6 @@ spec:
     - port: 15672
       protocol: TCP
     - port: 5672
+      protocol: TCP
+    - port: 5671
       protocol: TCP

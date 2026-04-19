@@ -1,0 +1,18 @@
+# Let’s Encrypt TLS for RabbitMQ listeners (AMQPS / management HTTPS) once ClusterIssuer letsencrypt-dns is Ready.
+# SANs are public wsh.no names; see rabbitmq-secrets.md for hostname verification vs in-cluster DNS.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: rabbitmq-tls
+  namespace: rabbitmq-production
+  labels:
+    app.kubernetes.io/name: rabbitmq
+    app.kubernetes.io/part-of: rabbitmq-production
+spec:
+  secretName: rabbitmq-tls
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-dns
+  dnsNames:
+    - rabbitmq.wsh.no
+    - rabbitmq.mgmt.wsh.no

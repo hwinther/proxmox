@@ -1,0 +1,27 @@
+# ACME DNS-01 via RFC2136 (TSIG dynamic updates), same operational model as nginx / Proxmox ACME.
+# Replace nameserver and tsigKeyName with values that match your authoritative DNS (see cert-manager-secrets.md).
+# The TSIG secret must exist in namespace cert-manager before certificates can issue.
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-dns
+spec:
+  acme:
+    email: acme-notify@wsh.no
+    privateKeySecretRef:
+      name: clusterissuer-letsencrypt-dns-account-key
+    server: https://acme-v02.api.letsencrypt.org/directory
+    solvers:
+      - selector:
+          dnsZones:
+            - wsh.no
+        dns01:
+          rfc2136:
+            # RFC 5737 documentation address — replace with the host:port your DNS accepts updates on.
+            nameserver: 192.0.2.1:53
+            tsigAlgorithm: HMACSHA256
+            # TSIG key name as configured on the server (often ends with a trailing dot).
+            tsigKeyName: cert-manager-wsh-no.
+            tsigSecretSecretRef:
+              name: rfc2136-tsig-wsh-no
+              key: tsig-secret

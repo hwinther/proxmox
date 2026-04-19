@@ -45,3 +45,14 @@ Management plugin listens on **15672** inside the cluster (no public Ingress is 
 ## 4. Upgrading the messaging topology operator manifest
 
 `messaging-topology-operator-no-namespace.yaml` is the upstream **`messaging-topology-operator.yaml`** release asset with the **first `Namespace/rabbitmq-system` document removed**, so it can live in the same Kustomize build as **`cluster-operator.yml`** (which already defines that namespace). When bumping the topology operator version, re-download the release YAML, strip that first document, and replace the file.
+
+## 5. TLS (AMQPS / management)
+
+The cluster references **`spec.tls.secretName: rabbitmq-tls`**, populated by cert-manager **`Certificate`** [`certificate-rabbitmq-tls.yaml`](certificate-rabbitmq-tls.yaml) using **`ClusterIssuer`** `letsencrypt-dns` (RFC2136). Create the TSIG secret and fix the issuer nameserver/key name first — see [`../cert-manager/cert-manager-secrets.md`](../cert-manager/cert-manager-secrets.md).
+
+- **AMQPS** listens on **5671** when TLS is enabled (plain AMQP remains on **5672** unless you change listener config separately).
+- The issued certificate covers **`rabbitmq.wsh.no`** and **`rabbitmq.mgmt.wsh.no`**. Clients that verify TLS must use a **hostname present in the cert** (for example **`rabbitmq.wsh.no` as the server name**), not only `rabbitmq.rabbitmq-production.svc.cluster.local`, or hostname verification will fail against Let’s Encrypt.
+- After Flux applies changes, confirm the cert is **Ready**, then run the checks in cert-manager-secrets.md §5 (OpenSSL).
+
+Public **Ingress** for the management UI is not defined in this bundle; management stays cluster-reachable on **15672** unless you add routing separately.
+
