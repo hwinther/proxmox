@@ -77,6 +77,8 @@ spec:
   rabbitmq:
     additionalPlugins:
       - rabbitmq_auth_backend_oauth2
+      - rabbitmq_prometheus
+      - rabbitmq_mqtt
     additionalConfig: |
       loopback_users.guest = false
       auth_backends.1 = rabbit_auth_backend_oauth2

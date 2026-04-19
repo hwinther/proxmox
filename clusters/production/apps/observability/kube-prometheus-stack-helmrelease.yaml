@@ -92,6 +92,25 @@ spec:
         - port: metrics
           interval: 15s
           scrapeTimeout: 10s
+      # RabbitMQ Cluster Operator: with spec.tls the metrics listener is HTTPS on 15691 (port name prometheus-tls).
+      # PodMonitor scrapes each StatefulSet replica; a Service-only scrape would round-robin one node per interval.
+      additionalPodMonitors:
+      - name: rabbitmq
+        selector:
+          matchLabels:
+            app.kubernetes.io/name: rabbitmq
+            app.kubernetes.io/component: rabbitmq
+        namespaceSelector:
+          matchNames:
+          - rabbitmq-production
+        podMetricsEndpoints:
+        - port: prometheus-tls
+          scheme: https
+          path: /metrics
+          interval: 15s
+          scrapeTimeout: 10s
+          tlsConfig:
+            insecureSkipVerify: true
       prometheusSpec:
         replicas: 1
         retention: 15d

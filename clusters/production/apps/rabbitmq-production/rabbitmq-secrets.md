@@ -56,5 +56,11 @@ The cluster references **`spec.tls.secretName: rabbitmq-tls`**, populated by cer
 - The issued certificate covers **`rabbitmq.wsh.no`** and **`rabbitmq.mgmt.wsh.no`**. Clients that verify TLS must use a **hostname present in the cert** (for example **`rabbitmq.wsh.no` as the server name**), not only `rabbitmq.rabbitmq-production.svc.cluster.local`, or hostname verification will fail against Let’s Encrypt.
 - After Flux applies changes, confirm the cert is **Ready**, then run the checks in cert-manager-secrets.md §5 (OpenSSL).
 
-Public **Ingress** for the management UI is **`rabbitmq.mgmt.wsh.no`** (Traefik `web` entrypoint → Service **`rabbitmq`** port **15672**). Direct TLS to the broker on **`rabbitmq.mgmt.wsh.no`** (port **15671**) is separate and uses the **`rabbitmq-tls`** Secret on the nodes.
+Public **Ingress** for the management UI is **`https://rabbitmq.mgmt.wsh.no`** (Traefik `web` entrypoint → Service **`rabbitmq`** port **15672**). Direct TLS to the broker on **`rabbitmq.mgmt.wsh.no`** (port **15671**) is separate and uses the **`rabbitmq-tls`** Secret on the nodes.
+
+## 6. Prometheus metrics and MQTT
+
+The cluster enables **`rabbitmq_prometheus`** and **`rabbitmq_mqtt`** ([`rabbitmq-cluster.yaml`](rabbitmq-cluster.yaml)). With **`spec.tls`**, the operator exposes metrics on **HTTPS port 15691** (Service port name **`prometheus-tls`**); kube-prometheus-stack includes a **PodMonitor** so each replica is scraped ([`../observability/kube-prometheus-stack-helmrelease.yaml`](../observability/kube-prometheus-stack-helmrelease.yaml)). **`NetworkPolicy`** allows **`observability-production`** → **15691** ([`networkpolicy-rabbitmq.yaml`](networkpolicy-rabbitmq.yaml)).
+
+**MQTT:** plain **1883** and TLS **8883** are added on the **`rabbitmq`** Service when the plugin is enabled. The NetworkPolicy does **not** allow them from other namespaces yet; add an ingress rule (and Cilium if you use host-network paths) when **edge-sdr** or other workloads need to connect.
 
