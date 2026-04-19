@@ -40,6 +40,23 @@ kubectl get certificate -A
 kubectl describe challenge -n rabbitmq-production
 ```
 
+### ClusterIssuer edits (nameserver / TSIG) not taking effect
+
+cert-manager **snapshots** the DNS01 solver into each **`Challenge`** when the ACME **`Order`** is created. Updating [`clusterissuer-letsencrypt-dns.yaml`](clusterissuer-letsencrypt-dns.yaml) in Git does **not** rewrite Challenges that already exist, so the controller can keep using the old **`nameserver`** until those challenges finish or are removed.
+
+After changing `nameserver`, `tsigKeyName`, or TSIG secret wiring, clear the stuck work for that certificate (namespace is the **`Certificate`**’s namespace, e.g. `rabbitmq-production`):
+
+```bash
+kubectl delete order --all -n rabbitmq-production
+kubectl delete challenge --all -n rabbitmq-production
+```
+
+Then either wait for reconciliation or run `kubectl describe certificate rabbitmq-tls -n rabbitmq-production` until new Orders/Challenges appear. **Flux** must also have applied the updated `ClusterIssuer` (`flux reconcile kustomization flux-system -n flux-system` if you are impatient).
+
+### DNS-01 check cadence (60s)
+
+The HelmRelease sets **`--dns01-check-retry-period=60s`** on the controller so propagation **self-checks** run at most about once per minute while waiting for `_acme-challenge` TXT to appear (helps when slaves lag the master). This is separate from the RFC2136 **`nameserver`** used for **dynamic updates** (still set only on the `ClusterIssuer`).
+
 Staging directory (for dry-runs): `https://acme-staging-v02.api.letsencrypt.org/directory` — use a **different** `metadata.name` / `privateKeySecretRef` if you add a staging issuer so account keys do not collide.
 
 ## 4. RabbitMQ bootstrap note

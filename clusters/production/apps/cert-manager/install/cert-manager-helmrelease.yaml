@@ -30,6 +30,9 @@ spec:
   values:
     crds:
       enabled: true
+    # Space DNS-01 propagation checks (e.g. slave AXFR lag); see cert-manager.io/docs/cli/controller (--dns01-check-retry-period).
+    extraArgs:
+      - --dns01-check-retry-period=60s
     global:
       commonLabels:
         app.kubernetes.io/part-of: cert-manager-production
