@@ -63,4 +63,3 @@ Public **Ingress** for the management UI is **`https://rabbitmq.mgmt.wsh.no`** (
 The cluster enables **`rabbitmq_prometheus`** and **`rabbitmq_mqtt`** ([`rabbitmq-cluster.yaml`](rabbitmq-cluster.yaml)). With **`spec.tls`**, the operator exposes metrics on **HTTPS port 15691** (Service port name **`prometheus-tls`**); kube-prometheus-stack includes a **PodMonitor** so each replica is scraped ([`../observability/kube-prometheus-stack-helmrelease.yaml`](../observability/kube-prometheus-stack-helmrelease.yaml)). **`NetworkPolicy`** allows **`observability-production`** → **15691** ([`networkpolicy-rabbitmq.yaml`](networkpolicy-rabbitmq.yaml)).
 
 **MQTT:** plain **1883** and TLS **8883** are added on the **`rabbitmq`** Service when the plugin is enabled. The NetworkPolicy does **not** allow them from other namespaces yet; add an ingress rule (and Cilium if you use host-network paths) when **edge-sdr** or other workloads need to connect.
-

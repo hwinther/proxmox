@@ -11,10 +11,10 @@ spec:
       app.kubernetes.io/name: rabbitmq
       app.kubernetes.io/component: rabbitmq
   ingress:
-    - fromEntities:
-        - host
-        - remote-node
-      toPorts:
-        - ports:
-            - port: "15672"
-              protocol: TCP
+  - fromEntities:
+    - host
+    - remote-node
+    toPorts:
+    - ports:
+      - port: "15672"
+        protocol: TCP

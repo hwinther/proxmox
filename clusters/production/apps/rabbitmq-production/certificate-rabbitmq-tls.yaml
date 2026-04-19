@@ -14,5 +14,5 @@ spec:
     kind: ClusterIssuer
     name: letsencrypt-dns
   dnsNames:
-    - rabbitmq.wsh.no
-    - rabbitmq.mgmt.wsh.no
+  - rabbitmq.wsh.no
+  - rabbitmq.mgmt.wsh.no

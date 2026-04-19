@@ -179,18 +179,18 @@ spec:
           enabled: true
           cors:
             endpoints:
-              - authorization
-              - token
-              - userinfo
+            - authorization
+            - token
+            - userinfo
             allowed_origins:
-              - https://rabbitmq.mgmt.wsh.no
-              - https://headlamp.mgmt.wsh.no
+            - https://rabbitmq.mgmt.wsh.no
+            - https://headlamp.mgmt.wsh.no
           authorization_policies:
             rabbitmq-management-admins:
               default_policy: deny
               rules:
-                - policy: one_factor
-                  subject: "group:k8s-admins"
+              - policy: one_factor
+                subject: "group:k8s-admins"
           jwks:
           - key_id: authelia-headlamp
             algorithm: RS256
@@ -220,7 +220,7 @@ spec:
           scopes:
             "rabbitmq.tag:administrator":
               claims:
-                - groups
+              - groups
           clients:
           - client_id: headlamp
             client_name: Headlamp

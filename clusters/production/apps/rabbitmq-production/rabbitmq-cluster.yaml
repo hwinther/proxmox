@@ -24,15 +24,15 @@ spec:
   affinity:
     podAntiAffinity:
       preferredDuringSchedulingIgnoredDuringExecution:
-        - weight: 100
-          podAffinityTerm:
-            labelSelector:
-              matchExpressions:
-                - key: app.kubernetes.io/name
-                  operator: In
-                  values:
-                    - rabbitmq
-            topologyKey: kubernetes.io/hostname
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: app.kubernetes.io/name
+              operator: In
+              values:
+              - rabbitmq
+          topologyKey: kubernetes.io/hostname
   # Operator defaults match this; declaring it keeps GitOps/review aligned with
   # https://github.com/rabbitmq/cluster-operator/blob/v2.20.1/internal/resource/statefulset.go
   override:
@@ -49,36 +49,36 @@ spec:
               seccompProfile:
                 type: RuntimeDefault
             initContainers:
-              - name: setup-container
-                securityContext:
-                  allowPrivilegeEscalation: false
-                  capabilities:
-                    drop:
-                      - ALL
-                  privileged: false
-                  readOnlyRootFilesystem: true
-                  runAsNonRoot: true
-                  seccompProfile:
-                    type: RuntimeDefault
+            - name: setup-container
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                  - ALL
+                privileged: false
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                seccompProfile:
+                  type: RuntimeDefault
             containers:
-              - name: rabbitmq
-                securityContext:
-                  allowPrivilegeEscalation: false
-                  capabilities:
-                    drop:
-                      - ALL
-                  privileged: false
-                  readOnlyRootFilesystem: true
-                  runAsNonRoot: true
-                  seccompProfile:
-                    type: RuntimeDefault
+            - name: rabbitmq
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                  - ALL
+                privileged: false
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                seccompProfile:
+                  type: RuntimeDefault
   tls:
     secretName: rabbitmq-tls
   rabbitmq:
     additionalPlugins:
-      - rabbitmq_auth_backend_oauth2
-      - rabbitmq_prometheus
-      - rabbitmq_mqtt
+    - rabbitmq_auth_backend_oauth2
+    - rabbitmq_prometheus
+    - rabbitmq_mqtt
     additionalConfig: |
       loopback_users.guest = false
       auth_backends.1 = rabbit_auth_backend_oauth2
