@@ -185,6 +185,22 @@ spec:
             allowed_origins:
             - https://rabbitmq.mgmt.wsh.no
             - https://headlamp.mgmt.wsh.no
+          # Broker permission strings (RFC 6749 scopes). Register them here so client `scopes` validate;
+          # keys must be quoted so YAML does not treat `:` or `*` as syntax. Claims are satisfied by
+          # claims_policy rabbitmq-management on the rabbitmq-management client.
+          scopes:
+            "rabbitmq.tag:administrator":
+              claims:
+              - groups
+            "rabbitmq.read:*/*":
+              claims:
+              - groups
+            "rabbitmq.write:*/*":
+              claims:
+              - groups
+            "rabbitmq.configure:*/*":
+              claims:
+              - groups
           authorization_policies:
             rabbitmq-management-admins:
               default_policy: deny
