@@ -22,7 +22,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       containers:
       - name: test-api
-        image: ghcr.io/hwinther/test/api:0.63.0
+        image: ghcr.io/hwinther/test/api:0.64.0
         imagePullPolicy: Always
         securityContext:
           allowPrivilegeEscalation: false
