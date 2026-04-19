@@ -44,6 +44,12 @@ spec:
           value: http://+:8080
         - name: ConnectionStrings__ClutterStock
           value: Data Source=/data/clutterstock.db
+        # Npgsql URI when migrating off SQLite; Kyverno clones cluttertestdb-app into clutterstock-test.
+        - name: ConnectionStrings__ClutterStockPostgres
+          valueFrom:
+            secretKeyRef:
+              name: cluttertestdb-app
+              key: uri
         - name: OTEL_SERVICE_NAME
           value: "clutterstock-api"
         - name: OTEL_EXPORTER_OTLP_ENDPOINT

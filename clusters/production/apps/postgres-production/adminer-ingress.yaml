@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: adminer
+  namespace: postgres-production
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: postgres-production-authelia-forwardauth@kubernetescrd
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Management
+    gethomepage.dev/name: Adminer (Postgres production)
+    gethomepage.dev/icon: mdi-database-outline
+    gethomepage.dev/description: Web SQL UI for CNPG postgres-production; default clutterstockdb-rw
+    gethomepage.dev/weight: "11"
+spec:
+  rules:
+  - host: adminer-pg-prod.mgmt.wsh.no
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: adminer
+            port:
+              number: 8080

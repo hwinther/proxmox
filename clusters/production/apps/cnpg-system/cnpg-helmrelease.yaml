@@ -1,0 +1,41 @@
+# CloudNative-PG operator — https://cloudnative-pg.io/
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: cloudnative-pg
+  namespace: cnpg-system
+spec:
+  interval: 30m
+  timeout: 10m
+  targetNamespace: cnpg-system
+  install:
+    createNamespace: false
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  upgrade:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  chart:
+    spec:
+      chart: cloudnative-pg
+      version: "0.28.0"
+      sourceRef:
+        kind: HelmRepository
+        name: cloudnative-pg
+        namespace: cnpg-system
+  values:
+    replicaCount: 1
+    crds:
+      create: true
+    config:
+      clusterWide: true
+    monitoring:
+      podMonitorEnabled: false
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        memory: 512Mi

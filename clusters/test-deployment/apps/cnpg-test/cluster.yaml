@@ -1,0 +1,21 @@
+# Test cluster Postgres — same namespace as test-api so Secret testdb-app is addressable without cross-namespace sync.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: testdb
+  namespace: test
+spec:
+  instances: 1
+  storage:
+    storageClass: local-path
+    size: 5Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+  bootstrap:
+    initdb:
+      database: api
+      owner: app

@@ -1,0 +1,16 @@
+# ForwardAuth to Authelia; Ingress references postgres-production-authelia-forwardauth@kubernetescrd.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: authelia-forwardauth
+  namespace: postgres-production
+spec:
+  forwardAuth:
+    address: http://authelia.authelia-production.svc.cluster.local/api/authz/forward-auth
+    maxResponseBodySize: 1048576
+    trustForwardHeader: true
+    authResponseHeaders:
+    - Remote-User
+    - Remote-Name
+    - Remote-Email
+    - Remote-Groups

@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
 - namespace-platform-production.yaml
 - ceph-csi
+- cnpg-system
 - cert-manager
 - traefik
 - authelia-production
@@ -16,6 +17,8 @@ resources:
 - shared/production
 - shared/test
 - rabbitmq-production
+- postgres-test
+- postgres-production
 - clutterstock
 - clutterstock-test
 - test-test
