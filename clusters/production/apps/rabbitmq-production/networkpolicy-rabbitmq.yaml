@@ -45,3 +45,10 @@ spec:
       protocol: TCP
     - port: 5671
       protocol: TCP
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: traefik
+    ports:
+    - port: 15672
+      protocol: TCP

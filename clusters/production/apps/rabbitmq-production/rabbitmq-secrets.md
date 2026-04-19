@@ -34,7 +34,7 @@ The Cluster Operator creates **`rabbitmq-default-user`** (name pattern `rabbitmq
 kubectl get secret rabbitmq-default-user -n rabbitmq-production -o yaml
 ```
 
-Management plugin listens on **15672** inside the cluster (no public Ingress is defined here).
+Management plugin listens on **15672** (HTTP) inside the cluster. Traefik + Homepage use **`https://rabbitmq.mgmt.wsh.no`** via [`rabbitmq-management-ingress.yaml`](rabbitmq-management-ingress.yaml) (ensure DNS / edge proxy match other `*.mgmt.wsh.no` names).
 
 ## 3. Order of operations
 
@@ -54,5 +54,5 @@ The cluster references **`spec.tls.secretName: rabbitmq-tls`**, populated by cer
 - The issued certificate covers **`rabbitmq.wsh.no`** and **`rabbitmq.mgmt.wsh.no`**. Clients that verify TLS must use a **hostname present in the cert** (for example **`rabbitmq.wsh.no` as the server name**), not only `rabbitmq.rabbitmq-production.svc.cluster.local`, or hostname verification will fail against Let’s Encrypt.
 - After Flux applies changes, confirm the cert is **Ready**, then run the checks in cert-manager-secrets.md §5 (OpenSSL).
 
-Public **Ingress** for the management UI is not defined in this bundle; management stays cluster-reachable on **15672** unless you add routing separately.
+Public **Ingress** for the management UI is **`rabbitmq.mgmt.wsh.no`** (Traefik `web` entrypoint → Service **`rabbitmq`** port **15672**). Direct TLS to the broker on **`rabbitmq.mgmt.wsh.no`** (port **15671**) is separate and uses the **`rabbitmq-tls`** Secret on the nodes.
 

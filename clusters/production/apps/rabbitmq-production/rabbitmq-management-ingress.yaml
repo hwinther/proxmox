@@ -1,0 +1,27 @@
+# Management UI (port 15672) — same hostname pattern as other *.mgmt.wsh.no UIs.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rabbitmq-management
+  namespace: rabbitmq-production
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Management
+    gethomepage.dev/name: RabbitMQ
+    gethomepage.dev/icon: mdi-rabbit
+    gethomepage.dev/description: HA broker management — rabbitmq-production cluster
+    gethomepage.dev/weight: "8"
+    gethomepage.dev/pod-selector: app.kubernetes.io/name=rabbitmq
+spec:
+  rules:
+    - host: rabbitmq.mgmt.wsh.no
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: rabbitmq
+                port:
+                  number: 15672

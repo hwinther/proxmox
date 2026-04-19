@@ -10,3 +10,4 @@ resources:
   - topology-user-test-api.yaml
   - topology-permission-test-api.yaml
   - networkpolicy-rabbitmq.yaml
+  - rabbitmq-management-ingress.yaml
