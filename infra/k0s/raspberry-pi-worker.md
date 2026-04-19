@@ -213,9 +213,13 @@ Use only the label(s) that match physical hardware on that node (both are fine o
 
 Repeat for each Pi. General workloads without tolerations will not schedule here; edge workloads need the taint **toleration** and **nodeAffinity** (or `nodeSelector`) for `role=sdr-edge`.
 
-## Kubelet log rotation (optional worker profile)
+## Edge SDR (Pi workers): kubelet log rotation + ramdisk for `/var/log/pods`
 
-To cap **per-container** log file size on edge workers (default is larger), define a **worker profile** on controllers in `/etc/k0s/k0s.yaml` and join (or reinstall) the worker with that profile. Example profile name **`edge-sdr`** matching this repo’s edge pattern:
+On **Raspberry Pi** edge workers (`role=sdr-edge`, taint `node-type=edge-sdr`), combine **kubelet log caps** with a **tmpfs** on **`/var/log/pods`** so container logs stay in **RAM** with a bounded footprint. That avoids heavy **SD card** wear from high-churn JSON logs and matches how [Fluent Bit](../../clusters/edge-sdr/apps/fluent-bit-edge-sdr/fluent-bit-helmrelease.yaml) tails **`/var/log/pods/*/*/*.log`** on the edge-sdr cluster (see also [Fluent Bit secrets](../../clusters/edge-sdr/apps/fluent-bit-edge-sdr/fluent-bit-edge-sdr-secrets.md)).
+
+### 1. Kubelet rotation (worker profile on controllers)
+
+Cap **per-container** log files on workers (defaults are larger). Define a **worker profile** in **`/etc/k0s/k0s.yaml`** on controllers; example name **`edge-sdr`** aligned with this repo:
 
 ```yaml
 spec:
@@ -226,25 +230,42 @@ spec:
         containerLogMaxFiles: 3
 ```
 
-Then on the Pi (new install or after aligning with k0s docs for profile changes):
+Then on the Pi (**new** install, or follow [k0s worker profiles](https://docs.k0sproject.io/stable/worker-node-config/#worker-profiles) for changing profiles on an existing node):
 
 ```bash
 sudo k0s install worker --profile edge-sdr --token-file /path/to/worker.token
 ```
 
-See [k0s worker profiles](https://docs.k0sproject.io/stable/worker-node-config/#worker-profiles) for precedence and validation (`k0s config validate`). Central log retention for AIS/ADSB workloads is described alongside [Fluent Bit](../../clusters/edge-sdr/apps/fluent-bit-edge-sdr/fluent-bit-edge-sdr-secrets.md) on the edge-sdr cluster.
+Validate on controllers with `k0s config validate`. Rough sizing: each container stream keeps up to **`containerLogMaxFiles`** files of **`containerLogMaxSize`**; size the tmpfs (below) above that **times** the number of concurrent log streams you expect on the node.
 
-## Optional: tmpfs for `/var/log` on the Pi
+### 2. Ramdisk: tmpfs on `/var/log/pods` (preferred)
 
-If you want container logs (under `/var/log/pods`) to live in **RAM** with a fixed cap—so SD wear and disk growth stay bounded—mount a small **tmpfs** on `/var/log`. Logs are **lost on reboot**; that is acceptable when shipping to **Loki** on another cluster.
+Mount **tmpfs only on `/var/log/pods`** so **host** logs under **`/var/log`** (e.g. **journal**, **syslog**) stay on the SD card while **Kubernetes** pod logs live in RAM.
 
-Example **`/etc/fstab`** line (64 MiB cap; tune to taste):
+1. **Stop the worker** (or do this before first `k0s start` on a fresh install) so nothing is writing under `/var/log/pods`.
+2. Ensure the mount point exists: `sudo mkdir -p /var/log/pods`.
+3. Add to **`/etc/fstab`** (example **128 MiB**; tune with kubelet limits and pod count):
+
+   ```fstab
+   tmpfs /var/log/pods tmpfs defaults,noatime,size=128M 0 0
+   ```
+
+4. `sudo mount -a` (or **reboot**). After **k0s** is running again, kubelet/containerd recreate the per-pod paths under **`/var/log/pods`** on the tmpfs.
+
+**Trade-offs:**
+
+- Pod logs are **lost on reboot** (and if the tmpfs fills, kubelet may rotate/evict aggressively). Acceptable when logs are **shipped off-node** (Fluent Bit → Loki).
+- First boot / join order: if **`/var/log/pods`** is not mounted before kubelet starts writing, you can briefly get logs on the underlying filesystem—use a **reboot** or a **systemd mount unit** with **`Before=k0sworker.service`** if you need stricter ordering than **fstab** alone.
+
+### 3. Alternative: tmpfs on all of `/var/log`
+
+Simpler but makes **host** logs under **`/var/log`** ephemeral too:
 
 ```fstab
 tmpfs /var/log tmpfs defaults,noatime,size=64M 0 0
 ```
 
-Apply after editing fstab (`sudo mount -a` or reboot). **Trade-off:** the rest of `/var/log` (e.g. host syslog) also becomes ephemeral unless you use a more selective layout (for example bind-mounting only `/var/log/pods`, which is more fiddly).
+Use only if you do not rely on persistent host logs on the Pi.
 
 ## kube-system DaemonSets and the edge taint
 
