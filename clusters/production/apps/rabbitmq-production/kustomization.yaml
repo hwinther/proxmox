@@ -10,4 +10,5 @@ resources:
   - topology-user-test-api.yaml
   - topology-permission-test-api.yaml
   - networkpolicy-rabbitmq.yaml
+  - cilium-cluster-nodes-to-rabbitmq-management.yaml
   - rabbitmq-management-ingress.yaml

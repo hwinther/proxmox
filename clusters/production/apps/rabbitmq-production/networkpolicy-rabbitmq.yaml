@@ -1,4 +1,5 @@
 # Ingress-only: allow clustering in-namespace, AMQP from test-test, management from topology operator.
+# Traefik (hostNetwork) hits backends as Cilium host/remote-node — see cilium-cluster-nodes-to-rabbitmq-management.yaml.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:

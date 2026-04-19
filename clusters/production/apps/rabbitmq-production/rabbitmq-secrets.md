@@ -34,7 +34,7 @@ The Cluster Operator creates **`rabbitmq-default-user`** (name pattern `rabbitmq
 kubectl get secret rabbitmq-default-user -n rabbitmq-production -o yaml
 ```
 
-Management plugin listens on **15672** (HTTP) inside the cluster. Traefik + Homepage use **`https://rabbitmq.mgmt.wsh.no`** via [`rabbitmq-management-ingress.yaml`](rabbitmq-management-ingress.yaml) (ensure DNS / edge proxy match other `*.mgmt.wsh.no` names).
+Management plugin listens on **15672** (HTTP) inside the cluster. Traefik + Homepage use **`https://rabbitmq.mgmt.wsh.no`** via [`rabbitmq-management-ingress.yaml`](rabbitmq-management-ingress.yaml) (ensure DNS / edge proxy match other `*.mgmt.wsh.no` names). Traefik uses **hostNetwork** on k0s: reachability also needs [`cilium-cluster-nodes-to-rabbitmq-management.yaml`](cilium-cluster-nodes-to-rabbitmq-management.yaml) (see [`../traefik/README.md`](../traefik/README.md)).
 
 ## 3. Order of operations
 

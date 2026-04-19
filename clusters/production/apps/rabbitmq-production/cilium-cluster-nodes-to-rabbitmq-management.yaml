@@ -1,0 +1,20 @@
+# Traefik uses hostNetwork; Ingress dials backends from Cilium host/remote-node identity, not the traefik namespace.
+# See clusters/production/apps/traefik/README.md — without this, nginx → Traefik → RabbitMQ can 504 while in-cluster access works.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-cluster-nodes-to-rabbitmq-management
+  namespace: rabbitmq-production
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: rabbitmq
+      app.kubernetes.io/component: rabbitmq
+  ingress:
+    - fromEntities:
+        - host
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "15672"
+              protocol: TCP
