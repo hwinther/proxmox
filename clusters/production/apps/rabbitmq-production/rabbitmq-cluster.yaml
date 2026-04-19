@@ -87,7 +87,7 @@ spec:
       auth_oauth2.issuer = https://auth.wsh.no
       auth_oauth2.https.hostname_verification = wildcard
       auth_oauth2.verify_aud = false
-      auth_oauth2.extra_scopes_source = groups
+      auth_oauth2.additional_scopes_key = groups
       # Order matters: plugin appends sub + client_id. Prefer stable claims before client_id.
       auth_oauth2.preferred_username_claims.1 = sub
       auth_oauth2.preferred_username_claims.2 = email
