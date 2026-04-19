@@ -14,10 +14,21 @@ spec:
         app: test-api
         app.kubernetes.io/name: test-api
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1654
+        runAsGroup: 1654
+        fsGroup: 1654
+        fsGroupChangePolicy: OnRootMismatch
       containers:
       - name: test-api
         image: ghcr.io/hwinther/test/api:0.63.0
         imagePullPolicy: Always
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
         resources:
           requests:
             cpu: 100m

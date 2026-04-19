@@ -16,6 +16,10 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
+        runAsUser: 1654
+        runAsGroup: 1654
+        fsGroup: 1654
+        fsGroupChangePolicy: OnRootMismatch
       containers:
       - name: test-api
         image: ghcr.io/hwinther/test/api:0.64.0
@@ -48,11 +52,19 @@ spec:
         - name: OTEL_TRACES_EXPORTER
           value: "otlp"
         - name: RabbitMq__HostName
-          value: "rabbitmq"
+          value: "rabbitmq.rabbitmq-production.svc.cluster.local"
+        - name: RabbitMq__VirtualHost
+          value: "test-test"
         - name: RabbitMq__UserName
-          value: "guest"
+          valueFrom:
+            secretKeyRef:
+              name: test-api-rabbitmq
+              key: username
         - name: RabbitMq__Password
-          value: "guest"
+          valueFrom:
+            secretKeyRef:
+              name: test-api-rabbitmq
+              key: password
         ports:
         - name: http
           containerPort: 8080
