@@ -36,6 +36,8 @@ kubectl get secret rabbitmq-default-user -n rabbitmq-production -o yaml
 
 Management plugin listens on **15672** (HTTP) inside the cluster. Traefik + Homepage use **`https://rabbitmq.mgmt.wsh.no`** via [`rabbitmq-management-ingress.yaml`](rabbitmq-management-ingress.yaml) (ensure DNS / edge proxy match other `*.mgmt.wsh.no` names). Traefik uses **hostNetwork** on k0s: reachability also needs [`cilium-cluster-nodes-to-rabbitmq-management.yaml`](cilium-cluster-nodes-to-rabbitmq-management.yaml) (see [`../traefik/README.md`](../traefik/README.md)).
 
+**Authelia:** the Ingress uses the same **forward-auth** Middleware as Headlamp (`headlamp-production-authelia-forwardauth`). Only LDAP users in group **`k8s-admins`** pass Authelia ([`../authelia-production/authelia-helmrelease.yaml`](../authelia-production/authelia-helmrelease.yaml) `access_control`). You still sign in to the **RabbitMQ** UI with credentials from Secret **`rabbitmq-default-user`** (or another management user you created) — Authelia only guards the edge URL.
+
 ## 3. Order of operations
 
 1. Flux applies operators + `RabbitmqCluster` → wait until pods are Ready.

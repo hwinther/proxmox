@@ -6,6 +6,8 @@ metadata:
   namespace: rabbitmq-production
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
+    # Same Authelia forward-auth Middleware as Headlamp (namespace-local CR name: authelia-forwardauth).
+    traefik.ingress.kubernetes.io/router.middlewares: headlamp-production-authelia-forwardauth@kubernetescrd
     gethomepage.dev/enabled: "true"
     gethomepage.dev/group: Management
     gethomepage.dev/name: RabbitMQ

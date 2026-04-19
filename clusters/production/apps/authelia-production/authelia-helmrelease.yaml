@@ -126,6 +126,11 @@ spec:
           - "^/oidc-callback([?].*)?$"
         - domain: headlamp.mgmt.wsh.no
           policy: one_factor
+        # RabbitMQ management UI — Traefik forward-auth; LDAP group cn must match attributes.group_name (cn).
+        - domain: rabbitmq.mgmt.wsh.no
+          policy: one_factor
+          subject:
+            - "group:k8s-admins"
       authentication_backend:
         password_change:
           disable: true
