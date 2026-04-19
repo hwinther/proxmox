@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
 - namespace-platform-production.yaml
 - ceph-csi
+- cert-manager
 - traefik
 - authelia-production
 - headlamp-production

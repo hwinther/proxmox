@@ -72,6 +72,8 @@ spec:
                   runAsNonRoot: true
                   seccompProfile:
                     type: RuntimeDefault
+  tls:
+    secretName: rabbitmq-tls
   rabbitmq:
     additionalConfig: |
       loopback_users.guest = false

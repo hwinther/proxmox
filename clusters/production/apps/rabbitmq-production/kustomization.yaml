@@ -4,6 +4,7 @@ resources:
   - https://github.com/rabbitmq/cluster-operator/releases/download/v2.20.1/cluster-operator.yml
   - messaging-topology-operator-no-namespace.yaml
   - namespace.yaml
+  - certificate-rabbitmq-tls.yaml
   - rabbitmq-cluster.yaml
   - topology-vhost-test-test.yaml
   - topology-user-test-api.yaml
