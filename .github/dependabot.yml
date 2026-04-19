@@ -121,6 +121,7 @@ updates:
   - "/clusters/production/apps/authelia-production"
   - "/clusters/production/apps/ceph-csi"
   - "/clusters/production/apps/cert-manager"
+  - "/clusters/production/apps/cert-manager/install"
   - "/clusters/production/apps/clutterstock"
   - "/clusters/production/apps/clutterstock-migrate"
   - "/clusters/production/apps/dex-example-app-production"
