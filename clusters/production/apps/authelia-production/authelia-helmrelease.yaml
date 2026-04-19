@@ -213,6 +213,9 @@ spec:
               - name
               - email
               access_token:
+              # Broker reads only the access token for the management UI username (not the id_token).
+              # Include sub so RabbitMQ never falls through to client_id (management.oauth_client_id).
+              - sub
               - groups
               - preferred_username
               - name
