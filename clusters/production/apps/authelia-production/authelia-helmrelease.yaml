@@ -118,14 +118,14 @@ spec:
           policy: bypass
           resources:
           - "^/clusters/[^/]+/healthz$"
-        # OIDC redirect lands on headlamp before a portal session exists; ForwardAuth + one_factor would 302 forever.
+        # OIDC redirect lands on headlamp before a portal session exists; ForwardAuth + two_factor would 302 forever.
         # Callback is still protected by OAuth state + PKCE; bypass only this path (see Traefik + Authelia OIDC notes).
         - domain: headlamp.mgmt.wsh.no
           policy: bypass
           resources:
           - "^/oidc-callback([?].*)?$"
         - domain: headlamp.mgmt.wsh.no
-          policy: one_factor
+          policy: two_factor
       authentication_backend:
         password_change:
           disable: true
@@ -224,7 +224,7 @@ spec:
             require_pkce: true
             pkce_challenge_method: S256
             claims_policy: headlamp-kube-apiserver
-            authorization_policy: one_factor
+            authorization_policy: two_factor
             consent_mode: pre-configured
             pre_configured_consent_duration: 1 year
             redirect_uris:
