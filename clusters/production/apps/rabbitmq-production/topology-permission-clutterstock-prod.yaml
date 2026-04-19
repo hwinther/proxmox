@@ -1,13 +1,12 @@
-# user must match the "username" key in Secret test-api-rabbitmq-credentials.
-# test-api uses shared vhost "test" (see topology-vhost-test.yaml).
+# Username must match Secret clutterstock-prod-rabbitmq-credentials key "username".
 apiVersion: rabbitmq.com/v1beta1
 kind: Permission
 metadata:
-  name: test-api-test
+  name: clutterstock-prod-prod
   namespace: rabbitmq-production
 spec:
-  vhost: test
-  user: test-api
+  vhost: prod
+  user: clutterstock-prod
   permissions:
     configure: ".*"
     write: ".*"

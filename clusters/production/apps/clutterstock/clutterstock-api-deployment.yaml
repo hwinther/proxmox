@@ -1,3 +1,4 @@
+# RabbitMQ: create Secret clutterstock-production-rabbitmq before rollout (see ../rabbitmq-production/rabbitmq-secrets.md).
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -53,6 +54,20 @@ spec:
           value: otlp
         - name: OTEL_RESOURCE_ATTRIBUTES
           value: service.namespace=clutterstock-production,deployment.environment=production
+        - name: RabbitMq__HostName
+          value: rabbitmq.rabbitmq-production.svc.cluster.local
+        - name: RabbitMq__VirtualHost
+          value: prod
+        - name: RabbitMq__UserName
+          valueFrom:
+            secretKeyRef:
+              name: clutterstock-production-rabbitmq
+              key: username
+        - name: RabbitMq__Password
+          valueFrom:
+            secretKeyRef:
+              name: clutterstock-production-rabbitmq
+              key: password
         ports:
         - name: http
           containerPort: 8080

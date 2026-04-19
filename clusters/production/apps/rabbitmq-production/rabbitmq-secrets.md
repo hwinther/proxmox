@@ -4,6 +4,8 @@ Passwords and import secrets live only in **Kubernetes Secrets** (not in this re
 
 The broker Service is **`rabbitmq.rabbitmq-production.svc.cluster.local`** (port **5672**). Clients in other namespaces must use the full DNS name.
 
+**Virtual hosts:** the cluster defines two shared vhosts (not per-app): **`prod`** for production workloads and **`test`** for test / non-prod workloads ([`topology-vhost-prod.yaml`](topology-vhost-prod.yaml), [`topology-vhost-test.yaml`](topology-vhost-test.yaml)). The default **`/`** vhost still exists but is unused by these manifests. Add **`User`** + **`Permission`** resources for each app or shared service account on the appropriate vhost.
+
 ## 1. Bootstrap: topology import secret + app env secret
 
 Create the **import** secret in `rabbitmq-production` first (Messaging Topology Operator reads it for `User` `test-api`). Use the same username/password values for the app Secret in `test-test`.
@@ -25,6 +27,37 @@ kubectl create secret generic test-api-rabbitmq \
 ```
 
 If the `User` object already reconciled and you rotated the import secret, add a label on the `User` to force reconcile (see [upstream note](https://github.com/rabbitmq/messaging-topology-operator/blob/main/docs/examples/users/userPreDefinedCreds.yaml)).
+
+### Clutterstock (`clutterstock-test` / `clutterstock-production`)
+
+Broker users **`clutterstock-test`** and **`clutterstock-prod`** map to shared vhosts **`test`** and **`prod`** ([`topology-user-clutterstock-test.yaml`](topology-user-clutterstock-test.yaml), [`topology-permission-clutterstock-test.yaml`](topology-permission-clutterstock-test.yaml), prod equivalents). The API Deployments read **`clutterstock-test-rabbitmq`** / **`clutterstock-production-rabbitmq`** in their namespaces (`RabbitMq__*` env vars).
+
+Create import secrets in **`rabbitmq-production`** first, then app secrets (same password per user):
+
+```bash
+PW_TEST="$(openssl rand -base64 32 | tr -d '\n')"
+PW_PROD="$(openssl rand -base64 32 | tr -d '\n')"
+
+kubectl create secret generic clutterstock-test-rabbitmq-credentials \
+  --namespace rabbitmq-production \
+  --from-literal=username=clutterstock-test \
+  --from-literal=password="$PW_TEST"
+
+kubectl create secret generic clutterstock-test-rabbitmq \
+  --namespace clutterstock-test \
+  --from-literal=username=clutterstock-test \
+  --from-literal=password="$PW_TEST"
+
+kubectl create secret generic clutterstock-prod-rabbitmq-credentials \
+  --namespace rabbitmq-production \
+  --from-literal=username=clutterstock-prod \
+  --from-literal=password="$PW_PROD"
+
+kubectl create secret generic clutterstock-production-rabbitmq \
+  --namespace clutterstock-production \
+  --from-literal=username=clutterstock-prod \
+  --from-literal=password="$PW_PROD"
+```
 
 ## 2. Cluster admin UI / default user
 
@@ -49,8 +82,9 @@ Management plugin listens on **15672** (HTTP) inside the cluster. Traefik + Home
 ## 3. Order of operations
 
 1. Flux applies operators + `RabbitmqCluster` → wait until pods are Ready.
-2. Create **`test-api-rabbitmq-credentials`** then ensure `User`/`Permission`/`Vhost` objects reconcile.
+2. Create **`test-api-rabbitmq-credentials`** then ensure `User`/`Permission`/`Vhost` objects reconcile (sample app **`test-api`** uses vhost **`test`**).
 3. Create **`test-api-rabbitmq`** in `test-test` before rolling **`test-api`** if it uses `secretKeyRef` (missing keys block pod startup).
+4. For Clutterstock: create the four Secrets above, then roll **`clutterstock-api`** in **`clutterstock-test`** / **`clutterstock-production`** once `User`/`Permission` resources are Ready.
 
 ## 4. Upgrading the messaging topology operator manifest
 

@@ -1,11 +1,11 @@
-# Logical vhost for workloads in namespace test-test (quorum queues as default).
+# Shared vhost for test / non-prod workloads (not per-app). Default queue type: quorum.
 apiVersion: rabbitmq.com/v1beta1
 kind: Vhost
 metadata:
-  name: test-test
+  name: test
   namespace: rabbitmq-production
 spec:
-  name: test-test
+  name: test
   defaultQueueType: quorum
   rabbitmqClusterReference:
     name: rabbitmq

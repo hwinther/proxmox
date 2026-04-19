@@ -6,9 +6,14 @@ resources:
 - namespace.yaml
 - certificate-rabbitmq-tls.yaml
 - rabbitmq-cluster.yaml
-- topology-vhost-test-test.yaml
+- topology-vhost-prod.yaml
+- topology-vhost-test.yaml
 - topology-user-test-api.yaml
 - topology-permission-test-api.yaml
+- topology-user-clutterstock-test.yaml
+- topology-user-clutterstock-prod.yaml
+- topology-permission-clutterstock-test.yaml
+- topology-permission-clutterstock-prod.yaml
 - networkpolicy-rabbitmq.yaml
 - cilium-cluster-nodes-to-rabbitmq-management.yaml
 - rabbitmq-management-ingress.yaml

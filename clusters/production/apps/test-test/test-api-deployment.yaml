@@ -54,7 +54,7 @@ spec:
         - name: RabbitMq__HostName
           value: "rabbitmq.rabbitmq-production.svc.cluster.local"
         - name: RabbitMq__VirtualHost
-          value: "test-test"
+          value: "test"
         - name: RabbitMq__UserName
           valueFrom:
             secretKeyRef:

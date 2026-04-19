@@ -1,0 +1,11 @@
+# Import credentials from Secret clutterstock-test-rabbitmq-credentials (not in git).
+apiVersion: rabbitmq.com/v1beta1
+kind: User
+metadata:
+  name: clutterstock-test
+  namespace: rabbitmq-production
+spec:
+  rabbitmqClusterReference:
+    name: rabbitmq
+  importCredentialsSecret:
+    name: clutterstock-test-rabbitmq-credentials
