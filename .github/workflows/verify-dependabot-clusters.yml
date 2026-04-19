@@ -21,6 +21,7 @@ jobs:
         runs-on: ubuntu-latest
         permissions:
             contents: read
+            issues: write
             pull-requests: write
         steps:
             - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -103,6 +104,32 @@ jobs:
                           repo: context.repo.repo,
                           issue_number,
                           body,
+                        });
+                      }
+
+            - name: Remove Dependabot cluster path comment when fixed
+              if: github.event_name == 'pull_request' && steps.dependabot-check.outcome ==
+                  'success'
+              uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+              with:
+                  script: |
+                      const marker = '<!-- dependabot-clusters-check -->';
+                      const issue_number = context.payload.pull_request.number;
+                      const { data: comments } = await github.rest.issues.listComments({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        issue_number,
+                      });
+                      const existing = comments.find(
+                        (c) =>
+                          c.body?.includes(marker) &&
+                          c.user?.login === 'github-actions[bot]',
+                      );
+                      if (existing) {
+                        await github.rest.issues.deleteComment({
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                          comment_id: existing.id,
                         });
                       }
 

@@ -1,0 +1,41 @@
+# Ingress-only: allow clustering in-namespace, AMQP from test-test, management from topology operator.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: rabbitmq
+  namespace: rabbitmq-production
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: rabbitmq
+      app.kubernetes.io/component: rabbitmq
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector: {}
+    ports:
+    - port: 4369
+      protocol: TCP
+    - port: 5672
+      protocol: TCP
+    - port: 15672
+      protocol: TCP
+    - port: 25672
+      protocol: TCP
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: test-test
+    ports:
+    - port: 5672
+      protocol: TCP
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: rabbitmq-system
+    ports:
+    - port: 15672
+      protocol: TCP
+    - port: 5672
+      protocol: TCP

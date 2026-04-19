@@ -1,0 +1,12 @@
+# Imports username/password from Secret test-api-rabbitmq-credentials (not in git).
+# Create the secret before this User reconciles — see rabbitmq-secrets.md.
+apiVersion: rabbitmq.com/v1beta1
+kind: User
+metadata:
+  name: test-api
+  namespace: rabbitmq-production
+spec:
+  rabbitmqClusterReference:
+    name: rabbitmq
+  importCredentialsSecret:
+    name: test-api-rabbitmq-credentials

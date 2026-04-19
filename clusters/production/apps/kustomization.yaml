@@ -14,6 +14,7 @@ resources:
 - homepage
 - shared/production
 - shared/test
+- rabbitmq-production
 - clutterstock
 - clutterstock-test
 - test-test

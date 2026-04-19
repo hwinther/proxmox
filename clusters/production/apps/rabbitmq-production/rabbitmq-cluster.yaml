@@ -1,0 +1,77 @@
+# HA: 3 nodes (odd replica count). Resources follow "comfortable homelab" tier from plan.
+# https://www.rabbitmq.com/kubernetes/operator/using-operator
+apiVersion: rabbitmq.com/v1beta1
+kind: RabbitmqCluster
+metadata:
+  name: rabbitmq
+  namespace: rabbitmq-production
+  labels:
+    app.kubernetes.io/name: rabbitmq
+    app.kubernetes.io/part-of: rabbitmq-production
+spec:
+  replicas: 3
+  image: docker.io/library/rabbitmq:4.0.5-management
+  persistence:
+    storageClassName: ceph-rbd
+    storage: 20Gi
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: "2"
+      memory: 2Gi
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                    - rabbitmq
+            topologyKey: kubernetes.io/hostname
+  # Operator defaults match this; declaring it keeps GitOps/review aligned with
+  # https://github.com/rabbitmq/cluster-operator/blob/v2.20.1/internal/resource/statefulset.go
+  override:
+    statefulSet:
+      spec:
+        template:
+          spec:
+            securityContext:
+              runAsNonRoot: true
+              runAsUser: 999
+              runAsGroup: 999
+              fsGroup: 0
+              fsGroupChangePolicy: OnRootMismatch
+              seccompProfile:
+                type: RuntimeDefault
+            initContainers:
+              - name: setup-container
+                securityContext:
+                  allowPrivilegeEscalation: false
+                  capabilities:
+                    drop:
+                      - ALL
+                  privileged: false
+                  readOnlyRootFilesystem: true
+                  runAsNonRoot: true
+                  seccompProfile:
+                    type: RuntimeDefault
+            containers:
+              - name: rabbitmq
+                securityContext:
+                  allowPrivilegeEscalation: false
+                  capabilities:
+                    drop:
+                      - ALL
+                  privileged: false
+                  readOnlyRootFilesystem: true
+                  runAsNonRoot: true
+                  seccompProfile:
+                    type: RuntimeDefault
+  rabbitmq:
+    additionalConfig: |
+      loopback_users.guest = false
