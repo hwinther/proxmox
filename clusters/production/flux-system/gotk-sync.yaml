@@ -68,7 +68,9 @@ spec:
     kind: GitRepository
     name: flux-system
 ---
-# cert-manager CRDs + controller must exist before ./clusters/production can server-dry-run Certificate / ClusterIssuer.
+# cert-manager Helm only (CRDs + controller). Separate Flux Kustomization so it reconciles in parallel with ./clusters/production.
+# Do NOT add spec.dependsOn from the root flux-system Kustomization to this one: cert-manager-install is defined in the
+# same gotk-sync bundle as flux-system applies — a dependsOn would deadlock (dependency never created until apply runs).
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
@@ -91,8 +93,8 @@ spec:
   interval: 10m0s
   path: ./clusters/production
   prune: true
-  dependsOn:
-    - name: cert-manager-install
+  # After cert-manager Helm installs CRDs, the next flux-system reconcile passes server dry-run for Certificate / ClusterIssuer.
+  retryInterval: 1m0s
   ## Do not dependsOn clutterstock-migrate here: if the migrate PVC/Job is not Ready (e.g. Ceph secret missing),
   ## that would block the entire production tree (observability, Traefik, Homepage). Clutterstock ordering is
   ## best-effort: run or re-run the migrator Job before relying on the API, or apply migrate first manually.

@@ -1,6 +1,6 @@
 # cert-manager credentials (production)
 
-TLS for cluster workloads uses **cert-manager** in namespace **`cert-manager`**. The **HelmRelease** is reconciled by Flux **`Kustomization` `cert-manager-install`** (`./clusters/production/apps/cert-manager/install`) so CRDs exist before the main production kustomization applies `Certificate` / `ClusterIssuer` objects. This directory’s **`ClusterIssuer`** `letsencrypt-dns` completes **ACME DNS-01** using **RFC2136** (TSIG), the same mechanism as nginx DNS challenges and Proxmox ACME when pointed at BIND / PowerDNS / similar.
+TLS for cluster workloads uses **cert-manager** in namespace **`cert-manager`**. The **HelmRelease** is reconciled by Flux **`Kustomization` `cert-manager-install`** (`./clusters/production/apps/cert-manager/install`) in parallel with the root **`flux-system`** Kustomization (`./clusters/production`). On first rollout, **`flux-system`** may briefly fail server dry-run on `Certificate` / `ClusterIssuer` until cert-manager CRDs exist; Flux retries (see `retryInterval` on the root `flux-system` Kustomization in `gotk-sync.yaml`). The root Kustomization must **not** `dependsOn` `cert-manager-install` when both are defined in the same `gotk-sync` apply batch — that deadlocks. This directory’s **`ClusterIssuer`** `letsencrypt-dns` completes **ACME DNS-01** using **RFC2136** (TSIG), the same mechanism as nginx DNS challenges and Proxmox ACME when pointed at BIND / PowerDNS / similar.
 
 ## 1. CA scope (what this issuer is for)
 
