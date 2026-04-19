@@ -2,6 +2,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 # Applied by Flux Kustomization kyverno-policies after Kyverno HelmRelease installs CRDs.
 resources:
+- kyverno-clusterrole-aggregate-background-secrets-read.yaml
 - ../../../../bases/kyverno-supply-chain
 - ../../../../bases/kyverno-best-practices
 - ../../../../bases/kyverno-platform
