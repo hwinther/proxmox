@@ -136,6 +136,7 @@ updates:
   - "/clusters/production/apps/observability"
   - "/clusters/production/apps/oidc-k8s-admins-rbac"
   - "/clusters/production/apps/policy-reporter-production"
+  - "/clusters/production/apps/postgres-cnpg"
   - "/clusters/production/apps/postgres-production"
   - "/clusters/production/apps/postgres-test"
   - "/clusters/production/apps/rabbitmq-production"
