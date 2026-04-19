@@ -256,6 +256,12 @@ spec:
             - profile
             - email
             - groups
+            # RabbitMQ permission scopes (RFC 6749 scope strings; not Authelia built-in scope names).
+            # authorization_policy rabbitmq-management-admins ensures only k8s-admins receive tokens.
+            - "rabbitmq.tag:administrator"
+            - "rabbitmq.read:*/*"
+            - "rabbitmq.write:*/*"
+            - "rabbitmq.configure:*/*"
           # Dex example-app (ghcr.io/dexidp/example-app): local OIDC debugger only. Redirect is loopback.
           # Secret must match Dex's default flag value exactly (opaque string ZXhhbXBsZS1hcHAtc2VjcmV0, not decoded).
           # Do not reuse this client_id/secret for anything reachable from untrusted hosts.
