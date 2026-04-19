@@ -6,10 +6,10 @@ The in-cluster DNS name stays **`redis.<namespace>.svc.cluster.local:6379`** —
 
 ## 1. Create secrets (before Flux rolls the Valkey Deployment)
 
-Use one long random password for each tier (**production** vs **test** can differ). Example (`openssl` on a workstation):
+Use one long random password for each tier (**production** vs **test** can differ). Example (`openssl` on a workstation). Strip **newlines** plus base64’s **`+` and `/`** so the same string embeds cleanly in a `redis://…` URL without URL-encoding:
 
 ```bash
-PW_PROD="$(openssl rand -base64 48 | tr -d '\n')"
+PW_PROD="$(openssl rand -base64 48 | tr -d '\n+/')"
 
 kubectl create secret generic valkey-auth \
   --namespace shared-production \
@@ -23,14 +23,14 @@ kubectl create secret generic authelia-session-valkey \
 **Test tier** (`shared-test`): same pattern with a separate password and namespace `shared-test` (no Authelia secret unless you add a consumer that needs it).
 
 ```bash
-PW_TEST="$(openssl rand -base64 48 | tr -d '\n')"
+PW_TEST="$(openssl rand -base64 48 | tr -d '\n+/')"
 
 kubectl create secret generic valkey-auth \
   --namespace shared-test \
   --from-literal=password="$PW_TEST"
 ```
 
-**Test frontend** (`test-test` namespace) reads **`REDIS_URL`** from Secret **`test-frontend-valkey`** / key **`redis-url`**. Create it with the **same** password as `shared-test/valkey-auth` (URL-encode the password if it contains reserved characters):
+**Test frontend** (`test-test` namespace) reads **`REDIS_URL`** from Secret **`test-frontend-valkey`** / key **`redis-url`**. Create it with the **same** password as `shared-test/valkey-auth`. If the password can contain URL-reserved characters, generate it with `tr -d '\n+/'` as above, or URL-encode it when building `redis-url`.
 
 ```bash
 # After valkey-auth exists in shared-test with password PW_TEST:
@@ -47,7 +47,7 @@ The HelmRelease mounts **`authelia-session-valkey`** with key **`session.redis.p
 
 ## 3. Application clients (your updates)
 
-**Full `REDIS_URL`** (works with most Redis clients; URL-encode special characters in the password if needed):
+**Full `REDIS_URL`** (works with most Redis clients). Prefer passwords generated with `tr -d '\n+/'` as above; otherwise URL-encode reserved characters in the password:
 
 ```text
 redis://:PASSWORD@redis.shared-production.svc.cluster.local:6379/0
