@@ -170,10 +170,22 @@ spec:
           enabled: true
           path: /config/db.sqlite3
       notifier:
+        # Internal relay may reject Authelia's default startup probe recipient (test@authelia.com).
         disable_startup_check: true
         filesystem:
+          enabled: false
+        smtp:
           enabled: true
-          filename: /config/notification.txt
+          # LAN smarthost; use submission://HOST:587 if yours requires STARTTLS instead of plain 25.
+          address: smtp://10.20.1.39:25
+          sender: "Authelia <noreply@wsh.no>"
+          identifier: authelia.auth.wsh.no
+          subject: "[Authelia] {title}"
+          timeout: 10 seconds
+          disable_require_tls: true
+          username: ""
+          password:
+            disabled: true
       identity_providers:
         oidc:
           enabled: true

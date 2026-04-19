@@ -1,5 +1,6 @@
 # Egress for Authelia: cluster DNS, internal NTP (Authelia startup clock check), LDAP,
-# and Valkey session store in shared-production (`redis.shared-production.svc.cluster.local:6379`).
+# Valkey session store in shared-production (`redis.shared-production.svc.cluster.local:6379`),
+# and SMTP to the LAN mail forwarder (OTP / registration emails).
 # LDAP CIDR must match the A/AAAA for auth.oh.wsh.no; NTP is Authelia `configMap.ntp.address` (lan gateway / ntpd).
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
@@ -34,6 +35,16 @@ spec:
       - port: "389"
         protocol: TCP
       - port: "636"
+        protocol: TCP
+  - toCIDR:
+    - 10.20.1.39/32
+    toPorts:
+    - ports:
+      - port: "25"
+        protocol: TCP
+      - port: "587"
+        protocol: TCP
+      - port: "465"
         protocol: TCP
   - toEndpoints:
     - matchLabels:
