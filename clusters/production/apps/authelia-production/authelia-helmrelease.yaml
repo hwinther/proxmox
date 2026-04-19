@@ -176,13 +176,16 @@ spec:
           enabled: false
         smtp:
           enabled: true
-          # LAN smarthost; use submission://HOST:587 if yours requires STARTTLS instead of plain 25.
-          address: smtp://10.20.1.39:25
+          # Postfix: 587 submission (STARTTLS), 465 implicit TLS (submissions://…:465), 25 relay (smtp://…:25).
+          address: submission://postfix.oh.wsh.no:587
           sender: "Authelia <noreply@wsh.no>"
           identifier: authelia.auth.wsh.no
           subject: "[Authelia] {title}"
           timeout: 10 seconds
-          disable_require_tls: true
+          disable_require_tls: false
+          tls:
+            server_name: postfix.oh.wsh.no
+            skip_verify: false
           username: ""
           password:
             disabled: true
