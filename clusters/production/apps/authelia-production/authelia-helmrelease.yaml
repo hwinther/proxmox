@@ -265,6 +265,7 @@ spec:
             - rabbitmq
             consent_mode: pre-configured
             pre_configured_consent_duration: 1 year
+            access_token_signed_response_alg: RS256
             access_token_signed_response_key_id: authelia-headlamp
             redirect_uris:
             - https://rabbitmq.mgmt.wsh.no/js/oidc-oauth/login-callback.html
