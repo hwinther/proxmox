@@ -11,14 +11,14 @@ spec:
       name: clusterissuer-letsencrypt-dns-account-key
     server: https://acme-v02.api.letsencrypt.org/directory
     solvers:
-      - selector:
-          dnsZones:
-            - wsh.no
-        dns01:
-          rfc2136:
-            nameserver: 167.172.166.129:53
-            tsigAlgorithm: HMACSHA512
-            tsigKeyName: cert-manager-wsh-no
-            tsigSecretSecretRef:
-              name: rfc2136-tsig-wsh-no
-              key: tsig-secret
+    - selector:
+        dnsZones:
+        - wsh.no
+      dns01:
+        rfc2136:
+          nameserver: 10.31.0.3:53
+          tsigAlgorithm: HMACSHA512
+          tsigKeyName: cert-manager-wsh-no
+          tsigSecretSecretRef:
+            name: rfc2136-tsig-wsh-no
+            key: tsig-secret
