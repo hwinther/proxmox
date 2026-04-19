@@ -17,10 +17,11 @@ resources:
 - shared/production
 - shared/test
 - rabbitmq-production
-- postgres-test
-- postgres-production
-- clutterstock
-- clutterstock-test
+# App namespaces + Kyverno RoleBindings before postgres-* Kyverno clone ClusterPolicies (validate-policy SAR).
 - test-test
+- clutterstock-test
+- postgres-test
+- clutterstock
+- postgres-production
 - ingress.yaml
 - hubble-ui-ingress.yaml
