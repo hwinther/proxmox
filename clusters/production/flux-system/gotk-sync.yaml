@@ -68,6 +68,43 @@ spec:
     kind: GitRepository
     name: flux-system
 ---
+# CNPG CRDs ship with the Helm chart; Cluster CRs must not apply in the same Flux Kustomization as the HelmRelease or
+# server dry-run fails with: no matches for kind "Cluster" in version "postgresql.cnpg.io/v1".
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: cnpg-system
+  namespace: flux-system
+spec:
+  interval: 10m0s
+  path: ./clusters/production/apps/cnpg-system
+  prune: true
+  wait: true
+  timeout: 15m
+  healthChecks:
+  - apiVersion: helm.toolkit.fluxcd.io/v2
+    kind: HelmRelease
+    name: cloudnative-pg
+    namespace: cnpg-system
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: postgres-cnpg-production
+  namespace: flux-system
+spec:
+  interval: 10m0s
+  path: ./clusters/production/apps/postgres-cnpg
+  prune: true
+  dependsOn:
+  - name: cnpg-system
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+---
 # cert-manager Helm only (CRDs + controller). Separate Flux Kustomization so it reconciles in parallel with ./clusters/production.
 # Do NOT add spec.dependsOn from the root flux-system Kustomization to this one: cert-manager-install is defined in the
 # same gotk-sync bundle as flux-system applies — a dependsOn would deadlock (dependency never created until apply runs).

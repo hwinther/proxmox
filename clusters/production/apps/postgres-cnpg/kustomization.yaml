@@ -1,0 +1,7 @@
+# Referenced only by Flux Kustomization postgres-cnpg-production (dependsOn cnpg-system).
+# Keeps CNPG Helm (CRDs) reconciling before postgres-test / postgres-production Cluster CRs.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- ../postgres-test
+- ../postgres-production

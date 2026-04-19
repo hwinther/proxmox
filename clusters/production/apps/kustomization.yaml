@@ -3,7 +3,7 @@ kind: Kustomization
 resources:
 - namespace-platform-production.yaml
 - ceph-csi
-- cnpg-system
+# cnpg-system + postgres-* Cluster CRs: separate Flux Kustomizations (gotk-sync) so Helm installs CRDs before dry-run.
 - cert-manager
 - traefik
 - authelia-production
@@ -20,8 +20,6 @@ resources:
 # App namespaces + Kyverno RoleBindings before postgres-* Kyverno clone ClusterPolicies (validate-policy SAR).
 - test-test
 - clutterstock-test
-- postgres-test
 - clutterstock
-- postgres-production
 - ingress.yaml
 - hubble-ui-ingress.yaml
