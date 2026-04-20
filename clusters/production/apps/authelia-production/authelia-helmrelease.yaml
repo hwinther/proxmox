@@ -126,6 +126,11 @@ spec:
           - "^/oidc-callback([?].*)?$"
         - domain: headlamp.mgmt.wsh.no
           policy: two_factor
+        # Adminer (Postgres) — Traefik forward-auth; must be allowed here or default_policy: deny returns 403.
+        - domain: adminer-pg-test.mgmt.wsh.no
+          policy: two_factor
+        - domain: adminer-pg-prod.mgmt.wsh.no
+          policy: two_factor
       authentication_backend:
         password_change:
           disable: true
