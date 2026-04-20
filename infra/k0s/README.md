@@ -16,6 +16,7 @@ Confirm **k0s + Cilium** compatibility for your chosen versions (CNI-only vs kub
 
 ## 3. Bootstrap k0s
 
+- **Adding Proxmox VMs** (controller+worker vs worker-only, tokens, `k0s.yaml`, taints, `KUBECONFIG`): [node-onboarding.md](node-onboarding.md).
 - **Raspberry Pi workers:** [raspberry-pi-worker.md](raspberry-pi-worker.md) — join token, ports, labels/taints for SDR edge nodes, USB verification notes, and how that differs from [k0s.yaml.example](k0s.yaml.example).
 - Use `k0sctl` or your standard method; keep **repeatable config** (API addresses, control-plane and worker roles, worker profiles).
 - **Cilium + Hubble Helm values** under `spec.extensions.helm.charts` should include **`cluster.name`**, **`hubble`** (relay + TLS auto + `peerService.internalTrafficPolicy: Cluster`), and a **pinned chart `version`** — see [`k0s.yaml.example`](k0s.yaml.example) (generic IPs) or [`k0s.production.example.yaml`](k0s.production.example.yaml) (shape matching the production LAN). Merge into `/etc/k0s/k0s.yaml` on controllers so k0s does not run “minimal” Cilium without Hubble.
