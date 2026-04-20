@@ -83,6 +83,14 @@ spec:
         timeoutSeconds: 5
         failureThreshold: 6
         successThreshold: 1
+    backgroundController:
+      replicas: 1
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          memory: 512Mi
     # Resource report controller lists cluster-scoped types; default chart RBAC omits some APIs (log spam + informer retries).
     reportsController:
       rbac:

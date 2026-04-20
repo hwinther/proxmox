@@ -86,10 +86,10 @@ spec:
       replicas: 1
       resources:
         requests:
-          cpu: 50m
-          memory: 128Mi
-        limits:
+          cpu: 100m
           memory: 256Mi
+        limits:
+          memory: 512Mi
     cleanupController:
       replicas: 1
       resources:
