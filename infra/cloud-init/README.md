@@ -33,7 +33,7 @@ chmod +x infra/cloud-init/create-k0s-debian-template.sh   # from repo root, adju
 sudo ./infra/cloud-init/create-k0s-debian-template.sh
 ```
 
-Edit [`snippets/cloud-init-user.example.yaml`](snippets/cloud-init-user.example.yaml) (SSH key, user) **before** cloning the template for production use. Override `VMID`, `STORAGE`, `VMSETTINGS`, `IMAGENAME` / `IMAGEURL` as needed. Set `USE_CUSTOM_USER=0` to use only `scripts/cloud-init/ci-ssh-keys` and vendor data (no `user` snippet).
+Edit [`snippets/cloud-init-user.example.yaml`](snippets/cloud-init-user.example.yaml) (SSH key, user) **before** cloning the template for production use. **Alpine:** copy [`snippets/cloud-init-user.alpine.example.yaml`](snippets/cloud-init-user.alpine.example.yaml) to `cloud-init-user.yaml` instead — Alpine has no `/bin/bash` until `apk` runs, and cloud-init creates the account before `packages` install `bash`, so `shell: /bin/bash` causes `can't execute '/bin/bash'` on early console login. Override `VMID`, `STORAGE`, `VMSETTINGS`, `IMAGENAME` / `IMAGEURL` as needed. Set `USE_CUSTOM_USER=0` to use only `scripts/cloud-init/ci-ssh-keys` and vendor data (no `user` snippet).
 
 **Disk:** both k0s template scripts default **`DISK_TARGET=64G`** (64 GiB total virtual size for `scsi0`). They read the cloud image’s virtual size with `qemu-img` and run `qm resize` with **only the missing** amount (`lib/k0s-template-common.sh`). Override with e.g. `DISK_TARGET=128G`.
 

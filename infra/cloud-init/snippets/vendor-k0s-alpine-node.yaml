@@ -48,6 +48,7 @@ packages:
 - procps
 - kmod
 - bash
+- sudo
 - nano
 # Optional: Ceph client debugging (CSI still runs in containers)
 # - ceph-common

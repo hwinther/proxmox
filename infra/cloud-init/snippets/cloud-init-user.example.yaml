@@ -1,5 +1,11 @@
 #cloud-config
-# Copy to Proxmox snippets and replace SSH keys / users. Reference as cicustom user=...
+# Copy to cloud-init-user.yaml (see snippets/.gitignore) and replace SSH keys / users.
+#
+# **Shell:** use `/bin/bash` on Debian generic cloud (bash is preinstalled). On **Alpine**,
+# `/bin/bash` is not in the minroot and cloud-init usually creates users **before** the
+# `packages` phase installs `bash`, so the first console login can fail with
+# `can't execute '/bin/bash'`. For Alpine k0s nodes, start from
+# `cloud-init-user.alpine.example.yaml` or set `shell: /bin/ash` here.
 chpasswd:
   expire: false
 users:
