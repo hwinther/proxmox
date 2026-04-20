@@ -1,0 +1,21 @@
+# Cloud-init network config v1 — two interfaces: k0s node + ceph-public
+version: 1
+config:
+- type: physical
+  name: ens18
+  subnets:
+  - type: static
+    address: 10.20.13.102/24
+    gateway: 10.20.13.1
+
+- type: physical
+  name: ens19
+  subnets:
+  - type: static
+    address: 10.20.4.102/24
+
+- type: nameserver
+  address:
+  - "10.20.13.1"
+  search:
+  - "k0s.wsh.no"
