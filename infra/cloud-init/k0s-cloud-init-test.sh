@@ -16,12 +16,19 @@
 #                     and applied via cicustom before first boot. Same shape as snippets/network-example-static.yaml.
 #   HOSTNAME_OVERRIDE Guest OS hostname for this clone. Injected into cloud-init user-data (and cicustom user=
 #                     updated) because many Proxmox releases do not support qm set --hostname.
+#                     If unset, defaults to CLONE_NAME when CLONE_NAME is a valid hostname and not the script
+#                     default (k0s-cloudinit-test), so production clones can omit --hostname when it matches
+#                     the Proxmox VM name.
+#   FQDN_OVERRIDE     Optional full FQDN for cloud-init (e.g. k0s-prod04.k0s.wsh.no). Defaults to the same
+#                     value as HOSTNAME_OVERRIDE when unset (short name only).
 #
 # Examples:
 #   ./k0s-cloud-init-test.sh up
 #   ./k0s-cloud-init-test.sh up --destroy-first
 #   DESTROY_FIRST=1 ./k0s-cloud-init-test.sh up
-#   CLONE_VMID=20011 CLONE_NAME=k0s-test-2 HOSTNAME_OVERRIDE=k0s-test-2 NETWORK_OVERRIDE=/root/snippet-net-102.yaml ./k0s-cloud-init-test.sh up --destroy-first
+#   CLONE_VMID=20011 CLONE_NAME=k0s-test-2 NETWORK_OVERRIDE=/root/snippet-net-102.yaml ./k0s-cloud-init-test.sh up --destroy-first
+#       # (guest hostname defaults from CLONE_NAME when HOSTNAME_OVERRIDE is unset)
+#   FQDN_OVERRIDE=k0s-test-2.example.com ./k0s-cloud-init-test.sh up --hostname k0s-test-2
 #   ./k0s-cloud-init-test.sh up --network-override /path/to/net-vm3.yaml --hostname k0s-test-3
 #   ./k0s-cloud-init-test.sh recreate
 #   ./k0s-cloud-init-test.sh down
@@ -120,11 +127,16 @@ apply_network_override() {
 apply_hostname_override() {
   local vmid="$1"
   local name="$2"
+  local fqdn="${3:-$2}"
   local dest_name="k0s-cloud-test-${vmid}-user.yaml"
   local dest="/var/lib/vz/snippets/${dest_name}"
 
   if [[ ! "${name}" =~ ^[[:alnum:]]([[:alnum:].-]*[[:alnum:]])?$ ]]; then
-    echo "HOSTNAME_OVERRIDE must be a simple hostname (alphanumeric, dots, hyphens): ${name}" >&2
+    echo "hostname must be a simple hostname (alphanumeric, dots, hyphens): ${name}" >&2
+    exit 1
+  fi
+  if [[ ! "${fqdn}" =~ ^[[:alnum:]]([[:alnum:].-]*[[:alnum:]])?$ ]]; then
+    echo "fqdn must be a hostname/FQDN (alphanumeric, dots, hyphens): ${fqdn}" >&2
     exit 1
   fi
 
@@ -163,7 +175,7 @@ apply_hostname_override() {
     {
       head -n 1 "${user_real}"
       echo "hostname: ${name}"
-      echo "fqdn: ${name}"
+      echo "fqdn: ${fqdn}"
       echo "manage_etc_hosts: true"
       echo ""
       tail -n +2 "${user_real}" | sed \
@@ -175,12 +187,12 @@ apply_hostname_override() {
     cat > "${dest}" <<EOF
 #cloud-config
 hostname: ${name}
-fqdn: ${name}
+fqdn: ${fqdn}
 manage_etc_hosts: true
 EOF
   fi
 
-  echo "Wrote per-clone user snippet with hostname: ${dest}"
+  echo "Wrote per-clone user snippet with hostname=${name} fqdn=${fqdn}: ${dest}"
 
   local merged="" seen_user=0
   local IFS=,
@@ -204,7 +216,7 @@ EOF
   fi
 
   qm set "${vmid}" --cicustom "${merged}"
-  echo "Updated ${vmid} cicustom user -> local:snippets/${dest_name} (hostname ${name})"
+  echo "Updated ${vmid} cicustom user -> local:snippets/${dest_name} (hostname ${name}, fqdn ${fqdn})"
 }
 
 cmd_up() {
@@ -222,8 +234,16 @@ cmd_up() {
   if [[ -n "${NETWORK_OVERRIDE:-}" ]]; then
     apply_network_override "${CLONE_VMID}" "${NETWORK_OVERRIDE}"
   fi
-  if [[ -n "${HOSTNAME_OVERRIDE:-}" ]]; then
-    apply_hostname_override "${CLONE_VMID}" "${HOSTNAME_OVERRIDE}"
+  local host_ov fqdn_ov
+  host_ov="${HOSTNAME_OVERRIDE:-}"
+  if [[ -z "${host_ov}" ]] && [[ "${CLONE_NAME}" != "k0s-cloudinit-test" ]] \
+    && [[ "${CLONE_NAME}" =~ ^[[:alnum:]]([[:alnum:].-]*[[:alnum:]])?$ ]]; then
+    host_ov="${CLONE_NAME}"
+    echo "HOSTNAME_OVERRIDE unset; using CLONE_NAME for guest hostname: ${host_ov}"
+  fi
+  fqdn_ov="${FQDN_OVERRIDE:-${host_ov}}"
+  if [[ -n "${host_ov}" ]]; then
+    apply_hostname_override "${CLONE_VMID}" "${host_ov}" "${fqdn_ov}"
   fi
   qm start "${CLONE_VMID}"
   if [[ "${NO_TERMINAL:-0}" != 1 ]]; then
@@ -268,9 +288,10 @@ Flags:
   --destroy-first        Valid with \`up\`: remove existing clone before cloning
   --no-terminal          Before or after command: skip \`qm terminal\` on \`up\` / \`recreate\`
   --network-override F   Valid before \`up\`/\`recreate\`: per-clone cloud-init network v1 YAML (see NETWORK_OVERRIDE)
-  --hostname NAME        Valid before \`up\`/\`recreate\`: guest hostname via cloud-init user-data (see HOSTNAME_OVERRIDE)
+  --hostname NAME        Valid before \`up\`/\`recreate\`: guest short hostname (see HOSTNAME_OVERRIDE)
+  --fqdn FQDN            Valid before \`up\`/\`recreate\`: guest FQDN for cloud-init (see FQDN_OVERRIDE); default = hostname
 
-Env: TEMPLATE_VMID, CLONE_VMID, CLONE_NAME, NO_TERMINAL, DESTROY_FIRST, NETWORK_OVERRIDE, HOSTNAME_OVERRIDE
+Env: TEMPLATE_VMID, CLONE_VMID, CLONE_NAME, NO_TERMINAL, DESTROY_FIRST, NETWORK_OVERRIDE, HOSTNAME_OVERRIDE, FQDN_OVERRIDE
 EOF
 }
 
@@ -296,6 +317,14 @@ while [[ $# -gt 0 ]]; do
         exit 1
       fi
       HOSTNAME_OVERRIDE="$2"
+      shift 2
+      ;;
+    --fqdn)
+      if [[ $# -lt 2 ]]; then
+        echo "--fqdn requires a name" >&2
+        exit 1
+      fi
+      FQDN_OVERRIDE="$2"
       shift 2
       ;;
     help|-h|--help)
@@ -342,6 +371,14 @@ case "${CMD}" in
           HOSTNAME_OVERRIDE="$2"
           shift 2
           ;;
+        --fqdn)
+          if [[ $# -lt 2 ]]; then
+            echo "up: --fqdn requires a name" >&2
+            exit 1
+          fi
+          FQDN_OVERRIDE="$2"
+          shift 2
+          ;;
         *)
           echo "Unknown option for up: $1" >&2
           exit 1
@@ -378,6 +415,14 @@ case "${CMD}" in
             exit 1
           fi
           HOSTNAME_OVERRIDE="$2"
+          shift 2
+          ;;
+        --fqdn)
+          if [[ $# -lt 2 ]]; then
+            echo "recreate: --fqdn requires a name" >&2
+            exit 1
+          fi
+          FQDN_OVERRIDE="$2"
           shift 2
           ;;
         *)
