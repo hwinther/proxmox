@@ -47,9 +47,21 @@ kubectl get secret cluttertestdb-app -n clutterstock-test -o jsonpath='{.data.ur
 echo
 ```
 
-## Adminer (test tier)
+## Adminer (test tier) + OIDC
 
-Ingress **`https://adminer-pg-test.mgmt.wsh.no`** (Authelia). Default server **`testdb-rw.postgres-test.svc.cluster.local`**; use **`cluttertestdb-rw.postgres-test.svc.cluster.local`** in the UI for Clutterstock test. Homepage lists it when **`kubernetes.yaml`** uses **`ingress: true`** (see **`gethomepage.dev/*`** annotations on the Ingress).
+Traffic: **browser → Traefik → `oauth2-proxy-adminer` → Adminer**. OIDC uses Authelia **`https://auth.wsh.no`** with public clients **`adminer-pg-test`** (PKCE, `two_factor`), defined in [`../authelia-production/authelia-helmrelease.yaml`](../authelia-production/authelia-helmrelease.yaml). Vanilla Adminer has no OIDC; **oauth2-proxy** performs the code flow then proxies to Adminer.
+
+### Secret `oauth2-proxy-adminer` (namespace `postgres-test`)
+
+Create **before** the oauth2-proxy Deployment rolls (key **`cookie-secret`**: 16 / 24 / 32 random bytes, base64-encoded — oauth2-proxy validates length):
+
+```bash
+kubectl create secret generic oauth2-proxy-adminer \
+  --namespace postgres-test \
+  --from-literal=cookie-secret="$(openssl rand -base64 32)"
+```
+
+Ingress **`https://adminer-pg-test.mgmt.wsh.no`**. Default DB server in Adminer remains **`testdb-rw.postgres-test.svc.cluster.local`**; use **`cluttertestdb-rw.postgres-test.svc.cluster.local`** for Clutterstock test. Homepage discovers the Ingress via **`gethomepage.dev/*`** when cluster **`ingress: true`**.
 
 ## Superuser
 

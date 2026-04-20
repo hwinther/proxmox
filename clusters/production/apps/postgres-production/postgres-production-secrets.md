@@ -17,6 +17,16 @@ kubectl get secret clutterstockdb-app -n clutterstock-production -o yaml
 
 The API Deployment reads **`ConnectionStrings__ClutterStockPostgres`** from key **`uri`** until you switch the app off SQLite (`ConnectionStrings__ClutterStock`).
 
-## Adminer
+## Adminer + OIDC
 
-Ingress **`https://adminer-pg-prod.mgmt.wsh.no`** (Authelia). Default server **`clutterstockdb-rw.postgres-production.svc.cluster.local`**; you can enter other `-rw` hosts in the UI if you add more clusters later. Listed on Homepage via **`gethomepage.dev/*`** Ingress annotations (cluster mode **`ingress: true`**).
+**oauth2-proxy** in front of Adminer; Authelia OIDC public client **`adminer-pg-prod`** (PKCE, `two_factor`) in [`../authelia-production/authelia-helmrelease.yaml`](../authelia-production/authelia-helmrelease.yaml). Ingress **`https://adminer-pg-prod.mgmt.wsh.no`**. Default server **`clutterstockdb-rw.postgres-production.svc.cluster.local`**.
+
+### Secret `oauth2-proxy-adminer` (namespace `postgres-production`)
+
+```bash
+kubectl create secret generic oauth2-proxy-adminer \
+  --namespace postgres-production \
+  --from-literal=cookie-secret="$(openssl rand -base64 32)"
+```
+
+Homepage: **`gethomepage.dev/*`** on the Ingress with cluster **`ingress: true`**.

@@ -1,0 +1,81 @@
+# OIDC in front of Adminer via oauth2-proxy + Authelia public client adminer-pg-prod (PKCE).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oauth2-proxy-adminer
+  namespace: postgres-production
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oauth2-proxy-adminer
+  template:
+    metadata:
+      labels:
+        app: oauth2-proxy-adminer
+        app.kubernetes.io/name: oauth2-proxy-adminer
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: oauth2-proxy
+        image: quay.io/oauth2-proxy/oauth2-proxy:v7.7.1
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        ports:
+        - name: http
+          containerPort: 4180
+          protocol: TCP
+        env:
+        - name: OAUTH2_PROXY_PROVIDER
+          value: oidc
+        - name: OAUTH2_PROXY_OIDC_ISSUER_URL
+          value: https://auth.wsh.no
+        - name: OAUTH2_PROXY_CLIENT_ID
+          value: adminer-pg-prod
+        - name: OAUTH2_PROXY_CLIENT_SECRET
+          value: ""
+        - name: OAUTH2_PROXY_REDIRECT_URL
+          value: https://adminer-pg-prod.mgmt.wsh.no/oauth2/callback
+        - name: OAUTH2_PROXY_UPSTREAMS
+          value: http://adminer.postgres-production.svc.cluster.local:8080
+        - name: OAUTH2_PROXY_HTTP_ADDRESS
+          value: 0.0.0.0:4180
+        - name: OAUTH2_PROXY_EMAIL_DOMAIN
+          value: "*"
+        - name: OAUTH2_PROXY_COOKIE_SECURE
+          value: "true"
+        - name: OAUTH2_PROXY_COOKIE_SAMESITE
+          value: lax
+        - name: OAUTH2_PROXY_COOKIE_NAME
+          value: _oauth2_adminer_pg_prod
+        - name: OAUTH2_PROXY_SKIP_PROVIDER_BUTTON
+          value: "true"
+        - name: OAUTH2_PROXY_CODE_CHALLENGE_METHOD
+          value: S256
+        - name: OAUTH2_PROXY_SCOPE
+          value: openid profile email groups
+        - name: OAUTH2_PROXY_COOKIE_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: oauth2-proxy-adminer
+              key: cookie-secret
+        resources:
+          requests:
+            cpu: 25m
+            memory: 64Mi
+          limits:
+            memory: 256Mi
+        readinessProbe:
+          httpGet:
+            path: /ping
+            port: http
+          initialDelaySeconds: 3
+          periodSeconds: 10

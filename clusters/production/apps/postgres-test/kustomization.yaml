@@ -8,9 +8,11 @@ resources:
 - networkpolicy-cnpg.yaml
 - networkpolicy-cnpg-cluttertestdb.yaml
 - networkpolicy-adminer.yaml
+- networkpolicy-oauth2-proxy-adminer.yaml
 - adminer-deployment.yaml
 - adminer-service.yaml
-- traefik-middleware-authelia-forwardauth.yaml
+- oauth2-proxy-adminer-deployment.yaml
+- oauth2-proxy-adminer-service.yaml
 - adminer-ingress.yaml
 - cilium-cluster-nodes-to-adminer-http.yaml
 - kyverno-clusterpolicy-clone-testdb-app.yaml

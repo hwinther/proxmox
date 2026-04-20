@@ -1,12 +1,12 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: adminer
+  name: oauth2-proxy-adminer
   namespace: postgres-production
 spec:
   podSelector:
     matchLabels:
-      app: adminer
+      app: oauth2-proxy-adminer
   policyTypes:
   - Ingress
   - Egress
@@ -14,12 +14,9 @@ spec:
   - from:
     - namespaceSelector:
         matchLabels:
-          kubernetes.io/metadata.name: postgres-production
-      podSelector:
-        matchLabels:
-          app: oauth2-proxy-adminer
+          kubernetes.io/metadata.name: traefik
     ports:
-    - port: 8080
+    - port: 4180
       protocol: TCP
   egress:
   - to:
@@ -38,6 +35,17 @@ spec:
     - namespaceSelector:
         matchLabels:
           kubernetes.io/metadata.name: postgres-production
+      podSelector:
+        matchLabels:
+          app: adminer
     ports:
-    - port: 5432
+    - port: 8080
+      protocol: TCP
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+        except:
+        - 169.254.169.254/32
+    ports:
+    - port: 443
       protocol: TCP

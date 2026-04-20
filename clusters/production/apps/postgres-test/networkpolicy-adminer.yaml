@@ -14,7 +14,10 @@ spec:
   - from:
     - namespaceSelector:
         matchLabels:
-          kubernetes.io/metadata.name: traefik
+          kubernetes.io/metadata.name: postgres-test
+      podSelector:
+        matchLabels:
+          app: oauth2-proxy-adminer
     ports:
     - port: 8080
       protocol: TCP

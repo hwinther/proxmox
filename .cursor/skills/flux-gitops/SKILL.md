@@ -98,11 +98,12 @@ clusters/<name>/
 - Document operator-created credentials and clone behavior in **[`postgres-test-secrets.md`](../../../clusters/production/apps/postgres-test/postgres-test-secrets.md)** and **[`postgres-production-secrets.md`](../../../clusters/production/apps/postgres-production/postgres-production-secrets.md)** (not committed `Secret` manifests).
 - **NetworkPolicy:** allow app namespace → **`postgres-test:5432`** or **`postgres-production:5432`** as appropriate; CNPG pods allow ingress from listed client namespaces and from **Adminer** where deployed.
 
-### Adminer (SQL UI)
+### Adminer (SQL UI) + OIDC
 
-- **Test tier:** Ingress **`adminer-pg-test.mgmt.wsh.no`** (namespace **`postgres-test`**, Authelia).
-- **Production tier:** **`adminer-pg-prod.mgmt.wsh.no`** (namespace **`postgres-production`**).
-- Both register on **Homepage** via **`gethomepage.dev/*`** Ingress annotations while [`homepage.yaml`](../../../clusters/production/apps/homepage/homepage.yaml) keeps **`kubernetes.yaml`** `ingress: true`.
+- **Test tier:** Ingress **`adminer-pg-test.mgmt.wsh.no`** → **`oauth2-proxy-adminer`** → Adminer in **`postgres-test`**. **OIDC** uses Authelia (**`auth.wsh.no`**) public client **`adminer-pg-test`** (PKCE, `two_factor`); Traefik **forward-auth** is not used here (Adminer has no native OIDC).
+- **Production tier:** **`adminer-pg-prod.mgmt.wsh.no`** → **`oauth2-proxy-adminer`** in **`postgres-production`**, client **`adminer-pg-prod`**.
+- **Secrets:** each namespace has **`oauth2-proxy-adminer`** / key **`cookie-secret`** (see bundle `*-secrets.md`). **Authelia** OIDC client definitions live in [`authelia-helmrelease.yaml`](../../../clusters/production/apps/authelia-production/authelia-helmrelease.yaml); OIDC **CORS** `allowed_origins` includes both Adminer hosts.
+- **Homepage:** **`gethomepage.dev/*`** on the Ingresses with [`homepage.yaml`](../../../clusters/production/apps/homepage/homepage.yaml) **`kubernetes.yaml`** `ingress: true`.
 
 ### Separate test Kubernetes cluster (`clusters/test-deployment/`)
 

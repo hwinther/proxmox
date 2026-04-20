@@ -1,4 +1,4 @@
-# Traefik uses hostNetwork; allow node-originated traffic to Adminer (same pattern as postgres-test).
+# Traefik uses hostNetwork; allow node-originated traffic to oauth2-proxy (fronts Adminer).
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -7,12 +7,12 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      app: adminer
+      app: oauth2-proxy-adminer
   ingress:
   - fromEntities:
     - host
     - remote-node
     toPorts:
     - ports:
-      - port: "8080"
+      - port: "4180"
         protocol: TCP
