@@ -13,6 +13,11 @@
 # article’s sysfs eBPF snippet — modern Alpine generic cloud images handle bpffs; we still add
 # fstab + mount for /sys/fs/bpf like the Debian vendor.
 #
+# **resolv.conf:** Alpine + ENI does not run cloud-init’s `resolv_conf` module from network v1
+# nameservers alone; `apk` in modules-final then fails DNS. We seed `/etc/resolv.conf` via
+# `write_files` (runs before package install). Defaults are public resolvers — fork or override
+# with a per-node vendor merge if you need internal DNS only.
+#
 # **Cilium:** on Alpine 3.20+ the root filesystem should be mounted **rshared** (add `rshared`
 # to the `/` options in fstab, e.g. `rw,relatime,rshared`) and the live root remounted so mount
 # namespaces propagate — see the Cilium/k0s-on-Alpine host prep notes (same blog series).
@@ -28,7 +33,6 @@
 
 hostname: k0s-node
 manage_etc_hosts: true
-manage_resolv_conf: true
 package_upgrade: true
 package_reboot_if_required: true
 timezone: Europe/Oslo
@@ -55,6 +59,12 @@ packages:
 # - ceph-common
 
 write_files:
+- path: /etc/resolv.conf
+  permissions: "0644"
+  content: |
+    nameserver 8.8.8.8
+    nameserver 8.8.4.4
+
 - path: /etc/modules-load.d/k8s-cni.conf
   content: |
     overlay
