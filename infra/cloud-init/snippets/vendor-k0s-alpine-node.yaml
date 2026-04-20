@@ -28,6 +28,7 @@
 
 hostname: k0s-node
 manage_etc_hosts: true
+manage_resolv_conf: true
 package_upgrade: true
 package_reboot_if_required: true
 timezone: Europe/Oslo
