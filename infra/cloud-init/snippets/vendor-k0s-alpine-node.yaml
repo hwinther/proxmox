@@ -1,0 +1,157 @@
+#cloud-config
+# Alpine Linux (generic cloud image) k0s **node** baseline: OS prep + k0s binary only.
+#
+# Targets generic **BIOS** qcow2 images (e.g. generic_alpine-*-x86_64-bios-cloudinit-r0.qcow2).
+# UEFI images need a UEFI-capable Proxmox VM (OVMF) and matching image filename.
+#
+# Does NOT:
+#   - join the cluster (use a per-clone vendor snippet, cloud-init merge, or SSH after boot)
+#   - install Cilium / Ceph CSI (same as Debian vendor — see infra/k0s/cilium-k0s-setup.md)
+#
+# Alpine / k0s host prep aligns with https://blog.devdemand.co/deploying-k0s-alpine/
+# (cgroups v2 unified, dbus for machine-id, udev for volume plugins like OpenEBS). We skip the
+# article’s sysfs eBPF snippet — modern Alpine generic cloud images handle bpffs; we still add
+# fstab + mount for /sys/fs/bpf like the Debian vendor.
+#
+# **Cilium:** on Alpine 3.20+ the root filesystem should be mounted **rshared** (add `rshared`
+# to the `/` options in fstab, e.g. `rw,relatime,rshared`) and the live root remounted so mount
+# namespaces propagate — see the Cilium/k0s-on-Alpine host prep notes (same blog series).
+#
+# Notes vs Debian vendor:
+#   - **OpenRC** instead of systemd (`rc-service` / `rc-update`, not `systemctl`).
+#   - **apk** package names (nfs-utils, conntrack-tools, procps for `sysctl --system`).
+#   - Upstream `k0s` Linux builds are Go-linked; they are expected to run on musl, but if
+#     execution fails, verify with `ldd /usr/local/bin/k0s` and consider glibc compat or the
+#     Debian template instead.
+# Pinned k0s: bump K0S_VERSION — https://github.com/k0sproject/k0s/releases
+# Pinned cilium CLI: bump CILIUM_CLI_VERSION — https://github.com/cilium/cilium-cli/releases
+
+hostname: k0s-node
+manage_etc_hosts: true
+package_upgrade: true
+package_reboot_if_required: true
+timezone: Europe/Oslo
+
+# k0s on Alpine: dbus (machine-id), udev (OpenEBS-style volume plugins) — see Dev Demand guide.
+packages:
+- dbus
+- udev
+- openssh
+- qemu-guest-agent
+- chrony
+- curl
+- ca-certificates
+- iptables
+- conntrack-tools
+- socat
+- nfs-utils
+- procps
+- kmod
+# Optional: Ceph client debugging (CSI still runs in containers)
+# - ceph-common
+
+write_files:
+- path: /etc/modules-load.d/k8s-cni.conf
+  content: |
+    overlay
+    br_netfilter
+
+- path: /etc/sysctl.d/99-k8s-network.conf
+  content: |
+    net.ipv4.ip_forward = 1
+    net.ipv4.conf.all.rp_filter = 0
+    net.ipv4.conf.default.rp_filter = 0
+    net.bridge.bridge-nf-call-iptables = 1
+    net.bridge.bridge-nf-call-ip6tables = 1
+    net.ipv6.conf.all.forwarding = 1
+    net.ipv6.conf.default.forwarding = 1
+    fs.inotify.max_user_instances = 8192
+    fs.inotify.max_user_watches = 524288
+    vm.swappiness = 0
+
+runcmd:
+# cgroups v2 unified (article: rc.conf + cgroups service; reboot scheduled below)
+- |
+  if grep -q '^rc_cgroup_mode=' /etc/rc.conf; then
+    sed -i 's/^rc_cgroup_mode=.*/rc_cgroup_mode="unified"/' /etc/rc.conf
+  else
+    echo 'rc_cgroup_mode="unified"' >> /etc/rc.conf
+  fi
+- rc-service cgroups start || true
+- rc-update add cgroups default || true
+- rc-service dbus start || true
+- rc-update add dbus default || true
+- rc-update add udev sysinit || true
+- rc-update add udev-trigger sysinit || true
+- rc-update add udev-settle sysinit || true
+# Cilium: MS_SHARED root — append rshared to first real `/` line in fstab (any UUID/device), then remount.
+- |
+  set -e
+  if [ -f /etc/fstab ]; then
+    cp -a /etc/fstab /etc/fstab.bak.before-rshared
+    awk '
+      BEGIN { root_seen = 0 }
+      /^[[:space:]]*#/ { print; next }
+      $2 == "/" && root_seen == 0 {
+        root_seen = 1
+        if ($4 !~ /(^|,)rshared(,|$)/) $4 = $4 ",rshared"
+      }
+      { print }
+    ' /etc/fstab > /tmp/fstab.ci
+    mv /tmp/fstab.ci /etc/fstab
+  fi
+  mount -o remount,rshared /
+- test -f /etc/fstab && grep -q '[[:space:]]/sys/fs/bpf[[:space:]]' /etc/fstab || echo 'bpffs /sys/fs/bpf bpf defaults 0 0' >> /etc/fstab
+- mkdir -p /sys/fs/bpf
+- mountpoint -q /sys/fs/bpf || mount -t bpf bpf /sys/fs/bpf
+- modprobe overlay || true
+- modprobe br_netfilter || true
+- sysctl --system
+- swapoff -a || true
+- test -f /etc/fstab && sed -i.bak '/[[:space:]]swap[[:space:]]/s/^/#/' /etc/fstab || true
+- rc-update add sshd default
+- rc-update add chronyd default
+- rc-update add qemu-guest-agent default
+- rc-service sshd restart || true
+- rc-service chronyd restart || true
+- rc-service qemu-guest-agent start || true
+- |
+  set -e
+  K0S_VERSION=v1.35.2+k0s.0
+  ARCH=$(uname -m)
+  case "$ARCH" in
+    x86_64) ARCH=amd64 ;;
+    aarch64) ARCH=arm64 ;;
+    *) echo "unsupported arch for k0s: $ARCH" >&2; exit 1 ;;
+  esac
+  TAG_ESC=$(printf '%s\n' "$K0S_VERSION" | sed 's/+/%2B/g')
+  BIN="k0s-${K0S_VERSION}-${ARCH}"
+  BIN_ESC=$(printf '%s\n' "$BIN" | sed 's/+/%2B/g')
+  curl -sSLf -o /usr/local/bin/k0s "https://github.com/k0sproject/k0s/releases/download/${TAG_ESC}/${BIN_ESC}"
+  chmod +x /usr/local/bin/k0s
+- |
+  set -e
+  CILIUM_CLI_VERSION=v0.19.2
+  ARCH=$(uname -m)
+  case "$ARCH" in
+    x86_64) CLI_ARCH=amd64 ;;
+    aarch64) CLI_ARCH=arm64 ;;
+    *) echo "unsupported arch for cilium-cli: $ARCH" >&2; exit 1 ;;
+  esac
+  WORKDIR=$(mktemp -d)
+  trap 'rm -rf "$WORKDIR"' EXIT
+  cd "$WORKDIR"
+  BASE="https://github.com/cilium/cilium-cli/releases/download/${CILIUM_CLI_VERSION}"
+  TGZ="cilium-linux-${CLI_ARCH}.tar.gz"
+  curl -sSLf -O "${BASE}/${TGZ}"
+  curl -sSLf -O "${BASE}/${TGZ}.sha256sum"
+  sha256sum -c "${TGZ}.sha256sum"
+  tar -C /usr/local/bin -xzf "${TGZ}"
+- modprobe rbd || true
+- echo rbd >> /etc/modules-load.d/k8s-storage.conf
+
+# Article reboot after rc_cgroup_mode — second boot comes up with unified cgroups + udev sysinit.
+power_state:
+  mode: reboot
+  timeout: 300
+  condition: true

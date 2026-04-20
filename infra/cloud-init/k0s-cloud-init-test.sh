@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
-# Proxmox helper: clone the k0s Debian cloud-init template for a quick test VM, or tear it down.
+# Proxmox helper: clone the k0s cloud-init template for a quick test VM, or tear it down.
 # Run on the Proxmox host. Replaces the older split of create-debian-cloud-init-test.sh +
 # destroy-debian-cloud-init-test.sh with one script and explicit commands.
 #
 # Environment (optional):
-#   TEMPLATE_VMID   Template created by create-k0s-debian-template.sh (default: 10010)
+#   CREATE_TEMPLATE_SCRIPT  Path to template script (default: create-k0s-debian-template.sh).
+#                            For Alpine: CREATE_TEMPLATE_SCRIPT="${PWD}/infra/cloud-init/create-k0s-alpine-template.sh" TEMPLATE_VMID=10011
+#   TEMPLATE_VMID   Template VM id (default: 10010 Debian; use 10011 if you created the Alpine template)
 #   CLONE_VMID      Test clone id (default: 20010)
 #   CLONE_NAME      Clone name (default: k0s-cloudinit-test)
 #   NO_TERMINAL=1   After `up` / `recreate`, do not run `qm terminal`
@@ -28,7 +30,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CREATE_TEMPLATE_SCRIPT="${SCRIPT_DIR}/create-k0s-debian-template.sh"
+CREATE_TEMPLATE_SCRIPT="${CREATE_TEMPLATE_SCRIPT:-${SCRIPT_DIR}/create-k0s-debian-template.sh}"
 
 TEMPLATE_VMID="${TEMPLATE_VMID:-10010}"
 CLONE_VMID="${CLONE_VMID:-20010}"
