@@ -6,6 +6,17 @@ Cloud-init **YAML lives in Git** under `infra/cloud-init/snippets/`. On each Pro
 
 Keeping snippets under **`infra/`** (not `scripts/`) makes it clear these are **infrastructure config** for Proxmox VMs, separate from one-off automation scripts.
 
+### Windows (Git Bash)
+
+These `.sh` files are run on the **Proxmox host** (Linux). On a Windows workstation, open **Git Bash** to edit them and run quick checks, for example:
+
+```bash
+bash -n infra/cloud-init/create-k0s-debian-template.sh
+bash -n infra/cloud-init/lib/k0s-template-common.sh
+```
+
+Use Unix paths under `/o/proxmox` or `//o/proxmox` depending on your Git for Windows mount.
+
 ## Runtime on Proxmox
 
 1. Copy or symlink files into `/var/lib/vz/snippets/`.
@@ -22,7 +33,20 @@ chmod +x infra/cloud-init/create-k0s-debian-template.sh   # from repo root, adju
 sudo ./infra/cloud-init/create-k0s-debian-template.sh
 ```
 
-Edit [`snippets/cloud-init-user.example.yaml`](snippets/cloud-init-user.example.yaml) (SSH key, user) **before** cloning the template for production use. Override `VMID`, `STORAGE`, `VMSETTINGS`, `IMAGENAME` / `IMAGEURL` as needed. Set `USE_CUSTOM_USER=0` to use only `scripts/cloud-init/ci-ssh-keys` and vendor data (no `user` snippet).
+**User data:** use [`snippets/cloud-init-user-debian.yaml`](snippets/cloud-init-user-debian.yaml) for Debian templates and [`snippets/cloud-init-user-alpine.yaml`](snippets/cloud-init-user-alpine.yaml) for Alpine (both can live in Git; login shell **`/bin/ash`** on Alpine avoids early-boot `/bin/bash` missing — see the Alpine file header). Each `create-k0s-*-template.sh` defaults to the matching file; override with **`USER_SOURCE`**. Replace placeholder SSH keys before production. Override `VMID`, `STORAGE`, `VMSETTINGS`, `IMAGENAME` / `IMAGEURL` as needed. Set `USE_CUSTOM_USER=0` to use only `scripts/cloud-init/ci-ssh-keys` and vendor data (no `user` snippet).
+
+**Disk:** both k0s template scripts default **`DISK_TARGET=64G`** (64 GiB total virtual size for `scsi0`). They read the cloud image’s virtual size with `qemu-img` and run `qm resize` with **only the missing** amount (`lib/k0s-template-common.sh`). Override with e.g. `DISK_TARGET=128G`.
+
+### Automated template (Alpine generic cloud + k0s node vendor)
+
+Same flow as Debian, but the vendor snippet uses **apk** packages and **OpenRC** (`vendor-k0s-alpine-node.yaml`). It follows the [k0s-on-Alpine host prep checklist](https://blog.devdemand.co/deploying-k0s-alpine/) (cgroups v2 unified, dbus, udev), adds **`rshared` on the root mount** in `/etc/fstab` plus `mount -o remount,rshared /` for **Cilium** (Alpine 3.20+ pattern), omits the article’s sysfs eBPF edit, and ends with **one automatic reboot** after first-boot provisioning so `rc_cgroup_mode` matches the guide. Default image is a pinned **BIOS** `qcow2` from [Alpine’s cloud index](https://dl-cdn.alpinelinux.org/alpine/latest-stable/releases/cloud/) (`generic_alpine-*-x86_64-bios-cloudinit-r0.qcow2`). Bump `IMAGENAME` when Alpine publishes a newer generic build; use a **UEFI** `*-uefi-cloudinit-*.qcow2` if the VM uses OVMF.
+
+```bash
+chmod +x infra/cloud-init/create-k0s-alpine-template.sh
+sudo ./infra/cloud-init/create-k0s-alpine-template.sh
+```
+
+Default template **VMID is 10011** (Debian k0s template defaults to **10010**) so both can coexist. [`k0s-cloud-init-test.sh`](k0s-cloud-init-test.sh) still points at the Debian creator by default; point **`CREATE_TEMPLATE_SCRIPT`** at `create-k0s-alpine-template.sh` and set **`TEMPLATE_VMID`** to match when testing Alpine clones.
 
 ### Static network (`NETWORK_SOURCE`)
 
@@ -63,17 +87,17 @@ Override **`TEMPLATE_VMID`**, **`CLONE_VMID`**, **`CLONE_NAME`** as needed.
 
 ## k0s + Cilium + Ceph CSI
 
-| Layer | Where it runs | Typical mechanism |
-|--------|----------------|-------------------|
-| **Node OS prep** | First boot | `vendor-k0s-debian-node.yaml` (packages, sysctl, `k0s` binary) |
-| **k0s join** | After template clone | `k0s install controller|worker` with token/config (per-clone vendor, Ansible, or SSH) |
-| **Cilium** | Cluster exists | Helm or Flux (see [`../k0s/cilium-k0s-setup.md`](../k0s/cilium-k0s-setup.md)) |
-| **Ceph CSI** | Cluster exists | Helm or Flux; nodes need kernel **RBD** and **ceph-public** reachability — no CSI Helm in cloud-init |
+| Layer            | Where it runs        | Typical mechanism                                                                                    |
+| ---------------- | -------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| **Node OS prep** | First boot           | `vendor-k0s-debian-node.yaml` or `vendor-k0s-alpine-node.yaml` (packages, sysctl, `k0s` binary)      |
+| **k0s join**     | After template clone | `k0s install controller                                                                              | worker` with token/config (per-clone vendor, Ansible, or SSH) |
+| **Cilium**       | Cluster exists       | Helm or Flux (see [`../k0s/cilium-k0s-setup.md`](../k0s/cilium-k0s-setup.md))                        |
+| **Ceph CSI**     | Cluster exists       | Helm or Flux; nodes need kernel **RBD** and **ceph-public** reachability — no CSI Helm in cloud-init |
 
 Do **not** install Cilium or Ceph CSI in cloud-init unless you run a **custom** second-stage with a valid kubeconfig and idempotent Helm — that is brittle for golden templates.
 
 ## Related
 
 - Legacy template script: [`../../scripts/cloud-init/debian.sh`](../../scripts/cloud-init/debian.sh) — point `USER_YAML` / `VENDOR_YAML` symlinks at `infra/cloud-init/snippets/` if you want a single source of truth.
-- k0s-focused template script: [`create-k0s-debian-template.sh`](create-k0s-debian-template.sh).
+- k0s-focused template scripts: [`create-k0s-debian-template.sh`](create-k0s-debian-template.sh), [`create-k0s-alpine-template.sh`](create-k0s-alpine-template.sh).
 - k0s networking + firewall: [`../k0s/network-plan.md`](../k0s/network-plan.md)

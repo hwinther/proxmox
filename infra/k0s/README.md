@@ -10,7 +10,7 @@ Follow this order on lab nodes before relying on the same steps in production. A
 
 ## 2. Node OS (Cilium prerequisites)
 
-Per node VM: kernel and modules required by your Cilium version, sysctl/conntrack tuning as documented by Cilium, correct MTU if using encapsulation, and **no leftover CNI** from other installers. Debian cloud-init baseline for nodes: [`../cloud-init/snippets/vendor-k0s-debian-node.yaml`](../cloud-init/snippets/vendor-k0s-debian-node.yaml) (see [`../cloud-init/README.md`](../cloud-init/README.md)).
+Per node VM: kernel and modules required by your Cilium version, sysctl/conntrack tuning as documented by Cilium, correct MTU if using encapsulation, and **no leftover CNI** from other installers. Cloud-init baselines for nodes: Debian [`../cloud-init/snippets/vendor-k0s-debian-node.yaml`](../cloud-init/snippets/vendor-k0s-debian-node.yaml), Alpine [`../cloud-init/snippets/vendor-k0s-alpine-node.yaml`](../cloud-init/snippets/vendor-k0s-alpine-node.yaml) (see [`../cloud-init/README.md`](../cloud-init/README.md)).
 
 Confirm **k0s + Cilium** compatibility for your chosen versions (CNI-only vs kube-proxy replacement).
 

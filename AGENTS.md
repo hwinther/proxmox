@@ -4,6 +4,10 @@
 
 This is a **homelab infrastructure-as-code (IaC) / GitOps repository**. There is no runnable web application in this repo; it contains Kubernetes manifests (Flux-managed), Python automation scripts for Proxmox LXC provisioning, Docker Compose stacks for SDR feeders, and container image Dockerfiles.
 
+### Shell on Windows
+
+Use **Git Bash** (`Git\bin\bash.exe`) for repo **bash** scripts and POSIX checks (e.g. `bash -n infra/cloud-init/*.sh`). PowerShell is fine for `npm` / `npx` / `git`; do not assume **WSL** is installed.
+
 ### Dev dependencies
 
 - **Python** (>=3.8): runtime dep `dnspython`, dev deps `coverage`, `flake8`, `flake8-html`, `unittest-xml-reporting`, `genbadge[all]`. Install via `pip install dnspython==2.2.1 coverage==7.8.0 unittest-xml-reporting==3.2.0 flake8==7.2.0 flake8-html==0.4.3 "genbadge[all]==1.1.3"`. Note: `pip install -e ".[dev]"` will fail because flit expects a `proxmox` Python module that does not exist; install deps directly instead.
