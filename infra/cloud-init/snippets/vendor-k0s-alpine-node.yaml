@@ -47,6 +47,8 @@ packages:
 - nfs-utils
 - procps
 - kmod
+- bash
+- nano
 # Optional: Ceph client debugging (CSI still runs in containers)
 # - ceph-common
 
