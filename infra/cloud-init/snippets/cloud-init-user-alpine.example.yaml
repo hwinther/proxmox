@@ -1,0 +1,17 @@
+#cloud-config
+# k0s Proxmox template — **Alpine** generic cloud (`create-k0s-alpine-template.sh`).
+# Debian pair: `cloud-init-user-debian.yaml`. Use `/bin/ash` here: `/bin/bash` is not present
+# until `apk` runs, and cloud-init creates users before `packages`, so `shell: /bin/bash` can
+# break early console login (`can't execute '/bin/bash'`). Vendor still installs `bash` for scripts.
+chpasswd:
+  expire: false
+users:
+- default
+- name: user
+  gecos: k0s node admin
+  groups: adm, users, wheel
+  lock_passwd: true
+  sudo: ALL=(ALL) NOPASSWD:ALL
+  shell: /bin/ash
+  ssh_authorized_keys:
+  - ssh-ed25519 AAAA...your-key-here

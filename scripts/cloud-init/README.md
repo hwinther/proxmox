@@ -1,6 +1,6 @@
 # Legacy Proxmox template scripts
 
-Cloud-init YAML snippets now live in **[`infra/cloud-init/snippets/`](../../infra/cloud-init/snippets/)** (canonical copy in Git).
+Cloud-init YAML snippets now live in **[`infra/cloud-init/snippets/`](../../infra/cloud-init/snippets/)** (canonical copy in Git). k0s user-data templates: **`cloud-init-user-debian.yaml`** and **`cloud-init-user-alpine.yaml`**.
 
 On the Proxmox host, symlink `/var/lib/vz/snippets/*.yaml` to that directory (or a checkout path).
 

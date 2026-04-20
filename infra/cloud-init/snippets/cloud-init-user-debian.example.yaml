@@ -1,0 +1,16 @@
+#cloud-config
+# k0s Proxmox template — **Debian** generic cloud (`create-k0s-debian-template.sh`).
+# Alpine pair: `cloud-init-user-alpine.yaml` (`shell: /bin/ash`; see README).
+# Replace SSH keys before relying on the template. Override with USER_SOURCE=... when running the script.
+chpasswd:
+  expire: false
+users:
+- default
+- name: user
+  gecos: k0s node admin
+  groups: adm, users, sudo
+  lock_passwd: true
+  sudo: ALL=(ALL) NOPASSWD:ALL
+  shell: /bin/bash
+  ssh_authorized_keys:
+  - ssh-ed25519 AAAA...your-key-here

@@ -3,7 +3,8 @@
 # vendor-k0s-alpine-node.yaml (k0s binary, sysctl, bpffs, OpenRC services, etc.).
 #
 # Run this ON the Proxmox host. Snippet sources default to ../snippets/ (this repo).
-# Override with SNIPPETS_DIR if you keep snippets elsewhere.
+# Override with SNIPPETS_DIR if you keep snippets elsewhere. User data default:
+# snippets/cloud-init-user-alpine.yaml (pair: cloud-init-user-debian.yaml).
 #
 # Image index: https://dl-cdn.alpinelinux.org/alpine/latest-stable/releases/cloud/
 # Pick a **generic** *bios-cloudinit* **qcow2** for SeaBIOS VMs (default below), or a UEFI
@@ -43,7 +44,7 @@ VENDOR_SNIPPET_NAME="${VENDOR_SNIPPET_NAME:-vendor-k0s-alpine-node.yaml}"
 USER_YAML="/var/lib/vz/snippets/${USER_SNIPPET_NAME}"
 VENDOR_YAML="/var/lib/vz/snippets/${VENDOR_SNIPPET_NAME}"
 
-USER_SOURCE="${USER_SOURCE:-${SNIPPETS_DIR}/cloud-init-user.yaml}"
+USER_SOURCE="${USER_SOURCE:-${SNIPPETS_DIR}/cloud-init-user-alpine.yaml}"
 VENDOR_SOURCE="${VENDOR_SOURCE:-${SNIPPETS_DIR}/vendor-k0s-alpine-node.yaml}"
 
 SSH_KEYS_FILE="${SSH_KEYS_FILE:-${REPO_ROOT}/scripts/cloud-init/ci-ssh-keys}"

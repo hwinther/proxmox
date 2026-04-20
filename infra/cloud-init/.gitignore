@@ -1,3 +1,6 @@
+# Legacy / local override when not using committed *-debian.yaml / *-alpine.yaml
 cloud-init-user.yaml
+cloud-init-user-*.yaml
+!cloud-init-user-*.example.yaml
 network-k0s-node.yaml
 !lib/

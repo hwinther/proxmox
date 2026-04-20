@@ -4,9 +4,10 @@
 #
 # Run this ON the Proxmox host from any cwd. Snippet sources default to this script's
 # ../snippets/ directory (this repo). Override with SNIPPETS_DIR if you keep snippets elsewhere.
+# User data default: snippets/cloud-init-user-debian.yaml (pair: cloud-init-user-alpine.yaml).
 #
-# Prerequisites: wget, pvesm/qm available; edit cloud-init-user.example.yaml (or your user
-# snippet) with a real SSH key before first boot, or omit user data and pass --sshkeys instead.
+# Prerequisites: wget, pvesm/qm available; edit snippets/cloud-init-user-debian.yaml (or set
+# USER_SOURCE) with a real SSH key before first boot, or omit user data and pass --sshkeys instead.
 #
 # Usage:
 #   ./create-k0s-debian-template.sh
@@ -43,7 +44,7 @@ VENDOR_SNIPPET_NAME="${VENDOR_SNIPPET_NAME:-vendor-k0s-debian-node.yaml}"
 USER_YAML="/var/lib/vz/snippets/${USER_SNIPPET_NAME}"
 VENDOR_YAML="/var/lib/vz/snippets/${VENDOR_SNIPPET_NAME}"
 
-USER_SOURCE="${USER_SOURCE:-${SNIPPETS_DIR}/cloud-init-user.yaml}"
+USER_SOURCE="${USER_SOURCE:-${SNIPPETS_DIR}/cloud-init-user-debian.yaml}"
 VENDOR_SOURCE="${SNIPPETS_DIR}/vendor-k0s-debian-node.yaml"
 
 SSH_KEYS_FILE="${SSH_KEYS_FILE:-${REPO_ROOT}/scripts/cloud-init/ci-ssh-keys}"
