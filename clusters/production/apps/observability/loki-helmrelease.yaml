@@ -44,17 +44,6 @@ spec:
         requests:
           cpu: 50m
           memory: 256Mi
-      # Post-upgrade mc bucket job must reach MinIO ClusterIP; k0s-prod03 has had node→Service routing issues.
-      postJob:
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-              - matchExpressions:
-                - key: kubernetes.io/hostname
-                  operator: NotIn
-                  values:
-                  - k0s-prod03.k0s.wsh.no
     loki:
       commonConfig:
         replication_factor: 1
