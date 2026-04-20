@@ -16,5 +16,6 @@ users:
   - ssh-ed25519 AAAA...your-key-here
 
 #- name: root
+#  lock_passwd: false
 #  ssh_authorized_keys:
 #  - ssh-ed25519 AAAA...your-key-here
