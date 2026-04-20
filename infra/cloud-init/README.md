@@ -6,6 +6,17 @@ Cloud-init **YAML lives in Git** under `infra/cloud-init/snippets/`. On each Pro
 
 Keeping snippets under **`infra/`** (not `scripts/`) makes it clear these are **infrastructure config** for Proxmox VMs, separate from one-off automation scripts.
 
+### Windows (Git Bash)
+
+These `.sh` files are run on the **Proxmox host** (Linux). On a Windows workstation, open **Git Bash** to edit them and run quick checks, for example:
+
+```bash
+bash -n infra/cloud-init/create-k0s-debian-template.sh
+bash -n infra/cloud-init/lib/k0s-template-common.sh
+```
+
+Use Unix paths under `/o/proxmox` or `//o/proxmox` depending on your Git for Windows mount.
+
 ## Runtime on Proxmox
 
 1. Copy or symlink files into `/var/lib/vz/snippets/`.
@@ -23,6 +34,8 @@ sudo ./infra/cloud-init/create-k0s-debian-template.sh
 ```
 
 Edit [`snippets/cloud-init-user.example.yaml`](snippets/cloud-init-user.example.yaml) (SSH key, user) **before** cloning the template for production use. Override `VMID`, `STORAGE`, `VMSETTINGS`, `IMAGENAME` / `IMAGEURL` as needed. Set `USE_CUSTOM_USER=0` to use only `scripts/cloud-init/ci-ssh-keys` and vendor data (no `user` snippet).
+
+**Disk:** both k0s template scripts default **`DISK_TARGET=64G`** (64 GiB total virtual size for `scsi0`). They read the cloud image’s virtual size with `qemu-img` and run `qm resize` with **only the missing** amount (`lib/k0s-template-common.sh`). Override with e.g. `DISK_TARGET=128G`.
 
 ### Automated template (Alpine generic cloud + k0s node vendor)
 

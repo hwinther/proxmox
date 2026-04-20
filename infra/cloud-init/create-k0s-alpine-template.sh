@@ -12,11 +12,14 @@
 # Usage:
 #   ./create-k0s-alpine-template.sh
 #   IMAGENAME=... IMAGEURL=... VMID=10011 ./create-k0s-alpine-template.sh
+#   DISK_TARGET=128G ./create-k0s-alpine-template.sh
 #   NETWORK_SOURCE="${SNIPPETS_DIR}/network-example-static.yaml" ./create-k0s-alpine-template.sh
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=lib/k0s-template-common.sh
+source "${SCRIPT_DIR}/lib/k0s-template-common.sh"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 SNIPPETS_DIR="${SNIPPETS_DIR:-${SCRIPT_DIR}/snippets}"
 
@@ -31,7 +34,8 @@ export VMID="${VMID:-10011}"
 export VMMEM="${VMMEM:-8196}"
 export VMCORES="${VMCORES:-2}"
 export VMSETTINGS="${VMSETTINGS:---net0 virtio,bridge=vmbr0,tag=10,firewall=1 --net1 virtio,bridge=vmbr0,tag=20,firewall=1}"
-export DISK_RESIZE="${DISK_RESIZE:-32G}"
+# Total virtual disk size for scsi0 (GiB-style G/M/K/T). Only the delta from the cloud image is added.
+export DISK_TARGET="${DISK_TARGET:-64G}"
 
 USER_SNIPPET_NAME="${USER_SNIPPET_NAME:-cloud-init-k0s-user.yaml}"
 VENDOR_SNIPPET_NAME="${VENDOR_SNIPPET_NAME:-vendor-k0s-alpine-node.yaml}"
@@ -53,11 +57,12 @@ done
 
 echo "Using snippets from: ${SNIPPETS_DIR}"
 echo "Image: ${IMAGEURL}${IMAGENAME}"
+echo "DISK_TARGET (scsi0 total): ${DISK_TARGET}"
 
 wget -O "${IMAGEFOLDER}/${IMAGENAME}" --continue "${IMAGEURL}${IMAGENAME}"
 qm create "${VMID}" --name "${VMNAME}" --memory "${VMMEM}" --cores "${VMCORES}" --cpu host --ostype l26 ${VMSETTINGS}
 qm set "${VMID}" --scsi0 "${STORAGE}:0,import-from=${IMAGEFOLDER}/${IMAGENAME},discard=on"
-qm resize "${VMID}" scsi0 "+${DISK_RESIZE}"
+k0s_resize_scsi0_to_target "${VMID}" "${IMAGEFOLDER}/${IMAGENAME}" "${DISK_TARGET}"
 qm set "${VMID}" --scsi2 "${STORAGE}:cloudinit"
 qm set "${VMID}" --boot='order=scsi0;scsi2' --scsihw virtio-scsi-single
 qm set "${VMID}" --serial0 socket --vga serial0
