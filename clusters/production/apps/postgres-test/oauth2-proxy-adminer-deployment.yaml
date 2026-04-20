@@ -20,6 +20,19 @@ spec:
         runAsUser: 65532
         seccompProfile:
           type: RuntimeDefault
+      # oauth2-proxy startup validation requires client-secret or client-secret-file; empty file + PKCE matches Authelia public client.
+      initContainers:
+      - name: oidc-client-secret-file
+        image: docker.io/library/busybox:1.37
+        command: ['sh', '-c', ': > /secret/oidc-client-secret']
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: oidc-client-secret
+          mountPath: /secret
       containers:
       - name: oauth2-proxy
         image: quay.io/oauth2-proxy/oauth2-proxy:v7.7.1
@@ -40,16 +53,15 @@ spec:
           value: https://auth.wsh.no
         - name: OAUTH2_PROXY_CLIENT_ID
           value: adminer-pg-test
-        # Public Authelia OIDC client (PKCE); empty secret is required for some oauth2-proxy builds.
-        - name: OAUTH2_PROXY_CLIENT_SECRET
-          value: ""
+        - name: OAUTH2_PROXY_CLIENT_SECRET_FILE
+          value: /var/run/oauth2-proxy/oidc-client-secret
         - name: OAUTH2_PROXY_REDIRECT_URL
           value: https://adminer-pg-test.mgmt.wsh.no/oauth2/callback
         - name: OAUTH2_PROXY_UPSTREAMS
           value: http://adminer.postgres-test.svc.cluster.local:8080
         - name: OAUTH2_PROXY_HTTP_ADDRESS
           value: 0.0.0.0:4180
-        - name: OAUTH2_PROXY_EMAIL_DOMAIN
+        - name: OAUTH2_PROXY_EMAIL_DOMAINS
           value: "*"
         - name: OAUTH2_PROXY_COOKIE_SECURE
           value: "true"
@@ -68,6 +80,10 @@ spec:
             secretKeyRef:
               name: oauth2-proxy-adminer
               key: cookie-secret
+        volumeMounts:
+        - name: oidc-client-secret
+          mountPath: /var/run/oauth2-proxy
+          readOnly: true
         resources:
           requests:
             cpu: 25m
@@ -80,3 +96,6 @@ spec:
             port: http
           initialDelaySeconds: 3
           periodSeconds: 10
+      volumes:
+      - name: oidc-client-secret
+        emptyDir: {}
