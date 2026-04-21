@@ -1,0 +1,80 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "kubectl: port-forward test Postgres (testdb-rw)",
+      "type": "shell",
+      "command": "kubectl port-forward -n postgres-test svc/testdb-rw 5432:5432",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "kubectl-port-forward",
+        "pattern": { "regexp": ".", "file": 1, "location": 2, "message": 3 },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".",
+          "endsPattern": "Forwarding from"
+        }
+      },
+      "presentation": {
+        "reveal": "silent",
+        "panel": "dedicated",
+        "showReuseMessage": false
+      }
+    },
+    {
+      "label": "kubectl: port-forward test Valkey (shared-test redis)",
+      "type": "shell",
+      "command": "kubectl port-forward -n shared-test svc/redis 6379:6379",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "kubectl-port-forward",
+        "pattern": { "regexp": ".", "file": 1, "location": 2, "message": 3 },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".",
+          "endsPattern": "Forwarding from"
+        }
+      },
+      "presentation": {
+        "reveal": "silent",
+        "panel": "dedicated",
+        "showReuseMessage": false
+      }
+    },
+    {
+      "label": "kubectl: port-forward RabbitMQ (test vhost)",
+      "type": "shell",
+      "command": "kubectl port-forward -n rabbitmq-production svc/rabbitmq 5672:5672",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "kubectl-port-forward",
+        "pattern": { "regexp": ".", "file": 1, "location": 2, "message": 3 },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".",
+          "endsPattern": "Forwarding from"
+        }
+      },
+      "presentation": {
+        "reveal": "silent",
+        "panel": "dedicated",
+        "showReuseMessage": false
+      }
+    },
+    {
+      "label": "kubectl: port-forward all test backends (Postgres, Valkey, RabbitMQ)",
+      "dependsOn": [
+        "kubectl: port-forward test Postgres (testdb-rw)",
+        "kubectl: port-forward test Valkey (shared-test redis)",
+        "kubectl: port-forward RabbitMQ (test vhost)"
+      ],
+      "dependsOrder": "parallel",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared",
+        "showReuseMessage": false
+      }
+    }
+  ]
+}
