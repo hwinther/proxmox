@@ -22,3 +22,11 @@ configMapGenerator:
     disableNameSuffixHash: true
     labels:
       grafana_dashboard: "1"
+# CloudNative-PG cluster metrics (grafana.com/dashboards/20417, revision 4).
+- name: grafana-dashboard-cnpg-cluster
+  files:
+  - dashboards/cnpg-cluster.json
+  options:
+    disableNameSuffixHash: true
+    labels:
+      grafana_dashboard: "1"

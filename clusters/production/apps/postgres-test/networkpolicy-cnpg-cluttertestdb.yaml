@@ -37,6 +37,13 @@ spec:
       protocol: TCP
     - port: 8000
       protocol: TCP
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: observability-production
+    ports:
+    - port: 9187
+      protocol: TCP
   egress:
   - to:
     - namespaceSelector:

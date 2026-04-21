@@ -11,8 +11,9 @@ resources:
 - otel-collector-helmrelease.yaml
 - observability-ingress.yaml
 configMapGenerator:
-- name: grafana-dashboard-aspnet-otel
+- name: grafana-dashboards-custom
   files:
   - dashboards/aspnet-core-otel.json
+  - dashboards/cnpg-cluster.json
   options:
     disableNameSuffixHash: true

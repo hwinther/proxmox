@@ -90,9 +90,9 @@ spec:
           editable: true
           options:
             path: /var/lib/grafana/dashboards/custom
-    ## Patched ASP.NET OTEL dashboard (see kustomization configMapGenerator).
+    ## ASP.NET OTEL + CloudNativePG dashboards (see kustomization configMapGenerator).
     dashboardsConfigMaps:
-      custom: grafana-dashboard-aspnet-otel
+      custom: grafana-dashboards-custom
     dashboards:
       default:
         opentelemetry-collector:

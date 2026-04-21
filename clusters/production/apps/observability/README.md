@@ -23,7 +23,8 @@ Namespace: **`observability-production`**. Flux installs **kube-prometheus-stack
 - **Ingress:** `grafana.mgmt.wsh.no` → Service `obs-kps-grafana:80`.
 - **Login:** user `admin`; password in Secret `obs-kps-grafana` (chart-generated unless set in values).
 - **Datasources:** Prometheus (default from stack), Loki, Tempo (see `kube-prometheus-stack-helmrelease.yaml` `grafana.additionalDataSources`).
-- **Dashboards:** stock kube-prometheus-stack Grafana dashboards plus **ASP.NET Core OTEL** (`dashboards/aspnet-core-otel.json` → ConfigMap `grafana-dashboard-aspnet-otel`, sidecar label `grafana_dashboard=1`).
+- **Dashboards:** stock kube-prometheus-stack Grafana dashboards plus **ASP.NET Core OTEL** (`dashboards/aspnet-core-otel.json` → ConfigMap `grafana-dashboard-aspnet-otel`, sidecar label `grafana_dashboard=1`) and **CloudNativePG** (`dashboards/cnpg-cluster.json` from [Grafana dashboard 20417](https://grafana.com/grafana/dashboards/20417-cloudnativepg/) → ConfigMap `grafana-dashboard-cnpg-cluster`).
+- **Postgres (CloudNative-PG):** Prometheus scrapes each `Cluster` via `additionalPodMonitors` on port **`metrics`** (9187). NetworkPolicies on **`postgres-test`** / **`postgres-production`** allow **`observability-production`** → **9187/tcp** so the Prometheus pod can reach the exporter.
 
 ## Helm releases
 
