@@ -62,7 +62,20 @@
       }
     },
     {
-      "label": "kubectl: port-forward all test backends (Postgres, Valkey, RabbitMQ)",
+      "label": "Local test env: print credentials (test tier)",
+      "type": "shell",
+      "command": "pwsh -NoProfile -File \"${workspaceFolder}/.vscode/print-test-tier-creds.ps1\"",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "focus": true,
+        "showReuseMessage": false,
+        "clear": false
+      }
+    },
+    {
+      "label": "kubectl: port-forward all test backends (parallel)",
       "dependsOn": [
         "kubectl: port-forward test Postgres (testdb-rw)",
         "kubectl: port-forward test Valkey (shared-test redis)",
@@ -72,6 +85,20 @@
       "problemMatcher": [],
       "presentation": {
         "reveal": "silent",
+        "panel": "shared",
+        "showReuseMessage": false
+      }
+    },
+    {
+      "label": "kubectl: port-forward all test backends (Postgres, Valkey, RabbitMQ)",
+      "dependsOn": [
+        "Local test env: print credentials (test tier)",
+        "kubectl: port-forward all test backends (parallel)"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
         "panel": "shared",
         "showReuseMessage": false
       }
