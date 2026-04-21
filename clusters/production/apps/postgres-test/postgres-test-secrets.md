@@ -53,12 +53,12 @@ Traffic: **browser → Traefik → `oauth2-proxy-adminer` → Adminer**. OIDC us
 
 ### Secret `oauth2-proxy-adminer` (namespace `postgres-test`)
 
-Create **before** the oauth2-proxy Deployment rolls (key **`cookie-secret`**: 16 / 24 / 32 random bytes, base64-encoded — oauth2-proxy validates length):
+Create **before** the oauth2-proxy Deployment rolls (key **`cookie-secret`** must end up as **16, 24, or 32 bytes** after oauth2-proxy’s parsing). Do **not** use `openssl rand -base64 32` alone: values containing **`+` or `/`** fail RawURL base64 decoding, so the proxy treats the whole string as raw bytes (**44** characters) and exits with `cookie_secret must be 16, 24, or 32 bytes`. Prefer a **32-character hex** string (16 random bytes):
 
 ```bash
 kubectl create secret generic oauth2-proxy-adminer \
   --namespace postgres-test \
-  --from-literal=cookie-secret="$(openssl rand -base64 32)"
+  --from-literal=cookie-secret="$(openssl rand -hex 16)"
 ```
 
 Ingress **`https://adminer-pg-test.mgmt.wsh.no`**. Default DB server in Adminer remains **`testdb-rw.postgres-test.svc.cluster.local`**; use **`cluttertestdb-rw.postgres-test.svc.cluster.local`** for Clutterstock test. Homepage discovers the Ingress via **`gethomepage.dev/*`** when cluster **`ingress: true`**.

@@ -23,10 +23,12 @@ The API Deployment reads **`ConnectionStrings__ClutterStockPostgres`** from key 
 
 ### Secret `oauth2-proxy-adminer` (namespace `postgres-production`)
 
+Use a **`cookie-secret`** that oauth2-proxy accepts (16 / 24 / 32 bytes after its decode step). Avoid bare `openssl rand -base64 32`: if the value contains **`+` or `/`**, decoding fails and the proxy sees a **44-byte** raw string and crashes. Prefer:
+
 ```bash
 kubectl create secret generic oauth2-proxy-adminer \
   --namespace postgres-production \
-  --from-literal=cookie-secret="$(openssl rand -base64 32)"
+  --from-literal=cookie-secret="$(openssl rand -hex 16)"
 ```
 
 Homepage: **`gethomepage.dev/*`** on the Ingress with cluster **`ingress: true`**.
