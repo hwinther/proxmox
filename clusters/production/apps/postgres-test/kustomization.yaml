@@ -15,5 +15,6 @@ resources:
 - oauth2-proxy-adminer-service.yaml
 - adminer-ingress.yaml
 - cilium-cluster-nodes-to-adminer-http.yaml
+- cilium-networkpolicy-cnpg-apiserver.yaml
 - kyverno-clusterpolicy-clone-testdb-app.yaml
 - kyverno-clusterpolicy-clone-cluttertestdb-app.yaml

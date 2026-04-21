@@ -57,6 +57,13 @@ spec:
       protocol: UDP
     - port: 53
       protocol: TCP
+  # kubernetes.default.svc DNATs to apiserver nodes on 6443; Cilium enforces on post-DNAT tuple.
+  - to:
+    - ipBlock:
+        cidr: 10.96.0.0/12
+    ports:
+    - port: 443
+      protocol: TCP
   - to:
     - namespaceSelector:
         matchLabels:
@@ -73,4 +80,6 @@ spec:
         - 169.254.169.254/32
     ports:
     - port: 443
+      protocol: TCP
+    - port: 6443
       protocol: TCP

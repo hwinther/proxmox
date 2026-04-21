@@ -1,0 +1,25 @@
+# CNPG instance/init pods reach the Kubernetes API via kubernetes.default (ClusterIP:443 → apiserver nodes:6443).
+# Cilium classifies that path as host/remote-node; Kubernetes ipBlock 0.0.0.0/0 does not cover it, so allow explicitly.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: cnpg-to-kubernetes-apiserver
+  namespace: postgres-test
+spec:
+  endpointSelector:
+    matchExpressions:
+    - key: cnpg.io/cluster
+      operator: In
+      values:
+      - testdb
+      - cluttertestdb
+  egress:
+  - toEntities:
+    - host
+    - remote-node
+    toPorts:
+    - ports:
+      - port: "6443"
+        protocol: TCP
+      - port: "443"
+        protocol: TCP

@@ -5,6 +5,7 @@ resources:
 - kyverno-rbac-clone-source-secrets.yaml
 - cluster-clutterstockdb.yaml
 - networkpolicy-cnpg-clutterstockdb.yaml
+- cilium-networkpolicy-cnpg-apiserver.yaml
 - networkpolicy-adminer.yaml
 - networkpolicy-oauth2-proxy-adminer.yaml
 - adminer-deployment.yaml
