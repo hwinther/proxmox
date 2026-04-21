@@ -4,7 +4,7 @@ metadata:
   name: adminer
   namespace: postgres-production
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
     gethomepage.dev/enabled: "true"
     gethomepage.dev/group: Management
     gethomepage.dev/name: Adminer (Postgres production)

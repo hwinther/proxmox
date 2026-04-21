@@ -4,7 +4,9 @@ metadata:
   name: adminer
   namespace: postgres-test
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web
+    # Expose on both entrypoints: plain HTTP (edge may terminate TLS and forward HTTP to `web`)
+    # and HTTPS to Traefik (`websecure`). Without `websecure`, https://… to Traefik :443 returns 404.
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
     gethomepage.dev/enabled: "true"
     gethomepage.dev/group: Management
     gethomepage.dev/name: Adminer (Postgres test tier)
