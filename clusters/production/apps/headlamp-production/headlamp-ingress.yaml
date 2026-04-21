@@ -4,7 +4,9 @@ metadata:
   name: headlamp
   namespace: headlamp-production
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web
+    # Homepage infers http:// when spec.tls is absent (see gethomepage resource-helpers getUrlFromIngress).
+    gethomepage.dev/href: "https://headlamp.mgmt.wsh.no/"
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
     traefik.ingress.kubernetes.io/router.middlewares: headlamp-production-authelia-forwardauth@kubernetescrd
     gethomepage.dev/enabled: "true"
     gethomepage.dev/group: Management
