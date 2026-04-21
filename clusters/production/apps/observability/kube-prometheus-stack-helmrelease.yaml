@@ -111,6 +111,40 @@ spec:
           scrapeTimeout: 10s
           tlsConfig:
             insecureSkipVerify: true
+      # CloudNative-PG instance pods expose postgres_exporter on port name `metrics` (9187).
+      - name: cnpg-postgres-test-testdb
+        selector:
+          matchLabels:
+            cnpg.io/cluster: testdb
+        namespaceSelector:
+          matchNames:
+          - postgres-test
+        podMetricsEndpoints:
+        - port: metrics
+          interval: 30s
+          scrapeTimeout: 10s
+      - name: cnpg-postgres-test-cluttertestdb
+        selector:
+          matchLabels:
+            cnpg.io/cluster: cluttertestdb
+        namespaceSelector:
+          matchNames:
+          - postgres-test
+        podMetricsEndpoints:
+        - port: metrics
+          interval: 30s
+          scrapeTimeout: 10s
+      - name: cnpg-postgres-production-clutterstockdb
+        selector:
+          matchLabels:
+            cnpg.io/cluster: clutterstockdb
+        namespaceSelector:
+          matchNames:
+          - postgres-production
+        podMetricsEndpoints:
+        - port: metrics
+          interval: 30s
+          scrapeTimeout: 10s
       prometheusSpec:
         replicas: 1
         retention: 15d
