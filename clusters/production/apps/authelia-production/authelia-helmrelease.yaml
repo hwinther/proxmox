@@ -203,6 +203,18 @@ spec:
             - https://adminer-pg-test.mgmt.wsh.no
             - https://adminer-pg-prod.mgmt.wsh.no
             - https://test.test.wsh.no
+            # Local OIDC (browser Origin must match exactly; add more ports/hosts as needed).
+            - http://localhost:5173
+            - http://127.0.0.1:5173
+            - http://localhost:3000
+            - http://127.0.0.1:3000
+            - http://localhost:4200
+            - http://127.0.0.1:4200
+            - http://localhost:15672
+            - http://127.0.0.1:15672
+            # RabbitMQ management HTTPS listener (default TLS port); Origin uses https when UI is opened on 15671.
+            - https://localhost:15671
+            - https://127.0.0.1:15671
           authorization_policies:
             rabbitmq-management-admins:
               default_policy: deny
@@ -255,7 +267,9 @@ spec:
             - profile
             - email
             - groups
-          # RabbitMQ management UI — OIDC auth code + PKCE (see rabbitmq-server helper.js redirect_uri).
+          # RabbitMQ management UI — OIDC auth code + PKCE. redirect_uri is the current browser origin +
+          # /js/oidc-oauth/login-callback.html (or /). Local dev: plain HTTP on 15672 or HTTPS on 15671 if TLS
+          # is enabled; port-forward may use 127.0.0.1 vs localhost — register both if needed.
           - client_id: rabbitmq-management
             client_name: RabbitMQ management
             public: true
@@ -266,13 +280,22 @@ spec:
             # Management UI sends audience = auth_oauth2.resource_server_id (RFC 8707).
             audience:
             - rabbitmq
-            consent_mode: pre-configured
-            pre_configured_consent_duration: 1 year
+            # implicit: RabbitMQ management JS uses prompt=none for silent session checks; pre-configured consent
+            # requires a consent UI and breaks that flow (Authelia error: prompt type 'none' ... require consent).
+            consent_mode: implicit
             access_token_signed_response_alg: RS256
             access_token_signed_response_key_id: authelia-headlamp
             redirect_uris:
             - https://rabbitmq.mgmt.wsh.no/js/oidc-oauth/login-callback.html
             - https://rabbitmq.mgmt.wsh.no/
+            - http://localhost:15672/js/oidc-oauth/login-callback.html
+            - http://127.0.0.1:15672/js/oidc-oauth/login-callback.html
+            - http://localhost:15672/
+            - http://127.0.0.1:15672/
+            - https://localhost:15671/js/oidc-oauth/login-callback.html
+            - https://127.0.0.1:15671/js/oidc-oauth/login-callback.html
+            - https://localhost:15671/
+            - https://127.0.0.1:15671/
             scopes:
             - openid
             - profile
@@ -327,6 +350,10 @@ spec:
             - code
             redirect_uris:
             - https://test.test.wsh.no/auth/callback
+            - http://localhost:5173/auth/callback
+            - http://127.0.0.1:5173/auth/callback
+            - http://localhost:3000/auth/callback
+            - http://127.0.0.1:3000/auth/callback
             scopes:
             - openid
             - profile
