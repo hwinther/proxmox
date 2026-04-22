@@ -126,6 +126,10 @@ spec:
           - "^/oidc-callback([?].*)?$"
         - domain: headlamp.mgmt.wsh.no
           policy: two_factor
+        - domain: redis-prod.mgmt.wsh.no
+          policy: two_factor
+        - domain: redis-test.mgmt.wsh.no
+          policy: two_factor
       authentication_backend:
         password_change:
           disable: true
