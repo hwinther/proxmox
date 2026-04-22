@@ -92,13 +92,52 @@ Management plugin listens on **15672** (HTTP) inside the cluster. Traefik + Home
 
 ## 5. TLS (AMQPS / management)
 
-The cluster references **`spec.tls.secretName: rabbitmq-tls`**, populated by cert-manager **`Certificate`** [`certificate-rabbitmq-tls.yaml`](certificate-rabbitmq-tls.yaml) using **`ClusterIssuer`** `letsencrypt-dns` (RFC2136). Create the TSIG secret and fix the issuer nameserver/key name first — see [`../cert-manager/cert-manager-secrets.md`](../cert-manager/cert-manager-secrets.md).
+The cluster references **`spec.tls.secretName: rabbitmq-tls`** and **`spec.tls.caSecretName: rabbitmq-tls`**, populated by cert-manager **`Certificate`** [`certificate-rabbitmq-tls.yaml`](certificate-rabbitmq-tls.yaml) using **`ClusterIssuer`** **`internal-ca`** (self-signed, see [`../cert-manager/clusterissuer-internal-ca.yaml`](../cert-manager/clusterissuer-internal-ca.yaml) and [`../cert-manager/certificate-internal-ca.yaml`](../cert-manager/certificate-internal-ca.yaml)). The TSIG / Let's Encrypt flow is **not** used for this cert because LE cannot sign `*.svc` / `*.svc.cluster.local`, and the Messaging Topology Operator **must** reach `https://rabbitmq.rabbitmq-production.svc:15671/` to reconcile `User` / `Permission` / `Vhost` CRs — hostname verification there is what drives the whole topology sync.
 
-- **AMQPS** listens on **5671** when TLS is enabled (plain AMQP remains on **5672** unless you change listener config separately).
-- The issued certificate covers **`rabbitmq.wsh.no`** and **`rabbitmq.mgmt.wsh.no`**. Clients that verify TLS must use a **hostname present in the cert** (for example **`rabbitmq.wsh.no` as the server name**), not only `rabbitmq.rabbitmq-production.svc.cluster.local`, or hostname verification will fail against Let's Encrypt.
-- After Flux applies changes, confirm the cert is **Ready**, then run the checks in cert-manager-secrets.md §5 (OpenSSL).
+- **Certificate SANs:** `rabbitmq.rabbitmq-production.svc`, `rabbitmq.rabbitmq-production.svc.cluster.local`, `rabbitmq.wsh.no`, `rabbitmq.mgmt.wsh.no`.
+- **Topology operator trust:** `spec.tls.caSecretName: rabbitmq-tls` tells the operator to load `ca.crt` from the same Secret (cert-manager writes `ca.crt` into CA-issued TLS Secrets automatically) and use it as the HTTP client's root CA. Without `caSecretName`, reconciliation fails with `x509: certificate signed by unknown authority` or `certificate is valid for ..., not rabbitmq.rabbitmq-production.svc`.
+- **AMQPS** listens on **5671** when TLS is enabled (plain AMQP remains on **5672**).
+- **Public ingress** (`https://rabbitmq.mgmt.wsh.no`) is unaffected: Traefik `web` entrypoint → Service **`rabbitmq`** port **15672** (plain HTTP inside the cluster), and Traefik serves its own Let's Encrypt cert at the edge.
+- **Direct TLS to the broker from outside the cluster** (`rabbitmq.wsh.no:5671`, `rabbitmq.mgmt.wsh.no:15671`) now presents the internal CA. Clients that verify TLS there must trust `ca.crt` from Secret `rabbitmq-tls` (or set the AMQP client to skip verification — acceptable for local dev / debugging only). Grab the CA with:
 
-Public **Ingress** for the management UI is **`https://rabbitmq.mgmt.wsh.no`** (Traefik `web` entrypoint → Service **`rabbitmq`** port **15672**). Direct TLS to the broker on **`rabbitmq.mgmt.wsh.no`** (port **15671**) is separate and uses the **`rabbitmq-tls`** Secret on the nodes.
+  ```bash
+  kubectl get secret rabbitmq-tls -n rabbitmq-production -o jsonpath='{.data.ca\.crt}' | base64 -d > wsh-internal-ca.pem
+  ```
+
+- After Flux applies changes, confirm the cert is **Ready** (`kubectl get certificate -n rabbitmq-production`) and then that `User`, `Permission`, `Vhost` CRs flip to **`Ready=True`** (`kubectl get users.rabbitmq.com,permissions.rabbitmq.com,vhosts.rabbitmq.com -A`). If they were already stuck in `Ready=False` before the cert was fixed, force a reconcile:
+
+  ```bash
+  kubectl label user.rabbitmq.com       test-api         -n rabbitmq-production rotate=$(date +%s) --overwrite
+  kubectl label permission.rabbitmq.com test-api-test    -n rabbitmq-production rotate=$(date +%s) --overwrite
+  kubectl label vhost.rabbitmq.com      test             -n rabbitmq-production rotate=$(date +%s) --overwrite
+  ```
+
+- If you rotate the cert (e.g. expand SANs), the broker pods **do not auto-restart** on Secret change; roll the StatefulSet: `kubectl rollout restart statefulset/rabbitmq-server -n rabbitmq-production`.
+
+### In-cluster clients that need to trust the broker cert
+
+For **pods** that want to connect over AMQPS (`5671`) or HTTPS (`15671`) and verify the cert, the CA is distributed via **trust-manager** (see [`../cert-manager/bundle-wsh-internal-ca.yaml`](../cert-manager/bundle-wsh-internal-ca.yaml) and [`../cert-manager/install/trust-manager-helmrelease.yaml`](../cert-manager/install/trust-manager-helmrelease.yaml)). Any Namespace labelled **`wsh.no/trust-bundle: "true"`** gets a ConfigMap **`wsh-internal-ca`** with key **`ca-bundle.crt`** (Mozilla roots + our internal CA). Mount and point OpenSSL-based clients (including .NET 8+ `SslStream` / `RabbitMQ.Client` AMQPS) at it:
+
+```yaml
+env:
+  - name: SSL_CERT_FILE
+    value: /etc/ssl/wsh/ca-bundle.crt
+  - name: SSL_CERT_DIR
+    value: /etc/ssl/wsh
+volumeMounts:
+  - name: wsh-ca-bundle
+    mountPath: /etc/ssl/wsh
+    readOnly: true
+volumes:
+  - name: wsh-ca-bundle
+    configMap:
+      name: wsh-internal-ca
+      items:
+        - key: ca-bundle.crt
+          path: ca-bundle.crt
+```
+
+Reference implementation: [`../test-test/test-api-deployment.yaml`](../test-test/test-api-deployment.yaml). If .NET's chain-build ignores `SSL_CERT_FILE` on your base image, fall back to a RabbitMQ.Client `CertificateValidationCallback` that loads the PEM with `X509Certificate2.CreateFromPem(...)` and uses `X509ChainTrustMode.CustomRootTrust`.
 
 ## 6. Prometheus metrics and MQTT
 

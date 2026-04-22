@@ -1,0 +1,28 @@
+# trust-manager Bundle that distributes our internal CA (certificate-internal-ca.yaml) plus the
+# Mozilla public roots to every namespace labelled wsh.no/trust-bundle=true.
+#
+# Result: each labelled namespace gets a ConfigMap/wsh-internal-ca with key ca-bundle.crt containing
+# the full PEM chain. Workloads mount it at /etc/ssl/wsh/ca-bundle.crt and point SSL_CERT_FILE at it
+# (first consumer: clusters/production/apps/test-test/test-api-deployment.yaml — trusts the broker's
+# self-signed AMQPS/management cert from clusters/production/apps/rabbitmq-production/).
+#
+# Label a namespace with kubectl label ns <name> wsh.no/trust-bundle=true (or on the Namespace CR
+# under clusters/production/apps/<app>-<env>/namespace.yaml).
+apiVersion: trust.cert-manager.io/v1alpha1
+kind: Bundle
+metadata:
+  name: wsh-internal-ca
+  labels:
+    app.kubernetes.io/part-of: cert-manager-production
+spec:
+  sources:
+  - useDefaultCAs: true
+  - secret:
+      name: internal-ca
+      key: tls.crt
+  target:
+    configMap:
+      key: ca-bundle.crt
+    namespaceSelector:
+      matchLabels:
+        wsh.no/trust-bundle: "true"

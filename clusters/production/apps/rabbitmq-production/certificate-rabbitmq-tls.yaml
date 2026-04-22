@@ -1,5 +1,18 @@
-# Let’s Encrypt TLS for RabbitMQ listeners (AMQPS / management HTTPS) once ClusterIssuer letsencrypt-dns is Ready.
-# SANs are public wsh.no names; see rabbitmq-secrets.md for hostname verification vs in-cluster DNS.
+# TLS for RabbitMQ AMQPS (5671) / management HTTPS (15671) listeners.
+#
+# Issued by the internal CA (clusters/production/apps/cert-manager/clusterissuer-internal-ca.yaml)
+# because Let's Encrypt cannot sign *.svc / *.svc.cluster.local names, and the Messaging Topology
+# Operator connects to https://rabbitmq.rabbitmq-production.svc:15671/ — hostname verification there
+# is what actually drives User/Permission/Vhost reconciliation.
+#
+# rabbitmq-cluster.yaml wires spec.tls.caSecretName to this same Secret so the topology operator
+# loads ca.crt from it as its HTTP client trust anchor (cert-manager writes ca.crt into CA-issued
+# TLS Secrets automatically).
+#
+# Trade-off: public *direct* TLS to the broker on rabbitmq.wsh.no:5671 / rabbitmq.mgmt.wsh.no:15671
+# now presents the internal CA — clients that verify TLS there must trust it. The public management
+# Ingress (rabbitmq-management-ingress.yaml) terminates LE TLS at Traefik and talks HTTP to the
+# backend on 15672, so https://rabbitmq.mgmt.wsh.no is unaffected. See rabbitmq-secrets.md §5.
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
@@ -12,7 +25,9 @@ spec:
   secretName: rabbitmq-tls
   issuerRef:
     kind: ClusterIssuer
-    name: letsencrypt-dns
+    name: internal-ca
   dnsNames:
+  - rabbitmq.rabbitmq-production.svc
+  - rabbitmq.rabbitmq-production.svc.cluster.local
   - rabbitmq.wsh.no
   - rabbitmq.mgmt.wsh.no
