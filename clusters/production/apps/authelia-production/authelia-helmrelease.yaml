@@ -210,6 +210,8 @@ spec:
             # Local OIDC (browser Origin must match exactly; add more ports/hosts as needed).
             - http://localhost:5173
             - http://127.0.0.1:5173
+            - https://localhost:5173
+            - https://127.0.0.1:5173
             - http://localhost:3000
             - http://127.0.0.1:3000
             - http://localhost:4200
@@ -359,6 +361,8 @@ spec:
             - https://test.test.wsh.no/auth/callback
             - http://localhost:5173/auth/callback
             - http://127.0.0.1:5173/auth/callback
+            - https://localhost:5173/auth/callback
+            - https://127.0.0.1:5173/auth/callback
             - http://localhost:3000/auth/callback
             - http://127.0.0.1:3000/auth/callback
             - https://localhost:7156/swagger/oauth2-redirect.html
