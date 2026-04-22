@@ -381,8 +381,11 @@ spec:
             pre_configured_consent_duration: 1 year
             # Resource API expects RFC 9068 JWT access tokens (aud=pxce-api) so .NET JwtBearer can validate
             # directly against /api/oidc/jwks.json instead of introspecting the default opaque tokens.
+            # implicit audience: Authelia injects every whitelisted audience into `aud` without requiring the
+            # SPA to send RFC 8707 `resource=` on every authorization request; default is `explicit`.
             audience:
             - pxce-api
+            requested_audience_mode: implicit
             access_token_signed_response_alg: RS256
             access_token_signed_response_key_id: authelia-headlamp
             grant_types:
