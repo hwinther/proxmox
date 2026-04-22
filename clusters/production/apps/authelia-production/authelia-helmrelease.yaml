@@ -202,6 +202,7 @@ spec:
             - https://headlamp.mgmt.wsh.no
             - https://adminer-pg-test.mgmt.wsh.no
             - https://adminer-pg-prod.mgmt.wsh.no
+            - https://test.test.wsh.no
           authorization_policies:
             rabbitmq-management-admins:
               default_policy: deny
@@ -308,6 +309,30 @@ spec:
             - profile
             - email
             - groups
+          # Test tier sample app (test.test.wsh.no) — SPA + API; public client + PKCE, refresh via offline_access.
+          # Register the frontend’s exact redirect URI(s) here; add more entries if the stack uses provider-specific paths.
+          - client_id: pxce
+            client_name: Test app (test.test.wsh.no)
+            public: true
+            require_pkce: true
+            pkce_challenge_method: S256
+            claims_policy: headlamp-kube-apiserver
+            authorization_policy: two_factor
+            consent_mode: pre-configured
+            pre_configured_consent_duration: 1 year
+            grant_types:
+            - authorization_code
+            - refresh_token
+            response_types:
+            - code
+            redirect_uris:
+            - https://test.test.wsh.no/auth/callback
+            scopes:
+            - openid
+            - profile
+            - email
+            - groups
+            - offline_access
           # Dex example-app (ghcr.io/dexidp/example-app): local OIDC debugger only. Redirect is loopback.
           # Secret must match Dex's default flag value exactly (opaque string ZXhhbXBsZS1hcHAtc2VjcmV0, not decoded).
           # Do not reuse this client_id/secret for anything reachable from untrusted hosts.
