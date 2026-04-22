@@ -215,6 +215,9 @@ spec:
             # RabbitMQ management HTTPS listener (default TLS port); Origin uses https when UI is opened on 15671.
             - https://localhost:15671
             - https://127.0.0.1:15671
+            # ASP.NET Swashbuckle local dev (OAuth2 + PKCE from /swagger).
+            - https://localhost:7156
+            - https://127.0.0.1:7156
           authorization_policies:
             rabbitmq-management-admins:
               default_policy: deny
@@ -332,8 +335,8 @@ spec:
             - profile
             - email
             - groups
-          # Test tier sample app (test.test.wsh.no) — SPA + API; public client + PKCE, refresh via offline_access.
-          # Register the frontend’s exact redirect URI(s) here; add more entries if the stack uses provider-specific paths.
+          # Test tier sample app (test.test.wsh.no) — SPA + API + local Swashbuckle; public client + PKCE, refresh via offline_access.
+          # Swashbuckle OAuth redirect: {origin}/swagger/oauth2-redirect.html (add other ports if launchSettings differ).
           - client_id: pxce
             client_name: Test app (test.test.wsh.no)
             public: true
@@ -354,6 +357,8 @@ spec:
             - http://127.0.0.1:5173/auth/callback
             - http://localhost:3000/auth/callback
             - http://127.0.0.1:3000/auth/callback
+            - https://localhost:7156/swagger/oauth2-redirect.html
+            - https://127.0.0.1:7156/swagger/oauth2-redirect.html
             scopes:
             - openid
             - profile
