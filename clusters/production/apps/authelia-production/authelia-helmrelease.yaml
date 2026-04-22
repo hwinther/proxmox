@@ -130,6 +130,14 @@ spec:
           policy: two_factor
         - domain: redis-test.mgmt.wsh.no
           policy: two_factor
+        - domain: grafana.mgmt.wsh.no
+          policy: two_factor
+        - domain: alertmanager.mgmt.wsh.no
+          policy: two_factor
+        - domain: policy-reporter.mgmt.wsh.no
+          policy: two_factor
+        - domain: hubble.mgmt.wsh.no
+          policy: two_factor
       authentication_backend:
         password_change:
           disable: true

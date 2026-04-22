@@ -77,6 +77,22 @@ spec:
           tracesToLogs:
             datasourceUid: loki
             tags: [ "service.name" ]
+      # Traefik ForwardAuth (Authelia) sets Remote-User / Remote-Email / Remote-Groups on requests that reach Grafana.
+      grafana.ini:
+        server:
+          root_url: https://grafana.mgmt.wsh.no/
+        auth.proxy:
+          enabled: true
+          header_name: Remote-User
+          header_property: username
+          auto_sign_up: true
+          sync_ttl: 60
+          headers: "Email:Remote-Email,Name:Remote-Name"
+        users:
+          auto_assign_org_role: Viewer
+        auth:
+          disable_login_form: true
+          disable_signout_menu: false
 
     prometheus:
       enabled: true

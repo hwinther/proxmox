@@ -6,6 +6,7 @@ metadata:
   namespace: kube-system
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: headlamp-production-authelia-forwardauth@kubernetescrd
     gethomepage.dev/enabled: "true"
     gethomepage.dev/group: Management
     gethomepage.dev/name: Hubble
