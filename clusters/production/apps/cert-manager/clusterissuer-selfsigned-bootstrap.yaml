@@ -1,0 +1,9 @@
+# Bootstrap ClusterIssuer: signs the internal-ca root Certificate (see certificate-internal-ca.yaml).
+# Not used directly by application Certificates — use clusterissuer-internal-ca.yaml for in-cluster DNS names
+# and clusterissuer-letsencrypt-dns.yaml for public wsh.no names.
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: selfsigned-bootstrap
+spec:
+  selfSigned: {}

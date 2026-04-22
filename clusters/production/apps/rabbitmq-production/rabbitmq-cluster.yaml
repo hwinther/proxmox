@@ -74,6 +74,11 @@ spec:
                   type: RuntimeDefault
   tls:
     secretName: rabbitmq-tls
+    # Same Secret carries ca.crt (internal CA, see ../cert-manager/clusterissuer-internal-ca.yaml).
+    # The messaging topology operator loads ca.crt from this Secret to trust the broker's management
+    # HTTPS listener at https://rabbitmq.rabbitmq-production.svc:15671/ when reconciling User /
+    # Permission / Vhost CRs; without it, TLS hostname verification fails and topology never syncs.
+    caSecretName: rabbitmq-tls
   rabbitmq:
     additionalPlugins:
     - rabbitmq_auth_backend_oauth2

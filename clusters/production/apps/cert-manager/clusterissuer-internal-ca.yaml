@@ -1,0 +1,12 @@
+# CA ClusterIssuer for in-cluster TLS where Let's Encrypt cannot issue (e.g. *.svc, *.svc.cluster.local).
+# Reads the CA key material from Secret internal-ca in the cert-manager namespace (see
+# certificate-internal-ca.yaml). cert-manager looks up ClusterIssuer ca.secretName in the
+# --cluster-resource-namespace, which defaults to the cert-manager install namespace.
+# Use clusterissuer-letsencrypt-dns.yaml for anything publicly exposed.
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: internal-ca
+spec:
+  ca:
+    secretName: internal-ca

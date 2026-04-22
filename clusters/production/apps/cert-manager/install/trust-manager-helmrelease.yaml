@@ -1,0 +1,55 @@
+# trust-manager: distributes TLS trust bundles (Mozilla public roots + our internal CA) to namespaces
+# via the Bundle CRD. Installed in the same cert-manager-install Flux Kustomization as cert-manager
+# so the Bundle CRD exists before ../bundle-wsh-internal-ca.yaml reconciles against ./clusters/production.
+#
+# Chart: https://github.com/cert-manager/trust-manager/tree/main/deploy/charts/trust-manager
+# Docs:  https://cert-manager.io/docs/trust/trust-manager/
+#
+# defaultPackage.enabled=true bakes the Mozilla CA list into the operator image so Bundles can use
+# `useDefaultCAs: true` (see bundle-wsh-internal-ca.yaml). The trust namespace defaults to the
+# release namespace (cert-manager); our CA Secret (internal-ca) already lives there.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: trust-manager
+  namespace: cert-manager
+spec:
+  interval: 30m
+  timeout: 10m
+  targetNamespace: cert-manager
+  install:
+    createNamespace: false
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  upgrade:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  chart:
+    spec:
+      chart: trust-manager
+      version: "v0.22.1"
+      sourceRef:
+        kind: HelmRepository
+        name: jetstack
+        namespace: cert-manager
+  values:
+    app:
+      trust:
+        # Namespace whose Secrets can be referenced as Bundle sources. Defaults to the release
+        # namespace; kept explicit so rotating the value is a single-line PR.
+        namespace: cert-manager
+    defaultPackage:
+      enabled: true
+    # Match wsh-require-resource-limits / wsh-require-run-as-non-root Kyverno policies.
+    resources:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        memory: 128Mi
+    secretTargets:
+      enabled: false
+    commonLabels:
+      app.kubernetes.io/part-of: cert-manager-production

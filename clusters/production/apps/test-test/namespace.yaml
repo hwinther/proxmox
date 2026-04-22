@@ -5,3 +5,6 @@ metadata:
   name: test-test
   labels:
     app.kubernetes.io/part-of: test-test
+    # trust-manager Bundle (../cert-manager/bundle-wsh-internal-ca.yaml) renders ConfigMap
+    # wsh-internal-ca in every namespace with this label — consumed by test-api-deployment.yaml.
+    wsh.no/trust-bundle: "true"

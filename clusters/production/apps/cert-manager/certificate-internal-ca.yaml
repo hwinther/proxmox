@@ -1,0 +1,23 @@
+# Internal CA for workloads that need a certificate valid for in-cluster DNS names (*.svc, *.svc.cluster.local)
+# which Let's Encrypt cannot sign. Signed by clusterissuer-selfsigned-bootstrap.yaml; consumed by
+# clusterissuer-internal-ca.yaml (which looks up this Secret in the cert-manager namespace by default
+# via --cluster-resource-namespace). First consumer: rabbitmq-production/certificate-rabbitmq-tls.yaml.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: internal-ca
+  namespace: cert-manager
+  labels:
+    app.kubernetes.io/part-of: cert-manager-production
+spec:
+  isCA: true
+  commonName: wsh-internal-ca
+  secretName: internal-ca
+  duration: 87600h    # 10y — cert-manager auto-renews at renewBefore (default ~1/3 of duration).
+  renewBefore: 17520h # 2y  — rotate before expiry without co-sign hassles.
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: selfsigned-bootstrap
+    kind: ClusterIssuer
