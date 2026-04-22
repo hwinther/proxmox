@@ -17,3 +17,16 @@ resources:
 - networkpolicy-rabbitmq.yaml
 - cilium-cluster-nodes-to-rabbitmq-management.yaml
 - rabbitmq-management-ingress.yaml
+# Patches: label rabbitmq-system so trust-manager's wsh-internal-ca Bundle renders the ConfigMap
+# there, then mount it into the topology operator Pod so Go's x509 trust includes our self-signed
+# CA. Without this, User/Permission/Vhost CRs fail with "x509: certificate signed by unknown authority".
+patches:
+- path: patch-rabbitmq-system-trust-bundle.yaml
+  target:
+    kind: Namespace
+    name: rabbitmq-system
+- path: patch-topology-operator-ca-mount.yaml
+  target:
+    kind: Deployment
+    name: messaging-topology-operator
+    namespace: rabbitmq-system

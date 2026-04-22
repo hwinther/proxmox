@@ -1,0 +1,10 @@
+# Kustomize strategic-merge patch: label the upstream rabbitmq-system Namespace (created by the
+# remote cluster-operator.yml resource listed in kustomization.yaml) so trust-manager's Bundle
+# wsh-internal-ca renders ConfigMap/wsh-internal-ca into it. That ConfigMap is what
+# patch-topology-operator-ca-mount.yaml mounts into the operator Pod's trust store.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: rabbitmq-system
+  labels:
+    wsh.no/trust-bundle: "true"

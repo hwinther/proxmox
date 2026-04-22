@@ -1,0 +1,35 @@
+# Kustomize strategic-merge patch: mount the wsh-internal-ca CA bundle (from trust-manager, via
+# ConfigMap/wsh-internal-ca rendered into rabbitmq-system by the Namespace label on
+# patch-rabbitmq-system-trust-bundle.yaml) into the messaging-topology-operator Pod's system trust
+# store at /etc/ssl/certs/. Go's crypto/x509.SystemCertPool walks that directory and picks up
+# additional .crt files alongside the distro's ca-certificates.crt, so the operator now trusts our
+# self-signed broker cert when calling https://rabbitmq.rabbitmq-production.svc:15671/api/...
+#
+# Without this mount, reconciliation of User / Permission / Vhost CRs fails with:
+#   "x509: certificate signed by unknown authority"
+# (spec.tls.caSecretName on RabbitmqCluster does NOT feed the topology operator — that field is only
+# used for mTLS and web_stomp / web_mqtt TLS per upstream CRD docs).
+#
+# Reference: https://www.rabbitmq.com/kubernetes/operator/tls-topology-operator
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: messaging-topology-operator
+  namespace: rabbitmq-system
+spec:
+  template:
+    spec:
+      containers:
+      - name: manager
+        volumeMounts:
+        - name: wsh-ca-bundle
+          mountPath: /etc/ssl/certs/wsh-internal-ca.crt
+          subPath: ca-bundle.crt
+          readOnly: true
+      volumes:
+      - name: wsh-ca-bundle
+        configMap:
+          name: wsh-internal-ca
+          items:
+          - key: ca-bundle.crt
+            path: ca-bundle.crt
