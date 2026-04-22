@@ -68,6 +68,12 @@ spec:
           items:
           - key: session.redis.password.txt
             path: session.redis.password.txt
+        authelia-storage:
+          items:
+          - key: storage.encryption.key
+            path: storage.encryption.key
+          - key: storage.postgres.password.txt
+            path: storage.postgres.password.txt
     ingress:
       enabled: true
       annotations:
@@ -178,9 +184,22 @@ spec:
         file:
           enabled: false
       storage:
+        encryption_key:
+          secret_name: authelia-storage
+          path: storage.encryption.key
         local:
+          enabled: false
+        postgres:
           enabled: true
-          path: /config/db.sqlite3
+          address: tcp://clutterstockdb-rw.postgres-production.svc.cluster.local:5432
+          database: authelia
+          schema: public
+          username: authelia
+          password:
+            secret_name: authelia-storage
+            path: storage.postgres.password.txt
+          tls:
+            enabled: false
       notifier:
         # Internal relay may reject Authelia's default startup probe recipient (test@authelia.com).
         disable_startup_check: true

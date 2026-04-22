@@ -54,3 +54,11 @@ spec:
     - ports:
       - port: "6379"
         protocol: TCP
+  - toEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: postgres-production
+        cnpg.io/cluster: clutterstockdb
+    toPorts:
+    - ports:
+      - port: "5432"
+        protocol: TCP

@@ -1,0 +1,11 @@
+# Authelia SQL storage on the production CNPG cluster (see ../authelia-production/authelia-storage-secrets.md).
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: authelia
+  namespace: postgres-production
+spec:
+  cluster:
+    name: clutterstockdb
+  name: authelia
+  owner: authelia

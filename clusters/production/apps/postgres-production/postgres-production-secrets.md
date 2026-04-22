@@ -2,6 +2,8 @@
 
 Same pattern as [`../postgres-test/postgres-test-secrets.md`](../postgres-test/postgres-test-secrets.md): the operator creates **`clutterstockdb-app`** in **`postgres-production`**, and Kyverno clones it to **`clutterstock-production`** as **`clutterstockdb-app`** for `secretKeyRef`.
 
+**Authelia** uses a dedicated DB on this cluster (`Database` **`authelia`**, managed role **`authelia`**, Secret **`authelia-pg-user`**). See [`../authelia-production/authelia-storage-secrets.md`](../authelia-production/authelia-storage-secrets.md).
+
 Inspect the source URI:
 
 ```bash

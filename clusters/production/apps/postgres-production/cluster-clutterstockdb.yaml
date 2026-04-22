@@ -19,3 +19,10 @@ spec:
     initdb:
       database: clutterstock
       owner: app
+  managed:
+    roles:
+    - name: authelia
+      ensure: present
+      login: true
+      passwordSecret:
+        name: authelia-pg-user
