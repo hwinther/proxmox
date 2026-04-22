@@ -42,6 +42,10 @@ spec:
     grafana:
       enabled: true
       adminUser: admin
+      # RWO Ceph RBD PVC can't be attached twice; default RollingUpdate strategy stalls every rollout
+      # with "Multi-Attach error". Recreate tears down the old pod before starting the new one.
+      deploymentStrategy:
+        type: Recreate
       persistence:
         enabled: true
         type: pvc
