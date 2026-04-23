@@ -68,6 +68,17 @@ spec:
     ports:
     - port: 5432
       protocol: TCP
+  # Shared Valkey in shared-test: app cache + SignalR StackExchange.Redis backplane (pub/sub, no AMQPS).
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: shared-test
+      podSelector:
+        matchLabels:
+          app: redis
+    ports:
+    - port: 6379
+      protocol: TCP
   - to:
     - ipBlock:
         cidr: 0.0.0.0/0

@@ -14,6 +14,8 @@ spec:
         app: test-api
         app.kubernetes.io/name: test-api
     spec:
+      # Grace period must exceed preStop sleep (20s) + longest expected SignalR reconnect window.
+      terminationGracePeriodSeconds: 60
       securityContext:
         runAsNonRoot: true
         runAsUser: 1654
@@ -98,11 +100,21 @@ spec:
         - name: http
           containerPort: 8080
           protocol: TCP
+        # SignalR hubs keep long-lived WebSockets; drain connections on rollout instead of flipping
+        # pods mid-flight. preStop sleep keeps the pod in Terminating long enough for Traefik to stop
+        # routing new traffic here (Traefik re-reads Endpoints on node-local cache invalidation),
+        # and readiness on /healthz waits for DI + Redis backplane before accepting traffic.
         readinessProbe:
-          tcpSocket:
+          httpGet:
+            path: /healthz
             port: http
-          initialDelaySeconds: 3
+          initialDelaySeconds: 5
           periodSeconds: 10
+          timeoutSeconds: 3
+        lifecycle:
+          preStop:
+            exec:
+              command: ["sh", "-c", "sleep 20"]
         volumeMounts:
         - name: wsh-ca-bundle
           mountPath: /etc/ssl/wsh
