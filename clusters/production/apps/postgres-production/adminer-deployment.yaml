@@ -20,7 +20,7 @@ spec:
         fsGroup: 65534
       containers:
       - name: adminer
-        image: docker.io/adminer:4.8.1
+        image: adminer:4.8.1
         imagePullPolicy: IfNotPresent
         securityContext:
           allowPrivilegeEscalation: false

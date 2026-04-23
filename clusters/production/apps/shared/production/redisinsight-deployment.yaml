@@ -16,7 +16,7 @@ spec:
     spec:
       initContainers:
       - name: wait-for-valkey-auth
-        image: docker.io/valkey/valkey:8-alpine
+        image: valkey/valkey:8-alpine
         env:
         - name: VALKEY_PASSWORD
           valueFrom:
@@ -44,7 +44,7 @@ spec:
           exit 1
       containers:
       - name: redisinsight
-        image: docker.io/redis/redisinsight:3.2.0
+        image: redis/redisinsight:3.2.0
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:

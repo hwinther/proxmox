@@ -19,7 +19,7 @@ spec:
         fsGroup: 1000
       containers:
       - name: redis
-        image: docker.io/valkey/valkey:8-alpine
+        image: valkey/valkey:8-alpine
         command:
         - /bin/sh
         - -c

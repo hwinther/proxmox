@@ -16,7 +16,7 @@ spec:
       # RWO PVC: scale clutterstock-api to 0 before this Job runs, or the volume stays attached to the API pod.
       initContainers:
       - name: ensure-data-writable
-        image: docker.io/library/busybox:1.37
+        image: library/busybox:1.37
         command:
         - sh
         - -c
