@@ -47,6 +47,12 @@ spec:
             secretKeyRef:
               name: testdb-app
               key: uri
+        # Shared Valkey (redis.shared-test); test-frontend-valkey Secret holds a full redis:// URL with password + db=0.
+        - name: ConnectionStrings__Redis
+          valueFrom:
+            secretKeyRef:
+              name: test-frontend-valkey
+              key: redis-url
         - name: OTEL_SERVICE_NAME
           value: "test-api"
         - name: OTEL_EXPORTER_OTLP_ENDPOINT
@@ -57,6 +63,8 @@ spec:
           value: "otlp"
         - name: RabbitMq__HostName
           value: "rabbitmq.rabbitmq-production.svc.cluster.local"
+        - name: RabbitMq__Port
+          value: "5672"
         - name: RabbitMq__VirtualHost
           value: "test"
         - name: RabbitMq__UserName
@@ -69,6 +77,15 @@ spec:
             secretKeyRef:
               name: test-api-rabbitmq
               key: password
+        # OIDC bearer validation: Authelia issues RFC 9068 JWTs with aud=pxce-api for the pxce client (see
+        # ../authelia-production/authelia-helmrelease.yaml `requested_audience_mode: implicit`).
+        - name: Oidc__Authority
+          value: "https://auth.wsh.no"
+        - name: Oidc__Audience
+          value: "pxce-api"
+        # CORS: only the public production origin here; localhost/:5173 stays in Development appsettings.
+        - name: Cors__AllowedOrigins__0
+          value: "https://test.test.wsh.no"
         # Point OpenSSL (and by extension .NET 8+ SslStream / RabbitMQ.Client AMQPS) at the wsh-internal-ca
         # bundle so the broker's self-signed management/AMQPS cert verifies. ConfigMap wsh-internal-ca is
         # rendered into this namespace by trust-manager Bundle wsh-internal-ca (see
