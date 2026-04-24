@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/part-of: rabbitmq-production
 spec:
   replicas: 3
-  image: library/rabbitmq:4.2.5-management
+  image: library/rabbitmq:4.3.0-management
   persistence:
     storageClassName: ceph-rbd
     storage: 20Gi
