@@ -44,7 +44,7 @@ spec:
           exit 1
       containers:
       - name: redisinsight
-        image: redis/redisinsight:3.2.0
+        image: redis/redisinsight:3.4.2
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
