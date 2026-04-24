@@ -8,10 +8,30 @@ spec:
     matchLabels:
       app.kubernetes.io/instance: obs-otel-collector
   ingress:
+  # Traefik (hostNetwork) forwards browser OTLP HTTP to the collector.
   - fromEntities:
     - host
     - remote-node
     toPorts:
     - ports:
       - port: "4318"
+        protocol: TCP
+  # Pod-to-pod OTLP from instrumented workloads in any namespace (gRPC + HTTP).
+  - fromEndpoints:
+    - matchExpressions:
+      - key: k8s:io.kubernetes.pod.namespace
+        operator: Exists
+    toPorts:
+    - ports:
+      - port: "4317"
+        protocol: TCP
+      - port: "4318"
+        protocol: TCP
+  # Prometheus metrics scrape (ServiceMonitor obs-otel-collector).
+  - fromEndpoints:
+    - matchLabels:
+        app.kubernetes.io/name: prometheus
+    toPorts:
+    - ports:
+      - port: "8888"
         protocol: TCP
