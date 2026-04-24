@@ -1,9 +1,10 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: redis
   namespace: shared-production
 spec:
+  serviceName: redis
   replicas: 1
   selector:
     matchLabels:
@@ -56,10 +57,20 @@ spec:
         volumeMounts:
         - name: data
           mountPath: /data
-      volumes:
-      - name: data
-        persistentVolumeClaim:
-          claimName: valkey-data
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+      labels:
+        app: redis
+        app.kubernetes.io/component: cache
+        app.kubernetes.io/name: valkey
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      storageClassName: ceph-rbd
+      resources:
+        requests:
+          storage: 2Gi
 ---
 apiVersion: v1
 kind: Service
