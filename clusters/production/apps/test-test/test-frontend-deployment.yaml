@@ -47,7 +47,7 @@ spec:
         - name: PORT
           value: "8080"
         - name: PUBLIC_API_BASE_URL
-          value: "https://test.test.wsh.no/api"
+          value: "https://test.test.wsh.no"
         - name: PUBLIC_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
           value: "https://test.test.wsh.no/v1/traces"
         - name: PUBLIC_OTEL_SERVICE_NAME
