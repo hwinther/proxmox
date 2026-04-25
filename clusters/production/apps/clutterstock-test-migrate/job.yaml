@@ -12,6 +12,7 @@ spec:
       labels:
         app.kubernetes.io/component: clutterstock-migrate
     spec:
+      automountServiceAccountToken: false
       restartPolicy: Never
       # RWO PVC: scale clutterstock-api to 0 before this Job runs, or the volume stays attached to the API pod.
       initContainers:

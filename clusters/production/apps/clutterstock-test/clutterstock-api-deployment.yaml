@@ -18,6 +18,7 @@ spec:
         app: clutterstock-api
         app.kubernetes.io/name: clutterstock-api
     spec:
+      automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
         runAsUser: 1654

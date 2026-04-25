@@ -14,6 +14,7 @@ spec:
         app: test-frontend
         app.kubernetes.io/name: test-frontend
     spec:
+      automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000

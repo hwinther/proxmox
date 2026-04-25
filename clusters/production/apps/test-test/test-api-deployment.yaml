@@ -14,6 +14,7 @@ spec:
         app: test-api
         app.kubernetes.io/name: test-api
     spec:
+      automountServiceAccountToken: false
       # Grace period must exceed preStop sleep (20s) + longest expected SignalR reconnect window.
       terminationGracePeriodSeconds: 60
       securityContext:

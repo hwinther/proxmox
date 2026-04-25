@@ -12,6 +12,7 @@ spec:
       labels:
         app.kubernetes.io/component: clutterstock-migrate
     spec:
+      automountServiceAccountToken: false
       restartPolicy: Never
       # Same UID/fsGroup as clutterstock-api so SQLite files and /data stay readable/writable by the API.
       securityContext:

@@ -16,6 +16,7 @@ spec:
         app: dex-example-app
         app.kubernetes.io/name: dex-example-app
     spec:
+      automountServiceAccountToken: false
       # Image runs as root; pod-level runAsNonRoot causes CreateContainerConfigError on kubelet.
       securityContext:
         seccompProfile:

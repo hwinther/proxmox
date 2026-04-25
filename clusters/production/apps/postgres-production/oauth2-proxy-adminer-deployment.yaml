@@ -15,6 +15,7 @@ spec:
         app: oauth2-proxy-adminer
         app.kubernetes.io/name: oauth2-proxy-adminer
     spec:
+      automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
         runAsUser: 65532
