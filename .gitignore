@@ -227,3 +227,6 @@ config.ini
 
 # .tmp-helm is a temporary folder for extracted helm charts for debugging configuration issues, it should not be version-controlled
 .tmp-helm/
+
+# Claude code files
+.claude/
