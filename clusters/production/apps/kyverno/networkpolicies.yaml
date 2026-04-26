@@ -54,15 +54,10 @@ metadata:
   name: allow-cluster-nodes-to-kyverno-webhook
   namespace: kyverno
 spec:
-  # Kyverno admission-controller pod; label from upstream chart.
-  endpointSelector:
-    matchLabels:
-      app.kubernetes.io/component: admission-controller
+  # Covers all pods in the namespace. kube-apiserver (webhooks) and kubelet (readiness probes) both
+  # run on the host in k0s — no port restriction since probe ports vary across admission/background/reports controllers.
+  endpointSelector: {}
   ingress:
   - fromEntities:
     - host
     - remote-node
-    toPorts:
-    - ports:
-      - port: "10443"
-        protocol: TCP
