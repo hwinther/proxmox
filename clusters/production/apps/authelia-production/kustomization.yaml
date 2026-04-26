@@ -4,5 +4,6 @@ resources:
 - namespace-authelia-production.yaml
 - helmrepository.yaml
 - authelia-helmrelease.yaml
+- networkpolicies.yaml
 - cilium-cluster-nodes-to-authelia-http.yaml
 - cilium-authelia-egress-ldap.yaml

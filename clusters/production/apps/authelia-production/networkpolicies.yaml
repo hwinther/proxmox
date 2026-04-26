@@ -1,0 +1,28 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: authelia
+  namespace: authelia-production
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: authelia
+  policyTypes:
+  - Ingress
+  ingress:
+  # Traefik ForwardAuth and direct HTTP: standard NP covers pod-to-pod; Cilium cilium-cluster-nodes-to-authelia-http covers host/remote-node (Traefik hostNetwork).
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: traefik
+    ports:
+    - port: 9091
+      protocol: TCP
+  # Prometheus metrics scraping.
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: observability-production
+    ports:
+    - port: 9091
+      protocol: TCP

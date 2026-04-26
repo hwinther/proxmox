@@ -8,3 +8,5 @@ resources:
 - headlamp-ingress.yaml
 - kyverno-policyexception-headlamp-inits.yaml
 - kyverno-policyexception-headlamp-plugin-images.yaml
+- networkpolicies.yaml
+- cilium-cluster-nodes-to-http.yaml

@@ -1,0 +1,17 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-cluster-nodes-to-policy-reporter-http
+  namespace: policy-reporter-production
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: ui
+  ingress:
+  - fromEntities:
+    - host
+    - remote-node
+    toPorts:
+    - ports:
+      - port: "8080"
+        protocol: TCP

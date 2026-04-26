@@ -4,3 +4,4 @@ resources:
 - namespace-kubescape-production.yaml
 - helmrepository.yaml
 - kubescape-operator-helmrelease.yaml
+- networkpolicies.yaml

@@ -5,3 +5,4 @@ resources:
 - helmrepository.yaml
 - cert-manager-helmrelease.yaml
 - trust-manager-helmrelease.yaml
+- networkpolicies.yaml

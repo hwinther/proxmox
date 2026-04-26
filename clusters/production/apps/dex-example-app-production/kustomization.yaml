@@ -6,4 +6,5 @@ resources:
 - dex-example-app-deployment.yaml
 - dex-example-app-service.yaml
 - dex-example-app-ingress.yaml
+- networkpolicies.yaml
 - cilium-cluster-nodes-to-dex-example-http.yaml

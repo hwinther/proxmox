@@ -5,3 +5,5 @@ resources:
 - helmrepository.yaml
 - policy-reporter-helmrelease.yaml
 - policy-reporter-ingress.yaml
+- networkpolicies.yaml
+- cilium-cluster-nodes-to-http.yaml
