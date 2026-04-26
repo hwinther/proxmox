@@ -38,3 +38,16 @@ spec:
         cidr: 0.0.0.0/0
         except:
         - 169.254.169.254/32
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-headlamp-to-apiserver
+  namespace: headlamp-production
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: headlamp
+  egress:
+  - toEntities:
+    - kube-apiserver

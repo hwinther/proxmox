@@ -122,3 +122,20 @@ spec:
         cidr: 0.0.0.0/0
         except:
         - 169.254.169.254/32
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-policy-reporter-to-apiserver
+  namespace: policy-reporter-production
+spec:
+  endpointSelector:
+    matchExpressions:
+    - key: app.kubernetes.io/name
+      operator: In
+      values:
+      - policy-reporter
+      - kyverno-plugin
+  egress:
+  - toEntities:
+    - kube-apiserver
