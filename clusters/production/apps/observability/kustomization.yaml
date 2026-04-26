@@ -30,3 +30,11 @@ configMapGenerator:
     disableNameSuffixHash: true
     labels:
       grafana_dashboard: "1"
+# Proxmox VE via native OpenTelemetry metric server (grafana.com/dashboards/23855).
+- name: grafana-dashboard-proxmox-ve
+  files:
+  - dashboards/proxmox-ve.json
+  options:
+    disableNameSuffixHash: true
+    labels:
+      grafana_dashboard: "1"
