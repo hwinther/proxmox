@@ -43,13 +43,12 @@ spec:
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: allow-cluster-nodes-to-cert-manager-webhook
+  name: allow-cluster-nodes-to-cert-manager-webhooks
   namespace: cert-manager
 spec:
-  # cert-manager webhook pod; label from upstream chart.
-  endpointSelector:
-    matchLabels:
-      app.kubernetes.io/component: webhook
+  # Covers all pods in the namespace: cert-manager webhook (10250) and trust-manager webhook (6443).
+  # kube-apiserver runs on the host in k0s and is not a pod in kube-system, so host/remote-node entity is required.
+  endpointSelector: {}
   ingress:
   - fromEntities:
     - host
@@ -57,4 +56,6 @@ spec:
     toPorts:
     - ports:
       - port: "10250"
+        protocol: TCP
+      - port: "6443"
         protocol: TCP
