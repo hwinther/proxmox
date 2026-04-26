@@ -61,3 +61,6 @@ spec:
   - fromEntities:
     - host
     - remote-node
+  egress:
+  - toEntities:
+    - kube-apiserver
