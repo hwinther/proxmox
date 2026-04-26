@@ -91,13 +91,15 @@ spec:
           header_property: username
           auto_sign_up: true
           sync_ttl: 60
-          headers: "Email:Remote-Email,Name:Remote-Name"
+          headers: "Email:Remote-Email,Name:Remote-Name,Groups:Remote-Groups"
           enable_login_token: false
         users:
           auto_assign_org_role: Viewer
         auth:
           disable_login_form: true
           disable_signout_menu: false
+          role_attribute_path: contains(groups[*], 'k8s-admins') && 'Admin' || 'Viewer'
+          role_attribute_strict: true
 
     prometheus:
       enabled: true
