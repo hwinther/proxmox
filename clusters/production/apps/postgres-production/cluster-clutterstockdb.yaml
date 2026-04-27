@@ -5,7 +5,10 @@ metadata:
   name: clutterstockdb
   namespace: postgres-production
 spec:
-  instances: 1
+  instances: 2
+  affinity:
+    enablePodAntiAffinity: true
+    topologyKey: kubernetes.io/hostname
   storage:
     storageClass: ceph-rbd
     size: 5Gi
