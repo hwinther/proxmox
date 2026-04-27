@@ -81,24 +81,29 @@ spec:
           tracesToLogs:
             datasourceUid: loki
             tags: [ "service.name" ]
-      # Traefik ForwardAuth (Authelia) sets Remote-User / Remote-Email on requests that reach Grafana.
-      # Homelab: anyone who passes Authelia 2FA for this host gets Admin (proxy auth has no group→role mapping in OSS).
       grafana.ini:
         server:
           root_url: https://grafana.mgmt.wsh.no/
-        auth.proxy:
-          enabled: true
-          header_name: Remote-User
-          header_property: username
-          auto_sign_up: true
-          sync_ttl: 60
-          headers: "Email:Remote-Email,Name:Remote-Name"
-          enable_login_token: false
-        users:
-          auto_assign_org_role: Admin
         auth:
           disable_login_form: true
           disable_signout_menu: false
+          oauth_auto_login: true
+        auth.generic_oauth:
+          enabled: true
+          name: Authelia
+          icon: signin
+          client_id: grafana
+          use_pkce: true
+          scopes: openid profile email groups
+          auth_url: https://auth.wsh.no/api/oidc/authorization
+          token_url: https://auth.wsh.no/api/oidc/token
+          api_url: https://auth.wsh.no/api/oidc/userinfo
+          # k8s-admins → GrafanaAdmin (server-level); everyone else → Viewer.
+          role_attribute_path: "contains(groups[*], 'k8s-admins') && 'GrafanaAdmin' || 'Viewer'"
+          role_attribute_strict: false
+          allow_sign_up: true
+        users:
+          auto_assign_org_role: Viewer
 
     prometheus:
       enabled: true
