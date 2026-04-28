@@ -161,10 +161,10 @@ spec:
         - port: metrics
           interval: 30s
           scrapeTimeout: 10s
-      - name: cnpg-postgres-production-clutterstockdb
+      - name: cnpg-postgres-production-postgres-prod
         selector:
           matchLabels:
-            cnpg.io/cluster: clutterstockdb
+            cnpg.io/cluster: postgres-prod
         namespaceSelector:
           matchNames:
           - postgres-production

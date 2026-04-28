@@ -1,12 +1,12 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: cnpg-clutterstockdb
+  name: cnpg-postgres-prod
   namespace: postgres-production
 spec:
   podSelector:
     matchLabels:
-      cnpg.io/cluster: clutterstockdb
+      cnpg.io/cluster: postgres-prod
   policyTypes:
   - Ingress
   - Egress
@@ -32,16 +32,6 @@ spec:
       podSelector:
         matchLabels:
           app: adminer
-    ports:
-    - port: 5432
-      protocol: TCP
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: postgres-production
-      podSelector:
-        matchLabels:
-          cnpg.io/cluster: postgres-prod
     ports:
     - port: 5432
       protocol: TCP

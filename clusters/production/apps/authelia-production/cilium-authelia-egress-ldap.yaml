@@ -57,7 +57,7 @@ spec:
   - toEndpoints:
     - matchLabels:
         k8s:io.kubernetes.pod.namespace: postgres-production
-        cnpg.io/cluster: clutterstockdb
+        cnpg.io/cluster: postgres-prod
     toPorts:
     - ports:
       - port: "5432"

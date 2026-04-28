@@ -2,7 +2,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
 - namespace.yaml
-- kyverno-rbac-generate-clutterstockdb-app-secret.yaml
+- kyverno-rbac-generate-postgres-prod-app-secret.yaml
 - clutterstock-api-deployment.yaml
 - clutterstock-frontend-deployment.yaml
 - networkpolicies.yaml

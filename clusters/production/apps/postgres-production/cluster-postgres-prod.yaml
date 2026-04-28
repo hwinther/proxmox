@@ -1,5 +1,4 @@
 # Shared production PostgreSQL cluster — hosts clutterstock and authelia databases.
-# Bootstrapped from clutterstockdb via pg_basebackup; old cluster removed after cutover.
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
@@ -19,27 +18,10 @@ spec:
       memory: 256Mi
     limits:
       memory: 512Mi
-  bootstrap:
-    pg_basebackup:
-      source: clutterstockdb
-  externalClusters:
-    - name: clutterstockdb
-      connectionParameters:
-        host: clutterstockdb-rw.postgres-production.svc
-        user: streaming_replica
-      sslCert:
-        name: clutterstockdb-replication
-        key: tls.crt
-      sslKey:
-        name: clutterstockdb-replication
-        key: tls.key
-      sslRootCert:
-        name: clutterstockdb-ca
-        key: ca.crt
   managed:
     roles:
     - name: authelia
       ensure: present
       login: true
       passwordSecret:
-        name: authelia-pg-user
+        name: authelia-pg-secret

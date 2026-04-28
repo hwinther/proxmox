@@ -9,7 +9,7 @@ metadata:
     gethomepage.dev/group: Management
     gethomepage.dev/name: Adminer (Postgres production)
     gethomepage.dev/icon: mdi-database-outline
-    gethomepage.dev/description: Adminer for CNPG postgres-production (OIDC via oauth2-proxy + Authelia); default clutterstockdb-rw
+    gethomepage.dev/description: Adminer for CNPG postgres-production (OIDC via oauth2-proxy + Authelia); default postgres-prod-rw
     gethomepage.dev/weight: "11"
 spec:
   rules:

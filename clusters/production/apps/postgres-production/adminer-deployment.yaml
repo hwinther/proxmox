@@ -30,7 +30,7 @@ spec:
             - ALL
         env:
         - name: ADMINER_DEFAULT_SERVER
-          value: clutterstockdb-rw.postgres-production.svc.cluster.local
+          value: postgres-prod-rw.postgres-production.svc.cluster.local
         ports:
         - name: http
           containerPort: 8080

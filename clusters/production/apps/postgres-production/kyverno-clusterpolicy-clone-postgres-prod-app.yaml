@@ -2,15 +2,15 @@
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
-  name: clone-clutterstockdb-app-secret-to-clutterstock-production
+  name: clone-postgres-prod-app-secret-to-clutterstock-production
   annotations:
-    policies.kyverno.io/title: Clone clutterstockdb-app secret to clutterstock-production
+    policies.kyverno.io/title: Clone postgres-prod-app secret to clutterstock-production
     policies.kyverno.io/category: CNPG
     policies.kyverno.io/severity: low
 spec:
   generateExisting: true
   rules:
-  - name: clone-clutterstockdb-app
+  - name: clone-postgres-prod-app
     match:
       any:
       - resources:
@@ -19,13 +19,13 @@ spec:
           namespaces:
           - postgres-production
           names:
-          - clutterstockdb-app
+          - postgres-prod-app
     generate:
       apiVersion: v1
       kind: Secret
-      name: clutterstockdb-app
+      name: postgres-prod-app
       namespace: clutterstock-production
       synchronize: true
       clone:
         namespace: postgres-production
-        name: clutterstockdb-app
+        name: postgres-prod-app

@@ -6,6 +6,6 @@ metadata:
   namespace: postgres-production
 spec:
   cluster:
-    name: clutterstockdb
+    name: postgres-prod
   name: authelia
   owner: authelia

@@ -3,10 +3,9 @@ kind: Kustomization
 resources:
 - namespace.yaml
 - kyverno-rbac-clone-source-secrets.yaml
-- cluster-clutterstockdb.yaml
 - cluster-postgres-prod.yaml
 - database-authelia.yaml
-- networkpolicy-cnpg-clutterstockdb.yaml
+- networkpolicy-cnpg-postgres-prod.yaml
 - cilium-networkpolicy-cnpg-apiserver.yaml
 - networkpolicy-adminer.yaml
 - networkpolicy-oauth2-proxy-adminer.yaml
@@ -16,4 +15,4 @@ resources:
 - oauth2-proxy-adminer-service.yaml
 - adminer-ingress.yaml
 - cilium-cluster-nodes-to-adminer-http.yaml
-- kyverno-clusterpolicy-clone-clutterstockdb-app.yaml
+- kyverno-clusterpolicy-clone-postgres-prod-app.yaml
