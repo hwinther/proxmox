@@ -20,6 +20,11 @@ spec:
       memory: 512Mi
   managed:
     roles:
+    - name: clutterstock
+      ensure: present
+      login: true
+      passwordSecret:
+        name: clutterstock-pg-secret
     - name: authelia
       ensure: present
       login: true

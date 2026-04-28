@@ -49,7 +49,7 @@ spec:
         - name: ConnectionStrings__ClutterStockPostgres
           valueFrom:
             secretKeyRef:
-              name: postgres-prod-app
+              name: clutterstock-pg-secret
               key: uri
         - name: OTEL_SERVICE_NAME
           value: "clutterstock-api"
