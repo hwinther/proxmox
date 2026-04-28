@@ -27,13 +27,13 @@ spec:
       connectionParameters:
         host: clutterstockdb-rw.postgres-production.svc
         user: streaming_replica
-      sslCertificate:
+      sslCert:
         name: clutterstockdb-replication
         key: tls.crt
       sslKey:
         name: clutterstockdb-replication
         key: tls.key
-      sslRootCertificate:
+      sslRootCert:
         name: clutterstockdb-ca
         key: ca.crt
   managed:
