@@ -4,6 +4,7 @@ resources:
 - namespace.yaml
 - kyverno-rbac-clone-source-secrets.yaml
 - cluster-clutterstockdb.yaml
+- cluster-postgres-prod.yaml
 - database-authelia.yaml
 - networkpolicy-cnpg-clutterstockdb.yaml
 - cilium-networkpolicy-cnpg-apiserver.yaml
