@@ -253,6 +253,8 @@ spec:
             - https://localhost:15671
             - https://127.0.0.1:15671
             # ASP.NET Swashbuckle local dev (OAuth2 + PKCE from /swagger).
+            - http://localhost:5155
+            - http://127.0.0.1:5155
             - https://localhost:7156
             - https://127.0.0.1:7156
             - https://clutterstock.wsh.no
