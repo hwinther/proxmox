@@ -31,39 +31,41 @@ $fg = 'Gray'
 Write-Host ''
 Write-Host '=== Test tier — values for localhost (use with forwarded ports) ===' -ForegroundColor $fc
 Write-Host ''
-Write-Host '  Postgres   127.0.0.1:5432' -ForegroundColor $fg
+Write-Host '  Postgres (test-api)     127.0.0.1:5432' -ForegroundColor $fg
+Write-Host '  Postgres (clutterstock) 127.0.0.1:5433' -ForegroundColor $fg
 Write-Host '  Valkey     127.0.0.1:6379' -ForegroundColor $fg
 Write-Host '  RabbitMQ   127.0.0.1:5672   vhost: test' -ForegroundColor $fg
 Write-Host ''
 
-# --- Postgres (testdb-app) ---
-Write-Host '--- Postgres (secret testdb-app / postgres-test) ---' -ForegroundColor $fy
-$pgUri = Get-SecretKey -Namespace postgres-test -Name testdb-app -Key uri
-$pgUser = Get-SecretKey -Namespace postgres-test -Name testdb-app -Key username
-$pgPass = Get-SecretKey -Namespace postgres-test -Name testdb-app -Key password
-$pgDb = Get-SecretKey -Namespace postgres-test -Name testdb-app -Key dbname
-if ($pgUri) {
-    $pgLocal = $pgUri -replace '@[^/]+', '@127.0.0.1:5432'
-    Write-Host 'ConnectionStrings__Blogging (cluster URI):' -ForegroundColor Gray
-    Write-Host $pgUri
-    Write-Host 'ConnectionStrings__Blogging (localhost, paste into appsettings / env):' -ForegroundColor Gray
-    Write-Host $pgLocal
-} else {
-    Write-Host '(could not read testdb-app uri — check context and namespace)' -ForegroundColor Red
+function Write-PgCreds {
+    param(
+        [string] $Label,
+        [string] $Namespace,
+        [string] $SecretName,
+        [string] $LocalPort
+    )
+    Write-Host "--- Postgres $Label (secret $SecretName / $Namespace) ---" -ForegroundColor $fy
+    $uri  = Get-SecretKey -Namespace $Namespace -Name $SecretName -Key uri
+    $user = Get-SecretKey -Namespace $Namespace -Name $SecretName -Key username
+    $pass = Get-SecretKey -Namespace $Namespace -Name $SecretName -Key password
+    $db   = Get-SecretKey -Namespace $Namespace -Name $SecretName -Key dbname
+    if ($uri) {
+        $local = $uri -replace '@[^/]+', "@127.0.0.1:$LocalPort"
+        Write-Host 'URI (cluster):' -ForegroundColor Gray
+        Write-Host $uri
+        Write-Host "URI (localhost :$LocalPort):" -ForegroundColor Gray
+        Write-Host $local
+    } else {
+        Write-Host "(could not read $SecretName uri — check context and namespace)" -ForegroundColor Red
+    }
+    if ($user) { Write-Host 'Username:' -ForegroundColor Gray; Write-Host $user }
+    if ($pass) { Write-Host 'Password:' -ForegroundColor Gray; Write-Host $pass }
+    if ($db)   { Write-Host 'Database:' -ForegroundColor Gray; Write-Host $db }
+    Write-Host ''
 }
-if ($pgUser) {
-    Write-Host 'Postgres username:' -ForegroundColor Gray
-    Write-Host $pgUser
-}
-if ($pgPass) {
-    Write-Host 'Postgres password:' -ForegroundColor Gray
-    Write-Host $pgPass
-}
-if ($pgDb) {
-    Write-Host 'Postgres database:' -ForegroundColor Gray
-    Write-Host $pgDb
-}
-Write-Host ''
+
+Write-PgCreds -Label '(test-api)'     -Namespace postgres-test -SecretName testdb-app       -LocalPort 5432
+Write-PgCreds -Label '(clutterstock)' -Namespace postgres-test -SecretName cluttertestdb-app -LocalPort 5433
 
 # --- Valkey ---
 Write-Host '--- Valkey (secret valkey-auth / shared-test) ---' -ForegroundColor $fy

@@ -61,6 +61,10 @@ spec:
           value: otlp
         - name: OTEL_RESOURCE_ATTRIBUTES
           value: service.namespace=clutterstock-production,deployment.environment=production
+        - name: Authentication__Authority
+          value: "https://auth.wsh.no"
+        - name: Authentication__Audience
+          value: "clutterstock-api"
         - name: RabbitMq__HostName
           value: rabbitmq.rabbitmq-production.svc.cluster.local
         - name: RabbitMq__VirtualHost

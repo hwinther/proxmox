@@ -22,6 +22,26 @@
       }
     },
     {
+      "label": "kubectl: port-forward test Postgres (cluttertestdb-rw)",
+      "type": "shell",
+      "command": "kubectl port-forward -n postgres-test svc/cluttertestdb-rw 5433:5432",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "kubectl-port-forward",
+        "pattern": { "regexp": ".", "file": 1, "location": 2, "message": 3 },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".",
+          "endsPattern": "Forwarding from"
+        }
+      },
+      "presentation": {
+        "reveal": "silent",
+        "panel": "dedicated",
+        "showReuseMessage": false
+      }
+    },
+    {
       "label": "kubectl: port-forward test Valkey (shared-test redis)",
       "type": "shell",
       "command": "kubectl port-forward -n shared-test svc/redis 6379:6379",
@@ -78,6 +98,7 @@
       "label": "kubectl: port-forward all test backends (parallel)",
       "dependsOn": [
         "kubectl: port-forward test Postgres (testdb-rw)",
+        "kubectl: port-forward test Postgres (cluttertestdb-rw)",
         "kubectl: port-forward test Valkey (shared-test redis)",
         "kubectl: port-forward RabbitMQ (test vhost)"
       ],
