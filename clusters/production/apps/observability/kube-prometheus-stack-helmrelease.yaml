@@ -94,6 +94,7 @@ spec:
           icon: signin
           client_id: grafana
           use_pkce: true
+          use_id_token: true
           scopes: openid profile email groups
           auth_url: https://auth.wsh.no/api/oidc/authorization
           token_url: https://auth.wsh.no/api/oidc/token
