@@ -88,6 +88,8 @@ spec:
           disable_login_form: true
           disable_signout_menu: false
           oauth_auto_login: true
+          # Allow OAuth to link to existing users created by other auth modules (e.g. authproxy from old setup).
+          oauth_allow_insecure_email_lookup: true
         auth.generic_oauth:
           enabled: true
           name: Authelia
