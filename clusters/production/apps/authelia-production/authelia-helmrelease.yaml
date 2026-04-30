@@ -287,6 +287,19 @@ spec:
               - name
               - email
               - email_verified
+              access_token:
+              - groups
+              - preferred_username
+              - name
+              - email
+              - email_verified
+            clutterstock:
+              id_token:
+              - groups
+              - preferred_username
+              - name
+              - email
+              - email_verified
             rabbitmq-management:
               id_token:
               - groups
@@ -433,6 +446,8 @@ spec:
             pkce_challenge_method: S256
             claims_policy: grafana
             authorization_policy: two_factor
+            access_token_signed_response_alg: RS256
+            access_token_signed_response_key_id: authelia-headlamp
             consent_mode: pre-configured
             pre_configured_consent_duration: 1 year
             redirect_uris:
@@ -450,6 +465,7 @@ spec:
             public: true
             require_pkce: true
             pkce_challenge_method: S256
+            claims_policy: clutterstock
             authorization_policy: two_factor
             consent_mode: pre-configured
             pre_configured_consent_duration: 1 year
