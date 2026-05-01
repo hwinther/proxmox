@@ -12,7 +12,7 @@ spec:
       restartPolicy: Never
       containers:
       - name: migrator
-        image: ghcr.io/hwinther/clutterstock/migrator:0.17.0
+        image: ghcr.io/hwinther/clutterstock/migrator:0.18.0
         imagePullPolicy: Always
         env:
         - name: ConnectionStrings__ClutterStock
