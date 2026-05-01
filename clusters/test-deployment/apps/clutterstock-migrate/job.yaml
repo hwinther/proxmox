@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: clutterstock-migrate-v098
+  name: clutterstock-migrate-v099
   namespace: test
 spec:
   backoffLimit: 3
@@ -15,11 +15,11 @@ spec:
         image: ghcr.io/hwinther/clutterstock/migrator:0.17.0
         imagePullPolicy: Always
         env:
-        - name: ConnectionStrings__ClutterStock
-          value: Data Source=/data/clutterstock.db
-        volumeMounts:
-        - name: sqlite-data
-          mountPath: /data
+        - name: ConnectionStrings__ClutterStockPostgres
+          valueFrom:
+            secretKeyRef:
+              name: clutterstock-pg-secret
+              key: uri
         resources:
           requests:
             cpu: 50m
@@ -27,7 +27,3 @@ spec:
           limits:
             cpu: 500m
             memory: 256Mi
-      volumes:
-      - name: sqlite-data
-        persistentVolumeClaim:
-          claimName: clutterstock-api-sqlite

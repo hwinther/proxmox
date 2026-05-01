@@ -4,4 +4,3 @@ resources:
 - namespace.yaml
 - pvc.yaml
 - job.yaml
-- kyverno-policyexception-migrate.yaml

@@ -6,7 +6,6 @@ metadata:
   namespace: clutterstock-production
 spec:
   replicas: 1
-  # RWO PVC: avoid RollingUpdate (second pod cannot attach until the first releases the volume).
   strategy:
     type: Recreate
   selector:
@@ -43,9 +42,7 @@ spec:
         env:
         - name: ASPNETCORE_URLS
           value: http://+:8080
-        - name: ConnectionStrings__ClutterStock
-          value: Data Source=/data/clutterstock.db
-        # Npgsql URI when migrating off SQLite; Kyverno clones clutterstockdb-app into clutterstock-production.
+        # Kyverno clones clutterstockdb-app into clutterstock-production.
         - name: ConnectionStrings__ClutterStockPostgres
           valueFrom:
             secretKeyRef:
@@ -88,13 +85,6 @@ spec:
             port: http
           initialDelaySeconds: 5
           periodSeconds: 10
-        volumeMounts:
-        - name: sqlite-data
-          mountPath: /data
-      volumes:
-      - name: sqlite-data
-        persistentVolumeClaim:
-          claimName: clutterstock-api-sqlite
 ---
 apiVersion: v1
 kind: Service
