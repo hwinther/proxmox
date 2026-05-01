@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: clutterstock-test-migrate-v105
+  name: clutterstock-test-migrate-v106
   namespace: clutterstock-test
 spec:
   backoffLimit: 3
@@ -29,7 +29,7 @@ spec:
             drop:
             - ALL
         env:
-        - name: ConnectionStrings__ClutterStockPostgres
+        - name: ConnectionStrings__ClutterStock
           valueFrom:
             secretKeyRef:
               name: cluttertestdb-app

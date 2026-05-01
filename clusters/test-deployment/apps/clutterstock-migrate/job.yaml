@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: clutterstock-migrate-v099
+  name: clutterstock-migrate-v100
   namespace: test
 spec:
   backoffLimit: 3
@@ -15,7 +15,7 @@ spec:
         image: ghcr.io/hwinther/clutterstock/migrator:0.17.0
         imagePullPolicy: Always
         env:
-        - name: ConnectionStrings__ClutterStockPostgres
+        - name: ConnectionStrings__ClutterStock
           valueFrom:
             secretKeyRef:
               name: clutterstock-pg-secret
