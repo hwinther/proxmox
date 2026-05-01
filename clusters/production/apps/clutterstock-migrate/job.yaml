@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: clutterstock-migrate-v105
+  name: clutterstock-migrate-v106
   namespace: clutterstock-production
 spec:
   backoffLimit: 3
@@ -21,7 +21,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       containers:
       - name: migrator
-        image: ghcr.io/hwinther/clutterstock/migrator:0.17.0
+        image: ghcr.io/hwinther/clutterstock/migrator:0.18.0
         imagePullPolicy: Always
         securityContext:
           allowPrivilegeEscalation: false
