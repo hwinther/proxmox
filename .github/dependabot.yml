@@ -131,7 +131,6 @@ updates:
   - "/clusters/production/apps/cnpg-system"
   - "/clusters/production/apps/clutterstock"
   - "/clusters/production/apps/clutterstock-migrate"
-  - "/clusters/production/apps/dex-example-app-production"
   - "/clusters/production/apps/headlamp-production"
   - "/clusters/production/apps/kubescape-production"
   - "/clusters/production/apps/kyverno"

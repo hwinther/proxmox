@@ -17,7 +17,7 @@ Decide these **while authoring the initial PR**, so you do not chain fixes acros
 
 1. **Image reference**
    - Prefer **semver tags** (and digests where you mirror or pin) for every container, initContainer, and ephemeralContainer — **`wsh-disallow-latest-require-digest`** targets `:latest` (see [`bases/kyverno-platform/clusterpolicy-disallow-latest-require-digest.yaml`](../../../bases/kyverno-platform/clusterpolicy-disallow-latest-require-digest.yaml)).
-   - If upstream **only** publishes `:latest` (no semver tag to pin): choose **one** path before merge: **(a)** mirror the image to `ghcr.io/hwinther/...` with a semver tag you control, **(b)** pin `image: repo/name@sha256:…` after you compute the digest once, or **(c)** add a **narrow** `PolicyException` for `wsh-disallow-latest-require-digest` **in the same PR** as the workload, with a YAML comment explaining why upstream cannot comply (example: [`clusters/production/apps/dex-example-app-production/kyverno-policyexception-dex-example-app-images.yaml`](../../../clusters/production/apps/dex-example-app-production/kyverno-policyexception-dex-example-app-images.yaml)).
+   - If upstream **only** publishes `:latest` (no semver tag to pin): choose **one** path before merge: **(a)** mirror the image to `ghcr.io/hwinther/...` with a semver tag you control, **(b)** pin `image: repo/name@sha256:…` after you compute the digest once, or **(c)** add a **narrow** `PolicyException` for `wsh-disallow-latest-require-digest` **in the same PR** as the workload, with a YAML comment explaining why upstream cannot comply.
 
 2. **`runAsNonRoot` vs image `USER` (kubelet, not Kyverno)**
    - Pod or container **`runAsNonRoot: true`** is required for hygiene and matches **`wsh-require-run-as-non-root`** (Audit in repo defaults), but **kubelet** rejects the pod if the image still runs as **UID 0** and you did not set a non-zero **`runAsUser`** compatible with the image.
@@ -87,7 +87,6 @@ Decide these **while authoring the initial PR**, so you do not chain fixes acros
 | Tagged app images + security + probes + NetworkPolicy | [`clusters/production/apps/clutterstock`](../../../clusters/production/apps/clutterstock) |
 | Migrate Job + busybox tag + init exception | [`clusters/production/apps/clutterstock-migrate`](../../../clusters/production/apps/clutterstock-migrate) |
 | Headlamp init exceptions + plugin tags | [`clusters/production/apps/headlamp-production`](../../../clusters/production/apps/headlamp-production) |
-| Third-party `:latest` + narrow digest-policy exception | [`clusters/production/apps/dex-example-app-production`](../../../clusters/production/apps/dex-example-app-production) |
 | Shared Redis / RedisInsight + NP | [`clusters/production/apps/shared`](../../../clusters/production/apps/shared) |
 | Docker build + supply-chain attestations | [`.github/actions/docker/action.yaml`](../../../.github/actions/docker/action.yaml), `build-*.yaml` workflows |
 

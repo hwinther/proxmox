@@ -8,7 +8,6 @@ resources:
 - traefik
 - authelia-production
 - headlamp-production
-- dex-example-app-production
 - oidc-k8s-admins-rbac
 - policy-reporter-production
 - kubescape-production
