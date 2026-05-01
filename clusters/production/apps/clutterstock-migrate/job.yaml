@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: clutterstock-migrate-v103
+  name: clutterstock-migrate-v104
   namespace: clutterstock-production
 spec:
   backoffLimit: 3
@@ -14,28 +14,11 @@ spec:
     spec:
       automountServiceAccountToken: false
       restartPolicy: Never
-      # Same UID/fsGroup as clutterstock-api so SQLite files and /data stay readable/writable by the API.
       securityContext:
         runAsNonRoot: true
         runAsUser: 1654
         fsGroup: 1654
         fsGroupChangePolicy: OnRootMismatch
-      # RWO PVC: scale clutterstock-api to 0 before this Job runs, or the volume stays attached to the API pod.
-      initContainers:
-      - name: ensure-data-writable
-        image: library/busybox:1.37
-        command:
-        - sh
-        - -c
-        - mkdir -p /data && ls -la /data
-        volumeMounts:
-        - name: sqlite-data
-          mountPath: /data
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-            - ALL
       containers:
       - name: migrator
         image: ghcr.io/hwinther/clutterstock/migrator:0.17.0
@@ -46,11 +29,11 @@ spec:
             drop:
             - ALL
         env:
-        - name: ConnectionStrings__ClutterStock
-          value: Data Source=/data/clutterstock.db
-        volumeMounts:
-        - name: sqlite-data
-          mountPath: /data
+        - name: ConnectionStrings__ClutterStockPostgres
+          valueFrom:
+            secretKeyRef:
+              name: clutterstock-pg-secret
+              key: uri
         resources:
           requests:
             cpu: 50m
@@ -58,7 +41,3 @@ spec:
           limits:
             cpu: 500m
             memory: 256Mi
-      volumes:
-      - name: sqlite-data
-        persistentVolumeClaim:
-          claimName: clutterstock-api-sqlite
