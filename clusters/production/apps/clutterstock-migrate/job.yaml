@@ -38,7 +38,7 @@ spec:
             - ALL
       containers:
       - name: migrator
-        image: ghcr.io/hwinther/clutterstock/migrator:0.16.0
+        image: ghcr.io/hwinther/clutterstock/migrator:0.17.0
         imagePullPolicy: Always
         securityContext:
           allowPrivilegeEscalation: false
