@@ -25,7 +25,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       containers:
       - name: clutterstock-api
-        image: ghcr.io/hwinther/clutterstock/api:0.18.0
+        image: ghcr.io/hwinther/clutterstock/api:0.20.0
         imagePullPolicy: Always
         securityContext:
           allowPrivilegeEscalation: false
