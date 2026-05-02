@@ -1,23 +1,27 @@
-# Restore sqlite-data.pxar from a PBS snapshot into the clutterstock-api PVC (overwrites /data).
-# Same amd64-only client image and tag as the backup Job (see clutterstock-test-pbs-backup-job.yaml).
+# Restore clutterstock-test postgres database from a PBS snapshot into the CNPG cluster.
+# Same amd64-only PBS client image and tag as the backup Job (see clutterstock-test-pbs-backup-job.yaml).
 #
 # Not in kustomization.yaml: apply manually when needed, e.g.
 #   kubectl apply -f clusters/production/apps/clutterstock-test/clutterstock-test-pbs-restore-job.yaml
 #
-# Prerequisites:
-#   1. Secret `clutterstock-test-pbs-backup`: PBS_REPOSITORY, PBS_PASSWORD, and for restore
-#      PBS_RESTORE_SNAPSHOT (see pbs-backup-secrets.md). List snapshots via a debug pod or
-#      `proxmox-backup-client list` with the same credentials.
-#   2. Scale API to zero and confirm the PVC is free (same as backup Job).
-#   3. Apply this Job; when it completes, verify files under /data then scale API back to 1.
+# Flow:
+#   1. initContainer pbs-restore pulls db.pxar from PBS_RESTORE_SNAPSHOT into an emptyDir.
+#   2. Main container runs pg_restore against the CNPG cluster (creds from cluttertestdb-app/uri).
 #
-# WARNING: Restore replaces content under /data for paths present in the archive. Test on a clone first.
+# Prerequisites:
+#   1. Secret `clutterstock-test-pbs-backup`: PBS_REPOSITORY, PBS_PASSWORD, and PBS_RESTORE_SNAPSHOT
+#      (see pbs-backup-secrets.md). List snapshots via a debug pod or
+#      `proxmox-backup-client list` with the same credentials.
+#   2. CNPG cluster `cluttertestdb` Ready.
+#
+# WARNING: `pg_restore --clean --if-exists` drops and recreates objects owned by the `app` user
+#          inside the target database. Verify on a clone first.
 #
 # Re-runs: `spec.template` is immutable — delete the Job or bump `metadata.name` when the pod spec changes.
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: clutterstock-test-pbs-restore-v002
+  name: clutterstock-test-pbs-restore-v003
   namespace: clutterstock-test
 spec:
   backoffLimit: 1
@@ -31,15 +35,15 @@ spec:
     spec:
       nodeSelector:
         kubernetes.io/arch: amd64
-      hostname: clutterstock-test-sqlite
+      hostname: clutterstock-test-postgres
       restartPolicy: Never
       securityContext:
         runAsNonRoot: true
         runAsUser: 1654
         fsGroup: 1654
         fsGroupChangePolicy: OnRootMismatch
-      containers:
-      - name: restore
+      initContainers:
+      - name: pbs-restore
         image: ghcr.io/hwinther/proxmox/proxmox/pbs/backup-client:0.6.1
         imagePullPolicy: IfNotPresent
         command:
@@ -48,7 +52,7 @@ spec:
         - |
           set -eu
           : "${PBS_RESTORE_SNAPSHOT:?set PBS_RESTORE_SNAPSHOT in Secret clutterstock-test-pbs-backup}"
-          exec /usr/bin/proxmox-backup-client restore "$PBS_RESTORE_SNAPSHOT" sqlite-data.pxar /data/
+          exec /usr/bin/proxmox-backup-client restore "$PBS_RESTORE_SNAPSHOT" db.pxar /dump/
         envFrom:
         - secretRef:
             name: clutterstock-test-pbs-backup
@@ -65,9 +69,37 @@ spec:
             cpu: "1"
             memory: 512Mi
         volumeMounts:
-        - name: sqlite-data
-          mountPath: /data
+        - name: dump
+          mountPath: /dump
+      containers:
+      - name: pgrestore
+        image: postgres:18-alpine
+        imagePullPolicy: IfNotPresent
+        command:
+        - /bin/sh
+        - -c
+        - 'pg_restore --clean --if-exists --no-owner --no-acl -d "$PGURI" /dump/clutterstock.pgdump'
+        env:
+        - name: PGURI
+          valueFrom:
+            secretKeyRef:
+              name: cluttertestdb-app
+              key: uri
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: "1"
+            memory: 512Mi
+        volumeMounts:
+        - name: dump
+          mountPath: /dump
       volumes:
-      - name: sqlite-data
-        persistentVolumeClaim:
-          claimName: clutterstock-api-sqlite
+      - name: dump
+        emptyDir: {}

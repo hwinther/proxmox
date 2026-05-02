@@ -1,25 +1,24 @@
-# Manual backup of clutterstock-api SQLite PVC to Proxmox Backup Server.
+# Manual backup of clutterstock-test postgres database to Proxmox Backup Server.
+#
+# Flow:
+#   1. initContainer pgdump runs pg_dump -Fc against the CNPG cluster (creds from cluttertestdb-app/uri)
+#      and writes /dump/clutterstock.pgdump in an emptyDir.
+#   2. Main container archives /dump as a PBS .pxar snapshot.
 #
 # Prerequisites:
 #   1. Create Secret `clutterstock-test-pbs-backup` (see pbs-backup-secrets.md).
-#   2. Scale API off the RWO volume so the Job can mount it:
-#        kubectl -n clutterstock-test scale deployment clutterstock-api --replicas=0
-#   3. Wait until no pod is using PVC `clutterstock-api-sqlite`, then apply this Job or let Flux create it.
-#   4. After the Job completes successfully:
-#        kubectl -n clutterstock-test scale deployment clutterstock-api --replicas=1
+#   2. CNPG cluster `cluttertestdb` Ready and the operator-provided `cluttertestdb-app` Secret present.
 #
 # Re-runs / image bumps: `spec.template` is immutable. Either
-#   `kubectl delete job -n clutterstock-test clutterstock-test-pbs-backup-v002`
-# or bump `metadata.name` (e.g. v002 → v003) so apply creates a new Job instead of patching.
+#   `kubectl delete job -n clutterstock-test clutterstock-test-pbs-backup-v003`
+# or bump `metadata.name` (e.g. v003 → v004) so apply creates a new Job instead of patching.
 #
-# Image tag: GitVersion MajorMinorPatch from .github/workflows/build-proxmox-pbs-backup-client.yaml
-# (calls reusable-workflows docker-container@v1). Builds run on workflow_dispatch or push of v* tags
-# touching images/proxmox-pbs-backup-client (see workflow paths); pin the tag from the run summary.
-# Image is linux/amd64 only (official static client from pbs-client); see images/proxmox-pbs-backup-client/Dockerfile.
+# Image tag (PBS client): GitVersion MajorMinorPatch from .github/workflows/build-proxmox-pbs-backup-client.yaml.
+# PBS client image is linux/amd64 only; postgres:18-alpine is multi-arch but pinned to amd64 here for symmetry.
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: clutterstock-test-pbs-backup-v002
+  name: clutterstock-test-pbs-backup-v003
   namespace: clutterstock-test
 spec:
   backoffLimit: 2
@@ -31,23 +30,51 @@ spec:
         app.kubernetes.io/name: clutterstock-pbs-backup
         app.kubernetes.io/component: clutterstock-pbs-backup
     spec:
-      # Image is linux/amd64; avoid arm64 nodes on mixed clusters.
       nodeSelector:
         kubernetes.io/arch: amd64
-      hostname: clutterstock-test-sqlite
+      hostname: clutterstock-test-postgres
       restartPolicy: Never
       securityContext:
         runAsNonRoot: true
         runAsUser: 1654
         fsGroup: 1654
         fsGroupChangePolicy: OnRootMismatch
+      initContainers:
+      - name: pgdump
+        image: postgres:18-alpine
+        imagePullPolicy: IfNotPresent
+        command:
+        - /bin/sh
+        - -c
+        - 'pg_dump -Fc -f /dump/clutterstock.pgdump "$PGURI"'
+        env:
+        - name: PGURI
+          valueFrom:
+            secretKeyRef:
+              name: cluttertestdb-app
+              key: uri
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: "1"
+            memory: 512Mi
+        volumeMounts:
+        - name: dump
+          mountPath: /dump
       containers:
       - name: backup
         image: ghcr.io/hwinther/proxmox/proxmox/pbs/backup-client:0.6.1
         imagePullPolicy: IfNotPresent
         args:
         - backup
-        - sqlite-data.pxar:/data
+        - db.pxar:/dump
         envFrom:
         - secretRef:
             name: clutterstock-test-pbs-backup
@@ -64,9 +91,8 @@ spec:
             cpu: "1"
             memory: 512Mi
         volumeMounts:
-        - name: sqlite-data
-          mountPath: /data
+        - name: dump
+          mountPath: /dump
       volumes:
-      - name: sqlite-data
-        persistentVolumeClaim:
-          claimName: clutterstock-api-sqlite
+      - name: dump
+        emptyDir: {}
