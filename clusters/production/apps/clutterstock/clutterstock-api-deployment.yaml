@@ -42,12 +42,22 @@ spec:
         env:
         - name: ASPNETCORE_URLS
           value: http://+:8080
-        # Kyverno clones clutterstockdb-app into clutterstock-production.
-        - name: ConnectionStrings__ClutterStockPostgres
+        # Connection string assembled from individual fields: clutterstock-pg-secret only has a usable
+        # `password` (its `uri` key carries an unsubstituted `<password>` placeholder). Kyverno clones the
+        # secret from postgres-production via clone-clutterstock-pg-secret-to-clutterstock-production.
+        - name: PG_HOST
+          value: postgres-prod-rw.postgres-production.svc.cluster.local
+        - name: PG_DB
+          value: clutterstock
+        - name: PG_USER
+          value: clutterstock
+        - name: PG_PASSWORD
           valueFrom:
             secretKeyRef:
               name: clutterstock-pg-secret
-              key: uri
+              key: password
+        - name: ConnectionStrings__ClutterStockPostgres
+          value: "Host=$(PG_HOST);Port=5432;Database=$(PG_DB);Username=$(PG_USER);Password=$(PG_PASSWORD)"
         - name: OTEL_SERVICE_NAME
           value: "clutterstock-api"
         - name: OTEL_EXPORTER_OTLP_ENDPOINT

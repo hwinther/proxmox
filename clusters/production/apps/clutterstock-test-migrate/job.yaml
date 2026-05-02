@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: clutterstock-test-migrate-v107
+  name: clutterstock-test-migrate-v108
   namespace: clutterstock-test
 spec:
   backoffLimit: 3
@@ -29,11 +29,20 @@ spec:
             drop:
             - ALL
         env:
-        - name: ConnectionStrings__ClutterStock
+        # Connection string assembled from individual fields for symmetry with production.
+        - name: PG_HOST
+          value: cluttertestdb-rw.postgres-test.svc.cluster.local
+        - name: PG_DB
+          value: clutterstock
+        - name: PG_USER
+          value: app
+        - name: PG_PASSWORD
           valueFrom:
             secretKeyRef:
               name: cluttertestdb-app
-              key: uri
+              key: password
+        - name: ConnectionStrings__ClutterStock
+          value: "Host=$(PG_HOST);Port=5432;Database=$(PG_DB);Username=$(PG_USER);Password=$(PG_PASSWORD)"
         resources:
           requests:
             cpu: 50m

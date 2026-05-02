@@ -42,12 +42,21 @@ spec:
         env:
         - name: ASPNETCORE_URLS
           value: http://+:8080
-        # Kyverno clones cluttertestdb-app into clutterstock-test.
-        - name: ConnectionStrings__ClutterStockPostgres
+        # Kyverno clones cluttertestdb-app into clutterstock-test. Connection string assembled from
+        # individual fields for symmetry with production (where the cloned secret's `uri` is broken).
+        - name: PG_HOST
+          value: cluttertestdb-rw.postgres-test.svc.cluster.local
+        - name: PG_DB
+          value: clutterstock
+        - name: PG_USER
+          value: app
+        - name: PG_PASSWORD
           valueFrom:
             secretKeyRef:
               name: cluttertestdb-app
-              key: uri
+              key: password
+        - name: ConnectionStrings__ClutterStockPostgres
+          value: "Host=$(PG_HOST);Port=5432;Database=$(PG_DB);Username=$(PG_USER);Password=$(PG_PASSWORD)"
         - name: OTEL_SERVICE_NAME
           value: "clutterstock-api"
         - name: OTEL_EXPORTER_OTLP_ENDPOINT
