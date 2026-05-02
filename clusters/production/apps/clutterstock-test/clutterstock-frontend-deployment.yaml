@@ -53,6 +53,12 @@ spec:
           value: "https://clutterstock.test.wsh.no/v1/traces"
         - name: PUBLIC_OTEL_SERVICE_NAME
           value: "clutterstock-frontend"
+        # Read at runtime by oidc.server.ts via process.env (not inlined at build time
+        # because the SSR code uses process.env.VITE_*, not import.meta.env).
+        - name: VITE_OIDC_AUTHORITY
+          value: "https://auth.wsh.no"
+        - name: VITE_OIDC_CLIENT_ID
+          value: "clutterstock"
         - name: REDIS_URL
           valueFrom:
             secretKeyRef:
