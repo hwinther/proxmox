@@ -1,0 +1,44 @@
+name: Publish node-base container to GHCR
+
+on:
+    workflow_dispatch:
+        inputs:
+            grype_fail_build:
+                description: "Fail the build if Grype finds vulnerabilities"
+                type: boolean
+                default: true
+    push:
+        tags:
+            - "v*"
+        paths:
+            - "compose/templates/node-base/**"
+            - ".github/workflows/build-node-base.yaml"
+            - "GitVersion.yml" 
+
+permissions:
+    contents: read
+    packages: write
+    id-token: write
+    attestations: write
+    actions: write
+    security-events: write
+
+concurrency:
+    group: "${{ github.workflow }} @ ${{ github.event.pull_request.head.label ||
+        github.head_ref || github.ref }}"
+    cancel-in-progress: true
+
+jobs:
+    node_base:
+        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' &&
+            startsWith(github.ref, 'refs/tags/v'))
+        uses: hwinther/reusable-workflows/.github/workflows/docker-container.yml@c8e1d0ea177e35cd9043ca216e1cdca4f2105724 # v1.19.0
+        secrets: inherit
+        with:
+            container_registry: ghcr.io
+            # ghcr.io/<repo-owner>/<repo>/<postfix> → ghcr.io/hwinther/proxmox/node-base
+            container_image_name_postfix: node-base
+            build_context: compose/templates/node-base
+            dockerfile: compose/templates/node-base/Dockerfile
+            grype_fail_build: ${{ github.event_name != 'workflow_dispatch' ||
+                fromJSON(github.event.inputs.grype_fail_build || 'true') }}
