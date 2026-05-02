@@ -484,6 +484,8 @@ spec:
             - https://clutterstock.wsh.no/swagger/oauth2-redirect.html
             - https://clutterstock.test.wsh.no/auth/callback
             - https://clutterstock.test.wsh.no/swagger/oauth2-redirect.html
+            # GitHub Actions e2e: docker-compose service name on the shared container network.
+            - http://clutterstock-frontend:8080/auth/callback
             - http://localhost:5173/auth/callback
             - http://127.0.0.1:5173/auth/callback
             - https://localhost:5173/auth/callback
