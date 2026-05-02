@@ -59,6 +59,10 @@ spec:
           value: "https://auth.wsh.no"
         - name: VITE_OIDC_CLIENT_ID
           value: "clutterstock"
+        # Public origin used by oidc.server.ts to build redirect_uri / post_logout_redirect_uri.
+        # Required because Traefik terminates TLS and the pod sees http on inbound requests.
+        - name: PUBLIC_ORIGIN
+          value: "https://clutterstock.test.wsh.no"
         - name: REDIS_URL
           valueFrom:
             secretKeyRef:
