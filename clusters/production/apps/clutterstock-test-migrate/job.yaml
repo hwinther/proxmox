@@ -21,7 +21,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       containers:
       - name: migrator
-        image: ghcr.io/hwinther/clutterstock/migrator:0.19.1
+        image: ghcr.io/hwinther/clutterstock/migrator:0.22.0
         imagePullPolicy: Always
         securityContext:
           allowPrivilegeEscalation: false
