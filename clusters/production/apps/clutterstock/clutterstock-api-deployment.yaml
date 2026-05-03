@@ -42,9 +42,7 @@ spec:
         env:
         - name: ASPNETCORE_URLS
           value: http://+:8080
-        # Connection string assembled from individual fields: clutterstock-pg-secret only has a usable
-        # `password` (its `uri` key carries an unsubstituted `<password>` placeholder). Kyverno clones the
-        # secret from postgres-production via clone-clutterstock-pg-secret-to-clutterstock-production.
+        # Connects as the CNPG-managed `clutterstock` role via cloned clutterstock-pg-secret.
         - name: PG_HOST
           value: postgres-prod-rw.postgres-production.svc.cluster.local
         - name: PG_DB
@@ -56,8 +54,7 @@ spec:
             secretKeyRef:
               name: clutterstock-pg-secret
               key: password
-        # URI form (postgres://user:pass@host:port/db) — API has a PostgresUrlParser that converts to ADO.NET key=value.
-        # Assembled from env vars because clutterstock-pg-secret/uri has an unsubstituted `<password>` placeholder.
+        # URI form — API has a PostgresUrlParser that converts to ADO.NET key=value.
         # Config key must match Program.cs `GetConnectionString("ClutterStock")`.
         - name: ConnectionStrings__ClutterStock
           value: "postgresql://$(PG_USER):$(PG_PASSWORD)@$(PG_HOST):5432/$(PG_DB)"

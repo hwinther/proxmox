@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: clutterstock-migrate-v109
+  name: clutterstock-migrate-v110
   namespace: clutterstock-production
 spec:
   backoffLimit: 3
@@ -29,8 +29,7 @@ spec:
             drop:
             - ALL
         env:
-        # Connection string assembled from individual fields: clutterstock-pg-secret only has a usable
-        # `password` (its `uri` key carries an unsubstituted `<password>` placeholder).
+        # Connects as CNPG-managed `clutterstock` role via cloned clutterstock-pg-secret.
         - name: PG_HOST
           value: postgres-prod-rw.postgres-production.svc.cluster.local
         - name: PG_DB
