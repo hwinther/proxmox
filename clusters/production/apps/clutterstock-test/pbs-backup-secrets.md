@@ -11,11 +11,11 @@ The backup and restore Jobs load environment variables from the Kubernetes Secre
 
 ## Optional keys
 
-| Key                       | When to set                                                                                                                                                                                                     |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PBS_FINGERPRINT`         | If PBS uses a self-signed certificate or you pin the server cert fingerprint. Same PBS docs section as above.                                                                                                   |
-| `PBS_NAMESPACE`           | PBS datastore namespace (e.g. `Production/clutterstock-test`). Job appends `--ns $PBS_NAMESPACE` to both backup and restore. Restores must use the same value as the backup. Create the namespace in the PBS UI. |
-| `PBS_ENCRYPTION_PASSWORD` | Only when the keyfile is password-protected (see `clutterstock-test-pbs-keyfile` Secret below). Read from env by `proxmox-backup-client`.                                                                       |
+| Key                       | When to set                                                                                                                                                                                                       |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PBS_FINGERPRINT`         | If PBS uses a self-signed certificate or you pin the server cert fingerprint. Same PBS docs section as above.                                                                                                     |
+| `PBS_NAMESPACE`           | PBS datastore namespace (e.g. `Production/clutterstock-test`). Job appends `--ns $PBS_NAMESPACE` to both backup and restore. Restores must use the same value as the backup. Create the namespace in the PBS UI.  |
+| `PBS_ENCRYPTION_PASSWORD` | Only when the keyfile is password-protected (see `clutterstock-test-pbs-keyfile` Secret below). Read from env by `proxmox-backup-client`.                                                                         |
 | `PBS_RESTORE_SNAPSHOT`    | Only for **restore**: full snapshot path (e.g. `host/clutterstock-test-postgres/2025-04-13T10:00:00Z`). Omit for backup-only. You can add it temporarily, run the restore Job, then remove it or leave it unused. |
 
 ## Create the Secret (CLI)
@@ -65,11 +65,10 @@ kubectl -n clutterstock-test create secret generic clutterstock-test-pbs-backup 
   --from-literal=PBS_ENCRYPTION_PASSWORD='<keyfile-password>'
 ```
 
-After patching, bump or delete the v005 Job to roll a fresh backup pod that reads the updated env (env from a Secret is not re-read by an already-running pod):
+After patching, the next scheduled CronJob run picks up the new env automatically — env from a Secret is read at pod start, so already-running pods are not affected. To validate the change before the next scheduled run, trigger an out-of-band Job from the CronJob:
 
 ```bash
-kubectl -n clutterstock-test delete job clutterstock-test-pbs-backup-v005
-kubectl apply -f clutterstock-test-pbs-backup-job.yaml
+kubectl -n clutterstock-test create job --from=cronjob/clutterstock-test-pbs-backup clutterstock-test-pbs-backup-manual-$(date +%s)
 ```
 
 ## Verify (without printing secret values)

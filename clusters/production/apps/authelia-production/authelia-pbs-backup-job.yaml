@@ -1,7 +1,7 @@
-# Manual backup of Authelia's postgres database (OIDC consent, TOTP devices, sessions, etc.)
+# Daily backup of Authelia's postgres database (OIDC consent, TOTP devices, sessions, etc.)
 # to Proxmox Backup Server.
 #
-# Flow:
+# Flow (per scheduled run):
 #   1. initContainer pgdump runs pg_dump -Fc using libpq env vars against the CNPG cluster
 #      (creds from authelia-pg-secret cloned by Kyverno) and writes /dump/authelia.pgdump.
 #   2. Main container archives /dump as a PBS .pxar snapshot — appends `--ns $PBS_NAMESPACE` and
@@ -11,110 +11,117 @@
 #   1. Create Secret `authelia-pbs-backup` (see pbs-backup-secrets.md).
 #   2. CNPG cluster `postgres-prod` Ready and `authelia-pg-secret` cloned into authelia-production.
 #
-# Re-runs / image bumps: `spec.template` is immutable. Either
-#   `kubectl delete job -n authelia-production authelia-pbs-backup-v001`
-# or bump `metadata.name` (e.g. v001 → v002) so apply creates a new Job instead of patching.
+# Trigger an immediate run (outside the schedule):
+#   kubectl -n authelia-production create job --from=cronjob/authelia-pbs-backup authelia-pbs-backup-manual-$(date +%s)
 apiVersion: batch/v1
-kind: Job
+kind: CronJob
 metadata:
-  name: authelia-pbs-backup-v001
+  name: authelia-pbs-backup
   namespace: authelia-production
 spec:
-  backoffLimit: 2
-  ttlSecondsAfterFinished: 86400
-  template:
-    metadata:
-      labels:
-        app.kubernetes.io/name: authelia-pbs-backup
-        app.kubernetes.io/component: authelia-pbs-backup
+  # 03:00 Europe/Oslo daily — between clutterstock-test (02:30) and clutterstock prod (03:30).
+  schedule: "0 3 * * *"
+  timeZone: Europe/Oslo
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 3600
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
     spec:
-      nodeSelector:
-        kubernetes.io/arch: amd64
-      hostname: authelia-postgres
-      restartPolicy: Never
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 1654
-        fsGroup: 1654
-        fsGroupChangePolicy: OnRootMismatch
-      initContainers:
-      - name: pgdump
-        image: postgres:18-alpine
-        imagePullPolicy: IfNotPresent
-        command:
-        - /bin/sh
-        - -c
-        - 'pg_dump -Fc -f /dump/authelia.pgdump'
-        env:
-        - name: PGHOST
-          value: postgres-prod-rw.postgres-production.svc.cluster.local
-        - name: PGUSER
-          value: authelia
-        - name: PGDATABASE
-          value: authelia
-        - name: PGPASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: authelia-pg-secret
-              key: password
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-            - ALL
-        resources:
-          requests:
-            cpu: 100m
-            memory: 128Mi
-          limits:
-            cpu: "1"
-            memory: 512Mi
-        volumeMounts:
-        - name: dump
-          mountPath: /dump
-      containers:
-      - name: backup
-        image: ghcr.io/hwinther/proxmox/proxmox/pbs/backup-client:0.6.1
-        imagePullPolicy: IfNotPresent
-        command:
-        - /bin/sh
-        - -c
-        - |
-          set -eu
-          set -- backup
-          [ -n "${PBS_NAMESPACE:-}" ] && set -- "$@" --ns "$PBS_NAMESPACE"
-          [ -f /etc/pbs/keyfile ] && set -- "$@" --keyfile /etc/pbs/keyfile
-          set -- "$@" db.pxar:/dump
-          exec /usr/bin/proxmox-backup-client "$@"
-        envFrom:
-        - secretRef:
-            name: authelia-pbs-backup
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-            - ALL
-        resources:
-          requests:
-            cpu: 100m
-            memory: 256Mi
-          limits:
-            cpu: "1"
-            memory: 512Mi
-        volumeMounts:
-        - name: dump
-          mountPath: /dump
-        - name: pbs-keyfile
-          mountPath: /etc/pbs
-          readOnly: true
-      volumes:
-      - name: dump
-        emptyDir: {}
-      - name: pbs-keyfile
-        secret:
-          secretName: pbs-encryption-keyfile
-          optional: true
-          items:
-          - key: keyfile
-            path: keyfile
-            mode: 0400
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: authelia-pbs-backup
+            app.kubernetes.io/component: authelia-pbs-backup
+        spec:
+          nodeSelector:
+            kubernetes.io/arch: amd64
+          hostname: authelia-postgres
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1654
+            fsGroup: 1654
+            fsGroupChangePolicy: OnRootMismatch
+          initContainers:
+          - name: pgdump
+            image: postgres:18-alpine
+            imagePullPolicy: IfNotPresent
+            command:
+            - /bin/sh
+            - -c
+            - 'pg_dump -Fc -f /dump/authelia.pgdump'
+            env:
+            - name: PGHOST
+              value: postgres-prod-rw.postgres-production.svc.cluster.local
+            - name: PGUSER
+              value: authelia
+            - name: PGDATABASE
+              value: authelia
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: authelia-pg-secret
+                  key: password
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: "1"
+                memory: 512Mi
+            volumeMounts:
+            - name: dump
+              mountPath: /dump
+          containers:
+          - name: backup
+            image: ghcr.io/hwinther/proxmox/proxmox/pbs/backup-client:0.6.1
+            imagePullPolicy: IfNotPresent
+            command:
+            - /bin/sh
+            - -c
+            - |
+              set -eu
+              set -- backup
+              [ -n "${PBS_NAMESPACE:-}" ] && set -- "$@" --ns "$PBS_NAMESPACE"
+              [ -f /etc/pbs/keyfile ] && set -- "$@" --keyfile /etc/pbs/keyfile
+              set -- "$@" db.pxar:/dump
+              exec /usr/bin/proxmox-backup-client "$@"
+            envFrom:
+            - secretRef:
+                name: authelia-pbs-backup
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+            resources:
+              requests:
+                cpu: 100m
+                memory: 256Mi
+              limits:
+                cpu: "1"
+                memory: 512Mi
+            volumeMounts:
+            - name: dump
+              mountPath: /dump
+            - name: pbs-keyfile
+              mountPath: /etc/pbs
+              readOnly: true
+          volumes:
+          - name: dump
+            emptyDir: {}
+          - name: pbs-keyfile
+            secret:
+              secretName: pbs-encryption-keyfile
+              optional: true
+              items:
+              - key: keyfile
+                path: keyfile
+                mode: 0400

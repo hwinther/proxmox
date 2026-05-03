@@ -13,12 +13,12 @@ The cluster-wide PBS encryption keyfile lives in `platform-production` and is cl
 
 ## Optional keys
 
-| Key                       | When to set                                                                                                                                                                                                |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PBS_FINGERPRINT`         | Self-signed PBS or pinned cert fingerprint.                                                                                                                                                                |
+| Key                       | When to set                                                                                                                                                                                                  |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `PBS_FINGERPRINT`         | Self-signed PBS or pinned cert fingerprint.                                                                                                                                                                  |
 | `PBS_NAMESPACE`           | PBS datastore namespace (e.g. `Production/clutterstock`). Job appends `--ns $PBS_NAMESPACE` to backup and restore. Restores must use the same value as the backup. Create the namespace in the PBS UI first. |
-| `PBS_ENCRYPTION_PASSWORD` | Only when the keyfile is password-protected. Read from env by `proxmox-backup-client`.                                                                                                                     |
-| `PBS_RESTORE_SNAPSHOT`    | Only for **restore**: full snapshot path (e.g. `host/clutterstock-postgres/2026-05-04T03:00:00Z`).                                                                                                          |
+| `PBS_ENCRYPTION_PASSWORD` | Only when the keyfile is password-protected. Read from env by `proxmox-backup-client`.                                                                                                                       |
+| `PBS_RESTORE_SNAPSHOT`    | Only for **restore**: full snapshot path (e.g. `host/clutterstock-postgres/2026-05-04T03:00:00Z`).                                                                                                           |
 
 ## Create the Secret
 
@@ -44,11 +44,10 @@ kubectl -n clutterstock-production patch secret clutterstock-pbs-backup --type m
 }'
 ```
 
-Set a value to `null` in the same patch to remove a key. Then bump or delete the v00X Job to roll a fresh pod (env from a Secret is not re-read by an already-running pod):
+Set a value to `null` in the same patch to remove a key. The next scheduled CronJob run picks up the new env automatically — env from a Secret is read at pod start, so already-running pods are not affected. To validate the change before the next scheduled run, trigger an out-of-band Job from the CronJob:
 
 ```bash
-kubectl -n clutterstock-production delete job clutterstock-pbs-backup-v001
-kubectl apply -f clutterstock-pbs-backup-job.yaml
+kubectl -n clutterstock-production create job --from=cronjob/clutterstock-pbs-backup clutterstock-pbs-backup-manual-$(date +%s)
 ```
 
 ## Restore (manual, destructive)
@@ -68,6 +67,8 @@ kubectl apply -f clusters/production/apps/clutterstock/clutterstock-pbs-restore-
 
 # 4. Watch it
 kubectl -n clutterstock-production get job clutterstock-pbs-restore-v001 -w
+
+# (the restore is still a one-shot Job, not a CronJob — version-bump pattern still applies for re-runs)
 
 # 5. Bring the API back up
 kubectl -n clutterstock-production scale deployment clutterstock-api --replicas=1

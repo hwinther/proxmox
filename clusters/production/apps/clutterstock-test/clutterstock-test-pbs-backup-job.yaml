@@ -1,6 +1,6 @@
-# Manual backup of clutterstock-test postgres database to Proxmox Backup Server.
+# Daily backup of clutterstock-test postgres database to Proxmox Backup Server.
 #
-# Flow:
+# Flow (per scheduled run):
 #   1. initContainer pgdump runs pg_dump -Fc against the CNPG cluster (creds from cluttertestdb-app/uri)
 #      and writes /dump/clutterstock.pgdump in an emptyDir.
 #   2. Main container archives /dump as a PBS .pxar snapshot.
@@ -9,115 +9,121 @@
 #   1. Create Secret `clutterstock-test-pbs-backup` (see pbs-backup-secrets.md).
 #   2. CNPG cluster `cluttertestdb` Ready and the operator-provided `cluttertestdb-app` Secret present.
 #
-# Re-runs / image bumps: `spec.template` is immutable. Either
-#   `kubectl delete job -n clutterstock-test clutterstock-test-pbs-backup-v005`
-# or bump `metadata.name` (e.g. v005 → v006) so apply creates a new Job instead of patching.
+# Trigger an immediate run (outside the schedule):
+#   kubectl -n clutterstock-test create job --from=cronjob/clutterstock-test-pbs-backup clutterstock-test-pbs-backup-manual-$(date +%s)
 #
 # Image tag (PBS client): GitVersion MajorMinorPatch from .github/workflows/build-proxmox-pbs-backup-client.yaml.
 # PBS client image is linux/amd64 only; postgres:18-alpine is multi-arch but pinned to amd64 here for symmetry.
 apiVersion: batch/v1
-kind: Job
+kind: CronJob
 metadata:
-  name: clutterstock-test-pbs-backup-v005
+  name: clutterstock-test-pbs-backup
   namespace: clutterstock-test
 spec:
-  backoffLimit: 2
-  # Job object (and finished Pods) are deleted this many seconds after Complete/Failed — expect `kubectl get jobs` to be empty afterward.
-  ttlSecondsAfterFinished: 86400
-  template:
-    metadata:
-      labels:
-        app.kubernetes.io/name: clutterstock-pbs-backup
-        app.kubernetes.io/component: clutterstock-pbs-backup
+  # 02:30 Europe/Oslo daily — runs first in the staggered backup window so a failing path is visible early.
+  schedule: "30 2 * * *"
+  timeZone: Europe/Oslo
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 3600
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
     spec:
-      nodeSelector:
-        kubernetes.io/arch: amd64
-      hostname: clutterstock-test-postgres
-      restartPolicy: Never
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 1654
-        fsGroup: 1654
-        fsGroupChangePolicy: OnRootMismatch
-      initContainers:
-      - name: pgdump
-        image: postgres:18-alpine
-        imagePullPolicy: IfNotPresent
-        command:
-        - /bin/sh
-        - -c
-        - 'pg_dump -Fc -f /dump/clutterstock.pgdump "$PGURI"'
-        env:
-        - name: PGURI
-          valueFrom:
-            secretKeyRef:
-              name: cluttertestdb-app
-              key: uri
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-            - ALL
-        resources:
-          requests:
-            cpu: 100m
-            memory: 128Mi
-          limits:
-            cpu: "1"
-            memory: 512Mi
-        volumeMounts:
-        - name: dump
-          mountPath: /dump
-      containers:
-      - name: backup
-        image: ghcr.io/hwinther/proxmox/proxmox/pbs/backup-client:0.6.1
-        imagePullPolicy: IfNotPresent
-        # Build args dynamically: append --ns / --keyfile only when configured.
-        # Image ENTRYPOINT is the proxmox-backup-client binary directly, but we need
-        # a shell to make these flags conditional, so call the binary explicitly.
-        command:
-        - /bin/sh
-        - -c
-        - |
-          set -eu
-          set -- backup
-          [ -n "${PBS_NAMESPACE:-}" ] && set -- "$@" --ns "$PBS_NAMESPACE"
-          [ -f /etc/pbs/keyfile ] && set -- "$@" --keyfile /etc/pbs/keyfile
-          set -- "$@" db.pxar:/dump
-          exec /usr/bin/proxmox-backup-client "$@"
-        envFrom:
-        - secretRef:
-            name: clutterstock-test-pbs-backup
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-            - ALL
-        resources:
-          requests:
-            cpu: 100m
-            memory: 256Mi
-          limits:
-            cpu: "1"
-            memory: 512Mi
-        volumeMounts:
-        - name: dump
-          mountPath: /dump
-        - name: pbs-keyfile
-          mountPath: /etc/pbs
-          readOnly: true
-      volumes:
-      - name: dump
-        emptyDir: {}
-      # Optional: client-side encryption keyfile (PBS AES-256-GCM). The cluster-wide source
-      # `pbs-encryption-keyfile` lives in platform-production; Kyverno clones it here. When the
-      # source Secret is absent, the clone no-ops, the mount stays empty, and --keyfile is not
-      # added — backup runs unencrypted.
-      - name: pbs-keyfile
-        secret:
-          secretName: pbs-encryption-keyfile
-          optional: true
-          items:
-          - key: keyfile
-            path: keyfile
-            mode: 0400
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: clutterstock-pbs-backup
+            app.kubernetes.io/component: clutterstock-pbs-backup
+        spec:
+          nodeSelector:
+            kubernetes.io/arch: amd64
+          hostname: clutterstock-test-postgres
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1654
+            fsGroup: 1654
+            fsGroupChangePolicy: OnRootMismatch
+          initContainers:
+          - name: pgdump
+            image: postgres:18-alpine
+            imagePullPolicy: IfNotPresent
+            command:
+            - /bin/sh
+            - -c
+            - 'pg_dump -Fc -f /dump/clutterstock.pgdump "$PGURI"'
+            env:
+            - name: PGURI
+              valueFrom:
+                secretKeyRef:
+                  name: cluttertestdb-app
+                  key: uri
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: "1"
+                memory: 512Mi
+            volumeMounts:
+            - name: dump
+              mountPath: /dump
+          containers:
+          - name: backup
+            image: ghcr.io/hwinther/proxmox/proxmox/pbs/backup-client:0.6.1
+            imagePullPolicy: IfNotPresent
+            # Build args dynamically: append --ns / --keyfile only when configured.
+            # Image ENTRYPOINT is the proxmox-backup-client binary directly, but we need
+            # a shell to make these flags conditional, so call the binary explicitly.
+            command:
+            - /bin/sh
+            - -c
+            - |
+              set -eu
+              set -- backup
+              [ -n "${PBS_NAMESPACE:-}" ] && set -- "$@" --ns "$PBS_NAMESPACE"
+              [ -f /etc/pbs/keyfile ] && set -- "$@" --keyfile /etc/pbs/keyfile
+              set -- "$@" db.pxar:/dump
+              exec /usr/bin/proxmox-backup-client "$@"
+            envFrom:
+            - secretRef:
+                name: clutterstock-test-pbs-backup
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+            resources:
+              requests:
+                cpu: 100m
+                memory: 256Mi
+              limits:
+                cpu: "1"
+                memory: 512Mi
+            volumeMounts:
+            - name: dump
+              mountPath: /dump
+            - name: pbs-keyfile
+              mountPath: /etc/pbs
+              readOnly: true
+          volumes:
+          - name: dump
+            emptyDir: {}
+          # Optional: client-side encryption keyfile (PBS AES-256-GCM). The cluster-wide source
+          # `pbs-encryption-keyfile` lives in platform-production; Kyverno clones it here. When the
+          # source Secret is absent, the clone no-ops, the mount stays empty, and --keyfile is not
+          # added — backup runs unencrypted.
+          - name: pbs-keyfile
+            secret:
+              secretName: pbs-encryption-keyfile
+              optional: true
+              items:
+              - key: keyfile
+                path: keyfile
+                mode: 0400
