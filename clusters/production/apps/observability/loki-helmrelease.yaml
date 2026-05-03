@@ -40,6 +40,9 @@ spec:
         enabled: true
         storageClass: ceph-rbd
         storageClassName: ceph-rbd
+        # Chart default is 5Gi — too small for 14d retention. Compactor evicts by age, not capacity,
+        # so an undersized bucket stalls ingestion before retention triggers.
+        size: 20Gi
       resources:
         requests:
           cpu: 50m

@@ -20,7 +20,9 @@ spec:
   values:
     replicas: 1
     tempo:
-      retention: 48h
+      # Tempo only supports time-based retention. With a 20Gi PVC and 24h retention, sustained ingest
+      # can run up to ~240 KB/s before retention can't keep up with the disk filling.
+      retention: 24h
       resources:
         requests:
           cpu: 50m
@@ -42,4 +44,4 @@ spec:
     persistence:
       enabled: true
       storageClassName: ceph-rbd
-      size: 10Gi
+      size: 20Gi

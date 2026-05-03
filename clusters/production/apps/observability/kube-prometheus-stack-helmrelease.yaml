@@ -178,6 +178,9 @@ spec:
       prometheusSpec:
         replicas: 1
         retention: 15d
+        # Soft size cap below the 20Gi PVC so a cardinality spike trips retention before filling disk
+        # (time-based retention alone offers no protection against runaway series volume).
+        retentionSize: 18GB
         enableOTLPReceiver: true
         enableRemoteWriteReceiver: true
         # Proxmox-managed Ceph cluster: scrape ceph-mgr Prometheus module on all three mons.

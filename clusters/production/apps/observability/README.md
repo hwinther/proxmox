@@ -26,6 +26,19 @@ Namespace: **`observability-production`**. Flux installs **kube-prometheus-stack
 - **Dashboards:** stock kube-prometheus-stack Grafana dashboards plus **ASP.NET Core OTEL** (`dashboards/aspnet-core-otel.json` → ConfigMap `grafana-dashboard-aspnet-otel`, sidecar label `grafana_dashboard=1`) and **CloudNativePG** (`dashboards/cnpg-cluster.json` from [Grafana dashboard 20417](https://grafana.com/grafana/dashboards/20417-cloudnativepg/) → ConfigMap `grafana-dashboard-cnpg-cluster`).
 - **Postgres (CloudNative-PG):** Prometheus scrapes each `Cluster` via `additionalPodMonitors` on port **`metrics`** (9187). NetworkPolicies on **`postgres-test`** / **`postgres-production`** allow **`observability-production`** → **9187/tcp** so the Prometheus pod can reach the exporter.
 
+## Ceph (Proxmox-managed cluster)
+
+Dashboard `dashboards/ceph-cluster.json` ([Grafana dashboard 2842](https://grafana.com/grafana/dashboards/2842-ceph-cluster/), revision 18) → ConfigMap `grafana-dashboard-ceph-cluster`. Prometheus scrapes `ceph-mgr` via the static `ceph` job in `kube-prometheus-stack-helmrelease.yaml` (`additionalScrapeConfigs`, targets `10.20.4.{18,20,34}:9283`). Standby mgrs return an empty 200; only the active mgr returns metrics, and failover is automatic.
+
+Two one-time settings on a Proxmox node before this works:
+
+```
+ceph mgr module enable prometheus            # exposes /metrics on :9283 — off by default
+ceph config set mgr mgr/prometheus/exclude_perf_counters false   # IOPS / Cluster Throughput / OSD Type Count panels need OSD + BlueStore perf counters, which are excluded by default since Pacific
+```
+
+The perf-counters flag adds ~50 series per OSD; fine at homelab scale, the upstream warning only applies to clusters with hundreds of OSDs.
+
 ## Helm releases
 
 | HelmRelease          | Purpose                                             |
