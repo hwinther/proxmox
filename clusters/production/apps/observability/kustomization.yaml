@@ -38,3 +38,11 @@ configMapGenerator:
     disableNameSuffixHash: true
     labels:
       grafana_dashboard: "1"
+# Cross-service web performance: HTTP rate/latency from Prometheus + slow HTTP/SQL trace tables from Tempo.
+- name: grafana-dashboard-web-performance
+  files:
+  - dashboards/web-performance.json
+  options:
+    disableNameSuffixHash: true
+    labels:
+      grafana_dashboard: "1"
