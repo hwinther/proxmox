@@ -34,3 +34,41 @@ spec:
       clone:
         namespace: platform-production
         name: pbs-encryption-keyfile
+  - name: clone-to-clutterstock-production
+    match:
+      any:
+      - resources:
+          kinds:
+          - Secret
+          namespaces:
+          - platform-production
+          names:
+          - pbs-encryption-keyfile
+    generate:
+      apiVersion: v1
+      kind: Secret
+      name: pbs-encryption-keyfile
+      namespace: clutterstock-production
+      synchronize: true
+      clone:
+        namespace: platform-production
+        name: pbs-encryption-keyfile
+  - name: clone-to-authelia-production
+    match:
+      any:
+      - resources:
+          kinds:
+          - Secret
+          namespaces:
+          - platform-production
+          names:
+          - pbs-encryption-keyfile
+    generate:
+      apiVersion: v1
+      kind: Secret
+      name: pbs-encryption-keyfile
+      namespace: authelia-production
+      synchronize: true
+      clone:
+        namespace: platform-production
+        name: pbs-encryption-keyfile

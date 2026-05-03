@@ -5,6 +5,8 @@ resources:
 - kyverno-rbac-generate-clutterstock-pg-secret.yaml
 - clutterstock-api-deployment.yaml
 - clutterstock-frontend-deployment.yaml
+- clutterstock-pbs-backup-job.yaml
+# Restore is clutterstock-pbs-restore-job.yaml — apply manually so Flux does not keep a failed/duplicate restore Job.
 - networkpolicies.yaml
 - cilium-cluster-nodes-to-http.yaml
 patches:

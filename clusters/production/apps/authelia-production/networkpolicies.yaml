@@ -26,3 +26,46 @@ spec:
     ports:
     - port: 9091
       protocol: TCP
+---
+# PBS backup/restore Jobs: DNS + Postgres (pg_dump/pg_restore init container) + HTTPS + PBS API port.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: authelia-pbs-backup
+  namespace: authelia-production
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: authelia-pbs-backup
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: postgres-production
+    ports:
+    - port: 5432
+      protocol: TCP
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+        except:
+        - 169.254.169.254/32
+    ports:
+    - port: 443
+      protocol: TCP
+    - port: 8007
+      protocol: TCP

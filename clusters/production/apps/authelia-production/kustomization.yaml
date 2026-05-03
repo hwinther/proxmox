@@ -7,3 +7,6 @@ resources:
 - networkpolicies.yaml
 - cilium-cluster-nodes-to-authelia-http.yaml
 - cilium-authelia-egress-ldap.yaml
+- kyverno-rbac-generate-authelia-pg-secret.yaml
+- authelia-pbs-backup-job.yaml
+# Restore is authelia-pbs-restore-job.yaml — apply manually so Flux does not keep a failed/duplicate restore Job.

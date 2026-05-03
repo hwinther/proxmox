@@ -17,3 +17,4 @@ resources:
 - adminer-ingress.yaml
 - cilium-cluster-nodes-to-adminer-http.yaml
 - kyverno-clusterpolicy-clone-clutterstock-pg-secret.yaml
+- kyverno-clusterpolicy-clone-authelia-pg-secret.yaml

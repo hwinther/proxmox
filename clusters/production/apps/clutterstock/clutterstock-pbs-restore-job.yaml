@@ -1,0 +1,128 @@
+# Restore clutterstock-production postgres database from a PBS snapshot into the CNPG cluster.
+# Same amd64-only PBS client image and tag as the backup Job.
+#
+# Not in kustomization.yaml: apply manually when needed, e.g.
+#   kubectl apply -f clusters/production/apps/clutterstock/clutterstock-pbs-restore-job.yaml
+#
+# Flow:
+#   1. initContainer pbs-restore pulls db.pxar from PBS_RESTORE_SNAPSHOT into an emptyDir.
+#   2. Main container runs pg_restore against the CNPG cluster (libpq env vars).
+#
+# Prerequisites:
+#   1. Secret `clutterstock-pbs-backup`: PBS_REPOSITORY, PBS_PASSWORD, PBS_RESTORE_SNAPSHOT
+#      (and PBS_NAMESPACE / PBS_ENCRYPTION_PASSWORD if used). See pbs-backup-secrets.md.
+#   2. CNPG cluster `postgres-prod` Ready, `clutterstock` role + DB present, `clutterstock-pg-secret`
+#      cloned into clutterstock-production.
+#   3. Stop the API + migrate Job before restoring (writes during restore corrupt the dump):
+#        kubectl -n clutterstock-production scale deployment clutterstock-api --replicas=0
+#
+# WARNING: `pg_restore --clean --if-exists` drops and recreates objects owned by the `clutterstock`
+#          user inside the target database. Verify on a clone first.
+#
+# Re-runs: `spec.template` is immutable — delete the Job or bump `metadata.name` when the pod spec changes.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: clutterstock-pbs-restore-v001
+  namespace: clutterstock-production
+spec:
+  backoffLimit: 1
+  # Job object (and finished Pods) are deleted this many seconds after Complete/Failed.
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: clutterstock-pbs-restore
+        app.kubernetes.io/component: clutterstock-pbs-backup
+    spec:
+      nodeSelector:
+        kubernetes.io/arch: amd64
+      hostname: clutterstock-postgres
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1654
+        fsGroup: 1654
+        fsGroupChangePolicy: OnRootMismatch
+      initContainers:
+      - name: pbs-restore
+        image: ghcr.io/hwinther/proxmox/proxmox/pbs/backup-client:0.6.1
+        imagePullPolicy: IfNotPresent
+        command:
+        - /bin/sh
+        - -c
+        - |
+          set -eu
+          : "${PBS_RESTORE_SNAPSHOT:?set PBS_RESTORE_SNAPSHOT in Secret clutterstock-pbs-backup}"
+          set -- restore
+          [ -n "${PBS_NAMESPACE:-}" ] && set -- "$@" --ns "$PBS_NAMESPACE"
+          [ -f /etc/pbs/keyfile ] && set -- "$@" --keyfile /etc/pbs/keyfile
+          set -- "$@" "$PBS_RESTORE_SNAPSHOT" db.pxar /dump/
+          exec /usr/bin/proxmox-backup-client "$@"
+        envFrom:
+        - secretRef:
+            name: clutterstock-pbs-backup
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: "1"
+            memory: 512Mi
+        volumeMounts:
+        - name: dump
+          mountPath: /dump
+        - name: pbs-keyfile
+          mountPath: /etc/pbs
+          readOnly: true
+      containers:
+      - name: pgrestore
+        image: postgres:18-alpine
+        imagePullPolicy: IfNotPresent
+        command:
+        - /bin/sh
+        - -c
+        - 'pg_restore --clean --if-exists --no-owner --no-acl -d "$PGDATABASE" /dump/clutterstock.pgdump'
+        env:
+        - name: PGHOST
+          value: postgres-prod-rw.postgres-production.svc.cluster.local
+        - name: PGUSER
+          value: clutterstock
+        - name: PGDATABASE
+          value: clutterstock
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: clutterstock-pg-secret
+              key: password
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: "1"
+            memory: 512Mi
+        volumeMounts:
+        - name: dump
+          mountPath: /dump
+      volumes:
+      - name: dump
+        emptyDir: {}
+      - name: pbs-keyfile
+        secret:
+          secretName: pbs-encryption-keyfile
+          optional: true
+          items:
+          - key: keyfile
+            path: keyfile
+            mode: 0400
