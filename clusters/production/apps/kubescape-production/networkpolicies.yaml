@@ -32,7 +32,15 @@ spec:
       protocol: UDP
     - port: 53
       protocol: TCP
+  # In-namespace coordination: operator ↔ kubescape ↔ kubevuln ↔ storage ↔ node-agent ↔ scheduler Jobs.
+  # Required as a discrete rule because Cilium treats `ipBlock: 0.0.0.0/0` as the `world` entity and
+  # does NOT include identity-routed cluster-internal pod IPs — see CNP semantics for Cilium NetworkPolicy.
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kubescape-production
   # Kubernetes API server + container registries (image vulnerability scanning).
+  # `world` entity in Cilium terms — covers external IPs only; in-cluster pod-to-pod uses identities.
   - to:
     - ipBlock:
         cidr: 0.0.0.0/0
@@ -49,3 +57,26 @@ spec:
   egress:
   - toEntities:
     - kube-apiserver
+---
+# Admission webhook: apiserver → kubescape-operator:8443. With Cilium kube-proxy replacement
+# the apiserver-originated traffic arrives with `host` / `remote-node` identity (per-node
+# CiliumInternalIP), not the `kube-apiserver` entity — same pattern as cnpg-to-kubernetes-apiserver.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-apiserver-to-kubescape-webhook
+  namespace: kubescape-production
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: kubescape-operator
+      app.kubernetes.io/component: operator
+  ingress:
+  - fromEntities:
+    - host
+    - remote-node
+    - kube-apiserver
+    toPorts:
+    - ports:
+      - port: "8443"
+        protocol: TCP

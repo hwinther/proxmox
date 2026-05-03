@@ -1,0 +1,36 @@
+# Single cluster-wide PBS client-side encryption keyfile, cloned into each namespace that runs
+# PBS backup/restore Jobs. Add a new rule per consuming namespace as more apps adopt PBS backups.
+#
+# Source Secret `pbs-encryption-keyfile` in namespace `platform-production` is created out-of-band
+# (see pbs-encryption-keyfile.md) — never committed to git. When the source is missing, the clone
+# rule no-ops and Job mounts (`optional: true`) stay empty so backups simply run unencrypted.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: clone-pbs-encryption-keyfile
+  annotations:
+    policies.kyverno.io/title: Clone pbs-encryption-keyfile to PBS-using namespaces
+    policies.kyverno.io/category: PBS
+    policies.kyverno.io/severity: low
+spec:
+  generateExisting: true
+  rules:
+  - name: clone-to-clutterstock-test
+    match:
+      any:
+      - resources:
+          kinds:
+          - Secret
+          namespaces:
+          - platform-production
+          names:
+          - pbs-encryption-keyfile
+    generate:
+      apiVersion: v1
+      kind: Secret
+      name: pbs-encryption-keyfile
+      namespace: clutterstock-test
+      synchronize: true
+      clone:
+        namespace: platform-production
+        name: pbs-encryption-keyfile

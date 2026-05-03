@@ -21,7 +21,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: clutterstock-test-pbs-restore-v003
+  name: clutterstock-test-pbs-restore-v005
   namespace: clutterstock-test
 spec:
   backoffLimit: 1
@@ -46,13 +46,19 @@ spec:
       - name: pbs-restore
         image: ghcr.io/hwinther/proxmox/proxmox/pbs/backup-client:0.6.1
         imagePullPolicy: IfNotPresent
+        # Match backup Job: append --ns / --keyfile only when configured. Encrypted backups
+        # require both --keyfile and PBS_ENCRYPTION_PASSWORD (read from env by the client).
         command:
         - /bin/sh
         - -c
         - |
           set -eu
           : "${PBS_RESTORE_SNAPSHOT:?set PBS_RESTORE_SNAPSHOT in Secret clutterstock-test-pbs-backup}"
-          exec /usr/bin/proxmox-backup-client restore "$PBS_RESTORE_SNAPSHOT" db.pxar /dump/
+          set -- restore
+          [ -n "${PBS_NAMESPACE:-}" ] && set -- "$@" --ns "$PBS_NAMESPACE"
+          [ -f /etc/pbs/keyfile ] && set -- "$@" --keyfile /etc/pbs/keyfile
+          set -- "$@" "$PBS_RESTORE_SNAPSHOT" db.pxar /dump/
+          exec /usr/bin/proxmox-backup-client "$@"
         envFrom:
         - secretRef:
             name: clutterstock-test-pbs-backup
@@ -71,6 +77,9 @@ spec:
         volumeMounts:
         - name: dump
           mountPath: /dump
+        - name: pbs-keyfile
+          mountPath: /etc/pbs
+          readOnly: true
       containers:
       - name: pgrestore
         image: postgres:18-alpine
@@ -103,3 +112,12 @@ spec:
       volumes:
       - name: dump
         emptyDir: {}
+      # Cluster-wide PBS encryption keyfile, cloned by Kyverno from platform-production.
+      - name: pbs-keyfile
+        secret:
+          secretName: pbs-encryption-keyfile
+          optional: true
+          items:
+          - key: keyfile
+            path: keyfile
+            mode: 0400
