@@ -75,7 +75,7 @@ spec:
           tls:
             insecure: true
         otlphttp/prometheus:
-          endpoint: http://obs-kps-kube-prometheus-st-prometheus.observability-production.svc.cluster.local/api/v1/otlp
+          endpoint: http://obs-kps-kube-prometheus-st-prometheus.observability-production.svc.cluster.local:9090/api/v1/otlp
           tls:
             insecure: true
         otlphttp/loki:
