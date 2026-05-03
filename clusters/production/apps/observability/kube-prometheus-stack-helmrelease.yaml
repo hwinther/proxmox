@@ -180,6 +180,16 @@ spec:
         retention: 15d
         enableOTLPReceiver: true
         enableRemoteWriteReceiver: true
+        # Proxmox-managed Ceph cluster: scrape ceph-mgr Prometheus module on all three mons.
+        # Standby mgrs return an empty 200; only the active mgr returns metrics, and failover is automatic.
+        additionalScrapeConfigs:
+        - job_name: ceph
+          metrics_path: /metrics
+          static_configs:
+          - targets:
+            - 10.20.4.18:9283
+            - 10.20.4.20:9283
+            - 10.20.4.34:9283
         resources:
           requests:
             cpu: 200m

@@ -46,3 +46,12 @@ configMapGenerator:
     disableNameSuffixHash: true
     labels:
       grafana_dashboard: "1"
+# Ceph cluster (grafana.com/dashboards/2842, revision 18) — requires ceph-mgr prometheus module enabled
+# and the static `ceph` scrape job in kube-prometheus-stack-helmrelease.yaml.
+- name: grafana-dashboard-ceph-cluster
+  files:
+  - dashboards/ceph-cluster.json
+  options:
+    disableNameSuffixHash: true
+    labels:
+      grafana_dashboard: "1"
