@@ -64,7 +64,7 @@ spec:
         except:
         - 169.254.169.254/32
 ---
-# PBS backup/restore Jobs: DNS + HTTPS + default PBS API port (narrow further if PBS has a fixed IP).
+# PBS backup/restore Jobs: DNS + Postgres (pg_dump/pg_restore init container) + HTTPS + PBS API port.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -88,6 +88,13 @@ spec:
     - port: 53
       protocol: UDP
     - port: 53
+      protocol: TCP
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: postgres-test
+    ports:
+    - port: 5432
       protocol: TCP
   - to:
     - ipBlock:

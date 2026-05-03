@@ -4,16 +4,17 @@ See [`../../docs/postgres-naming-convention.md`](../../../docs/postgres-naming-c
 
 ## clutterstock
 
-CNPG managed role **`clutterstock`** (target state; currently still `app`) owns the **`clutterstock`** database on cluster **`postgres-prod`**.
+CNPG managed role **`clutterstock`** owns the **`clutterstock`** database (declared in `database-clutterstock.yaml`) on cluster **`postgres-prod`**.
 
-Secret **`clutterstock-pg-secret`** (target; currently `postgres-prod-app`) is created manually and cloned by Kyverno into **`clutterstock-production`**.
-
-Inspect the connection URI:
+Secret **`clutterstock-pg-secret`** is created manually (referenced by `passwordSecret` on the managed role) and cloned by Kyverno into **`clutterstock-production`** for the API + migrate Job.
 
 ```bash
-kubectl get secret clutterstock-pg-secret -n postgres-production -o jsonpath='{.data.uri}' | base64 -d
-echo
+kubectl create secret generic clutterstock-pg-secret \
+  --from-literal=password=<password> \
+  -n postgres-production
 ```
+
+Note: `password` is the only key consumed by the deployments. CNPG also generates a `uri` key with a literal `<password>` placeholder — do not consume it directly; the deployments assemble the URI from `password` + plain-value PG_USER / PG_HOST / PG_DB.
 
 ## authelia
 
