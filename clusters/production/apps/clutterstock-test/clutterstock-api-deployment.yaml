@@ -55,8 +55,9 @@ spec:
             secretKeyRef:
               name: cluttertestdb-app
               key: password
-        # URI form (postgres://user:pass@host:port/db) — API has a parser that converts to ADO.NET key=value.
-        - name: ConnectionStrings__ClutterStockPostgres
+        # URI form (postgres://user:pass@host:port/db) — API has a PostgresUrlParser that converts to ADO.NET key=value.
+        # Config key must match Program.cs `GetConnectionString("ClutterStock")`.
+        - name: ConnectionStrings__ClutterStock
           value: "postgresql://$(PG_USER):$(PG_PASSWORD)@$(PG_HOST):5432/$(PG_DB)"
         - name: OTEL_SERVICE_NAME
           value: "clutterstock-api"
