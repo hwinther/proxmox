@@ -1,0 +1,13 @@
+# ClutterStock application database on the production CNPG cluster.
+# Owned by the managed `clutterstock` role declared in cluster-postgres-prod.yaml; see
+# clutterstock-pg-secret for the role password (cloned by Kyverno into clutterstock-production).
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: clutterstock
+  namespace: postgres-production
+spec:
+  cluster:
+    name: postgres-prod
+  name: clutterstock
+  owner: clutterstock
