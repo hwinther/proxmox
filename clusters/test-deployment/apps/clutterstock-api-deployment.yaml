@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: clutterstock-api
-        image: ghcr.io/hwinther/clutterstock/api:0.22.0
+        image: ghcr.io/hwinther/clutterstock/api:0.25.0
         imagePullPolicy: Always
         resources:
           requests:
