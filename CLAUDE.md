@@ -19,7 +19,7 @@ pip install -e ".[dev]"
 npm install
 ```
 
-A `config.ini` file must exist at the repo root (copy from `scripts/config.ini.example`) — the `Config()` class reads it at module load time, so tests fail without it.
+A `config.ini` file must exist at the repo root — the `Config()` class reads it at module load time, so any code that imports `common.common` fails without it. For `pytest`, the root `conftest.py` auto-copies `scripts/config.ini.example` if no `config.ini` is present. For `python -m unittest`, do the copy manually (`cp scripts/config.ini.example config.ini`).
 
 ## Commands
 
