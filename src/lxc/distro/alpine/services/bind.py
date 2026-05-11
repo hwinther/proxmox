@@ -1,4 +1,5 @@
 from ipaddress import IPv4Address
+from pathlib import Path
 from typing import Sequence
 
 from lxc.distro.alpine.actions import AlpineService
@@ -68,10 +69,10 @@ class BindService(AlpineService):
                               listen_interface: NetworkInterface,
                               file_path: str):
         named_conf_temp_path = '/tmp/named.conf'
-        named_template_conf = open(file_path, 'r').read()
+        named_template_conf = Path(file_path).read_text(encoding='utf-8')
         named_template_conf = named_template_conf.replace('1.2.3.0/24', str(listen_interface.ip4.network))
         named_template_conf = named_template_conf.replace('1.2.3.2', str(listen_interface.ip4.ip))
-        open(named_conf_temp_path, 'w').write(named_template_conf)
+        Path(named_conf_temp_path).write_text(named_template_conf, encoding='utf-8')
         self.container.push_file('/etc/bind/named.conf', named_conf_temp_path)
 
     def install_bind_dns_recursive(self,
@@ -90,7 +91,7 @@ class BindService(AlpineService):
                           source_template: str,
                           container_file_path: str,
                           zones: Sequence[DnsZone]):
-        template = open(source_template, 'r').read()
+        template = Path(source_template).read_text(encoding='utf-8')
         templates = []
         if zones is None:
             zones = []
@@ -100,7 +101,7 @@ class BindService(AlpineService):
             config = config.replace('1.2.3.4;', self.semicolon_join_ips(zone.get_ips()))
             templates.append(config)
         config_temp_path = '/tmp/named.tmp'
-        open(config_temp_path, 'w').write('\n'.join(templates))
+        Path(config_temp_path).write_text('\n'.join(templates), encoding='utf-8')
         self.container.push_file(container_file_path, config_temp_path)
 
     def install_bind_dns_authoritative(self,
@@ -120,7 +121,7 @@ class BindService(AlpineService):
                                '/etc/bind/named.zones.master.conf',
                                master_zones)
 
-        zone_template = open('../templates/bind9/zone.template', 'r').read()
+        zone_template = Path('../templates/bind9/zone.template').read_text(encoding='utf-8')
         zone_temp_path = '/tmp/named.zone.tmp'
         if master_zones is None:
             master_zones = []
@@ -128,7 +129,7 @@ class BindService(AlpineService):
             zone = zone_template
             zone = zone.replace('example.com', master_zone.domain_name)
             zone = zone.replace('192.168.254.2', str(listen_interface.ip4.ip))
-            open(zone_temp_path, 'w').write(zone)
+            Path(zone_temp_path).write_text(zone, encoding='utf-8')
             self.container.push_file(f'/var/bind/pri/{master_zone.domain_name}', zone_temp_path)
 
         self.template_and_push('../templates/bind9/named.zones.slave.conf',

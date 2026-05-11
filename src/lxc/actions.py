@@ -1,6 +1,7 @@
-import os
 import platform
+import shlex
 import tempfile
+from pathlib import Path
 from typing import List, Sequence
 
 from common.common import LxcConfig, PveNode, config, os_exec, pvesh_get_pve_nodes
@@ -113,9 +114,13 @@ class Container:
     pve_node: PveNode = None
 
     def __init__(self, container_id: int = None, lxc_config: LxcConfig = None, pve_node: PveNode = None):
+        if container_id is not None and lxc_config is not None:
+            raise ValueError("specify either container_id or lxc_config, not both")
         if container_id is not None:
             self.id = container_id
         elif lxc_config is not None:
+            if pve_node is None:
+                raise ValueError("pve_node is required when lxc_config is provided")
             self.id = lxc_config.lxc_node.vmid
             self.lxc_config = lxc_config
         else:
@@ -134,7 +139,7 @@ class Container:
 
     def push_file_from_template(self, container_file_path: str, template_file_path: str, **kwargs):
         with tempfile.NamedTemporaryFile() as temporary_file:
-            template = open(template_file_path, 'r', encoding='utf-8').read()
+            template = Path(template_file_path).read_text(encoding='utf-8')
             for key, value in kwargs.items():
                 if config.verbose:
                     print(f'replacing "{key}" with "{value}" in template data from {template_file_path}')
@@ -154,10 +159,11 @@ class Container:
         return self.pct_console_shell(f'ifdown eth{interface_id}; ifup eth{interface_id}')
 
     def append_file(self, file_path, text_line):
-        return self.pct_console_shell(f"echo '{text_line}' >> {file_path}")
+        return self.pct_console_shell(f"echo {shlex.quote(text_line)} >> {shlex.quote(file_path)}")
 
     def pct_console_shell(self, container_command: str):
-        return os_exec(f'echo "{container_command}" | pct console {self.id}', shell=True, remote_host=self.get_remote_host_value())
+        piped = f'echo {shlex.quote(container_command)} | pct console {int(self.id)}'
+        return os_exec(piped, shell=True, remote_host=self.get_remote_host_value())
 
     def pct_get_os_version(self):
         raise NotImplementedError("pct_get_os_version was not implemented")
@@ -240,7 +246,9 @@ class Container:
         if onboot is None:
             onboot = 0
 
-        open(config.container_ssh_authorized_key_filename, 'w').write(config.container_ssh_authorized_key)
+        Path(config.container_ssh_authorized_key_filename).write_text(
+            config.container_ssh_authorized_key, encoding='utf-8'
+        )
 
         network_arguments = []
         network_id = 0
@@ -254,28 +262,40 @@ class Container:
             features.append(f'mount={feature_mount}')
         if feature_nesting is not None:
             features.append(f'nesting={feature_nesting}')
-        feature_set = ''
-        if len(features) != 0:
-            feature_set = ' --features ' + ','.join(features)
 
         if rootfs_size is None:
             rootfs_size = '0.1'  # 100MB
 
-        cmd = f'pct create {self.id} {container_image_path} --ostype alpine --hostname {container_name}' \
-              f' --password="ROOT_PASSWORD" --ssh-public-keys {config.container_ssh_authorized_key_filename}' \
-              f' --cores {cpu_cores} --memory {memory} --swap {swap}' \
-              f' --pool {resource_pool} --rootfs {config.container_storage}:{rootfs_size},shared=0' \
-              f' --unprivileged {unprivileged} --cmode {cmode} --start {start} --onboot {onboot}' \
-              f'{feature_set}' \
-              + ' ' + ' '.join(network_arguments)
+        ct_root_pw = config.container_root_password()
+
+        # Build argv as a list so the password (and other values) survive verbatim
+        # through subprocess without env-var indirection or shell parsing.
+        argv = [
+            'pct', 'create', str(self.id), container_image_path,
+            '--ostype', 'alpine',
+            '--hostname', container_name,
+            '--password', ct_root_pw,
+            '--ssh-public-keys', config.container_ssh_authorized_key_filename,
+            '--cores', str(cpu_cores),
+            '--memory', str(memory),
+            '--swap', str(swap),
+            '--pool', resource_pool,
+            '--rootfs', f'{config.container_storage}:{rootfs_size},shared=0',
+            '--unprivileged', str(unprivileged),
+            '--cmode', cmode,
+            '--start', str(start),
+            '--onboot', str(onboot),
+        ]
+        if features:
+            argv += ['--features', ','.join(features)]
+        for net_arg in network_arguments:
+            # generate_net_argument returns "--netN value"; split it back into argv pair
+            flag, value = net_arg.split(' ', 1)
+            argv += [flag, value]
 
         # TODO: implement storage configuration:
         # f' --mp0 volume={container_storage}:0.01,mp=/etc/test,backup=1,ro=0,shared=0'
 
-        env = os.environ.copy()
-        ct_root_pw = config.container_root_password()
-        env['ROOT_PASSWORD'] = ct_root_pw
-
-        os_exec(cmd, env)
+        os_exec(argv)
         # TODO: verify that it runs
         print(f'Container {container_name} ({self.id}) is ready with root password: {ct_root_pw}')

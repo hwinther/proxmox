@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import configparser
 import json
 import hashlib
@@ -13,26 +15,26 @@ from typing import Callable, Optional
 
 
 class Config:
-    verbose: bool = None
-    template_storage: str = None
-    container_storage: str = None
+    verbose: bool | None = None
+    template_storage: str | None = None
+    container_storage: str | None = None
     container_root_password: Callable[[], str] = None
-    container_ssh_authorized_key: str = None
-    container_ssh_authorized_key_filename: str = None
-    network_bridge_default: str = None
-    resource_pool_default: str = None
-    cpu_cores_default: int = None
-    memory_default: int = None
-    swap_default: int = None
+    container_ssh_authorized_key: str | None = None
+    container_ssh_authorized_key_filename: str | None = None
+    network_bridge_default: str | None = None
+    resource_pool_default: str | None = None
+    cpu_cores_default: int | None = None
+    memory_default: int | None = None
+    swap_default: int | None = None
 
     # muacme settings
-    acme_email: str = None
-    ddns_server: str = None
-    ddns_tsig_key: str = None
+    acme_email: str | None = None
+    ddns_server: str | None = None
+    ddns_tsig_key: str | None = None
 
     # remote node
-    remote: bool = None
-    remote_host: str = None
+    remote: bool | None = None
+    remote_host: str | None = None
 
     def __init__(self):
         self.config = configparser.ConfigParser()
@@ -140,6 +142,7 @@ class LxcConfig:
     parent = None
     nameserver = None
     dev0 = None
+    searchdomain = None
 
     # noinspection PyShadowingBuiltins
     def __init__(self, lxc_node, arch, cores, digest, hostname, memory, ostype, rootfs, swap,
@@ -150,7 +153,7 @@ class LxcConfig:
                  mp6=None, mp7=None, mp8=None, mp9=None,
                  net0=None, net1=None, net2=None, net3=None, net4=None,
                  net5=None, net6=None, net7=None, net8=None, net9=None,
-                 dev0=None):
+                 dev0=None, searchdomain=None):
         self.lxc_node = lxc_node
         self.arch = arch
         self.cmode = cmode
@@ -190,6 +193,7 @@ class LxcConfig:
         self.net8 = net8
         self.net9 = net9
         self.dev0 = dev0
+        self.searchdomain = searchdomain
 
     def __str__(self):
         return f'{self.hostname} of type {self.ostype}'
@@ -388,29 +392,45 @@ def os_exec_cached(cmd, cache_duration: int = 300, env=None, local_override: boo
     return output
 
 
+class PveCommandError(RuntimeError):
+    def __init__(self, cmd, returncode: int, stdout: str, stderr: str):
+        self.cmd = cmd
+        self.returncode = returncode
+        self.stdout = stdout
+        self.stderr = stderr
+        super().__init__(
+            f'command exited with status {returncode}: {cmd!r}\n'
+            f'stdout: {stdout.strip()}\nstderr: {stderr.strip()}'
+        )
+
+
 def os_exec(cmd, env=None, local_override: bool = False, remote_host: str = None, **kwargs):
     if config.verbose:
         print(f'executing: {cmd}')
     if (config.remote or remote_host is not None) and not local_override:
         if remote_host is None:
             remote_host = config.remote_host
-        cmds = shlex.split(f'ssh {remote_host} {shlex.quote(cmd)}')
+        cmd_str = cmd if isinstance(cmd, str) else shlex.join(cmd)
+        cmds = shlex.split(f'ssh {remote_host} {shlex.quote(cmd_str)}')
         if 'shell' in kwargs:
             kwargs['shell'] = False
             if config.verbose:
                 print('disabled shell flag due to executing the command via a remote host')
         if config.verbose:
             print(f'updated cmd: {cmds}')
+    elif isinstance(cmd, list):
+        cmds = cmd
     elif 'shell' in kwargs:
         cmds = cmd
     else:
-        cmds = cmd.split(' ')
+        cmds = shlex.split(cmd)
     process = subprocess.run(cmds, capture_output=True, env=env, **kwargs)
     stderr = process.stderr.decode('utf-8')
+    stdout = process.stdout.decode('utf-8')
     if stderr != '':
         print(f'stderr: {stderr}')
-    process.check_returncode()
-    stdout = process.stdout.decode('utf-8')
+    if process.returncode != 0:
+        raise PveCommandError(cmd=cmd, returncode=process.returncode, stdout=stdout, stderr=stderr)
     if config.verbose and stdout != '':
         print(f'stdout: {stdout}')
     return stdout
