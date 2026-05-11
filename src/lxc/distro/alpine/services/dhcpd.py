@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Sequence
 
 import lxc.distro.alpine.actions
@@ -24,12 +25,12 @@ class DhcpService(lxc.distro.alpine.actions.AlpineService):
         self.container.rc_update('dhcpd', 'add')
 
         dhcpd_conf_temp_path = '/tmp/dhcpd.conf'
-        dhcpd_conf = open('../templates/isc-dhcp-server/dhcpd.conf', 'r').read()
-        open(dhcpd_conf_temp_path, 'w').write(dhcpd_conf)
+        dhcpd_conf = Path('../templates/isc-dhcp-server/dhcpd.conf').read_text(encoding='utf-8')
+        Path(dhcpd_conf_temp_path).write_text(dhcpd_conf, encoding='utf-8')
         self.container.push_file('/etc/dhcp/dhcpd.conf', dhcpd_conf_temp_path)
 
         subnets_temp_path = '/tmp/dhcpd.subnets.conf'
-        subnets_template_conf = open('../templates/isc-dhcp-server/dhcpd.subnets.conf', 'r').read()
+        subnets_template_conf = Path('../templates/isc-dhcp-server/dhcpd.subnets.conf').read_text(encoding='utf-8')
         subnet_configs = []
         for ip4_subnet in ip4_subnets:
             subnet_config = subnets_template_conf
@@ -55,11 +56,11 @@ class DhcpService(lxc.distro.alpine.actions.AlpineService):
                 subnet_config = subnet_config.replace('# option ntp-servers',
                                                       'option ntp-servers')
             subnet_configs.append(subnet_config)
-        open(subnets_temp_path, 'w').write('\n'.join(subnet_configs))
+        Path(subnets_temp_path).write_text('\n'.join(subnet_configs), encoding='utf-8')
         self.container.push_file('/etc/dhcp/dhcpd.subnets.conf', subnets_temp_path)
 
         devices_temp_path = '/tmp/dhcpd.devices.conf'
-        devices_template_conf = open('../templates/isc-dhcp-server/dhcpd.devices.conf', 'r').read()
+        devices_template_conf = Path('../templates/isc-dhcp-server/dhcpd.devices.conf').read_text(encoding='utf-8')
         device_configs = []
         for ip4_device in ip4_devices:
             device_config = devices_template_conf
@@ -67,7 +68,7 @@ class DhcpService(lxc.distro.alpine.actions.AlpineService):
             device_config = device_config.replace('00:11:22:33:44:55', ip4_device.hardware_ethernet)
             device_config = device_config.replace('1.2.3.4', str(ip4_device.fixed_address))
             device_configs.append(device_config)
-        open(devices_temp_path, 'w').write('\n'.join(device_configs))
+        Path(devices_temp_path).write_text('\n'.join(device_configs), encoding='utf-8')
         self.container.push_file('/etc/dhcp/dhcpd.devices.conf', devices_temp_path)
 
         self.container.rc_service('dhcpd', 'start')

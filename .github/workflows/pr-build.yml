@@ -1,0 +1,25 @@
+name: PR build
+
+on:
+    pull_request:
+        branches:
+            - main
+    workflow_dispatch:
+
+concurrency:
+    group: pr-build-caller-${{ github.ref }}
+    cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+    contents: read
+    pull-requests: write
+    checks: write
+    packages: read
+
+jobs:
+    pr-build:
+        uses: hwinther/reusable-workflows/.github/workflows/pr-build.yml@v1
+        with:
+            python_enabled: true
+            python_version: "3.13"
+            python_changes_regex: '^(src/|scripts/|pyproject\.toml|\.github/workflows/pr-build\.yml)'

@@ -1,0 +1,31 @@
+name: "Format and create PR"
+
+on:
+    workflow_dispatch:
+        inputs:
+            mode:
+                description: "Hvilken jobb som skal kjøres."
+                type: choice
+                required: true
+                default: ruff-format
+                options:
+                    - ruff-format
+                    - blame-ignore-revs
+
+permissions:
+    contents: write
+    pull-requests: write
+
+concurrency:
+    group: format-and-create-pr-${{ inputs.mode }}
+    cancel-in-progress: false
+
+jobs:
+    format:
+        uses: hwinther/reusable-workflows/.github/workflows/format-and-create-pr.yml@v1
+        with:
+            mode: ${{ inputs.mode }}
+            commit_subject: "chore: ruff format"
+            python_version: "3.13"
+            ruff_version: "0.8.0"
+            target_path: "."

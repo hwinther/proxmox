@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import List
 
 import lxc.distro.alpine.actions
@@ -109,7 +110,7 @@ class SambaService(lxc.distro.alpine.actions.AlpineService):
         # TODO: firewall policy?
 
         config_temp_path = '/tmp/smb.conf'
-        config_content = open('../templates/samba/smb.conf', 'r').read()
+        config_content = Path('../templates/samba/smb.conf').read_text(encoding='utf-8')
 
         if domain_master:
             config_content += """
@@ -152,15 +153,15 @@ ldap passwd sync = yes
             config_content += share.generate_config_section()
 
         self.container.pct_console_shell('mv /etc/samba/smb.conf /etc/samba/smb.conf.example')
-        open(config_temp_path, 'w').write(config_content)
+        Path(config_temp_path).write_text(config_content, encoding='utf-8')
 
         self.container.push_file('/etc/samba/smb.conf', config_temp_path)
 
         if mdns:
             # Add samba service to avahi
             config_temp_path = '/tmp/smb.service'
-            config_content = open('../templates/avahi/services/smb.service', 'r').read()
-            open(config_temp_path, 'w').write(config_content)
+            config_content = Path('../templates/avahi/services/smb.service').read_text(encoding='utf-8')
+            Path(config_temp_path).write_text(config_content, encoding='utf-8')
             self.container.push_file('/etc/avahi/services/smb.service', config_temp_path)
 
         self.container.pct_console_shell('testparm -s')  # verify config file(s)
@@ -188,10 +189,10 @@ class SambaClient(lxc.distro.alpine.actions.AlpineService):
         # TODO: check if config has created by our samba service before overwriting it
         self.container.pct_console_shell('mv /etc/samba/smb.conf /etc/samba/smb.conf.example')
         config_temp_path = '/tmp/smb.conf'
-        config_content = open('../templates/samba/smb.conf', 'r').read()
+        config_content = Path('../templates/samba/smb.conf').read_text(encoding='utf-8')
 
         if wins_server:
             config_content = config_content.replace(';   wins server = w.x.y.z', f'   wins server = {wins_server}')
 
-        open(config_temp_path, 'w').write(config_content)
+        Path(config_temp_path).write_text(config_content, encoding='utf-8')
         self.container.push_file('/etc/samba/smb.conf', config_temp_path)

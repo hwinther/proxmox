@@ -12,31 +12,42 @@ A homelab infrastructure-as-code / GitOps repository. There is no runnable web a
 
 ## Dev setup
 
-**Do not run `pip install -e ".[dev]"`** — flit expects a `proxmox` Python module that doesn't exist. Install deps directly:
+Build backend is setuptools; `pip install -e ".[dev]"` works from the repo root and pulls in ruff + mypy + pytest + pytest-cov + build:
 
 ```bash
-pip install dnspython==2.2.1 coverage==7.8.0 unittest-xml-reporting==3.2.0 flake8==7.2.0 flake8-html==0.4.3 "genbadge[all]==1.1.3"
+pip install -e ".[dev]"
 npm install
 ```
 
-A `config.ini` file must exist at the repo root (copy from `scripts/config.ini.example`) — the `Config()` class reads it at module load time, so tests fail without it.
+A `config.ini` file must exist at the repo root — the `Config()` class reads it at module load time, so any code that imports `common.common` fails without it. For `pytest`, the root `conftest.py` auto-copies `scripts/config.ini.example` if no `config.ini` is present. For `python -m unittest`, do the copy manually (`cp scripts/config.ini.example config.ini`).
 
 ## Commands
 
 ```bash
-# Run tests
-python3 -m unittest discover -s src -v
-python3 -m unittest discover -s scripts -v
+# Run tests (pytest auto-discovers the unittest-style tests under src/ and scripts/)
+pytest
 
-# Coverage
-coverage erase && coverage run -m unittest discover -s src && coverage run --append -m unittest discover -s scripts && coverage report
+# Coverage (pytest-cov uses the [tool.pytest.ini_options] config in pyproject.toml)
+pytest --cov=src --cov-report=term
 
-# Python linting (--exit-zero: warnings expected)
-flake8 --statistics src/ scripts/
+# Lint (ruff — currently configured with select=["E","F","W"], the flake8-equivalent set)
+ruff check .
+
+# Format check / apply
+ruff format --check .
+ruff format .
+
+# Type check
+mypy src
+
+# Build smoke (sdist + wheel; matches what the PR workflow runs)
+python -m build
 
 # Format check (JSON, Markdown only — YAML is excluded via .prettierignore)
 npx prettier --check "**/*.{json,md}"
 ```
+
+The PR workflow (`.github/workflows/pr-build.yml`) calls the reusable `pr-build.yml` from `hwinther/reusable-workflows`, which runs the same `ruff check` + `ruff format --check` + `mypy src` + `pytest` + `python -m build` pipeline on every PR that touches Python.
 
 ## Architecture
 
