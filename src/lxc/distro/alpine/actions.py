@@ -1,11 +1,10 @@
 import subprocess
-from typing import List
 
 import lxc.actions
 
 
 class AlpineService(lxc.actions.Service):
-    container: "AlpineContainer" = None
+    container: "AlpineContainer"
 
     def __init__(self, container: "AlpineContainer", name: str):
         super().__init__(container, name)
@@ -13,8 +12,6 @@ class AlpineService(lxc.actions.Service):
 
 
 class AlpineContainer(lxc.actions.Container):
-    services: List[AlpineService] = None
-
     def update_container(self):
         if not self.updates_available():
             return

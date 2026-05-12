@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pathlib import Path
 from typing import List
 
@@ -5,27 +7,27 @@ import lxc.distro.alpine.actions
 
 
 class LdapConfig:
-    auth_server = None
-    ldap_suffix = None
-    ldap_admin_dn = None
+    auth_server: str
+    ldap_suffix: str
+    ldap_admin_dn: str
 
-    def __init__(self, auth_server, ldap_suffix, ldap_admin_dn):
+    def __init__(self, auth_server: str, ldap_suffix: str, ldap_admin_dn: str):
         self.auth_server = auth_server
         self.ldap_suffix = ldap_suffix
         self.ldap_admin_dn = ldap_admin_dn
 
 
 class SambaShare:
-    name: str = None
-    path: str = None
-    comment: str = None
-    create_mask: int = None
-    directory_mask: int = None
-    valid_users: str = None
-    guest_ok: bool = None
-    browseable: bool = None
-    read_only: bool = None
-    printable: bool = None
+    name: str
+    path: str
+    comment: str | None
+    create_mask: int | None
+    directory_mask: int | None
+    valid_users: str | None
+    guest_ok: bool
+    browseable: bool
+    read_only: bool
+    printable: bool
 
     def __init__(
         self,
@@ -91,7 +93,7 @@ class SambaService(lxc.distro.alpine.actions.AlpineService):
     Doc https://www.samba.org/samba/docs/current/man-html/smbclient.1.html
     """
 
-    container: lxc.distro.alpine.actions.AlpineContainer = None
+    container: lxc.distro.alpine.actions.AlpineContainer
 
     def __init__(self, container: lxc.distro.alpine.actions.AlpineContainer, name: str):
         super().__init__(container, name)
@@ -176,7 +178,7 @@ ldap passwd sync = yes
                 .replace('LDAP_ADMIN_DN', ldap_config.ldap_admin_dn)
             )
 
-        for share in shares:
+        for share in shares or []:
             config_content += share.generate_config_section()
 
         self.container.pct_console_shell('mv /etc/samba/smb.conf /etc/samba/smb.conf.example')
@@ -206,7 +208,7 @@ class SambaClient(lxc.distro.alpine.actions.AlpineService):
     Config /etc/samba/smb.conf
     """
 
-    container: lxc.distro.alpine.actions.AlpineContainer = None
+    container: lxc.distro.alpine.actions.AlpineContainer
 
     def __init__(self, container: lxc.distro.alpine.actions.AlpineContainer, name: str):
         super().__init__(container, name)

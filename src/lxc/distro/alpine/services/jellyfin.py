@@ -7,7 +7,7 @@ class JellyfinService(lxc.distro.alpine.actions.AlpineService):
     https://jellyfin.org/docs/general/installation/linux/#alpine-linux
     """
 
-    container: lxc.distro.alpine.actions.AlpineContainer = None
+    container: lxc.distro.alpine.actions.AlpineContainer
 
     def __init__(self, container: lxc.distro.alpine.actions.AlpineContainer, name: str):
         super().__init__(container, name)

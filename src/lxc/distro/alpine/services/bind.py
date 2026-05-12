@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from ipaddress import IPv4Address
 from pathlib import Path
 from typing import Sequence
@@ -7,7 +9,7 @@ from lxc.models import NetworkInterface
 
 
 class DnsZone:
-    domain_name: str = None
+    domain_name: str
 
     def __init__(self, domain_name: str):
         self.domain_name = domain_name
@@ -66,6 +68,8 @@ class BindService(AlpineService):
         self.container.rc_service('named', 'start')
 
     def common_config_rewrite(self, listen_interface: NetworkInterface, file_path: str):
+        if listen_interface.ip4 is None:
+            raise ValueError('listen_interface must have an IPv4 address configured')
         named_conf_temp_path = '/tmp/named.conf'
         named_template_conf = Path(file_path).read_text(encoding='utf-8')
         named_template_conf = named_template_conf.replace('1.2.3.0/24', str(listen_interface.ip4.network))
@@ -84,7 +88,7 @@ class BindService(AlpineService):
             return ''
         return '; '.join([str(ip) for ip in ips]) + ';'
 
-    def template_and_push(self, source_template: str, container_file_path: str, zones: Sequence[DnsZone]):
+    def template_and_push(self, source_template: str, container_file_path: str, zones: Sequence[DnsZone] | None):
         template = Path(source_template).read_text(encoding='utf-8')
         templates = []
         if zones is None:
@@ -121,6 +125,8 @@ class BindService(AlpineService):
         zone_temp_path = '/tmp/named.zone.tmp'
         if master_zones is None:
             master_zones = []
+        if listen_interface.ip4 is None:
+            raise ValueError('listen_interface must have an IPv4 address configured')
         for master_zone in master_zones:
             zone = zone_template
             zone = zone.replace('example.com', master_zone.domain_name)
