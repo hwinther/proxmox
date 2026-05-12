@@ -81,12 +81,7 @@ def orphaned_cluster_dependabot_dirs(configured: set[str]) -> list[str]:
 
 def _github_error_message(text: str) -> str:
     """Escape for ::error command body (see GitHub workflow commands docs)."""
-    return (
-        text.replace("%", "%25")
-        .replace("\r\n", "%0D%0A")
-        .replace("\r", "%0D")
-        .replace("\n", "%0A")
-    )
+    return text.replace("%", "%25").replace("\r\n", "%0D%0A").replace("\r", "%0D").replace("\n", "%0A")
 
 
 def main() -> int:
@@ -99,10 +94,7 @@ def main() -> int:
     if missing:
         exit_code = 1
         MISSING_LIST_FILE.write_text("\n".join(missing) + "\n", encoding="utf-8")
-        hint = (
-            "Add under the appropriate package-ecosystem "
-            '(e.g. docker "directories" list).'
-        )
+        hint = "Add under the appropriate package-ecosystem " '(e.g. docker "directories" list).'
         for m in missing:
             msg = _github_error_message(f"Cluster directory {m} is not listed in Dependabot. {hint}")
             print(f"::error file={DEPENDABOT_REL},title=Dependabot::{msg}")

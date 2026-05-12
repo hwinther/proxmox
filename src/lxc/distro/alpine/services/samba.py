@@ -27,9 +27,19 @@ class SambaShare:
     read_only: bool = None
     printable: bool = None
 
-    def __init__(self, name: str, path: str, comment: str = None,
-                 create_mask: int = None, directory_mask: int = None, valid_users: str = None,
-                 guest_ok: bool = False, browseable: bool = False, read_only: bool = True, printable: bool = False):
+    def __init__(
+        self,
+        name: str,
+        path: str,
+        comment: str = None,
+        create_mask: int = None,
+        directory_mask: int = None,
+        valid_users: str = None,
+        guest_ok: bool = False,
+        browseable: bool = False,
+        read_only: bool = True,
+        printable: bool = False,
+    ):
         self.name = name
         self.path = path
         self.comment = comment
@@ -63,9 +73,16 @@ class SambaShare:
 """
 
 
-SAMBA_SHARE_HOMES = SambaShare(name='homes', path='', comment='Home Directories',
-                               create_mask=700, directory_mask=700, valid_users='%S',
-                               browseable=False, read_only=True)
+SAMBA_SHARE_HOMES = SambaShare(
+    name='homes',
+    path='',
+    comment='Home Directories',
+    create_mask=700,
+    directory_mask=700,
+    valid_users='%S',
+    browseable=False,
+    read_only=True,
+)
 
 
 class SambaService(lxc.distro.alpine.actions.AlpineService):
@@ -73,13 +90,21 @@ class SambaService(lxc.distro.alpine.actions.AlpineService):
     Config /etc/samba/smb.conf
     Doc https://www.samba.org/samba/docs/current/man-html/smbclient.1.html
     """
+
     container: lxc.distro.alpine.actions.AlpineContainer = None
 
     def __init__(self, container: lxc.distro.alpine.actions.AlpineContainer, name: str):
         super().__init__(container, name)
 
-    def install(self, ws: bool = False, mdns: bool = False, domain_master: bool = False, ntlm_support=False,
-                ldap_config: LdapConfig = None, shares: List[SambaShare] = None):
+    def install(
+        self,
+        ws: bool = False,
+        mdns: bool = False,
+        domain_master: bool = False,
+        ntlm_support=False,
+        ldap_config: LdapConfig = None,
+        shares: List[SambaShare] = None,
+    ):
         """
         Install the samba service with specified features
         ws - https://en.wikipedia.org/wiki/WS-Discovery
@@ -133,7 +158,8 @@ class SambaService(lxc.distro.alpine.actions.AlpineService):
 """
 
         if ldap_config:
-            config_content += """
+            config_content += (
+                """
 # ldap_config start
 passdb backend = ldapsam:ldap://AUTH_SERVER
 ldap suffix = LDAP_SUFFIX
@@ -145,9 +171,10 @@ ldap admin dn = LDAP_ADMIN_DN
 ldap ssl = start tls
 ldap passwd sync = yes
 # ldap_config end
-            """.replace('AUTH_SERVER', ldap_config.auth_server) \
-                .replace('LDAP_SUFFIX', ldap_config.ldap_suffix) \
+            """.replace('AUTH_SERVER', ldap_config.auth_server)
+                .replace('LDAP_SUFFIX', ldap_config.ldap_suffix)
                 .replace('LDAP_ADMIN_DN', ldap_config.ldap_admin_dn)
+            )
 
         for share in shares:
             config_content += share.generate_config_section()
@@ -178,6 +205,7 @@ class SambaClient(lxc.distro.alpine.actions.AlpineService):
     """
     Config /etc/samba/smb.conf
     """
+
     container: lxc.distro.alpine.actions.AlpineContainer = None
 
     def __init__(self, container: lxc.distro.alpine.actions.AlpineContainer, name: str):

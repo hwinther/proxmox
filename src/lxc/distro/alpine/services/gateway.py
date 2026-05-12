@@ -5,6 +5,7 @@ class GatewayService(lxc.distro.alpine.actions.AlpineService):
     """
     /etc/awall/optional/ - inactive config folder
     """
+
     container: lxc.distro.alpine.actions.AlpineContainer = None
 
     def __init__(self, container: lxc.distro.alpine.actions.AlpineContainer, name: str):
@@ -15,8 +16,10 @@ class GatewayService(lxc.distro.alpine.actions.AlpineService):
         self.container.rc_update('iptables', 'add')
         self.container.rc_update('ip6tables', 'add')
 
-        self.container.push_file_from_template(container_file_path='/etc/awall/optional/gateway-nat-policy.json',
-                                               template_file_path='../templates/awall/gateway-nat-policy.json')
+        self.container.push_file_from_template(
+            container_file_path='/etc/awall/optional/gateway-nat-policy.json',
+            template_file_path='../templates/awall/gateway-nat-policy.json',
+        )
 
         # Enable and activate firewall rules
         self.container.pct_console_shell("awall enable gateway-nat-policy && awall activate -f")

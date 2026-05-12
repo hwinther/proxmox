@@ -9,6 +9,7 @@ the test suite without a manual setup step.
 
 A locally-customized config.ini is never overwritten.
 """
+
 import shutil
 from pathlib import Path
 

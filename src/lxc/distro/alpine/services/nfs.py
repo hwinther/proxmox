@@ -7,6 +7,7 @@ class NfsServer(lxc.distro.alpine.actions.AlpineService):
     https://linux.die.net/man/5/exports
     https://github.com/unfs3/unfs3
     """
+
     container: lxc.distro.alpine.actions.AlpineContainer = None
 
     def __init__(self, container: lxc.distro.alpine.actions.AlpineContainer, name: str):
@@ -36,6 +37,7 @@ class NfsClient(lxc.distro.alpine.actions.AlpineService):
     """
     config: /etc/fstab
     """
+
     container: lxc.distro.alpine.actions.AlpineContainer = None
 
     def __init__(self, container: lxc.distro.alpine.actions.AlpineContainer, name: str):
@@ -58,4 +60,5 @@ class NfsClient(lxc.distro.alpine.actions.AlpineService):
     def mount_persist_reboot(self):
         self.container.rc_update('local', 'add')
         self.container.pct_console_shell(
-            'echo "mount -a" > /etc/local.d/mount.start && chmod +x /etc/local.d/mount.start')
+            'echo "mount -a" > /etc/local.d/mount.start && chmod +x /etc/local.d/mount.start'
+        )

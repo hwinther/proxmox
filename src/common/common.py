@@ -144,15 +144,49 @@ class LxcConfig:
     searchdomain = None
 
     # noinspection PyShadowingBuiltins
-    def __init__(self, lxc_node, arch, cores, digest, hostname, memory, ostype, rootfs, swap,
-                 description=None, features=None, lxc=None, unprivileged=None,
-                 cmode=None, onboot=None, startup=None, parent=None,
-                 nameserver=None,
-                 mp0=None, mp1=None, mp2=None, mp3=None, mp4=None, mp5=None,
-                 mp6=None, mp7=None, mp8=None, mp9=None,
-                 net0=None, net1=None, net2=None, net3=None, net4=None,
-                 net5=None, net6=None, net7=None, net8=None, net9=None,
-                 dev0=None, searchdomain=None):
+    def __init__(
+        self,
+        lxc_node,
+        arch,
+        cores,
+        digest,
+        hostname,
+        memory,
+        ostype,
+        rootfs,
+        swap,
+        description=None,
+        features=None,
+        lxc=None,
+        unprivileged=None,
+        cmode=None,
+        onboot=None,
+        startup=None,
+        parent=None,
+        nameserver=None,
+        mp0=None,
+        mp1=None,
+        mp2=None,
+        mp3=None,
+        mp4=None,
+        mp5=None,
+        mp6=None,
+        mp7=None,
+        mp8=None,
+        mp9=None,
+        net0=None,
+        net1=None,
+        net2=None,
+        net3=None,
+        net4=None,
+        net5=None,
+        net6=None,
+        net7=None,
+        net8=None,
+        net9=None,
+        dev0=None,
+        searchdomain=None,
+    ):
         self.lxc_node = lxc_node
         self.arch = arch
         self.cmode = cmode
@@ -226,9 +260,34 @@ class LxcNode:
     pressurememorysome = None
 
     # noinspection PyShadowingBuiltins
-    def __init__(self, pve_node, vmid, cpu, cpus, disk, diskread, diskwrite, maxdisk, maxmem, maxswap, mem, name,
-                 netin, netout, status, swap, type, uptime, pid=None, pressurecpufull=None, pressurecpusome=None,
-                 pressureiofull=None, pressureiosome=None, pressurememoryfull=None, pressurememorysome=None):
+    def __init__(
+        self,
+        pve_node,
+        vmid,
+        cpu,
+        cpus,
+        disk,
+        diskread,
+        diskwrite,
+        maxdisk,
+        maxmem,
+        maxswap,
+        mem,
+        name,
+        netin,
+        netout,
+        status,
+        swap,
+        type,
+        uptime,
+        pid=None,
+        pressurecpufull=None,
+        pressurecpusome=None,
+        pressureiofull=None,
+        pressureiosome=None,
+        pressurememoryfull=None,
+        pressurememorysome=None,
+    ):
         self.pve_node = pve_node
         self.vmid = vmid
         self.cpu = cpu
@@ -259,9 +318,16 @@ class LxcNode:
         return f'{self.vmid} of type {self.type} with status {self.status}'
 
     def get_lxc_config(self):
-        return LxcConfig(lxc_node=self, **json.loads(
-            os_exec_cached(f'pvesh get nodes/{self.pve_node.node}/lxc/{self.vmid}/config --output-format=json',
-                           cache_duration=3600, local_override=True)))
+        return LxcConfig(
+            lxc_node=self,
+            **json.loads(
+                os_exec_cached(
+                    f'pvesh get nodes/{self.pve_node.node}/lxc/{self.vmid}/config --output-format=json',
+                    cache_duration=3600,
+                    local_override=True,
+                )
+            ),
+        )
 
 
 class PveNode:
@@ -281,8 +347,22 @@ class PveNode:
     is_remote = None
 
     # noinspection PyShadowingBuiltins
-    def __init__(self, id, node, ssl_fingerprint, status, type, cpu=None, disk=None, level=None, maxcpu=None,
-                 maxdisk=None, maxmem=None, mem=None, uptime=None):
+    def __init__(
+        self,
+        id,
+        node,
+        ssl_fingerprint,
+        status,
+        type,
+        cpu=None,
+        disk=None,
+        level=None,
+        maxcpu=None,
+        maxdisk=None,
+        maxmem=None,
+        mem=None,
+        uptime=None,
+    ):
         self.id = id
         self.cpu = cpu
         self.disk = disk
@@ -302,8 +382,12 @@ class PveNode:
         return f'{self.node} of type {self.type} with status {self.status}'
 
     def get_lxc_nodes(self):
-        return [LxcNode(pve_node=self, **node) for node in
-                json.loads(os_exec(f'pvesh get nodes/{self.node}/lxc --output-format=json', local_override=True))]
+        return [
+            LxcNode(pve_node=self, **node)
+            for node in json.loads(
+                os_exec(f'pvesh get nodes/{self.node}/lxc --output-format=json', local_override=True)
+            )
+        ]
 
 
 config = Config()
@@ -319,7 +403,7 @@ def _get_cache_key(cmd, env=None, local_override=False, **kwargs):
         'local_override': local_override,
         'remote': config.remote,
         'remote_host': config.remote_host if config.remote else None,
-        'kwargs': sorted(kwargs.items())
+        'kwargs': sorted(kwargs.items()),
     }
     return hashlib.md5(str(cache_data).encode()).hexdigest()
 
@@ -383,10 +467,7 @@ def os_exec_cached(cmd, cache_duration: int = 300, env=None, local_override: boo
             del _exec_cache[cache_key]
 
     output = os_exec(cmd, env, local_override, **kwargs)
-    _exec_cache[cache_key] = {
-        'output': output,
-        'timestamp': time.time()
-    }
+    _exec_cache[cache_key] = {'output': output, 'timestamp': time.time()}
     _save_cache()
     return output
 
@@ -398,8 +479,7 @@ class PveCommandError(RuntimeError):
         self.stdout = stdout
         self.stderr = stderr
         super().__init__(
-            f'command exited with status {returncode}: {cmd!r}\n'
-            f'stdout: {stdout.strip()}\nstderr: {stderr.strip()}'
+            f'command exited with status {returncode}: {cmd!r}\n' f'stdout: {stdout.strip()}\nstderr: {stderr.strip()}'
         )
 
 
@@ -436,5 +516,7 @@ def os_exec(cmd, env=None, local_override: bool = False, remote_host: str = None
 
 
 def pvesh_get_pve_nodes():
-    return [PveNode(**node) for node in
-            json.loads(os_exec_cached('pvesh get nodes --output-format=json', local_override=True))]
+    return [
+        PveNode(**node)
+        for node in json.loads(os_exec_cached('pvesh get nodes --output-format=json', local_override=True))
+    ]

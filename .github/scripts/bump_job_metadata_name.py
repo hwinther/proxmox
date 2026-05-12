@@ -4,6 +4,7 @@ Bump batch/v1 Job metadata.name when spec changed vs base but name was not bumpe
 Used after a maintainer adds the configured label on a PR. Logic matches
 verify_job_metadata_name_bump.py.
 """
+
 from __future__ import annotations
 
 import os
@@ -34,19 +35,13 @@ def changed_job_yaml_files(base: str, head: str) -> list[str]:
 
 def file_at(ref: str, path: str) -> str | None:
     try:
-        return subprocess.check_output(
-            ["git", "show", f"{ref}:{path}"], text=True
-        )
+        return subprocess.check_output(["git", "show", f"{ref}:{path}"], text=True)
     except subprocess.CalledProcessError:
         return None
 
 
 def jobs_from(content: str) -> list[dict]:
-    return [
-        doc
-        for doc in yaml.safe_load_all(content)
-        if isinstance(doc, dict) and doc.get("kind") == "Job"
-    ]
+    return [doc for doc in yaml.safe_load_all(content) if isinstance(doc, dict) and doc.get("kind") == "Job"]
 
 
 def bump_name(name: str) -> str:
@@ -73,11 +68,7 @@ def needs_bump(old_job: dict, new_job: dict) -> bool:
 
 
 def job_indices_in_docs(docs: list) -> list[int]:
-    return [
-        i
-        for i, d in enumerate(docs)
-        if isinstance(d, dict) and d.get("kind") == "Job"
-    ]
+    return [i for i, d in enumerate(docs) if isinstance(d, dict) and d.get("kind") == "Job"]
 
 
 def process_file(path: str, base: str, head: str) -> bool:
@@ -92,17 +83,12 @@ def process_file(path: str, base: str, head: str) -> bool:
         return False
     if len(old_jobs) != len(new_jobs):
         print(
-            f"{path}: Job count changed ({len(old_jobs)} -> {len(new_jobs)}); "
-            "cannot auto-bump.",
+            f"{path}: Job count changed ({len(old_jobs)} -> {len(new_jobs)}); " "cannot auto-bump.",
             file=sys.stderr,
         )
         sys.exit(1)
 
-    bump_zip_indices = [
-        i
-        for i, (oj, nj) in enumerate(zip(old_jobs, new_jobs, strict=True))
-        if needs_bump(oj, nj)
-    ]
+    bump_zip_indices = [i for i, (oj, nj) in enumerate(zip(old_jobs, new_jobs, strict=True)) if needs_bump(oj, nj)]
     if not bump_zip_indices:
         return False
 

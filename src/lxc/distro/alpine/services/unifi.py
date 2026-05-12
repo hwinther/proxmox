@@ -6,6 +6,7 @@ class UnifiService(lxc.distro.alpine.actions.AlpineService):
     TODO
     https://wiki.alpinelinux.org/wiki/UniFi_Controller
     """
+
     container: lxc.distro.alpine.actions.AlpineContainer = None
 
     def __init__(self, container: lxc.distro.alpine.actions.AlpineContainer, name: str):

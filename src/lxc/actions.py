@@ -42,9 +42,18 @@ def update_lxc_templates():
     return alpine_newest, debian_newest
 
 
-def generate_net_argument(interface_id: int, network_interface: NetworkInterface = None,
-                          vlan_tag: int = None, firewall: bool = True, bridge: str = None, mac: str = None,
-                          ip4: str = None, gw4: str = None, ip6: str = None, gw6: str = None):
+def generate_net_argument(
+    interface_id: int,
+    network_interface: NetworkInterface = None,
+    vlan_tag: int = None,
+    firewall: bool = True,
+    bridge: str = None,
+    mac: str = None,
+    ip4: str = None,
+    gw4: str = None,
+    ip6: str = None,
+    gw6: str = None,
+):
     if network_interface is not None:
         vlan_tag = network_interface.vlan_tag
         firewall = network_interface.firewall
@@ -81,8 +90,10 @@ def generate_net_argument(interface_id: int, network_interface: NetworkInterface
     if gw6 is not None:
         gw6_arg = f',gw={gw6}'
 
-    return f'--net{interface_id} name=eth{interface_id},bridge={bridge_arg},{mac_arg}' \
-           f'ip={ip4}{gw4_arg},ip6={ip6}{gw6_arg},{vlan_arg}firewall={firewall_arg},type=veth'
+    return (
+        f'--net{interface_id} name=eth{interface_id},bridge={bridge_arg},{mac_arg}'
+        f'ip={ip4}{gw4_arg},ip6={ip6}{gw6_arg},{vlan_arg}firewall={firewall_arg},type=veth'
+    )
 
 
 class Service:
@@ -216,17 +227,28 @@ class Container:
         # TODO: check pct list to see if id exists, then use configured option to determine
         #  if we're overwriting it or not
         # os_exec(f'(pct shutdown {container_id}; pct stop {container_id}; pct destroy {container_id}); echo 0',
-        os_exec(f'(pct shutdown {container_id}; pct destroy {container_id}); echo 0',
-                shell=True)
+        os_exec(f'(pct shutdown {container_id}; pct destroy {container_id}); echo 0', shell=True)
 
     def purge_container(self):
         self.purge_container_by_id(self.id)
 
-    def create_container(self, container_name: str, container_image_path: str,
-                         network_interfaces: Sequence[NetworkInterface],
-                         resource_pool: str = None, memory: int = None, swap: int = None, cpu_cores: int = None,
-                         unprivileged: int = None, cmode: str = None, start: int = None, onboot: int = None,
-                         feature_mount: str = None, feature_nesting: int = None, rootfs_size: str = None):
+    def create_container(
+        self,
+        container_name: str,
+        container_image_path: str,
+        network_interfaces: Sequence[NetworkInterface],
+        resource_pool: str = None,
+        memory: int = None,
+        swap: int = None,
+        cpu_cores: int = None,
+        unprivileged: int = None,
+        cmode: str = None,
+        start: int = None,
+        onboot: int = None,
+        feature_mount: str = None,
+        feature_nesting: int = None,
+        rootfs_size: str = None,
+    ):
         #
         # TODO: rework this to a factory constructor with override in AlpineContainer?
         #
@@ -272,20 +294,36 @@ class Container:
         # Build argv as a list so the password (and other values) survive verbatim
         # through subprocess without env-var indirection or shell parsing.
         argv = [
-            'pct', 'create', str(self.id), container_image_path,
-            '--ostype', 'alpine',
-            '--hostname', container_name,
-            '--password', ct_root_pw,
-            '--ssh-public-keys', config.container_ssh_authorized_key_filename,
-            '--cores', str(cpu_cores),
-            '--memory', str(memory),
-            '--swap', str(swap),
-            '--pool', resource_pool,
-            '--rootfs', f'{config.container_storage}:{rootfs_size},shared=0',
-            '--unprivileged', str(unprivileged),
-            '--cmode', cmode,
-            '--start', str(start),
-            '--onboot', str(onboot),
+            'pct',
+            'create',
+            str(self.id),
+            container_image_path,
+            '--ostype',
+            'alpine',
+            '--hostname',
+            container_name,
+            '--password',
+            ct_root_pw,
+            '--ssh-public-keys',
+            config.container_ssh_authorized_key_filename,
+            '--cores',
+            str(cpu_cores),
+            '--memory',
+            str(memory),
+            '--swap',
+            str(swap),
+            '--pool',
+            resource_pool,
+            '--rootfs',
+            f'{config.container_storage}:{rootfs_size},shared=0',
+            '--unprivileged',
+            str(unprivileged),
+            '--cmode',
+            cmode,
+            '--start',
+            str(start),
+            '--onboot',
+            str(onboot),
         ]
         if features:
             argv += ['--features', ','.join(features)]

@@ -288,7 +288,7 @@ def client(socket_path):
     except KeyboardInterrupt:
         print('Exiting')
         modem_client.end_dial()
-        #break
+        # break
     except OSError:
         print('Caught OSError', sys.exc_info()[0])
     finally:

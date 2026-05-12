@@ -57,12 +57,13 @@ if answer is not None:
         sys.exit(0)
 
 nsupdate_script_path = '/tmp/nsupdate.script'
-nsupdate_script = 'server %s\n' \
-                  'zone %s\n' \
-                  'update delete %s. A\n' \
-                  'update add %s. 3600 A %s\n' \
-                  'show\n' \
-                  'send\n' % (nsserver, zone_name, ddns_domain, ddns_domain, ip)
+nsupdate_script = 'server %s\n' 'zone %s\n' 'update delete %s. A\n' 'update add %s. 3600 A %s\n' 'show\n' 'send\n' % (
+    nsserver,
+    zone_name,
+    ddns_domain,
+    ddns_domain,
+    ip,
+)
 
 if verbose:
     print('Writing to script file %s, content:' % nsupdate_script_path)

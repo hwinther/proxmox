@@ -1,5 +1,13 @@
-from ipaddress import IPv4Address, IPv4Interface, IPv4Network, IPv6Address, IPv6Interface, ip_address, ip_interface, \
-    ip_network
+from ipaddress import (
+    IPv4Address,
+    IPv4Interface,
+    IPv4Network,
+    IPv6Address,
+    IPv6Interface,
+    ip_address,
+    ip_interface,
+    ip_network,
+)
 from typing import Sequence, Union
 
 
@@ -13,8 +21,17 @@ class NetworkInterface:
     ip6: IPv6Interface = None
     gw6: IPv6Address = None
 
-    def __init__(self, vlan_tag: int = None, firewall: bool = True, bridge: str = None, mac: str = None,
-                 ip4: str = None, gw4: str = None, ip6: str = None, gw6: str = None):
+    def __init__(
+        self,
+        vlan_tag: int = None,
+        firewall: bool = True,
+        bridge: str = None,
+        mac: str = None,
+        ip4: str = None,
+        gw4: str = None,
+        ip6: str = None,
+        gw6: str = None,
+    ):
         self.vlan_tag = vlan_tag
         self.firewall = firewall
         self.bridge = bridge
@@ -39,11 +56,17 @@ class Subnet:
     netbios_name_servers: Sequence[Union[IPv4Address, IPv6Address]] = None
     ntp_servers: Sequence[Union[IPv4Address, IPv6Address]] = None
 
-    def __init__(self, network: str, range_start: int, range_end: int,
-                 router: str, domain_name: str,
-                 domain_name_servers: Sequence[str],
-                 netbios_name_servers: Sequence[str] = None,
-                 ntp_servers: Sequence[str] = None):
+    def __init__(
+        self,
+        network: str,
+        range_start: int,
+        range_end: int,
+        router: str,
+        domain_name: str,
+        domain_name_servers: Sequence[str],
+        netbios_name_servers: Sequence[str] = None,
+        ntp_servers: Sequence[str] = None,
+    ):
         # TODO: IPv6 support
         self.network = ip_network(network)
         self.range_start = self.network.network_address + range_start
