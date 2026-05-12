@@ -21,9 +21,9 @@ class DebianContainer(lxc.actions.Container):
 
         for i in range(0, 3):
             try:
-                self.pct_console_shell(f'DEBIAN_FRONTEND=noninteractive apt ' +
-                                       '-o "Apt::Cmd::Disable-Script-Warning=true" ' +
-                                       '-o "Dpkg::Options::="--force-confold""' +
+                self.pct_console_shell('DEBIAN_FRONTEND=noninteractive apt '
+                                       '-o "Apt::Cmd::Disable-Script-Warning=true" '
+                                       '-o "Dpkg::Options::="--force-confold""'
                                        ' -y full-upgrade')
                 break
             except subprocess.CalledProcessError as exception:
@@ -51,13 +51,13 @@ class DebianContainer(lxc.actions.Container):
 
     def apt_add(self, package_name):
         # TODO: verify installation, also check if installed first?
-        return self.pct_console_shell(f'DEBIAN_FRONTEND=noninteractive apt ' +
-                                      '-o "Apt::Cmd::Disable-Script-Warning=true" ' +
-                                      'install -y {package_name}')
+        return self.pct_console_shell('DEBIAN_FRONTEND=noninteractive apt '
+                                      '-o "Apt::Cmd::Disable-Script-Warning=true" '
+                                      f'install -y {package_name}')
 
     def apt_update_and_list_upgradable(self):
         # TODO: apk update also times out sometimes
-        return self.pct_console_shell(f'apt -o "Apt::Cmd::Disable-Script-Warning=true" update && ' +
+        return self.pct_console_shell('apt -o "Apt::Cmd::Disable-Script-Warning=true" update && '
                                       'apt -o "Apt::Cmd::Disable-Script-Warning=true" list --upgradable')
 
     def systemctl(self, service_name, operation):

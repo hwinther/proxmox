@@ -150,7 +150,8 @@ class Container:
             return return_value
 
     def add_net(self, interface_id: int, vlan_tag: int = None, ip4: str = None, ip6: str = None):
-        return os_exec(f'pct set {self.id} {generate_net_argument(interface_id, vlan_tag=vlan_tag, ip4=ip4, ip6=ip6)}', remote_host=self.get_remote_host_value())
+        net_arg = generate_net_argument(interface_id, vlan_tag=vlan_tag, ip4=ip4, ip6=ip6)
+        return os_exec(f'pct set {self.id} {net_arg}', remote_host=self.get_remote_host_value())
 
     def remove_net(self, interface_id: int):
         return os_exec(f'pct set {self.id} --delete net{interface_id}', remote_host=self.get_remote_host_value())

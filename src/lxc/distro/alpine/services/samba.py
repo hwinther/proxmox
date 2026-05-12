@@ -129,7 +129,7 @@ class SambaService(lxc.distro.alpine.actions.AlpineService):
   server min protocol = LANMAN1
   ntlm auth = yes
   lanman auth = yes
-# ntlm_support end            
+# ntlm_support end
 """
 
         if ldap_config:

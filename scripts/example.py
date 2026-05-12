@@ -122,12 +122,18 @@ def check_existing_containers(alpine_version: str, debian_version: str, update: 
 
             if isinstance(container, AlpineContainer):
                 distro = 'Alpine'
-                color = version_compare(alpine_version,
-                                        release) <= 0 and '\033[32m(newest)' or f'\033[31m(outdated, newest is {alpine_version})'
+                color = (
+                    '\033[32m(newest)'
+                    if version_compare(alpine_version, release) <= 0
+                    else f'\033[31m(outdated, newest is {alpine_version})'
+                )
             elif isinstance(container, DebianContainer):
                 distro = 'Debian'
-                color = version_compare(debian_version,
-                                        release) <= 0 and '\033[32m(newest)' or f'\033[31m(outdated, newest is {debian_version})'
+                color = (
+                    '\033[32m(newest)'
+                    if version_compare(debian_version, release) <= 0
+                    else f'\033[31m(outdated, newest is {debian_version})'
+                )
             else:
                 raise NotImplementedError("Unknown container type")
 
@@ -139,14 +145,15 @@ def check_existing_containers(alpine_version: str, debian_version: str, update: 
             color = len(updates_available) == 0 and '\033[32m' or '\033[31m'
             amount = len(updates_available)
             print(
-                f'{prefix}\033[93mUpdates available for \033[94m{container.lxc_config.hostname}: {color}{amount}\033[0m')
+                f'{prefix}\033[93mUpdates available for \033[94m{container.lxc_config.hostname}: {color}{amount}\033[0m'
+            )
 
             if not update or not updates_available:
                 continue
 
             print(f'{prefix}\033[91mUpdating..\033[0m')
             container.update_container()
-            
+
         except Exception as e:
             print(f'\033[31m{e}\033[0m')
 

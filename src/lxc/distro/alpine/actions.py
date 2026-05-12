@@ -21,7 +21,7 @@ class AlpineContainer(lxc.actions.Container):
 
         for i in range(0, 3):
             try:
-                return self.pct_console_shell(f"apk upgrade")
+                return self.pct_console_shell("apk upgrade")
             except subprocess.CalledProcessError as exception:
                 if exception.stderr.find(b'temporary error (try again later)') != -1:
                     print(f'Temporary error in "apk upgrade", retry #{i + 1}')
@@ -52,7 +52,7 @@ class AlpineContainer(lxc.actions.Container):
     def apk_update_version(self):
         for i in range(0, 3):
             try:
-                return self.pct_console_shell(f"apk update && apk version")
+                return self.pct_console_shell("apk update && apk version")
             except subprocess.CalledProcessError as exception:
                 if exception.stderr.find(b'temporary error (try again later)') != -1:
                     print(f'Temporary error in "apk upgrade", retry #{i + 1}')

@@ -157,7 +157,7 @@ class Modem(object):
                 self.end_dial()
                 self.send('NO CARRIER')
             elif cmd == 'ATZ':
-                print(f'Modem reset (noop)')
+                print('Modem reset (noop)')
                 self.send_ok()
             elif cmd.startswith('ATDT'):
                 self.dial_target = cmd[4:].strip()
