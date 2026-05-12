@@ -10,6 +10,7 @@ class TransmissionService(lxc.distro.alpine.actions.AlpineService):
     https://github.com/alpinelinux/awall
     https://www.zsiegel.com/2022/01/13/configuring-alpine-linux-firewall-with-docker
     """
+
     container: lxc.distro.alpine.actions.AlpineContainer = None
 
     def __init__(self, container: lxc.distro.alpine.actions.AlpineContainer, name: str):
@@ -26,12 +27,15 @@ class TransmissionService(lxc.distro.alpine.actions.AlpineService):
         self.container.rc_service('transmission-daemon', 'stop')
 
         self.container.pct_console_shell(
-            'mv /var/lib/transmission/config/settings.json /var/lib/transmission/config/settings.json.example')
+            'mv /var/lib/transmission/config/settings.json /var/lib/transmission/config/settings.json.example'
+        )
 
         # TODO: configure whitelist, username and password for API
-        self.container.push_file_from_template(container_file_path='/var/lib/transmission/config/settings.json',
-                                               template_file_path='../templates/transmission/settings.json',
-                                               DOWNLOAD_DIRECTORY=download_directory,
-                                               RPC_WHITELIST=rpc_whitelist)
+        self.container.push_file_from_template(
+            container_file_path='/var/lib/transmission/config/settings.json',
+            template_file_path='../templates/transmission/settings.json',
+            DOWNLOAD_DIRECTORY=download_directory,
+            RPC_WHITELIST=rpc_whitelist,
+        )
 
         self.container.rc_service('transmission-daemon', 'start')

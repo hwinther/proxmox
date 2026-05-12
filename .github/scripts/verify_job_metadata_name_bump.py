@@ -4,6 +4,7 @@ Fail if a batch/v1 Job's spec changed without a metadata.name change.
 Job spec.template (and most of spec) is immutable in Kubernetes; Flux applies
 then break when the name is reused.
 """
+
 from __future__ import annotations
 
 import os
@@ -32,19 +33,13 @@ def changed_job_yaml_files(base: str, head: str) -> list[str]:
 
 def file_at(ref: str, path: str) -> str | None:
     try:
-        return subprocess.check_output(
-            ["git", "show", f"{ref}:{path}"], text=True
-        )
+        return subprocess.check_output(["git", "show", f"{ref}:{path}"], text=True)
     except subprocess.CalledProcessError:
         return None
 
 
 def jobs_from(content: str) -> list[dict]:
-    return [
-        doc
-        for doc in yaml.safe_load_all(content)
-        if isinstance(doc, dict) and doc.get("kind") == "Job"
-    ]
+    return [doc for doc in yaml.safe_load_all(content) if isinstance(doc, dict) and doc.get("kind") == "Job"]
 
 
 def check_pair(path: str, old_job: dict, new_job: dict) -> list[str]:

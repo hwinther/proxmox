@@ -20,20 +20,21 @@ Requirements:
 nvme - apt install nvme-cli
 
 """
+
 import os
 import argparse
 import codecs
 import json
 
-__black = u'\u001b[30m'
-__red = u'\u001b[31m'
-__green = u'\u001b[32m'
-__yellow = u'\u001b[33m'
-__blue = u'\u001b[34m'
-__magenta = u'\u001b[35m'
-__cyan = u'\u001b[36m'
-__white = u'\u001b[37m'
-__reset = u'\u001b[0m'
+__black = '\u001b[30m'
+__red = '\u001b[31m'
+__green = '\u001b[32m'
+__yellow = '\u001b[33m'
+__blue = '\u001b[34m'
+__magenta = '\u001b[35m'
+__cyan = '\u001b[36m'
+__white = '\u001b[37m'
+__reset = '\u001b[0m'
 cmd_prefix = ''
 
 
@@ -138,8 +139,13 @@ def parse_lspci(verbose):
             if section_name not in attributes:
                 attributes[section_name] = []
             attributes[section_name].append(section_value)
-        device_table[address] = {'category': category, 'description': description, 'capability': capability,
-                                 'status': status, 'attributes': attributes}
+        device_table[address] = {
+            'category': category,
+            'description': description,
+            'capability': capability,
+            'status': status,
+            'attributes': attributes,
+        }
         if verbose:
             if capability and status:
                 print('Link capability: %s' % capability)
@@ -273,39 +279,71 @@ def main():
         if args.pci == 'none':
             continue
         elif args.pci == 'min':
-            if pci['category'].find(' bridge') != -1 or pci['category'].find(' peripheral') != -1 or \
-                    pci['category'] == 'SMBus' or pci['category'].find(' counters') != -1:
+            if (
+                pci['category'].find(' bridge') != -1
+                or pci['category'].find(' peripheral') != -1
+                or pci['category'] == 'SMBus'
+                or pci['category'].find(' counters') != -1
+            ):
                 continue
         elif args.pci == 'issues':
             if not capability or not status or capability['Speed'] == status['Speed']:
                 continue
         elif args.pci != 'all':
             # limit the output with the value as a search phrase
-            if pci['category'].lower().find(args.pci.lower()) == -1 and \
-                    pci['category'].lower().find(args.pci.lower()) == -1:
+            if (
+                pci['category'].lower().find(args.pci.lower()) == -1
+                and pci['category'].lower().find(args.pci.lower()) == -1
+            ):
                 continue
 
         success('Address: %s%s' % (__white, address))
         if 'Kernel driver in use' in pci['attributes']:
             kernel_drivers = ', '.join(pci['attributes']['Kernel driver in use'])
-            notice('\tCategory: %s%s %sDescription: %s%s %sKernel driver(s): %s%s' % (__green, pci['category'], __cyan,
-                                                                                      __green, pci['description'],
-                                                                                      __cyan, __green, kernel_drivers))
+            notice(
+                '\tCategory: %s%s %sDescription: %s%s %sKernel driver(s): %s%s'
+                % (__green, pci['category'], __cyan, __green, pci['description'], __cyan, __green, kernel_drivers)
+            )
         else:
-            notice('\tCategory: %s%s %sDescription: %s%s' % (__green, pci['category'], __cyan, __green,
-                                                             pci['description']))
+            notice(
+                '\tCategory: %s%s %sDescription: %s%s' % (__green, pci['category'], __cyan, __green, pci['description'])
+            )
 
         if capability and status:
             if capability['Speed'] != status['Speed']:
-                warn('\tCapability: %s%s%s@%s%s %sStatus: %s%s%s@%s%s' % (__red, capability['Speed'], __yellow, __red,
-                                                                          capability['Width'], __yellow, __red,
-                                                                          status['Speed'], __yellow, __red,
-                                                                          status['Width']))
+                warn(
+                    '\tCapability: %s%s%s@%s%s %sStatus: %s%s%s@%s%s'
+                    % (
+                        __red,
+                        capability['Speed'],
+                        __yellow,
+                        __red,
+                        capability['Width'],
+                        __yellow,
+                        __red,
+                        status['Speed'],
+                        __yellow,
+                        __red,
+                        status['Width'],
+                    )
+                )
             else:
-                notice('\tCapability: %s%s%s@%s%s %sStatus: %s%s%s@%s%s' % (__green, capability['Speed'], __cyan,
-                                                                            __green, capability['Width'], __cyan,
-                                                                            __green, status['Speed'], __cyan, __green,
-                                                                            status['Width']))
+                notice(
+                    '\tCapability: %s%s%s@%s%s %sStatus: %s%s%s@%s%s'
+                    % (
+                        __green,
+                        capability['Speed'],
+                        __cyan,
+                        __green,
+                        capability['Width'],
+                        __cyan,
+                        __green,
+                        status['Speed'],
+                        __cyan,
+                        __green,
+                        status['Width'],
+                    )
+                )
 
         if iommu is not None:
             notice('\tIOMMU group: %s%s' % (__green, iommu))
@@ -336,10 +374,29 @@ def main():
         cpu_voltage = dmidecode_cpu[0]['Voltage']
         cpu_current_speed = dmidecode_cpu[0]['Current Speed']
         cpu_max_speed = dmidecode_cpu[0]['Max Speed']
-        success('CPU[1/%d] Socket: %s%s %sCore/Threads: %s%s/%s %sVersion: %s%s %sVoltage: %s%s %sCurrent/Max speed: '
-                '%s%s/%s' % (len(dmidecode_cpu), __cyan, cpu_socket, __green, __cyan, cpu_core, cpu_threads, __green,
-                             __cyan, cpu_version, __green, __cyan, cpu_voltage, __green, __cyan, cpu_current_speed,
-                             cpu_max_speed))
+        success(
+            'CPU[1/%d] Socket: %s%s %sCore/Threads: %s%s/%s %sVersion: %s%s %sVoltage: %s%s %sCurrent/Max speed: '
+            '%s%s/%s'
+            % (
+                len(dmidecode_cpu),
+                __cyan,
+                cpu_socket,
+                __green,
+                __cyan,
+                cpu_core,
+                cpu_threads,
+                __green,
+                __cyan,
+                cpu_version,
+                __green,
+                __cyan,
+                cpu_voltage,
+                __green,
+                __cyan,
+                cpu_current_speed,
+                cpu_max_speed,
+            )
+        )
 
     for memory_array in dmidecode_memory_array:
         memory_handle = memory_array['Handle']
@@ -354,11 +411,21 @@ def main():
                     continue
                 active_devices += 1
                 total_size_mb += parse_size_mb(size)
-        success('Memory array: %s%s %sDevices: %s%d/%s %sCapacity: %s%s/%s' % (__cyan, memory_handle, __green, __cyan,
-                                                                               active_devices,
-                                                                               memory_array['Number Of Devices'],
-                                                                               __green, __cyan, total_size_mb // 1024,
-                                                                               memory_array['Maximum Capacity']))
+        success(
+            'Memory array: %s%s %sDevices: %s%d/%s %sCapacity: %s%s/%s'
+            % (
+                __cyan,
+                memory_handle,
+                __green,
+                __cyan,
+                active_devices,
+                memory_array['Number Of Devices'],
+                __green,
+                __cyan,
+                total_size_mb // 1024,
+                memory_array['Maximum Capacity'],
+            )
+        )
         for memory_device in related_devices:
             size = memory_device['Size']
             if size == 'No Module Installed':
@@ -368,20 +435,49 @@ def main():
                 if 'Configured Memory Speed' not in memory_device:
                     notice(
                         '\tLocator: %s%s %sSize: %s%s GB %sType: %s%s %sManufacturer: %s%s %sPart #: '
-                        '%s%s' % (__yellow, memory_device['Locator'],
-                                  __cyan, __yellow, size_mb // 1024,
-                                  __cyan, __yellow, memory_device['Type'],
-                                  __cyan, __yellow, memory_device['Manufacturer'],
-                                  __cyan, __yellow, memory_device['Part Number']))
+                        '%s%s'
+                        % (
+                            __yellow,
+                            memory_device['Locator'],
+                            __cyan,
+                            __yellow,
+                            size_mb // 1024,
+                            __cyan,
+                            __yellow,
+                            memory_device['Type'],
+                            __cyan,
+                            __yellow,
+                            memory_device['Manufacturer'],
+                            __cyan,
+                            __yellow,
+                            memory_device['Part Number'],
+                        )
+                    )
                 else:
                     notice(
                         '\tLocator: %s%s %sSize: %s%s GB %sSpeed %s%s @ %s %sType: %s%s %sManufacturer: %s%s %sPart #: '
-                        '%s%s' % (__yellow, memory_device['Locator'],
-                                  __cyan, __yellow, size_mb // 1024,
-                                  __cyan, __yellow, memory_device['Configured Memory Speed'], memory_device['Speed'],
-                                  __cyan, __yellow, memory_device['Type'],
-                                  __cyan, __yellow, memory_device['Manufacturer'],
-                                  __cyan, __yellow, memory_device['Part Number']))
+                        '%s%s'
+                        % (
+                            __yellow,
+                            memory_device['Locator'],
+                            __cyan,
+                            __yellow,
+                            size_mb // 1024,
+                            __cyan,
+                            __yellow,
+                            memory_device['Configured Memory Speed'],
+                            memory_device['Speed'],
+                            __cyan,
+                            __yellow,
+                            memory_device['Type'],
+                            __cyan,
+                            __yellow,
+                            memory_device['Manufacturer'],
+                            __cyan,
+                            __yellow,
+                            memory_device['Part Number'],
+                        )
+                    )
 
     success('PCI slots:')
     for key, dmi in sorted(dmidecode_device_table.items(), key=lambda kv: kv[1]['Handle']):
@@ -396,13 +492,38 @@ def main():
             pci = dmi_reverse_table[key]
             if 'Kernel driver in use' in pci['attributes']:
                 kernel_drivers = ', '.join(pci['attributes']['Kernel driver in use'])
-                notice('\tUsed slot: %s%s (%s) %sCategory: %s%s %sDescription: %s%s %sKernel driver(s): %s%s' % (
-                    __green, dmi['Type'], dmi['Designation'], __cyan, __green, pci['category'], __cyan, __green,
-                    pci['description'], __cyan, __green, kernel_drivers))
+                notice(
+                    '\tUsed slot: %s%s (%s) %sCategory: %s%s %sDescription: %s%s %sKernel driver(s): %s%s'
+                    % (
+                        __green,
+                        dmi['Type'],
+                        dmi['Designation'],
+                        __cyan,
+                        __green,
+                        pci['category'],
+                        __cyan,
+                        __green,
+                        pci['description'],
+                        __cyan,
+                        __green,
+                        kernel_drivers,
+                    )
+                )
             else:
-                notice('\tUsed slot: %s%s (%s) %sCategory: %s%s %sDescription: %s%s' % (
-                    __green, dmi['Type'], dmi['Designation'], __cyan, __green, pci['category'], __cyan, __green,
-                    pci['description']))
+                notice(
+                    '\tUsed slot: %s%s (%s) %sCategory: %s%s %sDescription: %s%s'
+                    % (
+                        __green,
+                        dmi['Type'],
+                        dmi['Designation'],
+                        __cyan,
+                        __green,
+                        pci['category'],
+                        __cyan,
+                        __green,
+                        pci['description'],
+                    )
+                )
 
     success('Disks:')
     for key, disk in lsblk_device_table.items():

@@ -6,6 +6,7 @@ class JellyfinService(lxc.distro.alpine.actions.AlpineService):
     config: /etc/conf.d/jellyfin
     https://jellyfin.org/docs/general/installation/linux/#alpine-linux
     """
+
     container: lxc.distro.alpine.actions.AlpineContainer = None
 
     def __init__(self, container: lxc.distro.alpine.actions.AlpineContainer, name: str):

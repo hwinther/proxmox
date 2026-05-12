@@ -65,9 +65,7 @@ class BindService(AlpineService):
     def start_bind(self):
         self.container.rc_service('named', 'start')
 
-    def common_config_rewrite(self,
-                              listen_interface: NetworkInterface,
-                              file_path: str):
+    def common_config_rewrite(self, listen_interface: NetworkInterface, file_path: str):
         named_conf_temp_path = '/tmp/named.conf'
         named_template_conf = Path(file_path).read_text(encoding='utf-8')
         named_template_conf = named_template_conf.replace('1.2.3.0/24', str(listen_interface.ip4.network))
@@ -75,8 +73,7 @@ class BindService(AlpineService):
         Path(named_conf_temp_path).write_text(named_template_conf, encoding='utf-8')
         self.container.push_file('/etc/bind/named.conf', named_conf_temp_path)
 
-    def install_bind_dns_recursive(self,
-                                   listen_interface: NetworkInterface):
+    def install_bind_dns_recursive(self, listen_interface: NetworkInterface):
         self.add_bind()
         self.common_config_rewrite(listen_interface, '../templates/bind9/named.conf.recursive')
         self.start_bind()
@@ -87,10 +84,7 @@ class BindService(AlpineService):
             return ''
         return '; '.join([str(ip) for ip in ips]) + ';'
 
-    def template_and_push(self,
-                          source_template: str,
-                          container_file_path: str,
-                          zones: Sequence[DnsZone]):
+    def template_and_push(self, source_template: str, container_file_path: str, zones: Sequence[DnsZone]):
         template = Path(source_template).read_text(encoding='utf-8')
         templates = []
         if zones is None:
@@ -104,22 +98,24 @@ class BindService(AlpineService):
         Path(config_temp_path).write_text('\n'.join(templates), encoding='utf-8')
         self.container.push_file(container_file_path, config_temp_path)
 
-    def install_bind_dns_authoritative(self,
-                                       listen_interface: NetworkInterface,
-                                       forward_zones: Sequence[ForwardZone] = None,
-                                       master_zones: Sequence[MasterZone] = None,
-                                       slave_zones: Sequence[SlaveZone] = None):
+    def install_bind_dns_authoritative(
+        self,
+        listen_interface: NetworkInterface,
+        forward_zones: Sequence[ForwardZone] = None,
+        master_zones: Sequence[MasterZone] = None,
+        slave_zones: Sequence[SlaveZone] = None,
+    ):
         self.add_bind()
         self.common_config_rewrite(listen_interface, '../templates/bind9/named.conf.authoritative')
         self.container.pct_console_shell('tsig-keygen tsig-update-key > /etc/bind/named.keys.conf')
 
-        self.template_and_push('../templates/bind9/named.zones.forward.conf',
-                               '/etc/bind/named.zones.forward.conf',
-                               forward_zones)
+        self.template_and_push(
+            '../templates/bind9/named.zones.forward.conf', '/etc/bind/named.zones.forward.conf', forward_zones
+        )
 
-        self.template_and_push('../templates/bind9/named.zones.master.conf',
-                               '/etc/bind/named.zones.master.conf',
-                               master_zones)
+        self.template_and_push(
+            '../templates/bind9/named.zones.master.conf', '/etc/bind/named.zones.master.conf', master_zones
+        )
 
         zone_template = Path('../templates/bind9/zone.template').read_text(encoding='utf-8')
         zone_temp_path = '/tmp/named.zone.tmp'
@@ -132,9 +128,9 @@ class BindService(AlpineService):
             Path(zone_temp_path).write_text(zone, encoding='utf-8')
             self.container.push_file(f'/var/bind/pri/{master_zone.domain_name}', zone_temp_path)
 
-        self.template_and_push('../templates/bind9/named.zones.slave.conf',
-                               '/etc/bind/named.zones.slave.conf',
-                               slave_zones)
+        self.template_and_push(
+            '../templates/bind9/named.zones.slave.conf', '/etc/bind/named.zones.slave.conf', slave_zones
+        )
 
         self.container.pct_console_shell('named-checkconf')  # verify config file(s)
         # TODO: use named-checkzone to also verify zones?

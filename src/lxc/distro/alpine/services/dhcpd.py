@@ -12,9 +12,7 @@ class DhcpService(lxc.distro.alpine.actions.AlpineService):
     /run/dhcp - state/pid
     """
 
-    def install(self,
-                ip4_subnets: Sequence[lxc.models.Subnet],
-                ip4_devices: Sequence[lxc.models.Device]):
+    def install(self, ip4_subnets: Sequence[lxc.models.Subnet], ip4_devices: Sequence[lxc.models.Device]):
         """
         Install, configure and start ISC DHCP daemon
         @param ip4_subnets: Subnet definitions
@@ -41,20 +39,18 @@ class DhcpService(lxc.distro.alpine.actions.AlpineService):
             subnet_config = subnet_config.replace('1.2.3.1', str(ip4_subnet.router))
             subnet_config = subnet_config.replace('local.lan', ip4_subnet.domain_name)
             if ip4_subnet.domain_name_servers:
-                subnet_config = subnet_config.replace('1.2.3.2',
-                                                      ', '.join([str(ip) for ip in ip4_subnet.domain_name_servers]))
-                subnet_config = subnet_config.replace('# option domain-name-servers',
-                                                      'option domain-name-servers')
+                subnet_config = subnet_config.replace(
+                    '1.2.3.2', ', '.join([str(ip) for ip in ip4_subnet.domain_name_servers])
+                )
+                subnet_config = subnet_config.replace('# option domain-name-servers', 'option domain-name-servers')
             if ip4_subnet.netbios_name_servers:
-                subnet_config = subnet_config.replace('1.2.3.3',
-                                                      ', '.join([str(ip) for ip in ip4_subnet.netbios_name_servers]))
-                subnet_config = subnet_config.replace('# option netbios-name-servers',
-                                                      'option netbios-name-servers')
+                subnet_config = subnet_config.replace(
+                    '1.2.3.3', ', '.join([str(ip) for ip in ip4_subnet.netbios_name_servers])
+                )
+                subnet_config = subnet_config.replace('# option netbios-name-servers', 'option netbios-name-servers')
             if ip4_subnet.ntp_servers:
-                subnet_config = subnet_config.replace('1.2.3.4',
-                                                      ', '.join([str(ip) for ip in ip4_subnet.ntp_servers]))
-                subnet_config = subnet_config.replace('# option ntp-servers',
-                                                      'option ntp-servers')
+                subnet_config = subnet_config.replace('1.2.3.4', ', '.join([str(ip) for ip in ip4_subnet.ntp_servers]))
+                subnet_config = subnet_config.replace('# option ntp-servers', 'option ntp-servers')
             subnet_configs.append(subnet_config)
         Path(subnets_temp_path).write_text('\n'.join(subnet_configs), encoding='utf-8')
         self.container.push_file('/etc/dhcp/dhcpd.subnets.conf', subnets_temp_path)
