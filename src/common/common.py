@@ -10,8 +10,7 @@ import subprocess
 import time
 import os
 import tempfile
-from functools import cache
-from typing import Callable, Optional
+from typing import Callable
 
 
 class Config:
@@ -372,7 +371,7 @@ def os_exec_cached(cmd, cache_duration: int = 300, env=None, local_override: boo
     # Load cache on first use
     if not _exec_cache:
         _load_cache()
-    
+
     cache_key = _get_cache_key(cmd, env, local_override, **kwargs)
     if cache_key in _exec_cache:
         cache_entry = _exec_cache[cache_key]
