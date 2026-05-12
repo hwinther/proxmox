@@ -6,7 +6,7 @@ class GatewayService(lxc.distro.alpine.actions.AlpineService):
     /etc/awall/optional/ - inactive config folder
     """
 
-    container: lxc.distro.alpine.actions.AlpineContainer = None
+    container: lxc.distro.alpine.actions.AlpineContainer
 
     def __init__(self, container: lxc.distro.alpine.actions.AlpineContainer, name: str):
         super().__init__(container, name)

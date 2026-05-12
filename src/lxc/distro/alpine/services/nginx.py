@@ -7,7 +7,7 @@ class NginxService(lxc.distro.alpine.actions.AlpineService):
     Jellyfin config based on https://jellyfin.org/docs/general/networking/nginx/
     """
 
-    container: lxc.distro.alpine.actions.AlpineContainer = None
+    container: lxc.distro.alpine.actions.AlpineContainer
 
     def __init__(self, container: lxc.distro.alpine.actions.AlpineContainer, name: str):
         super().__init__(container, name)

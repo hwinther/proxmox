@@ -1,11 +1,10 @@
 import subprocess
-from typing import List
 
 import lxc.actions
 
 
 class DebianService(lxc.actions.Service):
-    container: "DebianContainer" = None
+    container: "DebianContainer"
 
     def __init__(self, container: "DebianContainer", name: str):
         super().__init__(container, name)
@@ -13,8 +12,6 @@ class DebianService(lxc.actions.Service):
 
 
 class DebianContainer(lxc.actions.Container):
-    services: List[DebianService] = None
-
     def update_container(self):
         if not self.updates_available():
             return

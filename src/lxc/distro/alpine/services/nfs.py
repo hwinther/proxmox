@@ -8,7 +8,7 @@ class NfsServer(lxc.distro.alpine.actions.AlpineService):
     https://github.com/unfs3/unfs3
     """
 
-    container: lxc.distro.alpine.actions.AlpineContainer = None
+    container: lxc.distro.alpine.actions.AlpineContainer
 
     def __init__(self, container: lxc.distro.alpine.actions.AlpineContainer, name: str):
         super().__init__(container, name)
@@ -38,7 +38,7 @@ class NfsClient(lxc.distro.alpine.actions.AlpineService):
     config: /etc/fstab
     """
 
-    container: lxc.distro.alpine.actions.AlpineContainer = None
+    container: lxc.distro.alpine.actions.AlpineContainer
 
     def __init__(self, container: lxc.distro.alpine.actions.AlpineContainer, name: str):
         super().__init__(container, name)

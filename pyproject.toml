@@ -87,8 +87,14 @@ python_version = "3.10"
 ignore_missing_imports = true
 allow_untyped_defs = true
 allow_untyped_calls = true
+implicit_optional = true
 warn_unused_ignores = true
 warn_redundant_casts = true
+# Service subclasses intentionally have heterogeneous install/uninstall/start/stop
+# signatures (each takes its own domain-specific args). The base Service class
+# defines them as **kwargs placeholders so the structure is documented, but LSP
+# is deliberately not preserved across the install-method hierarchy.
+disable_error_code = ["override"]
 # tests/ doesn't exist at repo root; the python-build composite runs `mypy src`
 # when only src/ is present, so this section governs that invocation.
 

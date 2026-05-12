@@ -17,7 +17,7 @@ class Config:
     verbose: bool | None = None
     template_storage: str | None = None
     container_storage: str | None = None
-    container_root_password: Callable[[], str] = None
+    container_root_password: Callable[[], str] | None = None
     container_ssh_authorized_key: str | None = None
     container_ssh_authorized_key_filename: str | None = None
     network_bridge_default: str | None = None
@@ -102,46 +102,7 @@ class Config:
 
 
 class LxcConfig:
-    lxc_node: 'LxcNode' = None
-    arch = None
-    cmode = None
-    cores = None
-    description = None
-    digest = None
-    features = None
-    hostname = None
-    lxc = None
-    memory = None
-    mp0 = None
-    mp1 = None
-    mp2 = None
-    mp3 = None
-    mp4 = None
-    mp5 = None
-    mp6 = None
-    mp7 = None
-    mp8 = None
-    mp9 = None
-    net0 = None
-    net1 = None
-    net2 = None
-    net3 = None
-    net4 = None
-    net5 = None
-    net6 = None
-    net7 = None
-    net8 = None
-    net9 = None
-    onboot = None
-    ostype = None
-    rootfs = None
-    swap = None
-    unprivileged = None
-    startup = None
-    parent = None
-    nameserver = None
-    dev0 = None
-    searchdomain = None
+    lxc_node: 'LxcNode'
 
     # noinspection PyShadowingBuiltins
     def __init__(
@@ -233,32 +194,6 @@ class LxcConfig:
 
 
 class LxcNode:
-    pve_node = None
-    vmid = None
-    cpu = None
-    cpus = None
-    disk = None
-    diskread = None
-    diskwrite = None
-    maxdisk = None
-    maxmem = None
-    maxswap = None
-    mem = None
-    name = None
-    netin = None
-    netout = None
-    pid = None
-    status = None
-    swap = None
-    type = None
-    uptime = None
-    pressurecpufull = None
-    pressurecpusome = None
-    pressureiofull = None
-    pressureiosome = None
-    pressurememoryfull = None
-    pressurememorysome = None
-
     # noinspection PyShadowingBuiltins
     def __init__(
         self,
@@ -331,21 +266,6 @@ class LxcNode:
 
 
 class PveNode:
-    id = None
-    cpu = None
-    disk = None
-    level = None
-    maxcpu = None
-    maxdisk = None
-    maxmem = None
-    mem = None
-    node = None
-    ssl_fingerprint = None
-    status = None
-    type = None
-    uptime = None
-    is_remote = None
-
     # noinspection PyShadowingBuiltins
     def __init__(
         self,

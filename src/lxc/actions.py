@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import platform
 import shlex
 import tempfile
@@ -97,13 +99,16 @@ def generate_net_argument(
 
 
 class Service:
-    container: "Container" = None
-    name: str = None
+    container: "Container"
+    name: str
 
     def __init__(self, container: "Container", name: str):
         self.container = container
         self.name = name
 
+    # install/uninstall/start/stop are intentionally heterogeneous across
+    # subclasses (each service takes its own named args). The override
+    # mypy error code is disabled globally in pyproject.toml.
     def install(self, **kwargs):
         raise NotImplementedError('install was not implemented')
 
@@ -118,11 +123,11 @@ class Service:
 
 
 class Container:
-    id: int = None
-    network_interfaces: List[NetworkInterface] = None
-    services: List[Service] = None
-    lxc_config: LxcConfig = None
-    pve_node: PveNode = None
+    id: int
+    network_interfaces: List[NetworkInterface]
+    services: List[Service]
+    lxc_config: LxcConfig | None = None
+    pve_node: PveNode | None = None
 
     def __init__(self, container_id: int = None, lxc_config: LxcConfig = None, pve_node: PveNode = None):
         if container_id is not None and lxc_config is not None:
@@ -269,6 +274,9 @@ class Container:
         if onboot is None:
             onboot = 0
 
+        # Config validates these are non-None in __init__; narrow for mypy.
+        assert config.container_ssh_authorized_key_filename is not None
+        assert config.container_ssh_authorized_key is not None
         Path(config.container_ssh_authorized_key_filename).write_text(
             config.container_ssh_authorized_key, encoding='utf-8'
         )
@@ -289,6 +297,7 @@ class Container:
         if rootfs_size is None:
             rootfs_size = '0.1'  # 100MB
 
+        assert config.container_root_password is not None  # validated in Config.__init__
         ct_root_pw = config.container_root_password()
 
         # Build argv as a list so the password (and other values) survive verbatim
