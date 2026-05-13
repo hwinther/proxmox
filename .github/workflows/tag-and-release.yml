@@ -22,12 +22,14 @@ permissions:
 
 jobs:
     tag:
-        uses: hwinther/reusable-workflows/.github/workflows/tag-and-release.yml@ad844649b460ec162026409dfcd8fa543de18bbc # v1.34.0
+        # No `secrets:` block: the reusable tag-and-release.yml uses only GITHUB_TOKEN
+        # (auto-available to called workflows). Avoids the zizmor "secrets unconditionally
+        # inherited" finding.
+        uses: hwinther/reusable-workflows/.github/workflows/tag-and-release.yml@26fecfde179642e65e6e268de66cd2eaaaa21fa4 # v1.50.0
         with:
             tag_name: ${{ inputs.tag_name }}
             release_notes: ${{ inputs.release_notes }}
             create_release: ${{ inputs.create_release }}
-        secrets: inherit
 
     # GitHub does not run tag-push workflows when the tag was created with GITHUB_TOKEN; dispatch the same jobs explicitly.
     trigger-container-builds:
