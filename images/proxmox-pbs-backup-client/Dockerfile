@@ -18,14 +18,14 @@ RUN set -eux; \
     apt-get update; \
     apt-get install -y --no-install-recommends ca-certificates wget; \
     wget -qO /usr/share/keyrings/proxmox-archive-keyring.gpg \
-        https://enterprise.proxmox.com/debian/proxmox-archive-keyring-trixie.gpg; \
+    https://enterprise.proxmox.com/debian/proxmox-archive-keyring-trixie.gpg; \
     printf '%s\n' \
-        'Types: deb' \
-        'URIs: http://download.proxmox.com/debian/pbs-client' \
-        'Suites: trixie' \
-        'Components: main' \
-        'Signed-By: /usr/share/keyrings/proxmox-archive-keyring.gpg' \
-        > /etc/apt/sources.list.d/pbs-client.sources; \
+    'Types: deb' \
+    'URIs: http://download.proxmox.com/debian/pbs-client' \
+    'Suites: trixie' \
+    'Components: main' \
+    'Signed-By: /usr/share/keyrings/proxmox-archive-keyring.gpg' \
+    > /etc/apt/sources.list.d/pbs-client.sources; \
     apt-get update; \
     apt-get install -y --no-install-recommends proxmox-backup-client-static; \
     install -D /usr/bin/proxmox-backup-client /out/proxmox-backup-client; \
@@ -33,14 +33,12 @@ RUN set -eux; \
     apt-get autoremove -y; \
     rm -rf /var/lib/apt/lists/*
 
-# Static client: only CA bundle required at runtime for TLS to PBS.
-FROM debian:trixie-slim
-ENV DEBIAN_FRONTEND=noninteractive
-
-RUN set -eux; \
-    apt-get update; \
-    apt-get install -y --no-install-recommends ca-certificates; \
-    rm -rf /var/lib/apt/lists/*
+# Distroless static runtime: ships /etc/ssl/certs/ca-certificates.crt + minimal
+# /etc/passwd, no shell, no package manager. The :nonroot tag runs as UID 65532;
+# override with `--user 0` (or USER 0 in a downstream image) if you need to read
+# host-mounted paths that aren't world-readable. Multi-arch is not configured
+# because pbs-client trixie ships binary-amd64 only (see builder-stage comment).
+FROM gcr.io/distroless/static-debian13:nonroot@sha256:e3f945647ffb95b5839c07038d64f9811adf17308b9121d8a2b87b6a22a80a39 AS final
 
 COPY --from=builder /out/proxmox-backup-client /usr/bin/proxmox-backup-client
 

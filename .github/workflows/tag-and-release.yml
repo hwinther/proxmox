@@ -59,22 +59,7 @@ jobs:
                   echo "Using ref: $REF"
                   echo "ref=$REF" >> "$GITHUB_OUTPUT"
 
-            - name: Dispatch API container workflow
+            - name: Dispatch proxmox-pbs-backup-client container workflow
               env:
                   GH_TOKEN: ${{ github.token }}
-              run: gh workflow run api-container.yml --ref "${{ steps.ref.outputs.ref }}"
-
-            - name: Dispatch migrator container workflow
-              env:
-                  GH_TOKEN: ${{ github.token }}
-              run: gh workflow run migrator-container.yml --ref "${{ steps.ref.outputs.ref }}"
-
-            - name: Dispatch frontend container workflow
-              env:
-                  GH_TOKEN: ${{ github.token }}
-              run: gh workflow run frontend-container.yml --ref "${{ steps.ref.outputs.ref }}"
-
-            - name: Dispatch api-docs-pages workflow
-              env:
-                  GH_TOKEN: ${{ github.token }}
-              run: gh workflow run api-docs-pages.yml --ref "${{ steps.ref.outputs.ref }}"
+              run: gh workflow run build-proxmox-pbs-backup-client.yaml --ref "${{ steps.ref.outputs.ref }}"
