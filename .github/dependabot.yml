@@ -45,12 +45,8 @@ updates:
   - "/compose/templates/adsb/piaware"
   - "/compose/templates/adsb/tar1090"
   - "/compose/templates/ais/ais-catcher"
-  - "/compose/templates/sdr-base/bookworm/base-image"
-  - "/compose/templates/sdr-base/bookworm/build-image"
-  - "/compose/templates/sdr-base/bullseye/base-image"
-  - "/compose/templates/sdr-base/bullseye/build-image"
-  - "/compose/templates/sdr-base/buster/base-image"
-  - "/compose/templates/sdr-base/buster/build-image"
+  - "/compose/templates/sdr-base/base-image"
+  - "/compose/templates/sdr-base/build-image"
   schedule:
     interval: "daily"
   open-pull-requests-limit: 20

@@ -1,44 +1,84 @@
-# The purpose of this compose file is to simplify building all the base and build images for local use or testing
+# The purpose of this compose file is to simplify building all the base and build images for local use or testing.
+# Shared Dockerfiles in {base-image,build-image}/ are parameterized by DEBIAN_RELEASE.
+# Buster needs extra args: USE_ARCHIVE_REPOS=true (apt sources moved to archive.debian.org)
+# and (for the build image) INSTALL_PYTHON_BUILD_TOOLS=false (no python3-build on buster).
 
 services:
+  # ---- trixie (default / current Debian stable) --------------------------------
   sdr-base:
     build:
-      context: bookworm/base-image
-    image: ${DOCKER_REGISTRY}sdr/sdr-base-wsh:bookworm
+      context: base-image
+      args:
+        DEBIAN_RELEASE: trixie
+    image: ${DOCKER_REGISTRY}sdr/sdr-base-wsh:trixie
     deploy:
       replicas: 0
 
   sdr-build:
     build:
-      context: bookworm/build-image
+      context: build-image
+      args:
+        DEBIAN_RELEASE: trixie
+    image: ${DOCKER_REGISTRY}sdr/sdr-build-wsh:trixie
+    deploy:
+      replicas: 0
+
+  # ---- bookworm ---------------------------------------------------------------
+  sdr-base-bookworm:
+    build:
+      context: base-image
+      args:
+        DEBIAN_RELEASE: bookworm
+    image: ${DOCKER_REGISTRY}sdr/sdr-base-wsh:bookworm
+    deploy:
+      replicas: 0
+
+  sdr-build-bookworm:
+    build:
+      context: build-image
+      args:
+        DEBIAN_RELEASE: bookworm
     image: ${DOCKER_REGISTRY}sdr/sdr-build-wsh:bookworm
     deploy:
       replicas: 0
 
+  # ---- bullseye ---------------------------------------------------------------
   sdr-base-bullseye:
     build:
-      context: bullseye/base-image
+      context: base-image
+      args:
+        DEBIAN_RELEASE: bullseye
     image: ${DOCKER_REGISTRY}sdr/sdr-base-wsh:bullseye
     deploy:
       replicas: 0
 
   sdr-build-bullseye:
     build:
-      context: bullseye/build-image
+      context: build-image
+      args:
+        DEBIAN_RELEASE: bullseye
     image: ${DOCKER_REGISTRY}sdr/sdr-build-wsh:bullseye
     deploy:
       replicas: 0
 
+  # ---- buster (archived; needs apt sources rewrite + skip python3-build) ------
   sdr-base-buster:
     build:
-      context: buster/base-image
+      context: base-image
+      args:
+        DEBIAN_RELEASE: buster
+        USE_ARCHIVE_REPOS: "true"
     image: ${DOCKER_REGISTRY}sdr/sdr-base-wsh:buster
     deploy:
       replicas: 0
 
   sdr-build-buster:
     build:
-      context: buster/build-image
+      context: build-image
+      args:
+        DEBIAN_RELEASE: buster
+        USE_ARCHIVE_REPOS: "true"
+        INSTALL_PYTHON_BUILD_TOOLS: "false"
     image: ${DOCKER_REGISTRY}sdr/sdr-build-wsh:buster
     deploy:
       replicas: 0

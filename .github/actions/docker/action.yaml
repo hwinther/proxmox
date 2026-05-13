@@ -21,6 +21,12 @@ inputs:
   working_directory:
     required: true
     description: Working directory path, where the Dockerfile is located
+  build_args:
+    required: false
+    description: >-
+      Newline-separated KEY=VALUE build args forwarded to docker/build-push-action.
+      Use to drive parameterized Dockerfiles (e.g. DEBIAN_RELEASE=trixie).
+    default: ""
   platforms:
     required: false
     description: Platforms to build for
@@ -92,6 +98,7 @@ runs:
       push: ${{ inputs.push_condition }}
       tags: ${{ steps.meta.outputs.tags }}
       labels: ${{ steps.meta.outputs.labels }}
+      build-args: ${{ inputs.build_args }}
       outputs: type=image,name=target,annotation-index.org.opencontainers.image.description=${{ inputs.package_description }}
       # provenance: false # To simplify pruning
       # sbom: false

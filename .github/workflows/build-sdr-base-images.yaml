@@ -30,7 +30,17 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                debian_release: [ "bookworm", "bullseye", "buster" ]
+                debian_release: [ "buster", "bullseye", "bookworm", "trixie" ]
+                # Per-distro build-arg overrides. Default is empty (nothing extra). Buster needs
+                # its apt repos rewritten to archive.debian.org and lacks python3-build, so the
+                # build-image skips the python3 toolchain block. Future distros: add nothing.
+                include:
+                    - debian_release: buster
+                      extra_base_build_args: |
+                          USE_ARCHIVE_REPOS=true
+                      extra_build_build_args: |
+                          USE_ARCHIVE_REPOS=true
+                          INSTALL_PYTHON_BUILD_TOOLS=false
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -56,11 +66,12 @@ jobs:
                   echo "Constructed tag: $tag"
                   echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
+            # Shared base-image Dockerfile: any change rebuilds all distros, which is intended.
             - name: Check for changes in the specified path between tags
               id: git-tag-diff-base-image
               uses: ./.github/actions/git-tag-diff
               with:
-                  file_path: ${{ env.WORKING_DIRECTORY }}/${{ matrix.debian_release }}/base-image
+                  file_path: ${{ env.WORKING_DIRECTORY }}/base-image
 
             - name: Build and push runtime docker image
               uses: ./.github/actions/docker
@@ -71,17 +82,19 @@ jobs:
                   package_description: "WSH SDR base runtime image (for ${{ matrix.debian_release
                       }})"
                   package_vendor: ${{ env.PACKAGE_VENDOR }}
-                  working_directory: ${{ env.WORKING_DIRECTORY }}/${{ matrix.debian_release
-                      }}/base-image
+                  working_directory: ${{ env.WORKING_DIRECTORY }}/base-image
                   push_condition: ${{ github.event_name != 'pull_request' }}
                   tag: ${{ steps.generate-tag.outputs.tag }}
                   attest_supply_chain: "true"
+                  build_args: |
+                      DEBIAN_RELEASE=${{ matrix.debian_release }}
+                      ${{ matrix.extra_base_build_args }}
 
             - name: Check for changes in the specified path between tags
               id: git-tag-diff-build-image
               uses: ./.github/actions/git-tag-diff
               with:
-                  file_path: ${{ env.WORKING_DIRECTORY }}/${{ matrix.debian_release }}/build-image
+                  file_path: ${{ env.WORKING_DIRECTORY }}/build-image
 
             - name: Build and push build docker image
               uses: ./.github/actions/docker
@@ -92,8 +105,10 @@ jobs:
                   package_description: "WSH SDR base build image (for ${{ matrix.debian_release
                       }})"
                   package_vendor: ${{ env.PACKAGE_VENDOR }}
-                  working_directory: ${{ env.WORKING_DIRECTORY }}/${{ matrix.debian_release
-                      }}/build-image
+                  working_directory: ${{ env.WORKING_DIRECTORY }}/build-image
                   push_condition: ${{ github.event_name != 'pull_request' }}
                   tag: ${{ steps.generate-tag.outputs.tag }}
                   attest_supply_chain: "true"
+                  build_args: |
+                      DEBIAN_RELEASE=${{ matrix.debian_release }}
+                      ${{ matrix.extra_build_build_args }}
