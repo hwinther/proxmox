@@ -106,7 +106,7 @@ runs:
 
   - name: Install Cosign
     if: ${{ inputs.push_condition == 'true' && inputs.attest_supply_chain == 'true' }}
-    uses: sigstore/cosign-installer@cad07c2e89fa2edd6e2d7bab4c1aa38e53f76003 # v4.1.1
+    uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
     with:
       # Kyverno 1.17 resolves attestations like cosign v2 (.att manifest). Cosign v3 publishes via referrers → 404 on cluster.
       # See https://github.com/sigstore/cosign/issues/4708 for updates on the issues resolution.
