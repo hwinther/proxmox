@@ -11,13 +11,13 @@ description: >-
 
 ## Ingress File
 
-**Test cluster:** app Ingress documents live in `clusters/test-deployment/apps/ingress.yaml`, separated by `---`. Observability Ingress entries have their own file at `clusters/test-deployment/apps/observability/observability-ingress.yaml`.
+**Production:** most apps share [`clusters/production/apps/ingress.yaml`](../../../clusters/production/apps/ingress.yaml) — multiple Ingress documents separated by `---` in one file. Stacks with many or stack-specific entries keep a dedicated `*-ingress.yaml` next to the app (e.g. observability, Headlamp). Follow the existing pattern for the workload you touch.
 
-**Production:** many apps use the same multi-document style in [`clusters/production/apps/ingress.yaml`](../../../clusters/production/apps/ingress.yaml); some stacks keep a dedicated `*-ingress.yaml` next to the app (e.g. observability, Headlamp). Follow the existing pattern for the workload you touch.
+**Edge SDR:** the edge cluster has its own Ingress files under `clusters/edge-sdr/apps/`. SDR-only workloads (ADSB feeders, AIS-Catcher) don't expose web UIs at all; only observability shims do.
 
 ## Traefik Setup
 
-Traefik is deployed as a DaemonSet with `hostNetwork: true` via HelmRelease in `clusters/test-deployment/apps/traefik-helmrelease.yaml`. It listens on:
+Traefik is deployed as a DaemonSet with `hostNetwork: true` via HelmRelease in `clusters/production/apps/traefik/`. It listens on:
 
 | Entrypoint  | Port | Purpose                 |
 | ----------- | ---- | ----------------------- |
@@ -99,7 +99,7 @@ These annotations register the service in the Homepage dashboard automatically:
 1. Choose the hostname based on the DNS zone convention:
    - App: `<name>.kt.wsh.no`
    - Management UI: `<name>.mgmt-kt.wsh.no`
-2. Append a new `---` separated Ingress document to `clusters/test-deployment/apps/ingress.yaml`.
+2. Append a new `---` separated Ingress document to `clusters/production/apps/ingress.yaml` (or the stack's dedicated `*-ingress.yaml`).
 3. Include both Traefik and Homepage annotations.
 4. Ensure the referenced Service exists (from a `*-deployment.yaml` or HelmRelease).
 5. If one Ingress fronts **multiple** Deployments (e.g. `/` + `/api` on one host), set **`gethomepage.dev/pod-selector`** so Homepage can resolve pod status (e.g. `app in (my-frontend, my-api)`). Otherwise it may infer `app` from the Ingress name and show **not found**.

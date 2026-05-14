@@ -30,23 +30,6 @@ Operational notes: [`clusters/production/apps/observability/README.md`](../../..
 - Secret: **`obs-kps-grafana`** (admin password).
 - Extra datasources (Loki, Tempo) are set in **`kube-prometheus-stack-helmrelease.yaml`** under `grafana.additionalDataSources`.
 
-## Test / reference (`clusters/test-deployment/apps/observability/`)
-
-Legacy stack in namespace **`test`**: standalone **`obs-prometheus`** chart, **`obs-grafana`**, **`obs-loki`**, **`obs-tempo`**, **`obs-otel-collector`**. Detailed notes: [`clusters/test-deployment/apps/observability/README.md`](../../../clusters/test-deployment/apps/observability/README.md).
-
-### Test in-cluster endpoints
-
-| Signal | Endpoint |
-|--------|----------|
-| OTLP gRPC | `obs-otel-collector.test.svc.cluster.local:4317` |
-| OTLP HTTP | `http://obs-otel-collector.test.svc.cluster.local:4318` |
-| Prometheus OTLP (direct) | `http://obs-prometheus-server.test.svc.cluster.local/api/v1/otlp` |
-
-### Test Grafana
-
-- Datasources point at `obs-prometheus-server`, `obs-loki-gateway`, `obs-tempo` in namespace `test`.
-- Login Secret: **`obs-grafana`**.
-
 ## Instrumenting an App
 
 Send telemetry to the **OTEL Collector** (gRPC **4317**) for the target cluster/namespace.

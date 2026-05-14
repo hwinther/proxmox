@@ -10,14 +10,14 @@ description: >-
 
 ## File Conventions
 
-- **Filename:** `<app-name>-deployment.yaml`
-- **Location:** `clusters/test-deployment/apps/`
+- **Filename:** `<app-name>-deployment.yaml` (or place under a `<app>-<env>/` subdirectory for multi-file stacks)
+- **Location:** `clusters/production/apps/` (use `clusters/edge-sdr/apps/` for SDR-only workloads on the radio-pi cluster)
 - **Structure:** Deployment and Service in the same file, separated by `---`
-- **Registration:** Add the filename to `clusters/test-deployment/apps/kustomization.yaml` under `resources`
+- **Registration:** Add the filename to `clusters/production/apps/kustomization.yaml` under `resources`
 
 ## Namespace
 
-All app workloads use namespace `test`.
+Use **`appname-environment`** (e.g. `clutterstock-test`, `test-test`, `homepage-production`). See [`.cursor/skills/flux-gitops/SKILL.md`](../flux-gitops/SKILL.md) for the full naming policy.
 
 ## Template
 
@@ -26,7 +26,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: <app-name>
-  namespace: test
+  namespace: <app-name>-<env>
 spec:
   replicas: 1
   selector:
@@ -52,7 +52,7 @@ spec:
         - name: OTEL_SERVICE_NAME
           value: "<app-name>"
         - name: OTEL_EXPORTER_OTLP_ENDPOINT
-          value: "http://obs-otel-collector.test.svc.cluster.local:4317"
+          value: "http://obs-otel-collector.observability-production.svc.cluster.local:4317"
         ports:
         - name: http
           containerPort: 8080
@@ -62,7 +62,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: <app-name>
-  namespace: test
+  namespace: <app-name>-<env>
 spec:
   type: ClusterIP
   ports:
@@ -122,14 +122,14 @@ For apps that also need trace-specific config (e.g. .NET), add:
 
 ### PostgreSQL (production k0s)
 
-For **`clusters/production/apps/`** workloads, **relational data** should use **CloudNative-PG** with **tier-correct namespaces**: test-line apps → **`postgres-test`** `Cluster`s; production-line apps → **`postgres-production`** `Cluster`s. **`secretKeyRef`** targets the Kyverno-cloned **`<cluster>-app`** Secret in the **app** namespace (see [**.cursor/skills/flux-gitops/SKILL.md**](../flux-gitops/SKILL.md) → **PostgreSQL (CloudNative-PG)**). The standalone **`clusters/test-deployment/`** cluster has its own CNPG **`Cluster`** in namespace **`test`**.
+For **`clusters/production/apps/`** workloads, **relational data** should use **CloudNative-PG** with **tier-correct namespaces**: test-line apps → **`postgres-test`** `Cluster`s; production-line apps → **`postgres-production`** `Cluster`s. **`secretKeyRef`** targets the Kyverno-cloned **`<cluster>-app`** Secret in the **app** namespace (see [**.cursor/skills/flux-gitops/SKILL.md**](../flux-gitops/SKILL.md) → **PostgreSQL (CloudNative-PG)**).
 
 ## Checklist for New Deployments
 
 1. Create `<app>-deployment.yaml` from the template above.
 2. Replace all `<app-name>`, `<project>`, `<component>`, `<semver>` placeholders.
-3. Add the filename to `clusters/test-deployment/apps/kustomization.yaml`.
-4. Add an Ingress entry in `clusters/test-deployment/apps/ingress.yaml` if external access is needed.
+3. Add the filename to `clusters/production/apps/kustomization.yaml`.
+4. Add an Ingress entry in `clusters/production/apps/ingress.yaml` (or the stack's dedicated `*-ingress.yaml`) if external access is needed.
 5. Commit to `main` for Flux to reconcile.
 
 For **production** or any cluster that applies **Kyverno** `wsh-*` policies and **Kubescape** scans, read [**.cursor/skills/k8s-kyverno-kubescape-compliance/SKILL.md**](../k8s-kyverno-kubescape-compliance/SKILL.md) end-to-end — especially **“Before the first commit”** and **“PolicyExceptions”**: decide **image tag vs `:latest` exception**, **`runAsNonRoot` vs image `USER`**, **Cilium + Traefik host ingress**, and any **init-only root** exceptions **before** the first merge so the first PR already includes the workload **and** any narrowly scoped `PolicyException` files in the same change.

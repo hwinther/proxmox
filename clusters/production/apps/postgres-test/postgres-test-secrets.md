@@ -66,7 +66,3 @@ Ingress **`https://adminer-pg-test.mgmt.wsh.no`**. Default DB server in Adminer 
 ## Superuser
 
 Superuser access over the network stays **disabled** unless you explicitly enable it on the `Cluster`; prefer the **`-app`** credentials for applications.
-
-## Test-deployment cluster (`clusters/test-deployment`)
-
-The separate Flux root under **`clusters/test-deployment`** installs the same operator chart and a **`Cluster`** named **`testdb`** in namespace **`test`** (same namespace as **`test-api`**), using storage class **`local-path`**. The operator still creates **`testdb-app`** in **`test`**, so no Kyverno clone is required there. See [`../../../test-deployment/apps/cnpg-test/cluster.yaml`](../../../test-deployment/apps/cnpg-test/cluster.yaml).
