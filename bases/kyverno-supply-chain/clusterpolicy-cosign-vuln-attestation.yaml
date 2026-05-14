@@ -1,14 +1,16 @@
 # Cosign vulnerability scan attestation (Grype → SARIF predicate, cosign attest --type vuln).
-# Large Grype JSON predicates exceed Kyverno’s default maxContextSize (2Mi) when loaded into the policy engine.
-# Identity: reusable-workflows docker/dotnet-container @ refs/tags/v1, except ghcr.io/hwinther/proxmox/sdr/*
-# (hwinther/proxmox build-*.yaml — same as clusterpolicy-cyclonedx-sbom).
-# Remove this resource from bases/kyverno-supply-chain/kustomization.yaml if you do not publish vuln attestations.
+# Large Grype JSON predicates exceed Kyverno's default maxContextSize (2Mi) when loaded into the policy engine.
+#
+# Identity (SAN): the reusable-workflows docker/dotnet-container workflow, pinned either by floating tag
+# (@refs/tags/vN[.N[.N]]) or by 40-hex commit SHA. The caller repo (e.g. hwinther/wsh-rtl-sdr, wshno/wshno)
+# is NOT carried in this predicate type — unlike the SLSA provenance policy, we cannot add a caller-repo
+# condition here. Scope is therefore enforced via `imageReferences` (which registry paths are evaluated).
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
   name: wsh-require-cosign-vuln-attestation
   annotations:
-    policies.kyverno.io/title: Require Cosign vuln attestation (ghcr.io/hwinther)
+    policies.kyverno.io/title: Require Cosign vuln attestation (ghcr.io/hwinther, ghcr.io/wshno)
     policies.kyverno.io/category: Supply Chain
     policies.kyverno.io/severity: medium
 spec:
@@ -32,24 +34,8 @@ spec:
           - flux-system
     verifyImages:
     - imageReferences:
-      - ghcr.io/hwinther/proxmox/sdr/*
-      failureAction: Enforce # Note: Enforce is required for mutateDigest: true
-      mutateDigest: true
-      verifyDigest: true
-      useCache: true
-      attestations:
-      - predicateType: https://cosign.sigstore.dev/attestation/vuln/v1
-        attestors:
-        - entries:
-          - keyless:
-              issuer: https://token.actions.githubusercontent.com
-              subjectRegExp: ^https://github.com/hwinther/proxmox/\.github/workflows/build-[a-z0-9-]+\.ya?ml@refs/(heads/main|tags/.+)$
-              rekor:
-                url: https://rekor.sigstore.dev
-    - imageReferences:
       - ghcr.io/hwinther/*
-      skipImageReferences:
-      - ghcr.io/hwinther/proxmox/sdr/*
+      - ghcr.io/wshno/*
       failureAction: Enforce # Note: Enforce is required for mutateDigest: true
       mutateDigest: true
       verifyDigest: true
@@ -60,6 +46,6 @@ spec:
         - entries:
           - keyless:
               issuer: https://token.actions.githubusercontent.com
-              subjectRegExp: ^https://github.com/hwinther/reusable-workflows/\.github/workflows/(docker|dotnet)-container\.yml@refs/tags/v1$
+              subjectRegExp: ^https://github.com/hwinther/reusable-workflows/\.github/workflows/(docker|dotnet)-container\.yml@(refs/tags/v[0-9]+(\.[0-9]+){0,2}|[a-f0-9]{40})$
               rekor:
                 url: https://rekor.sigstore.dev

@@ -2,14 +2,17 @@
 # Predicate type must match cosign v2.x / in-toto: https://cyclonedx.org/bom (not …/schema — see cosign #2596).
 # Conditions use bomFormat at the predicate root; cosign --type cyclonedx embeds the CDX JSON as the predicate
 # body (not under Data.* — that shape is for cosign custom / older paths).
-# Identity: reusable-workflows docker/dotnet-container @ refs/tags/v1, except ghcr.io/hwinther/proxmox/sdr/*
-# which is signed from hwinther/proxmox .github/workflows/build-*.yaml (see clusterpolicy-github-slsa-provenance).
+#
+# Identity (SAN): the reusable-workflows docker/dotnet-container workflow, pinned either by floating tag
+# (@refs/tags/vN[.N[.N]]) or by 40-hex commit SHA. The caller repo isn't in this predicate type, so scope
+# is enforced via `imageReferences` (registry paths). See clusterpolicy-github-slsa-provenance.yaml for
+# the SLSA policy where caller-repo IS asserted via externalParameters.workflow.repository.
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
   name: wsh-require-cyclonedx-sbom
   annotations:
-    policies.kyverno.io/title: Require CycloneDX SBOM attestation (ghcr.io/hwinther)
+    policies.kyverno.io/title: Require CycloneDX SBOM attestation (ghcr.io/hwinther, ghcr.io/wshno)
     policies.kyverno.io/category: Supply Chain
     policies.kyverno.io/severity: medium
 spec:
@@ -33,29 +36,8 @@ spec:
           - flux-system
     verifyImages:
     - imageReferences:
-      - ghcr.io/hwinther/proxmox/sdr/*
-      failureAction: Enforce # Note: Enforce is required for mutateDigest: true
-      mutateDigest: true
-      verifyDigest: true
-      useCache: true
-      attestations:
-      - predicateType: https://cyclonedx.org/bom
-        attestors:
-        - entries:
-          - keyless:
-              issuer: https://token.actions.githubusercontent.com
-              subjectRegExp: ^https://github.com/hwinther/proxmox/\.github/workflows/build-[a-z0-9-]+\.ya?ml@refs/(heads/main|tags/.+)$
-              rekor:
-                url: https://rekor.sigstore.dev
-        conditions:
-        - all:
-          - key: "{{ bomFormat }}"
-            operator: Equals
-            value: CycloneDX
-    - imageReferences:
       - ghcr.io/hwinther/*
-      skipImageReferences:
-      - ghcr.io/hwinther/proxmox/sdr/*
+      - ghcr.io/wshno/*
       failureAction: Enforce # Note: Enforce is required for mutateDigest: true
       mutateDigest: true
       verifyDigest: true
@@ -66,7 +48,7 @@ spec:
         - entries:
           - keyless:
               issuer: https://token.actions.githubusercontent.com
-              subjectRegExp: ^https://github.com/hwinther/reusable-workflows/\.github/workflows/(docker|dotnet)-container\.yml@refs/tags/v1$
+              subjectRegExp: ^https://github.com/hwinther/reusable-workflows/\.github/workflows/(docker|dotnet)-container\.yml@(refs/tags/v[0-9]+(\.[0-9]+){0,2}|[a-f0-9]{40})$
               rekor:
                 url: https://rekor.sigstore.dev
         conditions:
