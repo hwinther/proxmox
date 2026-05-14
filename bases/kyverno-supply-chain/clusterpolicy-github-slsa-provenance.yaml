@@ -93,8 +93,8 @@ spec:
             operator: Equals
             value: https://actions.github.io/buildtypes/workflow/v1
           - key: "{{ buildDefinition.externalParameters.workflow.repository }}"
-            operator: Regex
-            value: ^https://github\.com/wshno/[a-z0-9._-]+$
+            operator: Equals
+            value: https://github.com/wshno/wshno
     # General fallback for any other ghcr.io/hwinther/* image (clutterstock, headlamp plugins
     # we publish ourselves, etc). Same reusable SAN, no caller-repo restriction.
     - imageReferences:
