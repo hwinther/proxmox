@@ -16,13 +16,18 @@ spec:
     # stay FailedDiscoveryCheck / 503 from the API. See cilium-k0s-setup.md § Aggregated APIs.
     extraArgs:
       enable-aggregator-routing: "true"
-      # OIDC for Headlamp (Authelia as IdP): issuer must match JWT `iss` and Headlamp `issuerURL` (https://auth.wsh.no).
-      # Controllers need outbound HTTPS to this host for JWKS/discovery. Uncomment when DNS/TLS for auth.wsh.no is live.
+      # OIDC for user auth against the kube-apiserver (Authelia as IdP). kube-apiserver's --oidc-client-id
+      # is single-valued, so the client_id represents the *cluster API audience*, not any one consumer.
+      # Headlamp (and any future OIDC tool) presents a token issued for this client. Issuer is shared
+      # (https://auth.wsh.no); client_id differs per cluster:
+      #   - production controllers: oidc-client-id: headlamp                  (authelia client `headlamp` — legacy name)
+      #   - edge-sdr   controllers: oidc-client-id: kube-apiserver-edge-sdr   (authelia client `kube-apiserver-edge-sdr`)
+      # Controllers need outbound HTTPS to auth.wsh.no for JWKS/discovery. Uncomment once DNS/TLS is live.
       oidc-issuer-url: https://auth.wsh.no
       oidc-client-id: headlamp
       oidc-username-claim: preferred_username
-      # Requires `groups` (and username claim) in the ID token — see Authelia `claims_policies` for client `headlamp`
-      # in `clusters/production/apps/authelia-production/authelia-helmrelease.yaml`.
+      # Requires `groups` (and username claim) in the ID token — see Authelia `claims_policies.headlamp-kube-apiserver`
+      # in `clusters/production/apps/authelia-production/authelia-helmrelease.yaml` (used by both clients).
       oidc-groups-claim: groups
       # If issuer TLS is not in the controller image default CA bundle, add a PEM path on the controller host:
       # oidc-ca-file: /etc/k0s/ssl/auth-wsh-no-ca.pem

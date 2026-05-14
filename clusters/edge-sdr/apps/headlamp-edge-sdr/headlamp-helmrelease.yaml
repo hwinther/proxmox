@@ -20,13 +20,47 @@ spec:
         kind: HelmRepository
         name: headlamp
         namespace: headlamp-edge-sdr
+  ## Headlamp loads OIDC discovery inside the pod (https://auth.wsh.no/...). Issuer TLS must be reachable
+  ## from the pod; edge-sdr Pis don't get split-horizon DNS for auth.wsh.no so we hostAlias it to the LAN
+  ## nginx box that fronts the production cluster's Authelia (mirrors clusters/production/apps/headlamp-production
+  ## /headlamp-helmrelease.yaml). Egress is SNAT to the node; allow node subnet → 10.20.13.201:443.
+  postRenderers:
+  - kustomize:
+      patches:
+      - target:
+          kind: Deployment
+          name: headlamp
+          namespace: headlamp-edge-sdr
+        patch: |
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: headlamp
+            namespace: headlamp-edge-sdr
+          spec:
+            template:
+              spec:
+                hostAliases:
+                  - ip: 10.20.13.201
+                    hostnames:
+                      - auth.wsh.no
   values:
     ## Flux sidebar plugin — copy baked image into shared emptyDir (see headlamp-k8s/plugins flux README).
     config:
       pluginsDir: /build/plugins
+      # Without -oidc-ca-file, Headlamp passes a non-nil empty OIDC CA to the OIDC client (GetInClusterContext),
+      # which logs "couldn't add custom cert to context" on every /oidc request. Point at the image CA bundle.
+      extraArgs:
+      - "-oidc-ca-file=/etc/ssl/certs/ca-certificates.crt"
       oidc:
         secret:
-          create: false
+          create: true
+          name: headlamp-oidc
+        clientID: kube-apiserver-edge-sdr
+        issuerURL: https://auth.wsh.no
+        scopes: openid profile email groups
+        callbackURL: https://headlamp.mgmt-edge-sdr.wsh.no/oidc-callback
+        usePKCE: true
     initContainers:
     - name: headlamp-plugins
       image: ghcr.io/headlamp-k8s/headlamp-plugin-flux:v0.6.0
