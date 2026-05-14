@@ -27,5 +27,5 @@ jobs:
             mode: ${{ inputs.mode }}
             commit_subject: "chore: ruff format"
             python_version: "3.13"
-            ruff_version: "0.8.0"
+            ruff_version: "0.15.12"
             target_path: "."
