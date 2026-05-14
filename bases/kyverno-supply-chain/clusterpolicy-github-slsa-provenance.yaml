@@ -67,6 +67,34 @@ spec:
           - key: "{{ buildDefinition.externalParameters.workflow.repository }}"
             operator: Equals
             value: https://github.com/hwinther/wsh-rtl-sdr
+    # wshno-org images (ghcr.io/wshno/*). Built by the same hwinther/reusable-workflows
+    # docker-container.yml, but the *caller* must be a wshno/* GitHub repo — proven by
+    # externalParameters.workflow.repository in the SLSA predicate. Defense-in-depth: even
+    # if the reusable is hijacked, only wshno-initiated builds verify.
+    - imageReferences:
+      - ghcr.io/wshno/*
+      failureAction: Enforce # Note: Enforce is required for mutateDigest: true
+      mutateDigest: true
+      verifyDigest: true
+      useCache: true
+      type: SigstoreBundle
+      attestations:
+      - predicateType: https://slsa.dev/provenance/v1
+        attestors:
+        - entries:
+          - keyless:
+              issuer: https://token.actions.githubusercontent.com
+              subjectRegExp: ^https://github.com/hwinther/reusable-workflows/\.github/workflows/(docker|dotnet)-container\.yml@(refs/tags/v[0-9]+(\.[0-9]+){0,2}|[a-f0-9]{40})$
+              rekor:
+                url: https://rekor.sigstore.dev
+        conditions:
+        - all:
+          - key: "{{ buildDefinition.buildType }}"
+            operator: Equals
+            value: https://actions.github.io/buildtypes/workflow/v1
+          - key: "{{ buildDefinition.externalParameters.workflow.repository }}"
+            operator: Regex
+            value: ^https://github\.com/wshno/[a-z0-9._-]+$
     # General fallback for any other ghcr.io/hwinther/* image (clutterstock, headlamp plugins
     # we publish ourselves, etc). Same reusable SAN, no caller-repo restriction.
     - imageReferences:
