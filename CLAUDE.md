@@ -55,7 +55,7 @@ The PR workflow (`.github/workflows/pr-build.yml`) calls the reusable `pr-build.
 
 - **CNI**: Cilium (eBPF, replaces kube-proxy); Hubble for observability
 - **Storage**: Proxmox Ceph accessed via `ceph-csi-rbd`, StorageClass `ceph-rbd`
-- **GitOps**: Flux v2 reconciles `clusters/production` and `clusters/test-deployment` — no local `kubectl apply` workflow
+- **GitOps**: Flux v2 reconciles `clusters/production` and `clusters/edge-sdr` — no local `kubectl apply` workflow
 - **Kustomize layout**: `clusters/` references shared bases in `bases/` via relative paths
 
 Namespace convention: `appname-environment` (e.g. `clutterstock-production`, `platform-production`)

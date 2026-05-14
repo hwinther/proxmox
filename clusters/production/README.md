@@ -1,6 +1,6 @@
 # Production cluster (k0s)
 
-GitOps manifests for the production cluster. Flux on **this** cluster must sync **only** `./clusters/production`, never `./clusters/test-deployment`.
+GitOps manifests for the production cluster. Flux on **this** cluster must sync **only** `./clusters/production`, never `./clusters/edge-sdr`.
 
 ## First-time Flux bootstrap
 
@@ -18,7 +18,7 @@ flux bootstrap github \
   --personal
 ```
 
-If this directory and `flux-system` already exist in Git, bootstrap reconciles against the committed `gotk-sync.yaml` and `gotk-components.yaml`. After upgrading Flux versions, regenerate `flux-system/gotk-components.yaml` (for example via `flux install --export`) and align with [`../test-deployment/flux-system/gotk-components.yaml`](../test-deployment/flux-system/gotk-components.yaml) when both clusters should run the same controller version.
+If this directory and `flux-system` already exist in Git, bootstrap reconciles against the committed `gotk-sync.yaml` and `gotk-components.yaml`. After upgrading Flux versions, regenerate `flux-system/gotk-components.yaml` (for example via `flux install --export`) and align with [`../edge-sdr/flux-system/gotk-components.yaml`](../edge-sdr/flux-system/gotk-components.yaml) when both clusters should run the same controller version.
 
 ## In-cluster sync
 
@@ -44,7 +44,7 @@ Platform checklist before apps: [`../../infra/k0s/README.md`](../../infra/k0s/RE
 | **Shared (env-scoped)** | [`apps/shared/`](apps/shared/)                                         | **`shared-production`** / **`shared-test`** — Valkey (Redis protocol, etc.) shared per environment line; see [README](apps/shared/README.md)                                                                            |
 | **Clutterstock**        | [`apps/clutterstock/`](apps/clutterstock/)                             | Namespace `clutterstock-production`, Ceph PVC via migrate; cache → **`shared-production`**; public **`clutterstock.wsh.no`**                                                                                            |
 | **Clutterstock (test)** | [`apps/clutterstock-test/`](apps/clutterstock-test/)                   | Namespace **`clutterstock-test`**, separate SQLite PVC + [`clutterstock-test-migrate/`](apps/clutterstock-test-migrate/); cache → **`shared-test`**; **`clutterstock.test.wsh.no`** for Playwright / release validation |
-| **Test (sample app)**   | [`apps/test-test/`](apps/test-test/)                                   | Namespace **`test-test`** (app **test** + env **test**); **`test.test.wsh.no`** (UI + `/api`, same images as test-deployment cluster)                                                                                   |
+| **Test (sample app)**   | [`apps/test-test/`](apps/test-test/)                                   | Namespace **`test-test`** (app **test** + env **test**); **`test.test.wsh.no`** (UI + `/api`); pulls `ghcr.io/hwinther/test/*`                                                                                          |
 | **Policy Reporter**     | [`apps/policy-reporter-production/`](apps/policy-reporter-production/) | Kyverno policy reports UI; **`policy-reporter.mgmt.wsh.no`**                                                                                                                                                            |
 | **OIDC admin RBAC**     | [`apps/oidc-k8s-admins-rbac/`](apps/oidc-k8s-admins-rbac/)             | `ClusterRoleBinding`: OIDC/LDAP group **`k8s-admins`** → **`cluster-admin`** (e.g. Headlamp after apiserver `oidc-*` flags)                                                                                             |
 | **Ingress**             | [`apps/ingress.yaml`](apps/ingress.yaml)                               | Public + management hosts (see hostnames below)                                                                                                                                                                         |
@@ -60,4 +60,4 @@ The placeholder namespace under `apps/` is `platform-production` for cluster-wid
 - **Applications:** **`{service}.wsh.no`** — e.g. `clutterstock.wsh.no` (Clutterstock API is routed on the same host under `/api/`). Non-prod Clutterstock on this cluster: **`clutterstock.test.wsh.no`** (see table above).
 - **Management plane:** **Homepage** uses **`mgmt.wsh.no`**. Other management UIs use **`{service}.mgmt.wsh.no`** — e.g. `grafana.mgmt.wsh.no`, `otel.mgmt.wsh.no`, `alertmanager.mgmt.wsh.no`, **`policy-reporter.mgmt.wsh.no`** (Kyverno reports via [Policy Reporter UI](https://kyverno.github.io/policy-reporter-docs/policy-reporter-ui/introduction.html)), **`redis-prod.mgmt.wsh.no`** / **`redis-test.mgmt.wsh.no`** (RedisInsight for **`shared-production`** / **`shared-test`** Valkey), **`adminer-pg-prod.mgmt.wsh.no`** / **`adminer-pg-test.mgmt.wsh.no`** (Adminer for CNPG via **oauth2-proxy** + Authelia **OIDC** in **`postgres-production`** / **`postgres-test`**). Prefer stricter edge controls (WAF / auth) on `mgmt.wsh.no` and `*.mgmt.wsh.no`. **Authelia / OIDC issuer** is **`auth.wsh.no`** (public canonical URL; see `apps/authelia-production/authelia-helmrelease.yaml` and `infra/k0s/k0s.yaml.example` for API server OIDC `extraArgs`).
 
-Non-prod uses **`appname.test.wsh.no`** or test-specific zones (e.g. `*.kt.wsh.no`); PR previews use **`appname-<pr-number>.preview.wsh.no`**. The **`test.test.wsh.no`** hostname is the sample **`ghcr.io/hwinther/test`** stack: **test-environment** traffic (`*.test.wsh.no`), not “production product” traffic, even though the workload runs on this cluster (see [`apps/test-test/README.md`](apps/test-test/README.md)). See [`.cursor/skills/flux-gitops/SKILL.md`](../../.cursor/skills/flux-gitops/SKILL.md).
+Non-prod uses **`appname.test.wsh.no`**; PR previews use **`appname-<pr-number>.preview.wsh.no`**. The **`test.test.wsh.no`** hostname is the sample **`ghcr.io/hwinther/test`** stack: **test-environment** traffic (`*.test.wsh.no`), not “production product” traffic, even though the workload runs on this cluster (see [`apps/test-test/README.md`](apps/test-test/README.md)). See [`.cursor/skills/flux-gitops/SKILL.md`](../../.cursor/skills/flux-gitops/SKILL.md).

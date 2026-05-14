@@ -11,12 +11,12 @@ description: >-
 
 ## Repository layout (mono-repo)
 
-Kubernetes GitOps uses **one folder per cluster** under `clusters/`. Production and test share this repo but **never** share the same Flux `path:` on the cluster.
+Kubernetes GitOps uses **one folder per cluster** under `clusters/`. Production and edge share this repo but **never** share the same Flux `path:` on the cluster.
 
-| Path                        | Purpose                |
-| --------------------------- | ---------------------- |
-| `clusters/test-deployment/` | Test cluster           |
-| `clusters/production/`      | Production k0s cluster |
+| Path                   | Purpose                                                   |
+| ---------------------- | --------------------------------------------------------- |
+| `clusters/production/` | Production k0s cluster (also hosts test-tier namespaces)  |
+| `clusters/edge-sdr/`   | Edge k0s cluster for SDR workloads on the radio-pi nodes  |
 
 See [`clusters/README.md`](../../../clusters/README.md) for when to split into a second repository (compliance, org boundaries).
 
@@ -47,8 +47,7 @@ Guidelines:
 | **Production (apps)**               | `{service}.wsh.no`                                                   | `clutterstock.wsh.no` (API at `/api/`)                                                                                                                                                                                                                                                      |
 | **Production (management)**         | Homepage: `mgmt.wsh.no`; other services: `{service}.mgmt.wsh.no`     | `mgmt.wsh.no`, `grafana.mgmt.wsh.no`, `headlamp.mgmt.wsh.no`                                                                                                                                                                                                                                |
 | **Production (SSO / OIDC issuer)**  | **Canonical:** `auth.wsh.no` only                                    | `https://auth.wsh.no` — Authelia (`iss`, session URL) + apiserver `oidc-issuer-url`; see [`authelia-helmrelease.yaml`](../../../clusters/production/apps/authelia-production/authelia-helmrelease.yaml). Keep **`*.mgmt.wsh.no`** private; public apps redirect login to **`auth.wsh.no`**. |
-| **Test**                            | `appname.test.wsh.no` or cluster-specific zones (e.g. `*.kt.wsh.no`) | `clutterstock.test.wsh.no`, `grafana.mgmt-kt.wsh.no`                                                                                                                                                                                                                                        |
-| **Test-tier DNS (on prod cluster)** | `*.test.wsh.no`                                                      | `test.test.wsh.no` — namespace **`test-test`** (app **test** + env **test**); ([`clusters/production/apps/test-test/`](../../../clusters/production/apps/test-test/README.md))                                                                                                              |
+| **Test tier (on prod cluster)**     | `appname.test.wsh.no`                                                | `clutterstock.test.wsh.no`, `test.test.wsh.no` — namespace **`test-test`** (app **test** + env **test**); ([`clusters/production/apps/test-test/`](../../../clusters/production/apps/test-test/README.md))                                                                                  |
 | **PR / preview**                    | `appname-<pr-number>.preview.wsh.no`                                 | `clutterstock-184.preview.wsh.no`                                                                                                                                                                                                                                                           |
 
 **PR/preview shape:** put **`appname`** and **`pr-number`** in one DNS label left of `preview.wsh.no` (`clutterstock-184`), not `184.clutterstock.preview.wsh.no`, so **`*.preview.wsh.no`** covers all preview hosts without per-app wildcards.
@@ -74,9 +73,9 @@ clusters/<name>/
     └── ...
 ```
 
-**Test cluster** (`clusters/test-deployment/apps/`) includes raw deployments, `ingress.yaml`, `traefik-helmrelease.yaml`, `observability/`, `kubevious/`, `homepage/`, `clutterstock-migrate/`, etc.
+**Production** (`clusters/production/apps/`) lists **`shared/production`** and **`shared/test`** before app bundles so **`shared-production`** / **`shared-test`** (Redis, etc.) exist first — see [`clusters/production/apps/shared/README.md`](../../../clusters/production/apps/shared/README.md). Test-tier app namespaces (e.g. **`test-test`**, **`clutterstock-test`**, **`postgres-test`**) also live under `clusters/production/apps/` — there is no separate test cluster.
 
-**Production** (`clusters/production/apps/`) lists **`shared/production`** and **`shared/test`** before app bundles so **`shared-production`** / **`shared-test`** (Redis, etc.) exist first — see [`clusters/production/apps/shared/README.md`](../../../clusters/production/apps/shared/README.md).
+**Edge SDR** (`clusters/edge-sdr/apps/`) hosts the SDR-only workloads (ADSB feeders, AIS-Catcher, observability shims, etc.) reconciled by the k0s cluster on the radio-pi nodes — see [`clusters/edge-sdr/`](../../../clusters/edge-sdr/).
 
 ## PostgreSQL (CloudNative-PG)
 
@@ -105,44 +104,36 @@ clusters/<name>/
 - **Secrets:** each namespace has **`oauth2-proxy-adminer`** / key **`cookie-secret`** (see bundle `*-secrets.md`). **Authelia** OIDC client definitions live in [`authelia-helmrelease.yaml`](../../../clusters/production/apps/authelia-production/authelia-helmrelease.yaml); OIDC **CORS** `allowed_origins` includes both Adminer hosts.
 - **Homepage:** **`gethomepage.dev/*`** on the Ingresses with [`homepage.yaml`](../../../clusters/production/apps/homepage/homepage.yaml) **`kubernetes.yaml`** `ingress: true`.
 
-### Separate test Kubernetes cluster (`clusters/test-deployment/`)
-
-That Flux root targets a **different** cluster: CNPG operator under **`cnpg-system/`** and a **`Cluster`** (e.g. **`testdb`** in namespace **`test`**, `local-path` storage) under **`cnpg-test/`**. It is **not** the same Postgres instance as production k0s `postgres-test` / `postgres-production`.
-
 ### PR / ephemeral previews
 
 For **`appname-preview`** namespaces, either provision a **dedicated small `Cluster`** per preview (RAM cost scales with cluster count), reuse a shared preview Postgres with **strict DB/user naming**, or defer Postgres until requirements are clear — see [Namespace naming](#namespace-naming) for hostname patterns.
 
 ## Sync configuration
 
-### Test (`clusters/test-deployment/flux-system/gotk-sync.yaml`)
-
-- **GitRepository** `flux-system` watches `https://github.com/hwinther/proxmox.git`, branch `main`, interval 1m.
-- **Flux Kustomization** `clutterstock-migrate` syncs `./clusters/test-deployment/apps/clutterstock-migrate` with prune enabled.
-- **Flux Kustomization** `flux-system` syncs `./clusters/test-deployment` with prune enabled and `dependsOn: clutterstock-migrate`.
-
-The dependency ensures migration jobs run before the main app bundle reconciles.
-
 ### Production (`clusters/production/flux-system/gotk-sync.yaml`)
 
-- Same **GitRepository** pattern (URL/branch/`secretRef` as appropriate for the prod cluster).
+- **GitRepository** `flux-system` watches `https://github.com/hwinther/proxmox.git`, branch `main`, interval 1m.
 - **Kustomization** `clutterstock-migrate` with `path: ./clusters/production/apps/clutterstock-migrate` (namespace + PVC + migrator Job).
 - Root **Kustomization** `flux-system` with `path: ./clusters/production` — **no `dependsOn` migrate**, so a stuck Clutterstock PVC/Job does not block observability, Traefik, or Homepage. Ensure migrator Job has completed before depending on Clutterstock API.
 
-Bootstrap production with `flux bootstrap github --path=clusters/production` (see `clusters/production/README.md`). Each cluster gets its own in-cluster `flux-system` secret for Git; do not copy test cluster kubeconfig secrets to prod.
+### Edge SDR (`clusters/edge-sdr/flux-system/gotk-sync.yaml`)
+
+Same **GitRepository** pattern, root **Kustomization** with `path: ./clusters/edge-sdr`. The edge cluster runs only the SDR workload manifests under `clusters/edge-sdr/apps/`.
+
+Bootstrap each cluster with `flux bootstrap github --path=clusters/<name>` (see `clusters/production/README.md`). Each cluster gets its own in-cluster `flux-system` secret for Git; do not copy kubeconfig secrets between them.
 
 ## Adding a new app (single manifest)
 
 Ensure the app uses a Namespace matching **`appname-environment`** (see [Namespace naming](#namespace-naming)); reference it in manifests via `metadata.namespace` or a Namespace resource in the same kustomization.
 
-For **test**, use `clusters/test-deployment/apps/`:
+All app manifests (both production tier and test tier) live under `clusters/production/apps/`:
 
-1. Create `clusters/test-deployment/apps/<app>-deployment.yaml` with Deployment + Service.
-2. Add the filename to the `resources` list in `clusters/test-deployment/apps/kustomization.yaml`.
-3. If the app needs an Ingress, append a new `---` document to `clusters/test-deployment/apps/ingress.yaml` using the [public hostname](#public-hostnames-wshno) for the environment (`appname.test.wsh.no` on the test cluster, etc.).
+1. Create `clusters/production/apps/<app>-<env>-deployment.yaml` with Deployment + Service. For test-tier workloads use **`<env>: test`** in the filename/namespace (e.g. `clutterstock-test/`, `test-test/`); for production-tier use **`production`**.
+2. Add the filename to the `resources` list in `clusters/production/apps/kustomization.yaml`.
+3. If the app needs an Ingress, append a new `---` document to `clusters/production/apps/ingress.yaml` using the [public hostname](#public-hostnames-wshno) pattern (`appname.wsh.no` for production tier, `appname.test.wsh.no` for test tier).
 4. Commit to `main`. Flux picks up the change within 1 minute.
 
-For **production**, mirror the same pattern under `clusters/production/apps/` and list resources in `clusters/production/apps/kustomization.yaml`.
+For **SDR edge workloads**, use `clusters/edge-sdr/apps/` instead — that cluster has its own Flux root and apps list.
 
 Before opening the PR, reconcile **Kyverno / Cilium / image policy** in the same change when needed: see [**.cursor/skills/k8s-kyverno-kubescape-compliance/SKILL.md**](../k8s-kyverno-kubescape-compliance/SKILL.md) (**“Before the first commit”**, **PolicyExceptions**, Traefik host ingress) so Flux does not apply a broken Deployment first and require follow-up commits for exceptions or `CiliumNetworkPolicy` fixes.
 
@@ -150,7 +141,7 @@ Before opening the PR, reconcile **Kyverno / Cilium / image policy** in the same
 
 For apps with multiple manifests (HelmRelease, namespace, configmaps):
 
-1. Create a subdirectory under the target cluster’s `apps/`, e.g. `clusters/test-deployment/apps/my-stack/` or `clusters/production/apps/my-stack/`.
+1. Create a subdirectory under the target cluster’s `apps/`, e.g. `clusters/production/apps/my-stack/` (or `clusters/edge-sdr/apps/my-stack/` for SDR-only stacks).
 2. Add a `kustomization.yaml` inside it listing its resources.
 3. Add the directory name to that cluster’s `apps/kustomization.yaml`:
 
@@ -186,4 +177,4 @@ To make one Kustomization wait for another, edit that cluster’s `flux-system/g
 - All changes deploy via **git**; avoid ad-hoc `kubectl apply` for GitOps-managed resources.
 - Flux prune is enabled: removing a resource from the kustomization deletes it from the cluster.
 - Use `kubectl get kustomization -n flux-system` and `flux get all` to check reconciliation status.
-- Keep **production** sync scoped to `./clusters/production`; never point a prod cluster at `./clusters/test-deployment`.
+- Keep **production** sync scoped to `./clusters/production` and **edge-sdr** to `./clusters/edge-sdr`; never cross-point them.

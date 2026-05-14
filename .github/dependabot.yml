@@ -35,40 +35,6 @@ updates:
   cooldown:
     default-days: 7
 
-# SDR feeder + base images moved to hwinther/wsh-rtl-sdr in May 2026; Dependabot tracks
-# the digest pins there now (see wsh-rtl-sdr/.github/dependabot.yml). The
-# /compose/templates/{adsb,ais,sdr-base}/ paths previously listed here are gone.
-
-# Test cluster (test-deployment) — separate from production.
-- package-ecosystem: "docker"
-  directories:
-  - "/clusters/test-deployment"
-  - "/clusters/test-deployment/apps"
-  - "/clusters/test-deployment/apps/clutterstock-migrate"
-  - "/clusters/test-deployment/apps/cnpg-system"
-  - "/clusters/test-deployment/apps/cnpg-test"
-  - "/clusters/test-deployment/apps/homepage"
-  - "/clusters/test-deployment/apps/headlamp-test"
-  - "/clusters/test-deployment/apps/kubevious"
-  - "/clusters/test-deployment/apps/kyverno"
-  - "/clusters/test-deployment/apps/kyverno-policies"
-  - "/clusters/test-deployment/apps/observability"
-  - "/clusters/test-deployment/apps/policy-reporter-test"
-  - "/clusters/test-deployment/flux-system"
-  schedule:
-    interval: "daily"
-  groups:
-    clutterstock:
-      patterns:
-      - "hwinther/clutterstock/*"
-    test:
-      patterns:
-      - "hwinther/test/*"
-    fluxcd:
-      patterns:
-      - "fluxcd/*"
-  open-pull-requests-limit: 20
-
 # edge-sdr cluster (k0s / SDR edge).
 - package-ecosystem: "docker"
   directories:
@@ -161,24 +127,4 @@ updates:
     test:
       patterns:
       - "hwinther/test/*"
-  open-pull-requests-limit: 20
-
-- package-ecosystem: "docker-compose"
-  directories:
-  - "/compose/servers/radio-pi01/ais"
-  - "/compose/servers/radio-pi01/adsb"
-  assignees: [ "hwinther" ]
-  target-branch: "deploy/radio-pi01"
-  schedule:
-    interval: "daily"
-  open-pull-requests-limit: 20
-
-- package-ecosystem: "docker-compose"
-  directories:
-  - "/compose/servers/radio-pi02/ais"
-  - "/compose/servers/radio-pi02/adsb"
-  assignees: [ "hwinther" ]
-  target-branch: "deploy/radio-pi02"
-  schedule:
-    interval: "daily"
   open-pull-requests-limit: 20

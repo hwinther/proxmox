@@ -14,11 +14,12 @@ This repo uses Flux HelmRelease CRDs (not `helm install`) to deploy Helm charts.
 
 ## File Locations
 
-- **Traefik:** `clusters/test-deployment/apps/traefik-helmrelease.yaml` (includes Namespace + HelmRepository + HelmRelease in one file)
-- **Observability stack:** `clusters/test-deployment/apps/observability/` with separate files for each release
-- **Kubevious:** `clusters/test-deployment/apps/kubevious/`
+- **Traefik:** `clusters/production/apps/traefik/` (HelmRelease + Namespace + HelmRepository)
+- **Observability stack:** `clusters/production/apps/observability/` with separate files for each release (kube-prometheus-stack, Loki, Tempo, OTel collector)
+- **CNPG operator:** `clusters/production/apps/cnpg-system/`
+- **Cert-manager:** `clusters/production/apps/cert-manager/`
 
-HelmRepositories for the observability stack are consolidated in `clusters/test-deployment/apps/observability/helmrepositories.yaml`.
+HelmRepositories for the observability stack are consolidated in `clusters/production/apps/observability/helmrepositories.yaml`.
 
 ## HelmRepository Template
 

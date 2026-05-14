@@ -11,4 +11,4 @@ resources:
 - Keep cluster-specific overlays (names, replicas, secrets) under `clusters/<name>/`. Namespace names should follow **`appname-environment`**. Ingress `host` values should follow **`wsh.no`** patterns (`appname.wsh.no`, `appname.test.wsh.no`, `appname-<pr>.preview.wsh.no`) — see [`.cursor/skills/flux-gitops/SKILL.md`](../.cursor/skills/flux-gitops/SKILL.md).
 - Avoid putting secrets in `bases/`; use sealed secrets or SOPS in cluster paths.
 
-Nothing is required to adopt this layout; add subdirectories when the same manifest is duplicated between `test-deployment` and `production`.
+Nothing is required to adopt this layout; add subdirectories when the same manifest is duplicated between `production` and `edge-sdr`.
