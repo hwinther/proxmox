@@ -399,7 +399,7 @@ class PveCommandError(RuntimeError):
         self.stdout = stdout
         self.stderr = stderr
         super().__init__(
-            f'command exited with status {returncode}: {cmd!r}\n' f'stdout: {stdout.strip()}\nstderr: {stderr.strip()}'
+            f'command exited with status {returncode}: {cmd!r}\nstdout: {stdout.strip()}\nstderr: {stderr.strip()}'
         )
 
 

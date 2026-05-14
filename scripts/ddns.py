@@ -57,7 +57,7 @@ if answer is not None:
         sys.exit(0)
 
 nsupdate_script_path = '/tmp/nsupdate.script'
-nsupdate_script = 'server %s\n' 'zone %s\n' 'update delete %s. A\n' 'update add %s. 3600 A %s\n' 'show\n' 'send\n' % (
+nsupdate_script = 'server %s\nzone %s\nupdate delete %s. A\nupdate add %s. 3600 A %s\nshow\nsend\n' % (
     nsserver,
     zone_name,
     ddns_domain,
