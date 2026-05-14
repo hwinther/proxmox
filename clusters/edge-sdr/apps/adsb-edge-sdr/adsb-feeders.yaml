@@ -42,7 +42,7 @@ spec:
                 - "true"
       containers:
       - name: piaware
-        image: ghcr.io/hwinther/proxmox/sdr/adsb/piaware-wsh:0.6.0
+        image: ghcr.io/hwinther/wsh-rtl-sdr/piaware:0.2.0@sha256:4bfa3f63a308ed020201fe7e1f2f0658cfbc5ec286177cd475b59204739880e2
         imagePullPolicy: IfNotPresent
         # env after envFrom so RECEIVER_* / MLAT_* override any accidental ConfigMap keys.
         envFrom:
@@ -112,7 +112,7 @@ spec:
                 - "true"
       containers:
       - name: fr24
-        image: ghcr.io/hwinther/proxmox/sdr/adsb/fr24-wsh:0.6.0
+        image: ghcr.io/hwinther/wsh-rtl-sdr/fr24:0.2.0@sha256:64e9c904df76d354476670a2999d7b9ccaedcf3c05610d7d2acf08158ec52636
         imagePullPolicy: IfNotPresent
         # env after envFrom so RECEIVER_* overrides if those keys ever appear in the Secret.
         envFrom:
@@ -176,7 +176,7 @@ spec:
                 - "true"
       containers:
       - name: adsbexchange
-        image: ghcr.io/hwinther/proxmox/sdr/adsb/adsbexchange-wsh:0.6.0
+        image: ghcr.io/hwinther/wsh-rtl-sdr/adsbexchange:0.2.0@sha256:3fa4c64ed0bbcfda2f2cfb5c08884028e161971f2673a9d9d93849c47744df34
         imagePullPolicy: IfNotPresent
         envFrom:
         - configMapRef:
@@ -234,7 +234,7 @@ spec:
                 - "true"
       containers:
       - name: opensky
-        image: ghcr.io/hwinther/proxmox/sdr/adsb/opensky-wsh:0.6.0
+        image: ghcr.io/hwinther/wsh-rtl-sdr/opensky:0.2.0@sha256:17985af3016ba6cdcdb81b3c1769e7c08fc0d6461f6f3181d0995ea182f829ea
         imagePullPolicy: IfNotPresent
         envFrom:
         - configMapRef:
