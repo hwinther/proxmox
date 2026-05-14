@@ -35,7 +35,7 @@ build-backend = "setuptools.build_meta"
 [project.optional-dependencies]
 dev = [
     "ruff==0.15.12",
-    "mypy==1.13.0",
+    "mypy==2.0.0",
     "pytest==9.0.3",
     "pytest-cov==7.1.0",
     "build==1.5.0"
