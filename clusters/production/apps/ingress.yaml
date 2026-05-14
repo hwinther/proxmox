@@ -82,6 +82,31 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
+  name: wshno
+  namespace: wshno-production
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Applications
+    gethomepage.dev/name: wsh.no
+    gethomepage.dev/icon: mdi-web
+    gethomepage.dev/description: Personal homepage (root domain)
+spec:
+  rules:
+  - host: wsh.no
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: wshno
+            port:
+              number: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
   name: homepage
   namespace: platform-production
   annotations:

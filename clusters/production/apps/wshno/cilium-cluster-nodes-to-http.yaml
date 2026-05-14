@@ -1,0 +1,17 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-cluster-nodes-to-wshno-http
+  namespace: wshno-production
+spec:
+  endpointSelector:
+    matchLabels:
+      app: wshno
+  ingress:
+  - fromEntities:
+    - host
+    - remote-node
+    toPorts:
+    - ports:
+      - port: "8080"
+        protocol: TCP

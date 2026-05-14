@@ -21,5 +21,6 @@ resources:
 - test-test
 - clutterstock-test
 - clutterstock
+- wshno
 - ingress.yaml
 - hubble-ui-ingress.yaml
