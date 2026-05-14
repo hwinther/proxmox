@@ -82,13 +82,12 @@ Decide these **while authoring the initial PR**, so you do not chain fixes acros
 
 ## Reference implementations (production)
 
-| Area | Location |
-|------|----------|
-| Tagged app images + security + probes + NetworkPolicy | [`clusters/production/apps/clutterstock`](../../../clusters/production/apps/clutterstock) |
-| Migrate Job + busybox tag + init exception | [`clusters/production/apps/clutterstock-migrate`](../../../clusters/production/apps/clutterstock-migrate) |
-| Headlamp init exceptions + plugin tags | [`clusters/production/apps/headlamp-production`](../../../clusters/production/apps/headlamp-production) |
-| Shared Redis / RedisInsight + NP | [`clusters/production/apps/shared`](../../../clusters/production/apps/shared) |
-| Docker build + supply-chain attestations | [`.github/actions/docker/action.yaml`](../../../.github/actions/docker/action.yaml), `build-*.yaml` workflows |
+| Area                                                  | Location                                                                                                  |
+| ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Tagged app images + security + probes + NetworkPolicy | [`clusters/production/apps/clutterstock`](../../../clusters/production/apps/clutterstock)                 |
+| Migrate Job + busybox tag + init exception            | [`clusters/production/apps/clutterstock-migrate`](../../../clusters/production/apps/clutterstock-migrate) |
+| Headlamp init exceptions + plugin tags                | [`clusters/production/apps/headlamp-production`](../../../clusters/production/apps/headlamp-production)   |
+| Shared Redis / RedisInsight + NP                      | [`clusters/production/apps/shared`](../../../clusters/production/apps/shared)                             |
 
 ## Verification
 
