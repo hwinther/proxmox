@@ -10,7 +10,7 @@ import subprocess
 import time
 import os
 import tempfile
-from typing import Callable
+from typing import Any, Callable
 
 
 class Config:
@@ -311,7 +311,7 @@ class PveNode:
 
 
 config = Config()
-_exec_cache = {}
+_exec_cache: dict[str, dict[str, Any]] = {}
 _cache_file_path = os.path.join(tempfile.gettempdir(), 'proxmox_exec_cache.json')
 
 
