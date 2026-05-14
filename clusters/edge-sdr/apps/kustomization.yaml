@@ -8,6 +8,7 @@ resources:
 - policy-reporter-edge-sdr
 - homepage
 - headlamp-edge-sdr
+- oidc-k8s-admins-rbac
 - podinfo-edge-sdr
 - ais-catcher-edge-sdr
 - adsb-edge-sdr
