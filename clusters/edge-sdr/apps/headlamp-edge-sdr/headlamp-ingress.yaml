@@ -7,7 +7,12 @@ metadata:
     # Homepage infers http:// when spec.tls is absent; force https since LAN nginx terminates TLS upstream.
     gethomepage.dev/href: "https://headlamp.mgmt-edge-sdr.wsh.no/"
     traefik.ingress.kubernetes.io/router.entrypoints: web
-    traefik.ingress.kubernetes.io/router.middlewares: headlamp-edge-sdr-authelia-forwardauth@kubernetescrd
+    # Same-namespace form (no `<namespace>-` prefix). Traefik's parser splits the prefixed
+    # form on the LAST hyphen, which is ambiguous when the namespace itself has hyphens —
+    # `headlamp-edge-sdr-authelia-forwardauth@kubernetescrd` resolves to namespace
+    # `headlamp-edge-sdr-authelia`, name `forwardauth` (does not exist). The Middleware lives
+    # in the same namespace as this Ingress, so the unqualified form is correct and unambiguous.
+    traefik.ingress.kubernetes.io/router.middlewares: authelia-forwardauth@kubernetescrd
     gethomepage.dev/enabled: "true"
     gethomepage.dev/group: Management
     gethomepage.dev/name: Headlamp
