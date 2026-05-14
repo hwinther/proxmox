@@ -94,7 +94,7 @@ def main() -> int:
     if missing:
         exit_code = 1
         MISSING_LIST_FILE.write_text("\n".join(missing) + "\n", encoding="utf-8")
-        hint = "Add under the appropriate package-ecosystem " '(e.g. docker "directories" list).'
+        hint = "Add under the appropriate package-ecosystem (e.g. docker \"directories\" list)."
         for m in missing:
             msg = _github_error_message(f"Cluster directory {m} is not listed in Dependabot. {hint}")
             print(f"::error file={DEPENDABOT_REL},title=Dependabot::{msg}")

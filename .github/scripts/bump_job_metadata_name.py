@@ -83,7 +83,7 @@ def process_file(path: str, base: str, head: str) -> bool:
         return False
     if len(old_jobs) != len(new_jobs):
         print(
-            f"{path}: Job count changed ({len(old_jobs)} -> {len(new_jobs)}); " "cannot auto-bump.",
+            f"{path}: Job count changed ({len(old_jobs)} -> {len(new_jobs)}); cannot auto-bump.",
             file=sys.stderr,
         )
         sys.exit(1)
