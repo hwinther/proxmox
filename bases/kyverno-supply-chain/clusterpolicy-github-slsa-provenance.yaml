@@ -1,12 +1,15 @@
 # GitHub actions/attest-build-provenance publishes Sigstore bundles (SLSA v1).
-# Keyless identity is the reusable workflow ref (github.workflow_ref), e.g.
-# …/docker-container.yml@refs/tags/v1 (Node/web images) or …/dotnet-container.yml@refs/tags/v1 (.NET API).
-# Consumers must use uses: …@v1. Branch test runs use @refs/heads/… and will not match.
-# SDR images under ghcr.io/hwinther/proxmox/sdr/* are built from this repo’s build-*.yaml workflows
-# (composite docker action), not reusable-workflows — see the extra verifyImages entry + skip list below.
-# Scoped to ghcr.io/hwinther/* — other registries/images are not evaluated (no exception needed).
+# Keyless identity (SAN) is the reusable workflow ref (github.job_workflow_ref), not the caller repo —
+# even when the build is initiated by a workflow in a different repo (e.g. hwinther/wsh-rtl-sdr), the
+# SAN reflects the reusable that ran (hwinther/reusable-workflows/.github/workflows/docker-container.yml).
+# The caller's repository is recorded inside the SLSA predicate at externalParameters.workflow.repository,
+# which we assert separately for the wsh-rtl-sdr scoped block below.
 #
-# Legacy org images without attestations: add skipImageReferences on each verifyImages entry, or create
+# Workflows pinned by SHA produce SAN endings of `@<40-hex-sha>`; semver-tagged refs produce
+# `@refs/tags/vX.Y.Z`. The regex accepts both; branch refs are rejected.
+#
+# Scoped to ghcr.io/hwinther/* — other registries/images are not evaluated (no exception needed).
+# Legacy images without attestations: add skipImageReferences on each verifyImages entry, or create
 # ClusterPolicyException (kyverno.io/v2) with spec.verifyImages.imageReferences for those patterns.
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
@@ -36,8 +39,12 @@ spec:
           - kyverno
           - flux-system
     verifyImages:
+    # Edge SDR images (feeders + sdr-base/build + gsm-tools). Built via the reusable
+    # docker-container workflow but the *caller* must be hwinther/wsh-rtl-sdr — proven
+    # by externalParameters.workflow.repository in the SLSA predicate. Defense-in-depth:
+    # even if someone else hijacks the reusable, only wsh-rtl-sdr-initiated builds verify.
     - imageReferences:
-      - ghcr.io/hwinther/proxmox/sdr/*
+      - ghcr.io/hwinther/wsh-rtl-sdr/*
       failureAction: Enforce # Note: Enforce is required for mutateDigest: true
       mutateDigest: true
       verifyDigest: true
@@ -49,7 +56,7 @@ spec:
         - entries:
           - keyless:
               issuer: https://token.actions.githubusercontent.com
-              subjectRegExp: ^https://github.com/hwinther/proxmox/\.github/workflows/build-[a-z0-9-]+\.ya?ml@refs/(heads/main|tags/.+)$
+              subjectRegExp: ^https://github.com/hwinther/reusable-workflows/\.github/workflows/(docker|dotnet)-container\.yml@(refs/tags/v[0-9]+(\.[0-9]+){0,2}|[a-f0-9]{40})$
               rekor:
                 url: https://rekor.sigstore.dev
         conditions:
@@ -57,10 +64,15 @@ spec:
           - key: "{{ buildDefinition.buildType }}"
             operator: Equals
             value: https://actions.github.io/buildtypes/workflow/v1
+          - key: "{{ buildDefinition.externalParameters.workflow.repository }}"
+            operator: Equals
+            value: https://github.com/hwinther/wsh-rtl-sdr
+    # General fallback for any other ghcr.io/hwinther/* image (clutterstock, headlamp plugins
+    # we publish ourselves, etc). Same reusable SAN, no caller-repo restriction.
     - imageReferences:
       - ghcr.io/hwinther/*
       skipImageReferences:
-      - ghcr.io/hwinther/proxmox/sdr/*
+      - ghcr.io/hwinther/wsh-rtl-sdr/*
       failureAction: Enforce # Note: Enforce is required for mutateDigest: true
       mutateDigest: true
       verifyDigest: true
@@ -72,7 +84,7 @@ spec:
         - entries:
           - keyless:
               issuer: https://token.actions.githubusercontent.com
-              subjectRegExp: ^https://github.com/hwinther/reusable-workflows/\.github/workflows/(docker|dotnet)-container\.yml@refs/tags/v1$
+              subjectRegExp: ^https://github.com/hwinther/reusable-workflows/\.github/workflows/(docker|dotnet)-container\.yml@(refs/tags/v[0-9]+(\.[0-9]+){0,2}|[a-f0-9]{40})$
               rekor:
                 url: https://rekor.sigstore.dev
         conditions:
