@@ -35,21 +35,9 @@ updates:
   cooldown:
     default-days: 7
 
-# Compose / SDR templates only (separate PR stream from cluster manifests).
-- package-ecosystem: "docker"
-  directories:
-  - "/compose/templates/adsb/adsbexchange"
-  - "/compose/templates/adsb/dump1090-fa"
-  - "/compose/templates/adsb/fr24"
-  - "/compose/templates/adsb/opensky"
-  - "/compose/templates/adsb/piaware"
-  - "/compose/templates/adsb/tar1090"
-  - "/compose/templates/ais/ais-catcher"
-  - "/compose/templates/sdr-base/base-image"
-  - "/compose/templates/sdr-base/build-image"
-  schedule:
-    interval: "daily"
-  open-pull-requests-limit: 20
+# SDR feeder + base images moved to hwinther/wsh-rtl-sdr in May 2026; Dependabot tracks
+# the digest pins there now (see wsh-rtl-sdr/.github/dependabot.yml). The
+# /compose/templates/{adsb,ais,sdr-base}/ paths previously listed here are gone.
 
 # Test cluster (test-deployment) — separate from production.
 - package-ecosystem: "docker"
@@ -173,15 +161,6 @@ updates:
     test:
       patterns:
       - "hwinther/test/*"
-  open-pull-requests-limit: 20
-
-- package-ecosystem: "docker-compose"
-  directories:
-  - "/compose/templates/adsb"
-  - "/compose/templates/ais"
-  - "/compose/templates/sdr-base"
-  schedule:
-    interval: "weekly"
   open-pull-requests-limit: 20
 
 - package-ecosystem: "docker-compose"
