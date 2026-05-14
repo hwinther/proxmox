@@ -12,7 +12,7 @@
 # Trigger an immediate run (outside the schedule):
 #   kubectl -n clutterstock-test create job --from=cronjob/clutterstock-test-pbs-backup clutterstock-test-pbs-backup-manual-$(date +%s)
 #
-# Image tag (PBS client): GitVersion MajorMinorPatch from .github/workflows/build-proxmox-pbs-backup-client.yaml.
+# Image tag (PBS client): GitVersion MajorMinorPatch from .github/workflows/build-proxmox-pbs-backup-client.yml.
 # PBS client image is linux/amd64 only; postgres:18-alpine is multi-arch but pinned to amd64 here for symmetry.
 apiVersion: batch/v1
 kind: CronJob

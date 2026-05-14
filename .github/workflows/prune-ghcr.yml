@@ -1,0 +1,41 @@
+name: Prune GHCR images
+
+# Smart GHCR pruner via the reusable prune-ghcr.yml. Deletes:
+#   - untagged manifests that aren't OCI 1.1 referrers (attestations are kept)
+#   - tagged manifests whose only tags are GitVersion prerelease semvers
+#     (X.Y.Z-<label>.<n>) for branches that no longer exist on origin
+#   - cosign legacy sha256-XXXX.{sig,att,sbom} tags whose parent manifest is
+#     itself being deleted in the same run
+# Anything unrecognised is KEPT (fail-safe).
+#
+# Replaces the old ghcr-prune.yaml which used actions/delete-package-versions
+# with a single hardcoded package name — that pruner couldn't distinguish
+# attestations from orphans or follow branch lifecycles.
+
+on:
+    workflow_dispatch:
+        inputs:
+            dry_run:
+                description: "Dry run — print what would be deleted without deleting"
+                type: boolean
+                default: false
+    schedule:
+        # Sunday 04:00 UTC — runs outside the working week and before Monday's
+        # build cadence (cluster manifest update PRs, base-image refresh, etc.).
+        - cron: "0 4 * * 0"
+
+permissions:
+    contents: read
+    packages: write
+
+jobs:
+    prune:
+        uses: hwinther/reusable-workflows/.github/workflows/prune-ghcr.yml@3ad0a22859d540e81f210707b744607321b5ae1b # v1.55.0
+        with:
+            # workflow_dispatch supplies inputs.dry_run; cron leaves it null and the
+            # || false fallback makes scheduled runs actually prune.
+            dry_run: ${{ inputs.dry_run || false }}
+            # Filter discovery to GHCR packages under this repo. After the May 2026
+            # SDR-feeder move to wsh-rtl-sdr, the only image left here is
+            # proxmox/proxmox-pbs-backup-client (matched by this prefix).
+            package_namespace_prefix: proxmox/
