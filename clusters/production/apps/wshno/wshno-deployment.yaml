@@ -16,12 +16,13 @@ spec:
     spec:
       automountServiceAccountToken: false
       securityContext:
+        # No runAsUser/fsGroup — the upstream image (nginxinc/nginx-unprivileged:alpine)
+        # already declares `USER nginx` (UID 101) and chowns its writable dirs accordingly.
+        # runAsNonRoot is enough to satisfy the Kyverno wsh-require-run-as-non-root policy.
         runAsNonRoot: true
-        runAsUser: 1000
-        fsGroup: 1000
       containers:
       - name: wshno
-        image: ghcr.io/wshno/wshno/web:0.3.0@sha256:ace62de331524b7e4249b6fc520464c362a812dcf94eed9dc50896b90658ab35
+        image: ghcr.io/wshno/wshno/web:0.4.0@sha256:e33f84c37e9c432da3f6977e12857be3b96eb59af4babf7cc8ea9ac5998d9441
         imagePullPolicy: IfNotPresent
         securityContext:
           allowPrivilegeEscalation: false
