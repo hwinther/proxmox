@@ -1,0 +1,11 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":dependencyDashboard"],
+  "enabledManagers": ["flux"],
+  "flux": {
+    "managerFilePatterns": ["/^clusters/.+\\.ya?ml$/", "/^bases/.+\\.ya?ml$/"]
+  },
+  "schedule": ["* * * * 1"],
+  "prConcurrentLimit": 5,
+  "commitMessagePrefix": "chore(deps):"
+}
