@@ -54,6 +54,7 @@ updates:
   - "/clusters/edge-sdr/apps/kyverno-policies"
   - "/clusters/edge-sdr/apps/kubescape-edge-sdr"
   - "/clusters/edge-sdr/apps/policy-reporter-edge-sdr"
+  - "/clusters/edge-sdr/apps/oidc-k8s-admins-rbac"
   - "/clusters/edge-sdr/flux-system"
   schedule:
     interval: "daily"
@@ -95,6 +96,7 @@ updates:
   - "/clusters/production/apps/postgres-test"
   - "/clusters/production/apps/rabbitmq-production"
   - "/clusters/production/apps/traefik"
+  - "/clusters/production/apps/wshno"
   - "/clusters/production/apps/shared/production"
   - "/clusters/production/flux-system"
   schedule:
