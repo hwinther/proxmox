@@ -1,10 +1,16 @@
 # Cosign vulnerability scan attestation (Grype → SARIF predicate, cosign attest --type vuln).
-# Large Grype JSON predicates exceed Kyverno's default maxContextSize (2Mi) when loaded into the policy engine.
+#
+# AUDIT-ONLY: the reusable hwinther/reusable-workflows docker-container.yml pipeline currently
+# publishes ONLY the SLSA provenance sigstore bundle (actions/attest-build-provenance). It does
+# NOT push a standalone `cosign attest --type vuln` predicate to the registry — Grype output goes
+# to workflow artifacts + GitHub Security, not an image attestation. So no image satisfies this
+# policy today. Kept as Audit so PolicyReports still surface the gap as a visible signal; flip
+# failureAction back to Enforce (and restore mutateDigest/verifyDigest) once the pipeline emits it.
+# Real supply-chain gating lives in clusterpolicy-github-slsa-provenance.yaml (still Enforce).
 #
 # Identity (SAN): the reusable-workflows docker/dotnet-container workflow, pinned either by floating tag
-# (@refs/tags/vN[.N[.N]]) or by 40-hex commit SHA. The caller repo (e.g. hwinther/wsh-rtl-sdr, wshno/wshno)
-# is NOT carried in this predicate type — unlike the SLSA provenance policy, we cannot add a caller-repo
-# condition here. Scope is therefore enforced via `imageReferences` (which registry paths are evaluated).
+# (@refs/tags/vN[.N[.N]]) or by 40-hex commit SHA. The caller repo is NOT carried in this predicate type;
+# scope is enforced via `imageReferences` (which registry paths are evaluated).
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -40,9 +46,11 @@ spec:
     - imageReferences:
       - ghcr.io/hwinther/wsh-rtl-sdr/*
       - ghcr.io/wshno/*
-      failureAction: Enforce # Note: Enforce is required for mutateDigest: true
-      mutateDigest: true
-      verifyDigest: true
+      # Audit mode: mutateDigest requires Enforce, so it (and verifyDigest) are off here.
+      # When the pipeline starts emitting this attestation, flip to Enforce + re-enable both.
+      failureAction: Audit
+      mutateDigest: false
+      verifyDigest: false
       useCache: true
       attestations:
       - predicateType: https://cosign.sigstore.dev/attestation/vuln/v1

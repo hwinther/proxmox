@@ -1,7 +1,12 @@
 # Requires a CycloneDX SBOM attestation in the registry (cosign attest --type cyclonedx from the build).
 # Predicate type must match cosign v2.x / in-toto: https://cyclonedx.org/bom (not …/schema — see cosign #2596).
-# Conditions use bomFormat at the predicate root; cosign --type cyclonedx embeds the CDX JSON as the predicate
-# body (not under Data.* — that shape is for cosign custom / older paths).
+#
+# AUDIT-ONLY: the reusable hwinther/reusable-workflows docker-container.yml pipeline currently
+# publishes ONLY the SLSA provenance sigstore bundle. It does NOT push a standalone
+# `cosign attest --type cyclonedx` predicate to the registry (Syft SBOM goes to workflow artifacts,
+# not an image attestation). No image satisfies this policy today. Kept as Audit so PolicyReports
+# surface the gap; flip failureAction back to Enforce (and restore mutateDigest/verifyDigest) once
+# the pipeline emits it. Real supply-chain gating is clusterpolicy-github-slsa-provenance.yaml.
 #
 # Identity (SAN): the reusable-workflows docker/dotnet-container workflow, pinned either by floating tag
 # (@refs/tags/vN[.N[.N]]) or by 40-hex commit SHA. The caller repo isn't in this predicate type, so scope
@@ -42,9 +47,11 @@ spec:
     - imageReferences:
       - ghcr.io/hwinther/wsh-rtl-sdr/*
       - ghcr.io/wshno/*
-      failureAction: Enforce # Note: Enforce is required for mutateDigest: true
-      mutateDigest: true
-      verifyDigest: true
+      # Audit mode: mutateDigest requires Enforce, so it (and verifyDigest) are off here.
+      # When the pipeline starts emitting this attestation, flip to Enforce + re-enable both.
+      failureAction: Audit
+      mutateDigest: false
+      verifyDigest: false
       useCache: true
       attestations:
       - predicateType: https://cyclonedx.org/bom
