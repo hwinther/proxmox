@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: home-assistant
+  namespace: home-assistant-production
+  annotations:
+    # Homepage infers http:// when spec.tls is absent (see gethomepage resource-helpers getUrlFromIngress).
+    gethomepage.dev/href: "https://home-assistant.wsh.no/"
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.middlewares: home-assistant-production-authelia-forwardauth@kubernetescrd
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Applications
+    gethomepage.dev/name: Home Assistant
+    gethomepage.dev/icon: mdi-home-assistant
+    gethomepage.dev/description: Home automation (network/IP integrations)
+spec:
+  rules:
+  - host: home-assistant.wsh.no
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: home-assistant
+            port:
+              number: 8123

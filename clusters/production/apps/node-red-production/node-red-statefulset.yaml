@@ -1,0 +1,88 @@
+# Node-RED migrated off the LXC. Flows/creds/settings (/data) live on a ceph-rbd PVC.
+# Runs non-root as the image's built-in uid 1000; fully behind Authelia 2FA (no carve-out).
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: node-red
+  namespace: node-red-production
+spec:
+  serviceName: node-red
+  replicas: 1
+  selector:
+    matchLabels:
+      app: node-red
+  template:
+    metadata:
+      labels:
+        app: node-red
+        app.kubernetes.io/name: node-red
+        app.kubernetes.io/component: automation
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+      - name: node-red
+        image: docker.io/nodered/node-red:4.1.10@sha256:eaa2fa23f751581162a4ff9eebb28fcbfcca7935b1a839f63672718f3c816761
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          runAsNonRoot: true
+          runAsUser: 1000
+        ports:
+        - name: http
+          containerPort: 1880
+          protocol: TCP
+        readinessProbe:
+          tcpSocket:
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        livenessProbe:
+          tcpSocket:
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 20
+          failureThreshold: 6
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        volumeMounts:
+        - name: data
+          mountPath: /data
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+      labels:
+        app: node-red
+        app.kubernetes.io/name: node-red
+        app.kubernetes.io/component: automation
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      storageClassName: ceph-rbd
+      resources:
+        requests:
+          storage: 5Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: node-red
+  namespace: node-red-production
+spec:
+  type: ClusterIP
+  ports:
+  - port: 1880
+    targetPort: http
+    protocol: TCP
+    name: http
+  selector:
+    app: node-red

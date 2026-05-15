@@ -21,6 +21,8 @@ resources:
 - test-test
 - clutterstock-test
 - clutterstock
+- home-assistant-production
+- node-red-production
 - wshno
 - ingress.yaml
 - hubble-ui-ingress.yaml

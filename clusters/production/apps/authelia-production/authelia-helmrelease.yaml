@@ -156,6 +156,18 @@ spec:
           policy: two_factor
         - domain: hubble.mgmt.wsh.no
           policy: two_factor
+        # HA companion app + webhooks use HA's own token/secret auth and can't do
+        # the Authelia portal flow — bypass the API/auth paths; gate the UI with 2FA.
+        # Bypass rules MUST precede the domain-wide two_factor (first match wins).
+        - domain: home-assistant.wsh.no
+          policy: bypass
+          resources:
+          - "^/api/.*"
+          - "^/auth/.*"
+        - domain: home-assistant.wsh.no
+          policy: two_factor
+        - domain: node-red.wsh.no
+          policy: two_factor
         - domain: clutterstock.wsh.no
           policy: two_factor
         - domain: clutterstock.test.wsh.no

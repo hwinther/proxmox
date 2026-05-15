@@ -1,0 +1,82 @@
+# Network/IP-only Home Assistant (no USB radios) migrated off the Podman VM.
+# State (/config incl. .storage + recorder DB) lives on a ceph-rbd PVC.
+# Runs as root: the upstream image is s6-overlay based and unsupported rootless;
+# no restricted-PSS Kyverno policy forbids it on this cluster.
+# NOTE: the migrated configuration.yaml MUST set http.use_x_forwarded_for: true
+# and http.trusted_proxies (pod + node CIDRs) or HA returns 400 behind Traefik.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: home-assistant
+  namespace: home-assistant-production
+spec:
+  serviceName: home-assistant
+  replicas: 1
+  selector:
+    matchLabels:
+      app: home-assistant
+  template:
+    metadata:
+      labels:
+        app: home-assistant
+        app.kubernetes.io/name: home-assistant
+        app.kubernetes.io/component: home-automation
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: home-assistant
+        image: ghcr.io/home-assistant/home-assistant:2026.5.2@sha256:f0baa7922ecec7790c40c41baf08ab218b6ab8db5f96dc03b03a0ae33d987c3d
+        ports:
+        - name: http
+          containerPort: 8123
+          protocol: TCP
+        readinessProbe:
+          tcpSocket:
+            port: http
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        livenessProbe:
+          tcpSocket:
+            port: http
+          initialDelaySeconds: 90
+          periodSeconds: 20
+          failureThreshold: 6
+        resources:
+          requests:
+            cpu: 200m
+            memory: 512Mi
+          limits:
+            cpu: "2"
+            memory: 2Gi
+        volumeMounts:
+        - name: data
+          mountPath: /config
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+      labels:
+        app: home-assistant
+        app.kubernetes.io/name: home-assistant
+        app.kubernetes.io/component: home-automation
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      storageClassName: ceph-rbd
+      resources:
+        requests:
+          storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: home-assistant
+  namespace: home-assistant-production
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8123
+    targetPort: http
+    protocol: TCP
+    name: http
+  selector:
+    app: home-assistant

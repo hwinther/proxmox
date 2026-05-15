@@ -97,6 +97,8 @@ updates:
   - "/clusters/production/apps/rabbitmq-production"
   - "/clusters/production/apps/traefik"
   - "/clusters/production/apps/wshno"
+  - "/clusters/production/apps/home-assistant-production"
+  - "/clusters/production/apps/node-red-production"
   - "/clusters/production/apps/shared/production"
   - "/clusters/production/flux-system"
   schedule:

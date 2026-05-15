@@ -1,0 +1,17 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-cluster-nodes-to-node-red-http
+  namespace: node-red-production
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: node-red
+  ingress:
+  - fromEntities:
+    - host
+    - remote-node
+    toPorts:
+    - ports:
+      - port: "1880"
+        protocol: TCP
