@@ -33,8 +33,12 @@ spec:
           - kyverno
           - flux-system
     verifyImages:
+    # Scoped to the docker-container.yml-built images that actually carry a cosign vuln
+    # attestation. .NET images (hwinther/clutterstock*, built via dotnet-container.yml)
+    # publish only SLSA provenance — they are covered by clusterpolicy-github-slsa-provenance
+    # and intentionally NOT matched here (would otherwise hard-fail with "missing digest").
     - imageReferences:
-      - ghcr.io/hwinther/*
+      - ghcr.io/hwinther/wsh-rtl-sdr/*
       - ghcr.io/wshno/*
       failureAction: Enforce # Note: Enforce is required for mutateDigest: true
       mutateDigest: true
