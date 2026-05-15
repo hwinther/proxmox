@@ -9,9 +9,17 @@ spec:
   interval: 30m
   timeout: 15m
   install:
+    # Edge RPi agent: don't gate the release on Deployment rollout. With wait
+    # enabled a slow/crashing pod times out the upgrade, triggering a rollback
+    # that restores the previous (broken) ConfigMap — a self-perpetuating loop.
+    # disableWait makes helm-controller apply manifests and mark Released without
+    # blocking on rollout, so corrected config actually persists and the pod
+    # recovers on its own.
+    disableWait: true
     remediation:
       retries: 3
   upgrade:
+    disableWait: true
     remediation:
       retries: 3
   dependsOn:
