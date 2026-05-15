@@ -62,6 +62,16 @@ spec:
         enabled: false
     server:
       name: server
+      # The prometheus chart ALWAYS renders this as the single top-level `global:`
+      # in prometheus.yml. Do NOT also put `global:` under serverFiles.prometheus.yml
+      # — the chart appends that verbatim, yielding a duplicate `global` key that
+      # Prometheus rejects (`field global already set`).
+      global:
+        scrape_interval: 30s
+        scrape_timeout: 10s
+        evaluation_interval: 1m
+        external_labels:
+          cluster: edge-sdr
       replicaCount: 1
       persistentVolume:
         enabled: false
@@ -79,12 +89,9 @@ spec:
       tolerations: []
     serverFiles:
       prometheus.yml:
-        global:
-          scrape_interval: 30s
-          scrape_timeout: 10s
-          evaluation_interval: 1m
-          external_labels:
-            cluster: edge-sdr
+        # global lives under `server.global` (above) — the chart owns the single
+        # top-level `global:`. remote_write is merged in from the
+        # prometheus-agent-remote-write Secret (serverFiles.prometheus.yml.remote_write).
         rule_files: []
         scrape_configs:
         - job_name: kubernetes-endpoints-node-exporter
