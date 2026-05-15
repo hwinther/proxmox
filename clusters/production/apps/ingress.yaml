@@ -86,6 +86,9 @@ metadata:
   namespace: wshno-production
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
+    # Homepage otherwise derives the link from the first Ingress rule host (wsh.no);
+    # pin it to the www form explicitly.
+    gethomepage.dev/href: "https://www.wsh.no/"
     gethomepage.dev/enabled: "true"
     gethomepage.dev/group: Applications
     gethomepage.dev/name: wsh.no
@@ -94,6 +97,18 @@ metadata:
 spec:
   rules:
   - host: wsh.no
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: wshno
+            port:
+              number: 8080
+  # www serves the same backend. LAN nginx already routes www.wsh.no via the
+  # *.wsh.no server_name → wsh_general (production Traefik); no nginx change needed.
+  - host: www.wsh.no
     http:
       paths:
       - path: /
