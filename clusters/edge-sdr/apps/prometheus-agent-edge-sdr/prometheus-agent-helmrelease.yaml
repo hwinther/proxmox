@@ -120,6 +120,14 @@ spec:
           - source_labels: [ __meta_kubernetes_pod_node_name ]
             action: replace
             target_label: node
+          # Rewrite `instance` from the (ephemeral Cilium pod IP):9100 to the node
+          # hostname. node-exporter here is NOT hostNetwork, so the default instance
+          # is a pod IP that changes on reschedule and is unreadable in dashboards.
+          # With this, stock "Node Exporter" dashboards show radio-pi01 / radio-pi02
+          # / k0s-prod-edge01 instead of IPs, and series stay stable across restarts.
+          - source_labels: [ __meta_kubernetes_pod_node_name ]
+            action: replace
+            target_label: instance
           - source_labels: [ __meta_kubernetes_namespace ]
             action: replace
             target_label: kubernetes_namespace
