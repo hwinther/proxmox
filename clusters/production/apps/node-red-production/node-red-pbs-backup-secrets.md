@@ -17,8 +17,16 @@ The cluster-wide PBS encryption keyfile lives in `platform-production` and is cl
 | ------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | `PBS_FINGERPRINT`         | Self-signed PBS or pinned cert fingerprint.                                                                           |
 | `PBS_NAMESPACE`           | PBS datastore namespace (e.g. `Production/node-red`). Job appends `--ns`. Restores must use the same value. Create the namespace in the PBS UI first. |
-| `PBS_ENCRYPTION_PASSWORD` | Only when the keyfile is password-protected.                                                                         |
+| `PBS_ENCRYPTION_PASSWORD` | **Always set** — the cluster `pbs-encryption-keyfile` is passphrase-protected (project convention).                   |
 | `PBS_RESTORE_SNAPSHOT`    | Only for **restore**: full snapshot path (e.g. `host/node-red/2026-05-16T04:15:00Z`).                                |
+
+> **The encryption key itself is not a key in this Secret.** The AES-256-GCM keyfile
+> is the cluster-wide Secret `pbs-encryption-keyfile` in `platform-production`, cloned
+> into this namespace by Kyverno and mounted at `/etc/pbs/keyfile`. The Job adds
+> `--keyfile` only if that file exists (mount is `optional: true`): no keyfile → backups
+> run **unencrypted**; keyfile present → encrypted automatically. Our cluster keyfile is
+> passphrase-protected, so `PBS_ENCRYPTION_PASSWORD` is **always** set in this Secret. See
+> [`../platform-production/pbs-encryption-keyfile.md`](../platform-production/pbs-encryption-keyfile.md).
 
 ## Create the Secret
 
@@ -26,7 +34,8 @@ The cluster-wide PBS encryption keyfile lives in `platform-production` and is cl
 kubectl -n node-red-production create secret generic node-red-pbs-backup \
   --from-literal=PBS_REPOSITORY='user@pbs!tokenid@pbs.example.com:8007:datastore' \
   --from-literal=PBS_PASSWORD='your-api-token-uuid-here' \
-  --from-literal=PBS_NAMESPACE='Production/node-red'
+  --from-literal=PBS_NAMESPACE='Production/node-red' \
+  --from-literal=PBS_ENCRYPTION_PASSWORD='<pbs-encryption-keyfile passphrase>'
 ```
 
 Patch (merge) to add/change a key; set a value to `null` to remove it. Env from a Secret is not re-read by a running pod — the next scheduled CronJob run picks up changes.

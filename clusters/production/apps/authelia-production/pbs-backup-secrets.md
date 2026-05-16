@@ -17,7 +17,7 @@ The cluster-wide PBS encryption keyfile lives in `platform-production` and is cl
 | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `PBS_FINGERPRINT`         | Self-signed PBS or pinned cert fingerprint.                                                                                                                                                                |
 | `PBS_NAMESPACE`           | PBS datastore namespace (e.g. `Production/authelia`). Job appends `--ns $PBS_NAMESPACE` to backup and restore. Restores must use the same value as the backup. Create the namespace in the PBS UI first.  |
-| `PBS_ENCRYPTION_PASSWORD` | Only when the keyfile is password-protected.                                                                                                                                                               |
+| `PBS_ENCRYPTION_PASSWORD` | **Always set** — the cluster `pbs-encryption-keyfile` is passphrase-protected (project convention).                                                                                                          |
 | `PBS_RESTORE_SNAPSHOT`    | Only for **restore**: full snapshot path (e.g. `host/authelia-postgres/2026-05-04T03:00:00Z`).                                                                                                             |
 
 ## Create the Secret

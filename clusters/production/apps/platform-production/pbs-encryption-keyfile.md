@@ -14,8 +14,10 @@ On any host with `proxmox-backup-client` installed:
 
 ```bash
 proxmox-backup-client key create /tmp/pbs-encryption.key
-# Optionally password-protect it. If you do, set PBS_ENCRYPTION_PASSWORD in each
-# consuming namespace's PBS-backup Secret (e.g. clutterstock-test-pbs-backup).
+# Convention: this keyfile is ALWAYS passphrase-protected. Enter a passphrase at the
+# prompt, and set that same passphrase as PBS_ENCRYPTION_PASSWORD in EVERY consuming
+# namespace's PBS-backup Secret (clutterstock-*, authelia, home-assistant, node-red, …).
+# Store the passphrase out-of-band alongside the keyfile.
 ```
 
 **Lose the keyfile, lose every encrypted PBS backup it produced.** The key never leaves the client — PBS stores opaque encrypted chunks. Back up the key material out-of-band (password manager, offline media), not just on the cluster it protects.
