@@ -1,0 +1,17 @@
+# Reconciles the private repo into this production cluster.
+# Mirrors the root flux-system Kustomization (see flux-system/gotk-sync.yaml).
+# Ordering vs traefik/authelia is eventually-consistent via retryInterval — the same
+# pattern this repo already relies on for cert-manager CRDs; no dependsOn needed.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: private-apps
+  namespace: flux-system
+spec:
+  interval: 10m0s
+  retryInterval: 1m0s
+  path: ./clusters/production
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: private-apps

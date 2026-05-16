@@ -1,0 +1,17 @@
+# Second Flux Git source: a separate private repo. Only the URL + secret name live in this
+# public repo; the private repo's contents never appear here.
+# Auth: read-only SSH deploy key in Secret 'private-apps-ssh' — see private-apps-ssh-secret.md.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: private-apps
+  namespace: flux-system
+spec:
+  interval: 1m0s
+  ref:
+    branch: main
+  secretRef:
+    name: private-apps-ssh
+  # SSH over 443 (port 22 egress is blocked from the cluster nodes). Same deploy key;
+  # GitHub serves the SSH endpoint on ssh.github.com:443.
+  url: ssh://git@ssh.github.com:443/hwinther/private-apps.git
