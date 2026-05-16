@@ -43,8 +43,17 @@ if [ -z "$NODES" ]; then
 else
   while read -r name status _; do
     [ -z "$name" ] && continue
-    if [ "$status" = "Ready" ]; then green "$name Ready"
-    else red "$name = $status"; FAIL=1; fi
+    case ",$status," in
+      *NotReady*|*Unknown*|,,)
+        red "$name = ${status:-unknown}"; FAIL=1 ;;
+      *SchedulingDisabled*)
+        # cordoned: etcd/control-plane unaffected — expected during a drain/migration
+        green "$name Ready (cordoned — expected during maintenance)" ;;
+      *Ready*)
+        green "$name Ready" ;;
+      *)
+        red "$name = $status"; FAIL=1 ;;
+    esac
   done <<EOF
 $NODES
 EOF

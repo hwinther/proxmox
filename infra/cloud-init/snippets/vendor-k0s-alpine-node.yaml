@@ -57,6 +57,12 @@ packages:
 - nano
 # Optional: Ceph client debugging (CSI still runs in containers)
 # - ceph-common
+# Cilium/network debugging
+- tcpdump
+- iputils-tracepath
+- nmap-ncat
+- socat
+- ethtool
 
 write_files:
 - path: /etc/resolv.conf
