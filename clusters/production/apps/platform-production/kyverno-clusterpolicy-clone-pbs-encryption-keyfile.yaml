@@ -4,6 +4,16 @@
 # Source Secret `pbs-encryption-keyfile` in namespace `platform-production` is created out-of-band
 # (see pbs-encryption-keyfile.md) — never committed to git. When the source is missing, the clone
 # rule no-ops and Job mounts (`optional: true`) stay empty so backups simply run unencrypted.
+#
+# ORDERING (validate-policy SAR): Kyverno's validate-policy webhook denies this whole
+# ClusterPolicy if ANY generate rule targets a namespace whose Kyverno RBAC
+# (kyverno-admission-controller/background-controller get,list,create on Secrets) is not
+# already LIVE in the cluster. So a new consuming namespace must land in TWO pushes:
+#   1. the app dir incl. its kyverno-rbac-generate-pbs-encryption-keyfile.yaml (RoleBinding),
+#      reconciled so the RBAC is live;
+#   2. THEN the new clone rule below.
+# Adding both in one commit dry-run-fails this policy. Same reason the postgres-* clone
+# policies are split into a later Flux Kustomization (see clusters/production/apps/kustomization.yaml).
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -72,41 +82,7 @@ spec:
       clone:
         namespace: platform-production
         name: pbs-encryption-keyfile
-  - name: clone-to-home-assistant-production
-    match:
-      any:
-      - resources:
-          kinds:
-          - Secret
-          namespaces:
-          - platform-production
-          names:
-          - pbs-encryption-keyfile
-    generate:
-      apiVersion: v1
-      kind: Secret
-      name: pbs-encryption-keyfile
-      namespace: home-assistant-production
-      synchronize: true
-      clone:
-        namespace: platform-production
-        name: pbs-encryption-keyfile
-  - name: clone-to-node-red-production
-    match:
-      any:
-      - resources:
-          kinds:
-          - Secret
-          namespaces:
-          - platform-production
-          names:
-          - pbs-encryption-keyfile
-    generate:
-      apiVersion: v1
-      kind: Secret
-      name: pbs-encryption-keyfile
-      namespace: node-red-production
-      synchronize: true
-      clone:
-        namespace: platform-production
-        name: pbs-encryption-keyfile
+  # PUSH 2 (after home-assistant-production / node-red-production kyverno RBAC is live):
+  # re-add the clone-to-home-assistant-production and clone-to-node-red-production rules
+  # here (same shape as clone-to-authelia-production above). See the ORDERING note in the
+  # file header for why these are deliberately not in the first push.
