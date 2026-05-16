@@ -335,7 +335,7 @@ kubectl get secret -n kube-system hubble-server-certs -o jsonpath='{.data.tls\.c
 
 ```bash
 kubectl -n kube-system delete secret hubble-server-certs hubble-relay-client-certs
-helm upgrade cilium cilium/cilium -n kube-system --version 1.19.2 --reuse-values \
+helm upgrade cilium cilium/cilium -n kube-system --version 1.19.4 --reuse-values \
   --set cluster.name=default --set hubble.relay.peerService.internalTrafficPolicy=Cluster --wait
 kubectl -n kube-system rollout restart ds/cilium deploy/hubble-relay
 kubectl -n kube-system patch svc hubble-peer -p '{"spec":{"internalTrafficPolicy":"Cluster"}}'

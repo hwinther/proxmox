@@ -41,7 +41,7 @@ spec:
       - chartname: cilium/cilium
         name: cilium
         namespace: kube-system
-        version: "1.19.2"
+        version: "1.19.4"
         values: |
           # Identity for Hubble TLS: SANs are *.<name>.hubble-grpc.cilium.io. Keep stable
           # or regenerate Hubble TLS secrets after changing (relay checks this hostname).
