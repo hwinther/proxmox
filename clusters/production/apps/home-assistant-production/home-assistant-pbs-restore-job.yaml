@@ -1,0 +1,92 @@
+# Restore Home Assistant's /config from a PBS snapshot into the ceph-rbd PVC.
+# Same amd64-only PBS client image/tag as the backup CronJob.
+#
+# Not in kustomization.yaml: apply manually when needed.
+#
+# Flow:
+#   1. Scale HA to 0 (frees the RWO volume; no podAffinity here so the restore pod
+#      can attach the PVC on whatever node it lands on).
+#   2. This Job mounts data-home-assistant-0 read-write at /config and runs
+#      `proxmox-backup-client restore $PBS_RESTORE_SNAPSHOT config.pxar /config`.
+#   3. Scale HA back to 1.
+#
+# proxmox-backup-client restore writes the archived tree into /config; it does NOT
+# delete files that are absent from the snapshot. For a clean restore, empty the PVC
+# first (seed-pod technique) — otherwise stale files survive alongside the restore.
+#
+# Prerequisites:
+#   1. Secret `home-assistant-pbs-backup`: PBS_REPOSITORY, PBS_PASSWORD,
+#      PBS_RESTORE_SNAPSHOT (+ PBS_NAMESPACE / PBS_ENCRYPTION_PASSWORD if used).
+#   2. HA scaled to 0:
+#        kubectl -n home-assistant-production scale statefulset home-assistant --replicas=0
+#        kubectl -n home-assistant-production wait --for=delete pod -l app=home-assistant --timeout=120s
+#
+# WARNING: overwrites live config. Bump metadata.name (Job spec is immutable) to re-run.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: home-assistant-pbs-restore-v001
+  namespace: home-assistant-production
+spec:
+  backoffLimit: 1
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: home-assistant-pbs-restore
+        app.kubernetes.io/component: home-assistant-pbs-backup
+    spec:
+      nodeSelector:
+        kubernetes.io/arch: amd64
+      hostname: home-assistant
+      restartPolicy: Never
+      containers:
+      - name: restore
+        image: ghcr.io/hwinther/proxmox/proxmox/pbs/backup-client:0.6.1
+        imagePullPolicy: IfNotPresent
+        command:
+        - /bin/sh
+        - -c
+        - |
+          set -eu
+          : "${PBS_RESTORE_SNAPSHOT:?set PBS_RESTORE_SNAPSHOT in Secret home-assistant-pbs-backup}"
+          set -- restore
+          [ -n "${PBS_NAMESPACE:-}" ] && set -- "$@" --ns "$PBS_NAMESPACE"
+          [ -f /etc/pbs/keyfile ] && set -- "$@" --keyfile /etc/pbs/keyfile
+          set -- "$@" "$PBS_RESTORE_SNAPSHOT" config.pxar /config
+          exec /usr/bin/proxmox-backup-client "$@"
+        envFrom:
+        - secretRef:
+            name: home-assistant-pbs-backup
+        securityContext:
+          runAsUser: 0
+          runAsGroup: 0
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: "1"
+            memory: 512Mi
+        volumeMounts:
+        - name: ha-config
+          mountPath: /config
+        - name: pbs-keyfile
+          mountPath: /etc/pbs
+          readOnly: true
+      volumes:
+      - name: ha-config
+        persistentVolumeClaim:
+          claimName: data-home-assistant-0
+      - name: pbs-keyfile
+        secret:
+          secretName: pbs-encryption-keyfile
+          optional: true
+          items:
+          - key: keyfile
+            path: keyfile
+            mode: 0400

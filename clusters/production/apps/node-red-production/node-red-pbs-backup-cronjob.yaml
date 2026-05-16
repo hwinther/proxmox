@@ -1,0 +1,103 @@
+# Daily backup of Node-RED's /data PVC (flows, creds, settings, projects) to
+# Proxmox Backup Server. Same PBS client image/tag as authelia-pbs-backup.
+#
+# Filesystem (not pg_dump) variant: the ceph-rbd PVC is ReadWriteOnce, so this Job
+# can only mount it on the node where the StatefulSet pod already has it attached.
+# requiredDuringScheduling podAffinity pins the backup pod to the Node-RED pod's
+# node (RWO permits multiple pods sharing the volume on the SAME node); the mount
+# is readOnly so the backup never writes the live volume. Runs as root so file
+# ownership/permissions never block the read. No restricted-PSS policy here forbids it.
+#
+# Prerequisites:
+#   1. Create Secret `node-red-pbs-backup` (see node-red-pbs-backup-secrets.md).
+#   2. Source Secret pbs-encryption-keyfile present in platform-production (cloned here
+#      by the clone-pbs-encryption-keyfile ClusterPolicy + this ns's Kyverno RBAC).
+#
+# Trigger an immediate run (outside the schedule):
+#   kubectl -n node-red-production create job --from=cronjob/node-red-pbs-backup node-red-pbs-backup-manual-$(date +%s)
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: node-red-pbs-backup
+  namespace: node-red-production
+spec:
+  # 04:15 Europe/Oslo daily — clear of the 02:30-03:30 postgres/authelia window and
+  # the 04:00 home-assistant backup.
+  schedule: "15 4 * * *"
+  timeZone: Europe/Oslo
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 3600
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: node-red-pbs-backup
+            app.kubernetes.io/component: node-red-pbs-backup
+        spec:
+          nodeSelector:
+            kubernetes.io/arch: amd64
+          # Co-locate with the running Node-RED pod so the RWO ceph-rbd volume is mountable.
+          affinity:
+            podAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+              - labelSelector:
+                  matchLabels:
+                    app: node-red
+                topologyKey: kubernetes.io/hostname
+          hostname: node-red
+          restartPolicy: Never
+          containers:
+          - name: backup
+            image: ghcr.io/hwinther/proxmox/proxmox/pbs/backup-client:0.6.1
+            imagePullPolicy: IfNotPresent
+            command:
+            - /bin/sh
+            - -c
+            - |
+              set -eu
+              set -- backup
+              [ -n "${PBS_NAMESPACE:-}" ] && set -- "$@" --ns "$PBS_NAMESPACE"
+              [ -f /etc/pbs/keyfile ] && set -- "$@" --keyfile /etc/pbs/keyfile
+              set -- "$@" data.pxar:/data
+              exec /usr/bin/proxmox-backup-client "$@"
+            envFrom:
+            - secretRef:
+                name: node-red-pbs-backup
+            securityContext:
+              runAsUser: 0
+              runAsGroup: 0
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+            resources:
+              requests:
+                cpu: 100m
+                memory: 256Mi
+              limits:
+                cpu: "1"
+                memory: 512Mi
+            volumeMounts:
+            - name: nr-data
+              mountPath: /data
+              readOnly: true
+            - name: pbs-keyfile
+              mountPath: /etc/pbs
+              readOnly: true
+          volumes:
+          - name: nr-data
+            persistentVolumeClaim:
+              claimName: data-node-red-0
+              readOnly: true
+          - name: pbs-keyfile
+            secret:
+              secretName: pbs-encryption-keyfile
+              optional: true
+              items:
+              - key: keyfile
+                path: keyfile
+                mode: 0400

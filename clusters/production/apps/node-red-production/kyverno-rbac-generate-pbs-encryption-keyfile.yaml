@@ -1,0 +1,31 @@
+# Kyverno's validate-policy admission webhook checks SAR on the generate target
+# namespace; the background controller applies the clone/sync of
+# pbs-encryption-keyfile (see platform-production clone-pbs-encryption-keyfile).
+# Rules cover all secrets in this namespace despite the secret-specific role name —
+# same pattern as authelia-production's kyverno-rbac-generate-authelia-pg-secret.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kyverno-generate-secret-pbs-encryption-keyfile
+  namespace: node-red-production
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kyverno-generate-secret-pbs-encryption-keyfile
+  namespace: node-red-production
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: kyverno-generate-secret-pbs-encryption-keyfile
+subjects:
+- kind: ServiceAccount
+  name: kyverno-admission-controller
+  namespace: kyverno
+- kind: ServiceAccount
+  name: kyverno-background-controller
+  namespace: kyverno

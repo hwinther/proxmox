@@ -72,3 +72,41 @@ spec:
       clone:
         namespace: platform-production
         name: pbs-encryption-keyfile
+  - name: clone-to-home-assistant-production
+    match:
+      any:
+      - resources:
+          kinds:
+          - Secret
+          namespaces:
+          - platform-production
+          names:
+          - pbs-encryption-keyfile
+    generate:
+      apiVersion: v1
+      kind: Secret
+      name: pbs-encryption-keyfile
+      namespace: home-assistant-production
+      synchronize: true
+      clone:
+        namespace: platform-production
+        name: pbs-encryption-keyfile
+  - name: clone-to-node-red-production
+    match:
+      any:
+      - resources:
+          kinds:
+          - Secret
+          namespaces:
+          - platform-production
+          names:
+          - pbs-encryption-keyfile
+    generate:
+      apiVersion: v1
+      kind: Secret
+      name: pbs-encryption-keyfile
+      namespace: node-red-production
+      synchronize: true
+      clone:
+        namespace: platform-production
+        name: pbs-encryption-keyfile

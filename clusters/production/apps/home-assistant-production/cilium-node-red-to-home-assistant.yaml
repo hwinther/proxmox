@@ -1,0 +1,25 @@
+# Node-RED (node-red-contrib-home-assistant-websocket) talks to HA pod-to-pod via
+# the in-cluster Service (http://home-assistant.home-assistant-production:8123),
+# NOT via home-assistant.wsh.no — that path hits Traefik + Authelia ForwardAuth.
+# The base HA policy (cilium-cluster-nodes-to-http.yaml) only allows host/remote-node
+# (Traefik); CiliumNetworkPolicies are additive, so this adds the Node-RED pod as an
+# allowed ingress source on 8123. Node-RED egress is unrestricted (it has only an
+# ingress policy), so no node-red-side change is needed.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-node-red-to-home-assistant-http
+  namespace: home-assistant-production
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: home-assistant
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: node-red-production
+        app: node-red
+    toPorts:
+    - ports:
+      - port: "8123"
+        protocol: TCP

@@ -6,3 +6,7 @@ resources:
 - traefik-middleware-authelia-forwardauth.yaml
 - home-assistant-ingress.yaml
 - cilium-cluster-nodes-to-http.yaml
+- cilium-node-red-to-home-assistant.yaml
+- kyverno-rbac-generate-pbs-encryption-keyfile.yaml
+- home-assistant-pbs-backup-cronjob.yaml
+# Restore is home-assistant-pbs-restore-job.yaml — apply manually so Flux does not keep a failed/duplicate restore Job.
