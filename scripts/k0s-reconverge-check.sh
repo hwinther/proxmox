@@ -24,7 +24,7 @@
 set -u
 
 CTX="${KUBE_CONTEXT:-Production}"
-CP_NODES="${CP_NODES:-10.20.13.11 10.20.13.12 10.20.13.14}"   # prod01 prod02 prod04 (etcd members)
+CP_NODES="${CP_NODES:-10.20.13.11 10.20.13.12 10.20.13.13}"   # prod01 prod02 prod03 (etcd members)
 SSH_USER="${SSH_USER:-root}"
 SSH_OPTS="-o StrictHostKeyChecking=accept-new -o ConnectTimeout=8 -o BatchMode=yes"
 WINDOW="${1:-30}"

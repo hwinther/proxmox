@@ -28,6 +28,21 @@ spec:
     ports:
     - port: 5432
       protocol: TCP
+  # CNPG instances of this cluster must reach each other for streaming
+  # replication / failover (replica -> primary on 5432, instance mgr 8000).
+  # Without this the replica can never join: it stays "Creating a new replica".
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: postgres-test
+      podSelector:
+        matchLabels:
+          cnpg.io/cluster: testdb
+    ports:
+    - port: 5432
+      protocol: TCP
+    - port: 8000
+      protocol: TCP
   - from:
     - namespaceSelector:
         matchLabels:
