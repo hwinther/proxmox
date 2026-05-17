@@ -94,6 +94,7 @@ updates:
   - "/clusters/production/apps/postgres-cnpg"
   - "/clusters/production/apps/postgres-production"
   - "/clusters/production/apps/postgres-test"
+  - "/clusters/production/apps/private-apps"
   - "/clusters/production/apps/rabbitmq-production"
   - "/clusters/production/apps/traefik"
   - "/clusters/production/apps/wshno"
