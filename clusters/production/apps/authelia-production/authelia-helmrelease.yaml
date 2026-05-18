@@ -156,6 +156,10 @@ spec:
           policy: two_factor
         - domain: hubble.mgmt.wsh.no
           policy: two_factor
+        # SABnzbd UI (private-apps repo). HA reaches SABnzbd via the in-cluster
+        # Service (not this ingress), so no API bypass is needed — gate the UI with 2FA.
+        - domain: sabnzbd.mgmt.wsh.no
+          policy: two_factor
         # HA companion app + webhooks use HA's own token/secret auth and can't do
         # the Authelia portal flow — bypass the API/auth paths; gate the UI with 2FA.
         # Bypass rules MUST precede the domain-wide two_factor (first match wins).
