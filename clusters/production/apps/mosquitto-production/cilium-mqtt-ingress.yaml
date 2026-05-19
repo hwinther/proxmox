@@ -22,6 +22,15 @@ spec:
     - ports:
       - port: "1883"
         protocol: TCP
+  # mqttui web inspector (same namespace) -> broker on 1883.
+  - fromEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: mosquitto-production
+        app: mqttui
+    toPorts:
+    - ports:
+      - port: "1883"
+        protocol: TCP
   - fromEntities:
     - host
     - remote-node

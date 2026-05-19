@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mqttui
+  namespace: mosquitto-production
+  annotations:
+    gethomepage.dev/href: "https://mqtt.mgmt.wsh.no/"
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.middlewares: mosquitto-production-authelia-forwardauth@kubernetescrd
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Management
+    gethomepage.dev/name: MQTT UI
+    gethomepage.dev/icon: mdi-transit-connection-variant
+    gethomepage.dev/description: Mosquitto broker inspector
+spec:
+  rules:
+  - host: mqtt.mgmt.wsh.no
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: mqttui
+            port:
+              number: 5000

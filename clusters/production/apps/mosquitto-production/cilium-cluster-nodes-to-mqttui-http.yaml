@@ -1,0 +1,18 @@
+# Traefik runs hostNetwork; ingress to the mqttui pod arrives from host / remote-node.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-cluster-nodes-to-mqttui-http
+  namespace: mosquitto-production
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: mqttui
+  ingress:
+  - fromEntities:
+    - host
+    - remote-node
+    toPorts:
+    - ports:
+      - port: "5000"
+        protocol: TCP

@@ -1,0 +1,94 @@
+# Web MQTT UI (terdia07/mqttui) — mgmt-only inspector for the broker. Stateless
+# (no PVC) so a Deployment, not a StatefulSet. Connects to the in-cluster
+# Mosquitto Service by short name (same namespace). The broker runs
+# allow_anonymous=false, so MQTT_USERNAME/MQTT_PASSWORD are required (one of the
+# users in the mosquitto-auth passwd file) — see mqttui-secrets.md.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mqttui
+  namespace: mosquitto-production
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mqttui
+  template:
+    metadata:
+      labels:
+        app: mqttui
+        app.kubernetes.io/name: mqttui
+        app.kubernetes.io/component: mqtt-ui
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: mqttui
+        # TODO: pin by digest once resolvable (repo convention). Verify the image's
+        # exact env contract — MQTT_BROKER/MQTT_PORT are confirmed; the auth var
+        # names (MQTT_USERNAME/MQTT_PASSWORD) may differ per image build.
+        image: docker.io/terdia07/mqttui:latest
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        env:
+        - name: MQTT_BROKER
+          value: mosquitto
+        - name: MQTT_PORT
+          value: "1883"
+        - name: MQTT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: mqttui-mqtt
+              key: MQTT_USERNAME
+        - name: MQTT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mqttui-mqtt
+              key: MQTT_PASSWORD
+        ports:
+        - name: http
+          containerPort: 5000
+          protocol: TCP
+        readinessProbe:
+          tcpSocket:
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        livenessProbe:
+          tcpSocket:
+            port: http
+          initialDelaySeconds: 20
+          periodSeconds: 20
+          failureThreshold: 6
+        resources:
+          requests:
+            cpu: 25m
+            memory: 64Mi
+          limits:
+            cpu: 250m
+            memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mqttui
+  namespace: mosquitto-production
+spec:
+  type: ClusterIP
+  ports:
+  - port: 5000
+    targetPort: http
+    protocol: TCP
+    name: http
+  selector:
+    app: mqttui
