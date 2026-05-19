@@ -1,0 +1,134 @@
+# Mosquitto MQTT broker for Home Assistant + DIY ESP/IoT devices.
+# Single replica: one authoritative retained-message store. State (retained
+# msgs + persistence DB) lives on a ceph-rbd PVC. eclipse-mosquitto runs as
+# the image's built-in non-root uid/gid 1883.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mosquitto
+  namespace: mosquitto-production
+spec:
+  serviceName: mosquitto-headless
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mosquitto
+  template:
+    metadata:
+      labels:
+        app: mosquitto
+        app.kubernetes.io/name: mosquitto
+        app.kubernetes.io/component: messaging
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1883
+        runAsGroup: 1883
+        fsGroup: 1883
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+      - name: mosquitto
+        image: docker.io/library/eclipse-mosquitto:2.0.20
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        ports:
+        - name: mqtt
+          containerPort: 1883
+          protocol: TCP
+        readinessProbe:
+          tcpSocket:
+            port: mqtt
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          tcpSocket:
+            port: mqtt
+          initialDelaySeconds: 15
+          periodSeconds: 20
+          failureThreshold: 6
+        resources:
+          requests:
+            cpu: 25m
+            memory: 32Mi
+          limits:
+            cpu: 200m
+            memory: 128Mi
+        volumeMounts:
+        - name: config
+          mountPath: /mosquitto/config/mosquitto.conf
+          subPath: mosquitto.conf
+          readOnly: true
+        - name: auth
+          mountPath: /mosquitto/auth
+          readOnly: true
+        - name: data
+          mountPath: /mosquitto/data
+      volumes:
+      - name: config
+        configMap:
+          name: mosquitto-config
+      - name: auth
+        secret:
+          secretName: mosquitto-auth
+          items:
+          - key: passwd
+            path: passwd
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+      labels:
+        app: mosquitto
+        app.kubernetes.io/name: mosquitto
+        app.kubernetes.io/component: messaging
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      storageClassName: ceph-rbd
+      resources:
+        requests:
+          storage: 1Gi
+---
+# Headless governing Service for the StatefulSet (stable identity only).
+apiVersion: v1
+kind: Service
+metadata:
+  name: mosquitto-headless
+  namespace: mosquitto-production
+spec:
+  clusterIP: None
+  selector:
+    app: mosquitto
+  ports:
+  - name: mqtt
+    port: 1883
+    targetPort: mqtt
+    protocol: TCP
+---
+# LoadBalancer Service: stable LAN VIP via Cilium LB-IPAM + L2 announce.
+# In-cluster clients (HA) use mosquitto.mosquitto-production.svc.cluster.local:1883;
+# external ESP/IoT clients use 10.20.13.100:1883.
+apiVersion: v1
+kind: Service
+metadata:
+  name: mosquitto
+  namespace: mosquitto-production
+  annotations:
+    lbipam.cilium.io/ips: "10.20.13.100"
+spec:
+  type: LoadBalancer
+  # Cluster (not Local): single-replica StatefulSet may not run on the
+  # L2-announcing node; Cluster lets any node forward. Client IP is SNATed,
+  # which is fine — access is gated by MQTT auth, not source IP.
+  externalTrafficPolicy: Cluster
+  selector:
+    app: mosquitto
+  ports:
+  - name: mqtt
+    port: 1883
+    targetPort: mqtt
+    protocol: TCP

@@ -1,0 +1,109 @@
+# Daily backup of Mosquitto's /mosquitto/data PVC (retained messages +
+# persistence DB) to Proxmox Backup Server. Same PBS client image/tag as the
+# home-assistant / node-red backups.
+#
+# Filesystem variant: the ceph-rbd PVC is ReadWriteOnce, so this Job can only
+# mount it on the node where the StatefulSet pod already has it attached.
+# requiredDuringScheduling podAffinity pins the backup pod to the Mosquitto
+# pod's node (RWO permits multiple pods sharing the volume on the SAME node);
+# the mount is readOnly so the backup never writes the live volume. Runs as
+# root so file ownership (uid 1883) never blocks the read. No restricted-PSS
+# policy on this cluster forbids it.
+#
+# NOTE: hot copy of mosquitto.db — usually restorable; acceptable for a homelab
+# daily. Retained MQTT discovery re-publishes anyway on device activity.
+#
+# Prerequisites:
+#   1. Create Secret `mosquitto-pbs-backup` (see mosquitto-pbs-backup-secrets.md).
+#   2. Source Secret pbs-encryption-keyfile present in platform-production (cloned
+#      here by the clone-pbs-encryption-keyfile ClusterPolicy + this ns's Kyverno
+#      RBAC). See the two-push ordering note in mosquitto-pbs-backup-secrets.md.
+#
+# Trigger an immediate run (outside the schedule):
+#   kubectl -n mosquitto-production create job --from=cronjob/mosquitto-pbs-backup mosquitto-pbs-backup-manual-$(date +%s)
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: mosquitto-pbs-backup
+  namespace: mosquitto-production
+spec:
+  # 04:30 Europe/Oslo daily — clear of the 02:30-03:30 postgres/authelia window,
+  # the 04:00 home-assistant and 04:15 node-red backups.
+  schedule: "30 4 * * *"
+  timeZone: Europe/Oslo
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 3600
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: mosquitto-pbs-backup
+            app.kubernetes.io/component: mosquitto-pbs-backup
+        spec:
+          nodeSelector:
+            kubernetes.io/arch: amd64
+          # Co-locate with the running Mosquitto pod so the RWO ceph-rbd volume is mountable.
+          affinity:
+            podAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+              - labelSelector:
+                  matchLabels:
+                    app: mosquitto
+                topologyKey: kubernetes.io/hostname
+          hostname: mosquitto
+          restartPolicy: Never
+          containers:
+          - name: backup
+            image: ghcr.io/hwinther/proxmox/proxmox/pbs/backup-client:0.6.1
+            imagePullPolicy: IfNotPresent
+            command:
+            - /bin/sh
+            - -c
+            - |
+              set -eu
+              set -- backup
+              [ -n "${PBS_NAMESPACE:-}" ] && set -- "$@" --ns "$PBS_NAMESPACE"
+              [ -f /etc/pbs/keyfile ] && set -- "$@" --keyfile /etc/pbs/keyfile
+              set -- "$@" data.pxar:/data
+              exec /usr/bin/proxmox-backup-client "$@"
+            envFrom:
+            - secretRef:
+                name: mosquitto-pbs-backup
+            securityContext:
+              runAsUser: 0
+              runAsGroup: 0
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: "1"
+                memory: 256Mi
+            volumeMounts:
+            - name: mq-data
+              mountPath: /data
+              readOnly: true
+            - name: pbs-keyfile
+              mountPath: /etc/pbs
+              readOnly: true
+          volumes:
+          - name: mq-data
+            persistentVolumeClaim:
+              claimName: data-mosquitto-0
+              readOnly: true
+          - name: pbs-keyfile
+            secret:
+              secretName: pbs-encryption-keyfile
+              optional: true
+              items:
+              - key: keyfile
+                path: keyfile
+                mode: 0400

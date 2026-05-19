@@ -1,0 +1,9 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- namespace.yaml
+- mosquitto-configmap.yaml
+- mosquitto-statefulset.yaml
+- cilium-mqtt-ingress.yaml
+- kyverno-rbac-generate-pbs-encryption-keyfile.yaml
+- mosquitto-pbs-backup-cronjob.yaml

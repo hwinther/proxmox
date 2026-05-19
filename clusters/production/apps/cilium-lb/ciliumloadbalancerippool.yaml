@@ -1,0 +1,11 @@
+# Assignable LoadBalancer VIP range. Single address for now (MQTT broker).
+# Must be in the node L2 (10.20.13.0/24) for L2 announcement ARP to work,
+# and outside the DHCP range / otherwise unused.
+apiVersion: cilium.io/v2
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: lan-pool
+spec:
+  blocks:
+  - start: "10.20.13.100"
+    stop: "10.20.13.100"

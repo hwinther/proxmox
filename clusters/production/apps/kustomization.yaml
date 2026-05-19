@@ -4,6 +4,8 @@ resources:
 # platform-production also hosts the cluster-wide pbs-encryption-keyfile clone policy + RBAC.
 - platform-production
 - ceph-csi
+# Cilium LB-IPAM pool + L2 announcement policy (VIP for type=LoadBalancer svcs).
+- cilium-lb
 # Pointer to a second (private) Flux Git source. See private-apps/.
 - private-apps
 # cnpg-system + postgres-* Cluster CRs: separate Flux Kustomizations (gotk-sync) so Helm installs CRDs before dry-run.
@@ -24,6 +26,7 @@ resources:
 - clutterstock-test
 - clutterstock
 - home-assistant-production
+- mosquitto-production
 - node-red-production
 - wshno
 - ingress.yaml

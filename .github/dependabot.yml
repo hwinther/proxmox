@@ -79,6 +79,7 @@ updates:
   - "/clusters/production/apps/ceph-csi"
   - "/clusters/production/apps/cert-manager"
   - "/clusters/production/apps/cert-manager/install"
+  - "/clusters/production/apps/cilium-lb"
   - "/clusters/production/apps/cnpg-system"
   - "/clusters/production/apps/clutterstock"
   - "/clusters/production/apps/clutterstock-migrate"
@@ -100,6 +101,7 @@ updates:
   - "/clusters/production/apps/wshno"
   - "/clusters/production/apps/home-assistant-production"
   - "/clusters/production/apps/node-red-production"
+  - "/clusters/production/apps/mosquitto-production"
   - "/clusters/production/apps/shared/production"
   - "/clusters/production/flux-system"
   schedule:
