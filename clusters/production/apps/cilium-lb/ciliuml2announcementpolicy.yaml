@@ -1,0 +1,18 @@
+# ARP-announce LoadBalancer VIPs on the node primary NIC (eth0, 10.20.13.0/24).
+# One node is elected per service via a k8s Lease, with automatic failover.
+# Requires l2announcements.enabled in the Cilium Helm stanza (k0s) — see
+# namespace-note.md. v2alpha1: CiliumL2AnnouncementPolicy is not yet graduated
+# to v2 in Cilium v1.19.
+apiVersion: cilium.io/v2alpha1
+kind: CiliumL2AnnouncementPolicy
+metadata:
+  name: lan-l2
+spec:
+  loadBalancerIPs: true
+  externalIPs: false
+  interfaces:
+  - ^eth0$
+  nodeSelector:
+    matchExpressions:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists

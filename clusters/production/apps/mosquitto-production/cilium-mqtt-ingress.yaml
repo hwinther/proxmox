@@ -1,0 +1,37 @@
+# Ingress to the broker on 1883 from:
+#  - the Home Assistant pod (in-cluster, pod-to-pod via ClusterIP)
+#  - LAN / IoT devices reaching the LoadBalancer VIP (arrive as world; the
+#    LB datapath is forwarded by host/remote-node). Scoped to the 10.20.0.0/16
+#    homelab range so the broker isn't open to arbitrary world identities.
+# Auth (password_file) is the real gate; this just narrows the network surface.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-mqtt-to-mosquitto
+  namespace: mosquitto-production
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: mosquitto
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: home-assistant-production
+        app: home-assistant
+    toPorts:
+    - ports:
+      - port: "1883"
+        protocol: TCP
+  - fromEntities:
+    - host
+    - remote-node
+    toPorts:
+    - ports:
+      - port: "1883"
+        protocol: TCP
+  - fromCIDR:
+    - 10.20.0.0/16
+    toPorts:
+    - ports:
+      - port: "1883"
+        protocol: TCP

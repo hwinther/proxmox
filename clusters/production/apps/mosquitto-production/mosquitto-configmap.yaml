@@ -1,0 +1,29 @@
+# Single broker, single retained store (the whole reason we use a dedicated
+# Mosquitto instead of RabbitMQ MQTT — deterministic HA discovery).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mosquitto-config
+  namespace: mosquitto-production
+data:
+  mosquitto.conf: |
+    # Plain MQTT. In-cluster (HA) reaches this via the ClusterIP DNS name;
+    # external ESP/IoT clients via the LoadBalancer VIP 10.20.13.100.
+    listener 1883 0.0.0.0
+    protocol mqtt
+
+    # Authenticated only — the listener is reachable from the LAN via the VIP.
+    allow_anonymous false
+    password_file /mosquitto/auth/passwd
+
+    # Retained messages + subscription state survive restarts (HA discovery).
+    persistence true
+    persistence_location /mosquitto/data/
+    autosave_interval 30
+
+    log_dest stdout
+    log_type error
+    log_type warning
+    log_type notice
+    connection_messages true
+    max_queued_messages 1000
