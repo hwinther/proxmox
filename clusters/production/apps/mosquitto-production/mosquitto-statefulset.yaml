@@ -27,6 +27,39 @@ spec:
         runAsGroup: 1883
         fsGroup: 1883
         fsGroupChangePolicy: OnRootMismatch
+      initContainers:
+      # Copy the Secret-mounted passwd into an emptyDir as mosquitto:mosquitto
+      # (1883) mode 0600 so the broker stops warning / future-refusing. Runs as
+      # root with only CHOWN — Kyverno run-as-non-root is Audit-only here.
+      - name: stage-auth
+        image: busybox:1.36
+        command:
+        - sh
+        - -c
+        - install -o 1883 -g 1883 -m 0600 /secret/passwd /auth/passwd
+        securityContext:
+          runAsNonRoot: false
+          runAsUser: 0
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+            add:
+            - CHOWN
+            - FOWNER
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            cpu: 100m
+            memory: 32Mi
+        volumeMounts:
+        - name: auth-secret
+          mountPath: /secret
+          readOnly: true
+        - name: auth
+          mountPath: /auth
       containers:
       - name: mosquitto
         image: docker.io/library/eclipse-mosquitto:2.0.20
@@ -72,12 +105,17 @@ spec:
       - name: config
         configMap:
           name: mosquitto-config
-      - name: auth
+      - name: auth-secret
         secret:
           secretName: mosquitto-auth
           items:
           - key: passwd
             path: passwd
+      # initContainer stages passwd here as 1883:1883 0600 — mosquitto 2.x warns
+      # (future versions refuse) on a root-owned / world-readable password file,
+      # which is how a Secret volume always mounts.
+      - name: auth
+        emptyDir: {}
   volumeClaimTemplates:
   - metadata:
       name: data

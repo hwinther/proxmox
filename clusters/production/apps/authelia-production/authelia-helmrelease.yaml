@@ -114,7 +114,13 @@ spec:
           subdomain: auth
           default_redirection_url: https://headlamp.mgmt.wsh.no/
       access_control:
-        default_policy: deny
+        # two_factor (not deny): any host that attaches the Authelia ForwardAuth
+        # middleware is 2FA-gated by default, so private-apps services need NO
+        # rule here (keeps their hostnames out of this public repo). A host that
+        # does NOT attach the middleware never reaches Authelia anyway, so this
+        # is not a posture regression. Explicit bypass/one_factor rules below
+        # still match first (default only applies to unmatched hosts).
+        default_policy: two_factor
         rules:
         - domain: auth.wsh.no
           policy: bypass
@@ -155,10 +161,6 @@ spec:
         - domain: policy-reporter.mgmt.wsh.no
           policy: two_factor
         - domain: hubble.mgmt.wsh.no
-          policy: two_factor
-        # SABnzbd UI (private-apps repo). HA reaches SABnzbd via the in-cluster
-        # Service (not this ingress), so no API bypass is needed — gate the UI with 2FA.
-        - domain: sabnzbd.mgmt.wsh.no
           policy: two_factor
         # HA companion app + webhooks use HA's own token/secret auth and can't do
         # the Authelia portal flow — bypass the API/auth paths; gate the UI with 2FA.
