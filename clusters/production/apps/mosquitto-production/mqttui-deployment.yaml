@@ -77,6 +77,18 @@ spec:
           limits:
             cpu: 250m
             memory: 256Mi
+        # terdia07/mqttui is a Flask app that creates a SQLite DB in /app/instance
+        # (Flask default). The container rootfs is owned by root; as non-root uid
+        # 1000 the app can't write there → sqlite3.OperationalError. Mount a
+        # writable emptyDir so SQLAlchemy can create the DB. State is non-critical
+        # (just UI/inspector state); ephemeral emptyDir is fine.
+        volumeMounts:
+        - name: instance
+          mountPath: /app/instance
+      volumes:
+      - name: instance
+        emptyDir:
+          sizeLimit: 64Mi
 ---
 apiVersion: v1
 kind: Service
