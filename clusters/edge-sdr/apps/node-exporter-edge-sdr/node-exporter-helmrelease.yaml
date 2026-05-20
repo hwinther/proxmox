@@ -8,9 +8,16 @@ spec:
   interval: 30m
   timeout: 10m
   install:
+    # DaemonSet on a cluster with a possibly-NotReady RPi: don't gate the release on rollout.
+    # If a node (e.g. radio-pi02) is unreachable, a DS pod stays Pending forever and the 10m
+    # helm wait times out, triggering a rollback that also times out → 25-min rollback loop.
+    # disableWait lets helm-controller apply manifests and mark Released without blocking;
+    # the DS converges as healthy nodes pick up the new pod spec.
+    disableWait: true
     remediation:
       retries: 3
   upgrade:
+    disableWait: true
     remediation:
       retries: 3
   chart:

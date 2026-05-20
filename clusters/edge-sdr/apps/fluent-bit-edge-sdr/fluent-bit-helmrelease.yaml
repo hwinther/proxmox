@@ -9,9 +9,14 @@ spec:
   interval: 30m
   timeout: 10m
   install:
+    # DaemonSet on a cluster with a possibly-NotReady RPi: don't gate the release on rollout.
+    # See node-exporter-helmrelease.yaml for the full rationale — same 25-min rollback loop
+    # if a DS pod can't schedule on radio-pi02.
+    disableWait: true
     remediation:
       retries: 3
   upgrade:
+    disableWait: true
     remediation:
       retries: 3
   chart:
