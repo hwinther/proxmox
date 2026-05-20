@@ -102,7 +102,10 @@ spec:
         # prometheus-agent-remote-write Secret (serverFiles.prometheus.yml.remote_write).
         rule_files: []
         scrape_configs:
-        - job_name: kubernetes-endpoints-node-exporter
+        # job_name=node-exporter so this remote-written series matches the stock kube-prometheus-stack
+        # Grafana "Node Exporter" dashboards' $job variable. The dashboards group nodes by `instance`,
+        # which is rewritten below to the node hostname (radio-pi01 / k0s-prod-edge01).
+        - job_name: node-exporter
           kubernetes_sd_configs:
           - role: endpoints
             namespaces:

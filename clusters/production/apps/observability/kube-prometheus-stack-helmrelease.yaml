@@ -211,10 +211,19 @@ spec:
 
     # Traefik uses hostNetwork + hostPort 9100 for metrics; node-exporter defaults to hostNetwork
     # and requests the same host port → all pods Pending. Pod-network mode still scrapes via ServiceMonitor.
+    # With hostNetwork=false the scrape target is the (ephemeral Cilium pod IP):9100, so the default
+    # `instance` label is unreadable in stock Grafana dashboards and rotates on reschedule. Relabel
+    # rewrites it to the node hostname; mirrors the edge-sdr agent's relabel in
+    # prometheus-agent-helmrelease.yaml.
     prometheus-node-exporter:
       enabled: true
       hostNetwork: false
       dnsPolicy: ClusterFirst
+      prometheus:
+        monitor:
+          relabelings:
+          - sourceLabels: [__meta_kubernetes_pod_node_name]
+            targetLabel: instance
 
     kube-state-metrics:
       enabled: true
