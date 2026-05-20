@@ -13,7 +13,22 @@ against `mosquitto-auth`).
 ```bash
 kubectl -n mosquitto-production create secret generic mqttui-mqtt \
   --from-literal=MQTT_USERNAME='mqttui' \
-  --from-literal=MQTT_PASSWORD='<that user'\''s plaintext password>'
+  --from-literal=MQTT_PASSWORD='<that user'\''s plaintext password>' \
+  --from-literal=MQTTUI_ADMIN_USER='admin' \
+  --from-literal=MQTTUI_ADMIN_PASSWORD="$(openssl rand -base64 24)" \
+  --from-literal=SECRET_KEY="$(openssl rand -hex 32)"
+```
+
+The last three keys are for **mqttui's own web UI login** (v2.0 adds a built-in
+admin user, default `admin/changeme` — override it here). `SECRET_KEY` is Flask's
+session signing key; without it, sessions reset on each pod restart. All three
+are read via `secretKeyRef ... optional: true` in the Deployment, so they can be
+patched in later without recreating the Secret:
+
+```bash
+kubectl -n mosquitto-production patch secret mqttui-mqtt --type merge -p \
+  "{\"stringData\":{\"MQTTUI_ADMIN_USER\":\"admin\",\"MQTTUI_ADMIN_PASSWORD\":\"$(openssl rand -base64 24)\",\"SECRET_KEY\":\"$(openssl rand -hex 32)\"}}"
+kubectl -n mosquitto-production rollout restart deploy/mqttui
 ```
 
 If you add a new `mqttui` user, regenerate the `mosquitto-auth` passwd file

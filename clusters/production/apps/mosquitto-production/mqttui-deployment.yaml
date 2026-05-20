@@ -55,6 +55,33 @@ spec:
             secretKeyRef:
               name: mqttui-mqtt
               key: MQTT_PASSWORD
+        # SQLite DBs (mqttui_users.db + mqtt_messages.db) — DB_PATH controls the
+        # directory derived via os.path.dirname(os.path.abspath(DB_PATH)). Default
+        # is relative 'mqtt_messages.db' → /app/, which is root-owned and not
+        # writable as uid 1000. Pin to the writable emptyDir below.
+        - name: DB_PATH
+          value: /data/mqtt_messages.db
+        # v2.0 Authentication for the UI login (separate from MQTT broker creds).
+        # Defaults baked into the image are admin/changeme — overridden here from
+        # the same Secret. Add MQTTUI_ADMIN_USER/PASSWORD/SECRET_KEY to mqttui-mqtt.
+        - name: MQTTUI_ADMIN_USER
+          valueFrom:
+            secretKeyRef:
+              name: mqttui-mqtt
+              key: MQTTUI_ADMIN_USER
+              optional: true
+        - name: MQTTUI_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mqttui-mqtt
+              key: MQTTUI_ADMIN_PASSWORD
+              optional: true
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: mqttui-mqtt
+              key: SECRET_KEY
+              optional: true
         ports:
         - name: http
           containerPort: 5000
@@ -77,16 +104,16 @@ spec:
           limits:
             cpu: 250m
             memory: 256Mi
-        # terdia07/mqttui is a Flask app that creates a SQLite DB in /app/instance
-        # (Flask default). The container rootfs is owned by root; as non-root uid
-        # 1000 the app can't write there → sqlite3.OperationalError. Mount a
-        # writable emptyDir so SQLAlchemy can create the DB. State is non-critical
-        # (just UI/inspector state); ephemeral emptyDir is fine.
+        # terdia07/mqttui derives its SQLite dir from DB_PATH (above) and writes
+        # mqttui_users.db + mqtt_messages.db there. /app is root-owned, so we
+        # mount a writable emptyDir at /data (DB_PATH=/data/mqtt_messages.db).
+        # Ephemeral: admin DB + message history reset on pod restart. Swap for a
+        # ceph-rbd PVC if persistence matters (it's just an inspector here).
         volumeMounts:
-        - name: instance
-          mountPath: /app/instance
+        - name: data
+          mountPath: /data
       volumes:
-      - name: instance
+      - name: data
         emptyDir:
           sizeLimit: 64Mi
 ---
