@@ -7,8 +7,9 @@
 # requiredDuringScheduling podAffinity pins the backup pod to the Mosquitto
 # pod's node (RWO permits multiple pods sharing the volume on the SAME node);
 # the mount is readOnly so the backup never writes the live volume. Runs as
-# root so file ownership (uid 1883) never blocks the read. No restricted-PSS
-# policy on this cluster forbids it.
+# uid:gid 1883 (matching the Mosquitto StatefulSet) so DAC reads on mode-0600
+# files written by mosquitto succeed even with `capabilities.drop: [ALL]`
+# stripping CAP_DAC_READ_SEARCH from root.
 #
 # NOTE: hot copy of mosquitto.db — usually restorable; acceptable for a homelab
 # daily. Retained MQTT discovery re-publishes anyway on device activity.
@@ -75,8 +76,9 @@ spec:
             - secretRef:
                 name: mosquitto-pbs-backup
             securityContext:
-              runAsUser: 0
-              runAsGroup: 0
+              runAsNonRoot: true
+              runAsUser: 1883
+              runAsGroup: 1883
               allowPrivilegeEscalation: false
               capabilities:
                 drop:

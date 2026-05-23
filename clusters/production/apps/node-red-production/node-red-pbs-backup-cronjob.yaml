@@ -5,8 +5,9 @@
 # can only mount it on the node where the StatefulSet pod already has it attached.
 # requiredDuringScheduling podAffinity pins the backup pod to the Node-RED pod's
 # node (RWO permits multiple pods sharing the volume on the SAME node); the mount
-# is readOnly so the backup never writes the live volume. Runs as root so file
-# ownership/permissions never block the read. No restricted-PSS policy here forbids it.
+# is readOnly so the backup never writes the live volume. Runs as uid:gid 1000
+# (matching the Node-RED StatefulSet) so DAC reads on app-written files succeed
+# even with `capabilities.drop: [ALL]` stripping CAP_DAC_READ_SEARCH from root.
 #
 # Prerequisites:
 #   1. Create Secret `node-red-pbs-backup` (see node-red-pbs-backup-secrets.md).
@@ -68,8 +69,9 @@ spec:
             - secretRef:
                 name: node-red-pbs-backup
             securityContext:
-              runAsUser: 0
-              runAsGroup: 0
+              runAsNonRoot: true
+              runAsUser: 1000
+              runAsGroup: 1000
               allowPrivilegeEscalation: false
               capabilities:
                 drop:

@@ -35,7 +35,7 @@ shred -u /tmp/pbs-encryption.key
 Once present, Kyverno clones it into every namespace carrying the `pbs.wsh.no/encryption-keyfile=true` label. Verify:
 
 ```bash
-kubectl get secret pbs-encryption-keyfile -A
+kubectl get secrets -A --field-selector metadata.name=pbs-encryption-keyfile
 ```
 
 ## Add a new consuming namespace
