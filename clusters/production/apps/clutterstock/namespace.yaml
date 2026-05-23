@@ -4,3 +4,4 @@ metadata:
   name: clutterstock-production
   labels:
     app.kubernetes.io/part-of: clutterstock-production
+    pbs.wsh.no/encryption-keyfile: "true"

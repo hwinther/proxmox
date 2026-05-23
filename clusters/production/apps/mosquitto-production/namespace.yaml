@@ -4,3 +4,4 @@ metadata:
   name: mosquitto-production
   labels:
     app.kubernetes.io/part-of: production
+    pbs.wsh.no/encryption-keyfile: "true"

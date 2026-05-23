@@ -4,3 +4,4 @@ metadata:
   name: clutterstock-test
   labels:
     app.kubernetes.io/part-of: clutterstock-test
+    pbs.wsh.no/encryption-keyfile: "true"

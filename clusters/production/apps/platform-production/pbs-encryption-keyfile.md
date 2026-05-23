@@ -1,6 +1,6 @@
 # Cluster-wide PBS encryption keyfile
 
-A single Secret **`pbs-encryption-keyfile`** in namespace **`platform-production`** holds the [Proxmox Backup Server AES-256-GCM keyfile](https://pbs.proxmox.com/docs/backup-client.html#encryption) used by every PBS backup/restore Job in this cluster. Kyverno (`clone-pbs-encryption-keyfile` ClusterPolicy) clones it into each consuming app namespace — Jobs reference the cloned Secret, never the source.
+A single Secret **`pbs-encryption-keyfile`** in namespace **`platform-production`** holds the [Proxmox Backup Server AES-256-GCM keyfile](https://pbs.proxmox.com/docs/backup-client.html#encryption) used by every PBS backup/restore Job in this cluster. Kyverno (`clone-pbs-encryption-keyfile` ClusterPolicy) clones it into every namespace labeled `pbs.wsh.no/encryption-keyfile=true` — Jobs reference the cloned Secret, never the source.
 
 ## Why one cluster-wide key
 
@@ -32,7 +32,7 @@ kubectl -n platform-production create secret generic pbs-encryption-keyfile \
 shred -u /tmp/pbs-encryption.key
 ```
 
-Once present, Kyverno clones it into the namespaces listed in `clone-pbs-encryption-keyfile`. Verify:
+Once present, Kyverno clones it into every namespace carrying the `pbs.wsh.no/encryption-keyfile=true` label. Verify:
 
 ```bash
 kubectl get secret pbs-encryption-keyfile -A
@@ -40,32 +40,25 @@ kubectl get secret pbs-encryption-keyfile -A
 
 ## Add a new consuming namespace
 
-Append a rule to `kyverno-clusterpolicy-clone-pbs-encryption-keyfile.yaml`:
+In the new app's directory:
 
-```yaml
-- name: clone-to-<namespace>
-  match:
-    any:
-    - resources:
-        kinds: [Secret]
-        namespaces: [platform-production]
-        names: [pbs-encryption-keyfile]
-  generate:
-    apiVersion: v1
-    kind: Secret
-    name: pbs-encryption-keyfile
-    namespace: <namespace>
-    synchronize: true
-    clone:
-      namespace: platform-production
-      name: pbs-encryption-keyfile
-```
+1. Label the Namespace:
 
-The consuming namespace also needs a Role binding granting Kyverno's admission and background controllers `secrets` write access (see e.g. `clutterstock-test/kyverno-rbac-generate-cluttertestdb-app-secret.yaml` — that role's rules already cover all secrets in the namespace despite the secret-specific name).
+   ```yaml
+   metadata:
+     name: <namespace>
+     labels:
+       pbs.wsh.no/encryption-keyfile: "true"
+   ```
+
+2. Ship a RoleBinding granting Kyverno's admission and background controllers `secrets` write access in that namespace (drop in `kyverno-rbac-generate-pbs-encryption-keyfile.yaml` — copy from `mosquitto-production/`). Without it the clone fails the SAR check at generate time.
+
+No edit to `kyverno-clusterpolicy-clone-pbs-encryption-keyfile.yaml` is needed — that's the whole point of the label-selector rule, and it lets apps in the sibling `private-apps` repo enrol themselves without naming themselves in this public repo.
 
 ## Rotate the key
 
 PBS encryption is symmetric — rotating means future backups use the new key, but past backups still need the old key to restore. Strategy options:
+
 - **Append-only**: keep both old and new keyfiles in the source Secret under different data keys. Mount both and let restores pick the right one (would need Job changes to support multi-key).
 - **Cutover**: replace the Secret in `platform-production`; Kyverno re-syncs to consumers; future backups encrypt with new key; restores from snapshots taken before the cutover need the archived old key.
 

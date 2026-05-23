@@ -16,8 +16,9 @@
 # Prerequisites:
 #   1. Create Secret `mosquitto-pbs-backup` (see mosquitto-pbs-backup-secrets.md).
 #   2. Source Secret pbs-encryption-keyfile present in platform-production (cloned
-#      here by the clone-pbs-encryption-keyfile ClusterPolicy + this ns's Kyverno
-#      RBAC). See the two-push ordering note in mosquitto-pbs-backup-secrets.md.
+#      here by the clone-pbs-encryption-keyfile ClusterPolicy, which matches the
+#      `pbs.wsh.no/encryption-keyfile=true` label on this ns + the namespace's
+#      Kyverno RBAC).
 #
 # Trigger an immediate run (outside the schedule):
 #   kubectl -n mosquitto-production create job --from=cronjob/mosquitto-pbs-backup mosquitto-pbs-backup-manual-$(date +%s)
