@@ -1,0 +1,44 @@
+# Cluster-wide RBAC for Kyverno to clone `pbs-encryption-keyfile` into every namespace labeled
+# `pbs.wsh.no/encryption-keyfile=true` (see the sibling `clone-pbs-encryption-keyfile`
+# ClusterPolicy).
+#
+# Why ClusterRole instead of per-namespace RoleBindings:
+# Kyverno's validate-policy admission webhook performs a SubjectAccessReview against the
+# generate rule's target namespace. The ClusterPolicy targets the templated namespace
+# `{{request.object.metadata.name}}` — the webhook treats that string literally and can only
+# satisfy the SAR check with cluster-wide RBAC. Without this binding, Flux's server-side dry-run
+# fails on every reconcile (even though the runtime clone itself worked once the policy was
+# first admitted), blocking the whole flux-system Kustomization.
+#
+# Privilege trade-off: Kyverno controllers now have cluster-wide Secret access. Actual cloning
+# is still gated by the ClusterPolicy's namespace-label match, so this only matters to anyone
+# who can write ClusterPolicies (cluster-admin) or label arbitrary namespaces (also cluster-
+# admin). In this single-operator homelab, that's acceptable; in a multi-tenant cluster, prefer
+# the split-policy / per-namespace-RBAC pattern instead.
+#
+# Per-namespace RoleBindings (`kyverno-rbac-generate-pbs-encryption-keyfile.yaml` in each app
+# dir) are now redundant. Leaving them in place for now; clean up as a follow-up.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kyverno-clone-pbs-encryption-keyfile
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kyverno-clone-pbs-encryption-keyfile
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kyverno-clone-pbs-encryption-keyfile
+subjects:
+- kind: ServiceAccount
+  name: kyverno-admission-controller
+  namespace: kyverno
+- kind: ServiceAccount
+  name: kyverno-background-controller
+  namespace: kyverno

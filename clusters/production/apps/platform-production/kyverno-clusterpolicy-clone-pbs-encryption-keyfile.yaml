@@ -7,14 +7,16 @@
 # (see pbs-encryption-keyfile.md) — never committed to git. When the source is missing, the clone
 # rule no-ops and Job mounts (`optional: true`) stay empty so backups simply run unencrypted.
 #
-# ORDERING (Kyverno SAR at generate time): for the clone to succeed in a target namespace, that
-# namespace's Kyverno RBAC (kyverno-admission-controller / background-controller get,list,create
-# on Secrets) must be live. Apps already ship that RBAC alongside their CronJob in the same
-# Kustomization, so a single push per new app is enough — the kyverno-rbac RoleBinding and the
-# namespace label land together and Kyverno's reconcile picks up the clone.
+# RBAC: Kyverno's admission/background controllers need cluster-wide Secret access for this
+# policy to pass the validate-policy webhook — the webhook treats the templated namespace
+# `{{request.object.metadata.name}}` literally during SAR, so per-namespace RoleBindings don't
+# satisfy it. The ClusterRole + ClusterRoleBinding live in
+# `kyverno-clusterrole-clone-pbs-encryption-keyfile.yaml` (must be present before this policy
+# reconciles cleanly). Per-namespace RoleBindings in each consuming ns are now redundant.
 #
-# Unlike the previous explicit-namespace form, this label-selector rule does NOT require a
-# second push to amend the ClusterPolicy when adding a new consumer.
+# Onboarding a new PBS-using namespace is a single push: set the label
+# `pbs.wsh.no/encryption-keyfile=true` on the Namespace; the keyfile is cloned automatically.
+# No edit to this ClusterPolicy needed.
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:

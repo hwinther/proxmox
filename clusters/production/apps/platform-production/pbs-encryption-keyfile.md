@@ -40,20 +40,16 @@ kubectl get secrets -A --field-selector metadata.name=pbs-encryption-keyfile
 
 ## Add a new consuming namespace
 
-In the new app's directory:
+Label the Namespace in the new app's directory:
 
-1. Label the Namespace:
+```yaml
+metadata:
+  name: <namespace>
+  labels:
+    pbs.wsh.no/encryption-keyfile: "true"
+```
 
-   ```yaml
-   metadata:
-     name: <namespace>
-     labels:
-       pbs.wsh.no/encryption-keyfile: "true"
-   ```
-
-2. Ship a RoleBinding granting Kyverno's admission and background controllers `secrets` write access in that namespace (drop in `kyverno-rbac-generate-pbs-encryption-keyfile.yaml` — copy from `mosquitto-production/`). Without it the clone fails the SAR check at generate time.
-
-No edit to `kyverno-clusterpolicy-clone-pbs-encryption-keyfile.yaml` is needed — that's the whole point of the label-selector rule, and it lets apps in the sibling `private-apps` repo enrol themselves without naming themselves in this public repo.
+That's it. No RoleBinding needed (Kyverno has cluster-wide Secret RBAC via `kyverno-clusterrole-clone-pbs-encryption-keyfile.yaml`), no edit to `kyverno-clusterpolicy-clone-pbs-encryption-keyfile.yaml` (label-selector matches all labeled namespaces). Apps in the sibling `private-apps` repo enrol themselves without naming themselves in this public repo.
 
 ## Rotate the key
 

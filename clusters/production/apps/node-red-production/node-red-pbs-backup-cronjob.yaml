@@ -102,4 +102,7 @@ spec:
               items:
               - key: keyfile
                 path: keyfile
-                mode: 0400
+                # 0444 (not 0400) so a non-root backup container can read it.
+                # The Secret data is namespace-scoped; in a single-container pod
+                # world-readable inside the pod doesn't leak it outside.
+                mode: 0444
