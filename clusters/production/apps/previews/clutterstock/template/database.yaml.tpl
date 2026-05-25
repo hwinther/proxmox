@@ -8,5 +8,5 @@ spec:
   owner: app
   cluster:
     name: cluttertestdb
-  reclaimPolicy: delete
+  databaseReclaimPolicy: delete
   ensure: present
