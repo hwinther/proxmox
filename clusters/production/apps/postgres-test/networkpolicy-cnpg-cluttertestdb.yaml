@@ -18,6 +18,16 @@ spec:
     ports:
     - port: 5432
       protocol: TCP
+  # ClutterStock preview envs (per-PR namespaces labelled clutterstock.wsh.no/preview=true). Same
+  # label drives the Kyverno secret-clone policy; reusing it here keeps ingress access in sync
+  # with whichever namespaces are enrolled as previews.
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          clutterstock.wsh.no/preview: "true"
+    ports:
+    - port: 5432
+      protocol: TCP
   - from:
     - namespaceSelector:
         matchLabels:
