@@ -26,6 +26,13 @@ spec:
     - port: 6379
       protocol: TCP
   - from:
+    - namespaceSelector:
+        matchLabels:
+          clutterstock.wsh.no/preview: "true"
+    ports:
+    - port: 6379
+      protocol: TCP
+  - from:
     - podSelector: {}
     ports:
     - port: 6379
