@@ -1,7 +1,7 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: Database
 metadata:
-  name: clutterstock-pr-226
+  name: clutterstock-preview-pr-226
   namespace: postgres-test
 spec:
   name: clutterstock_pr226

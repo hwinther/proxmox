@@ -8,7 +8,7 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: Database
 metadata:
-  name: clutterstock-pr-9999
+  name: clutterstock-preview-pr-9999
   namespace: postgres-test
 spec:
   name: clutterstock_pr9999

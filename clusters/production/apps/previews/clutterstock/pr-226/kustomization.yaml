@@ -1,6 +1,6 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-namespace: clutterstock-pr-226
+namespace: clutterstock-preview-pr-226
 
 resources:
 - ../base
@@ -50,7 +50,7 @@ patches:
             - name: PG_DB
               value: clutterstock_pr226
             - name: OTEL_RESOURCE_ATTRIBUTES
-              value: "service.namespace=clutterstock-pr-226,deployment.environment=preview"
+              value: "service.namespace=clutterstock-preview-pr-226,deployment.environment=preview"
 - target:
     kind: Deployment
     name: clutterstock-frontend
@@ -66,13 +66,13 @@ patches:
           - name: clutterstock-frontend
             env:
             - name: PUBLIC_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
-              value: "https://clutterstock-pr-226.test.wsh.no/v1/traces"
+              value: "https://clutterstock-226.preview.wsh.no/v1/traces"
             - name: PUBLIC_ORIGIN
-              value: "https://clutterstock-pr-226.test.wsh.no"
+              value: "https://clutterstock-226.preview.wsh.no"
 - target:
     kind: Ingress
     name: clutterstock
   patch: |-
     - op: replace
       path: /spec/rules/0/host
-      value: clutterstock-pr-226.test.wsh.no
+      value: clutterstock-226.preview.wsh.no

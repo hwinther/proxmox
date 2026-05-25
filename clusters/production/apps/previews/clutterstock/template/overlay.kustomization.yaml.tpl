@@ -1,6 +1,6 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-namespace: clutterstock-pr-__PR__
+namespace: clutterstock-preview-pr-__PR__
 
 resources:
 - ../base
@@ -50,7 +50,7 @@ patches:
             - name: PG_DB
               value: __DB_NAME__
             - name: OTEL_RESOURCE_ATTRIBUTES
-              value: "service.namespace=clutterstock-pr-__PR__,deployment.environment=preview"
+              value: "service.namespace=clutterstock-preview-pr-__PR__,deployment.environment=preview"
 - target:
     kind: Deployment
     name: clutterstock-frontend
