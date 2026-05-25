@@ -32,7 +32,7 @@ spec:
       # (1883) mode 0600 so the broker stops warning / future-refusing. Runs as
       # root with only CHOWN — Kyverno run-as-non-root is Audit-only here.
       - name: stage-auth
-        image: busybox:1.37
+        image: busybox:1.38
         command:
         - sh
         - -c
