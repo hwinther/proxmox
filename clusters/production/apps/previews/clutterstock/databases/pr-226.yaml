@@ -1,0 +1,12 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: clutterstock-pr-226
+  namespace: postgres-test
+spec:
+  name: clutterstock_pr226
+  owner: app
+  cluster:
+    name: cluttertestdb
+  reclaimPolicy: delete
+  ensure: present
