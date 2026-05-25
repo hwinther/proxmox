@@ -24,7 +24,7 @@ spec:
       # oauth2-proxy startup validation requires client-secret or client-secret-file; empty file + PKCE matches Authelia public client.
       initContainers:
       - name: oidc-client-secret-file
-        image: library/busybox:1.37
+        image: library/busybox:1.38
         command: [ 'sh', '-c', ': > /secret/oidc-client-secret' ]
         securityContext:
           allowPrivilegeEscalation: false
