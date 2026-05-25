@@ -8,6 +8,15 @@
 # Workflows pinned by SHA produce SAN endings of `@<40-hex-sha>`; semver-tagged refs produce
 # `@refs/tags/vX.Y.Z`. The regex accepts both; branch refs are rejected.
 #
+# Accepted reusable workflows (SAN):
+#   - docker-container.yml / dotnet-container.yml — build + push + sign in one go (release path)
+#   - image-push.yml                                — push + sign artifacts built earlier
+#                                                     (PR path: build-and-scan-*.yml builds locally,
+#                                                     image-push.yml then pushes if the PR is labelled
+#                                                     `deploy-feature`). image-push.yml's
+#                                                     attest_build_provenance_enabled defaults to true,
+#                                                     so the SLSA predicate is produced under this SAN.
+#
 # Scoped to ghcr.io/hwinther/* — other registries/images are not evaluated (no exception needed).
 # Legacy images without attestations: add skipImageReferences on each verifyImages entry, or create
 # ClusterPolicyException (kyverno.io/v2) with spec.verifyImages.imageReferences for those patterns.
@@ -56,7 +65,7 @@ spec:
         - entries:
           - keyless:
               issuer: https://token.actions.githubusercontent.com
-              subjectRegExp: ^https://github.com/hwinther/reusable-workflows/\.github/workflows/(docker|dotnet)-container\.yml@(refs/tags/v[0-9]+(\.[0-9]+){0,2}|[a-f0-9]{40})$
+              subjectRegExp: ^https://github.com/hwinther/reusable-workflows/\.github/workflows/(docker-container|dotnet-container|image-push)\.yml@(refs/tags/v[0-9]+(\.[0-9]+){0,2}|[a-f0-9]{40})$
               rekor:
                 url: https://rekor.sigstore.dev
         conditions:
@@ -84,7 +93,7 @@ spec:
         - entries:
           - keyless:
               issuer: https://token.actions.githubusercontent.com
-              subjectRegExp: ^https://github.com/hwinther/reusable-workflows/\.github/workflows/(docker|dotnet)-container\.yml@(refs/tags/v[0-9]+(\.[0-9]+){0,2}|[a-f0-9]{40})$
+              subjectRegExp: ^https://github.com/hwinther/reusable-workflows/\.github/workflows/(docker-container|dotnet-container|image-push)\.yml@(refs/tags/v[0-9]+(\.[0-9]+){0,2}|[a-f0-9]{40})$
               rekor:
                 url: https://rekor.sigstore.dev
         conditions:
@@ -112,7 +121,7 @@ spec:
         - entries:
           - keyless:
               issuer: https://token.actions.githubusercontent.com
-              subjectRegExp: ^https://github.com/hwinther/reusable-workflows/\.github/workflows/(docker|dotnet)-container\.yml@(refs/tags/v[0-9]+(\.[0-9]+){0,2}|[a-f0-9]{40})$
+              subjectRegExp: ^https://github.com/hwinther/reusable-workflows/\.github/workflows/(docker-container|dotnet-container|image-push)\.yml@(refs/tags/v[0-9]+(\.[0-9]+){0,2}|[a-f0-9]{40})$
               rekor:
                 url: https://rekor.sigstore.dev
         conditions:
