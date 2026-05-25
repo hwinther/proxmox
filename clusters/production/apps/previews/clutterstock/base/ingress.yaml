@@ -1,0 +1,34 @@
+# Host is patched per-PR by the overlay (clutterstock-pr-<N>.test.wsh.no). entrypoints: web because
+# the LAN nginx fronting the cluster terminates TLS with the existing *.test.wsh.no wildcard cert.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: clutterstock
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+spec:
+  rules:
+  - host: clutterstock-preview.test.wsh.no
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: clutterstock-api
+            port:
+              number: 8080
+      - path: /swagger
+        pathType: Prefix
+        backend:
+          service:
+            name: clutterstock-api
+            port:
+              number: 8080
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: clutterstock-frontend
+            port:
+              number: 8080

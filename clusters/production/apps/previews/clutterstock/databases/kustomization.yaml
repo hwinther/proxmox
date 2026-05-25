@@ -1,0 +1,7 @@
+# Per-PR CNPG Database CRs land here (managed by the gitops-preview-upsert/teardown workflows).
+# Kept in a separate kustomization with no `namespace:` directive so each Database CR's explicit
+# `namespace: postgres-test` is preserved (kustomize's overlay namespace transform overrides explicit
+# namespaces; isolating Database CRs from preview-namespace transformation is the simplest fix).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources: []

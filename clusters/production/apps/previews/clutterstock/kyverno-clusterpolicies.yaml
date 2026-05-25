@@ -1,0 +1,86 @@
+# ClusterPolicies that clone the Secrets a ClutterStock preview env needs into every namespace
+# labeled `clutterstock.wsh.no/preview=true`. Same label-driven generate pattern as
+# `clone-pbs-encryption-keyfile` in platform-production — see pbs-encryption-keyfile.md and the
+# pbs-encryption-keyfile-label-clone memory for the rationale.
+#
+# Kyverno's validate-policy webhook does a static SAR against `{{request.object.metadata.name}}` on
+# generate rules, which per-namespace RoleBindings cannot satisfy. The cluster-wide Secret RBAC for
+# Kyverno admission+background controllers was already added by the PBS work
+# (kyverno-clusterrole-clone-pbs-encryption-keyfile.yaml), so no extra RBAC is needed here.
+#
+# Trigger: a Namespace gets created (e.g. by the upsert workflow) with the preview label, OR an
+# existing namespace is labelled. `generateExisting: true` also re-applies on policy install so any
+# preview namespace already on the cluster gets the Secrets immediately.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: clone-clutterstock-preview-secrets
+  annotations:
+    policies.kyverno.io/title: Clone ClutterStock preview-env Secrets
+    policies.kyverno.io/category: ClutterStock
+    policies.kyverno.io/severity: low
+spec:
+  generateExisting: true
+  rules:
+  # Postgres app credential. Source `cluttertestdb-app` is the CNPG-managed application Secret in
+  # postgres-test; the preview API connects with this user to its per-PR database `clutterstock_pr<N>`
+  # which CNPG provisions from the per-PR Database CR.
+  - name: clone-cluttertestdb-app
+    match:
+      any:
+      - resources:
+          kinds:
+          - Namespace
+          selector:
+            matchLabels:
+              clutterstock.wsh.no/preview: "true"
+    generate:
+      apiVersion: v1
+      kind: Secret
+      name: cluttertestdb-app
+      namespace: "{{request.object.metadata.name}}"
+      synchronize: true
+      clone:
+        namespace: postgres-test
+        name: cluttertestdb-app
+  # RabbitMQ creds for the shared `test` vhost. Source lives in clutterstock-test (where the
+  # operator created it once). Sharing the `test` vhost across all previews is acceptable for
+  # short-lived PR envs.
+  - name: clone-clutterstock-test-rabbitmq
+    match:
+      any:
+      - resources:
+          kinds:
+          - Namespace
+          selector:
+            matchLabels:
+              clutterstock.wsh.no/preview: "true"
+    generate:
+      apiVersion: v1
+      kind: Secret
+      name: clutterstock-test-rabbitmq
+      namespace: "{{request.object.metadata.name}}"
+      synchronize: true
+      clone:
+        namespace: clutterstock-test
+        name: clutterstock-test-rabbitmq
+  # Valkey/Redis URL. Same sharing model as RabbitMQ — preview frontends use the shared-test redis
+  # via the URL in this Secret. Key collisions across previews are accepted (short-lived).
+  - name: clone-clutterstock-valkey
+    match:
+      any:
+      - resources:
+          kinds:
+          - Namespace
+          selector:
+            matchLabels:
+              clutterstock.wsh.no/preview: "true"
+    generate:
+      apiVersion: v1
+      kind: Secret
+      name: clutterstock-valkey
+      namespace: "{{request.object.metadata.name}}"
+      synchronize: true
+      clone:
+        namespace: clutterstock-test
+        name: clutterstock-valkey

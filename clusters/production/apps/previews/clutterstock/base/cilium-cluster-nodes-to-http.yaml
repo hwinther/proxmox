@@ -1,0 +1,22 @@
+# Allow cluster nodes (host networking, e.g. kubelet probes through node IPs) to reach the preview
+# API and frontend on port 8080. Mirrors clutterstock-test pattern.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-cluster-nodes-to-clutterstock-http
+spec:
+  endpointSelector:
+    matchExpressions:
+    - key: app
+      operator: In
+      values:
+      - clutterstock-api
+      - clutterstock-frontend
+  ingress:
+  - fromEntities:
+    - host
+    - remote-node
+    toPorts:
+    - ports:
+      - port: "8080"
+        protocol: TCP

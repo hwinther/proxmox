@@ -1,0 +1,81 @@
+# Ephemeral preview-env frontend Deployment. PUBLIC_ORIGIN and the public OTEL traces endpoint are
+# patched per-PR by the overlay so the SSR-built OIDC redirect URIs point at the preview hostname.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clutterstock-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: clutterstock-frontend
+  template:
+    metadata:
+      labels:
+        app: clutterstock-frontend
+        app.kubernetes.io/name: clutterstock-frontend
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+      - name: clutterstock-frontend
+        image: ghcr.io/hwinther/clutterstock/frontend:placeholder
+        imagePullPolicy: Always
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        readinessProbe:
+          tcpSocket:
+            port: http
+          initialDelaySeconds: 3
+          periodSeconds: 10
+        env:
+        - name: PORT
+          value: "8080"
+        - name: SERVER_API_URL
+          value: "http://clutterstock-api:8080"
+        - name: PUBLIC_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
+          value: "https://clutterstock-preview.test.wsh.no/v1/traces"
+        - name: PUBLIC_OTEL_SERVICE_NAME
+          value: "clutterstock-frontend"
+        - name: VITE_OIDC_AUTHORITY
+          value: "https://auth.wsh.no"
+        - name: VITE_OIDC_CLIENT_ID
+          value: "clutterstock"
+        - name: PUBLIC_ORIGIN
+          value: "https://clutterstock-preview.test.wsh.no"
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: clutterstock-valkey
+              key: redis-url
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: clutterstock-frontend
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8080
+    targetPort: http
+    protocol: TCP
+    name: http
+  selector:
+    app: clutterstock-frontend

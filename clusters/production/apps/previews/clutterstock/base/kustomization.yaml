@@ -1,0 +1,12 @@
+# Shared kustomize base for clutterstock PR preview environments. Every per-PR overlay under
+# ../pr-<N>/ references this base. Resources here intentionally have no `metadata.namespace` so the
+# overlay's `namespace:` directive populates it. The CNPG Database CR per PR lives outside this base
+# (in ../databases/) so kustomize's namespace transform does not overwrite its `postgres-test` ns.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- deployment-api.yaml
+- deployment-frontend.yaml
+- ingress.yaml
+- networkpolicies.yaml
+- cilium-cluster-nodes-to-http.yaml
