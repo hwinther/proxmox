@@ -35,6 +35,16 @@ updates:
   cooldown:
     default-days: 7
 
+# esp-poller container image — pins its own runtime deps in requirements.txt
+# (kept separate from the root pyproject so the image rebuild surface is small).
+- package-ecosystem: "pip"
+  directory: "/images/esp-poller"
+  open-pull-requests-limit: 20
+  schedule:
+    interval: "weekly"
+  cooldown:
+    default-days: 7
+
 # edge-sdr cluster (k0s / SDR edge).
 - package-ecosystem: "docker"
   directories:
@@ -102,6 +112,7 @@ updates:
   - "/clusters/production/apps/home-assistant-production"
   - "/clusters/production/apps/node-red-production"
   - "/clusters/production/apps/mosquitto-production"
+  - "/clusters/production/apps/esp-poller-production"
   - "/clusters/production/apps/shared/production"
   - "/clusters/production/flux-system"
   schedule:

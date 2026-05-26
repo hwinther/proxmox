@@ -1,0 +1,65 @@
+# Device list — one entry per ESP. To add a device or endpoint: append here, push, Flux
+# reconciles, Deployment auto-rolls (annotation digest changes), HA Discovery + Prometheus
+# pick up new sensors.
+#
+# A device has one or more endpoints. By default an endpoint must return
+# {"<sensor_key>": <number>, ...}. If it packs multiple readings into one string field,
+# add a `parser` block whose regex named groups map to sensor keys.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: esp-poller-devices
+  namespace: esp-poller-production
+data:
+  devices.yaml: |
+    devices:
+      - id: sensor01
+        name: Sensor 01
+        model: esp-dht11
+        endpoints:
+          - id: dht11
+            # Response: {"value": "25c26"} → 25 °C, 26 %.
+            url: http://10.20.1.142:8080/api/sensor01/dht11/value
+            parser:
+              source: value
+              regex: '^(?P<temperature>\d+)c(?P<humidity>\d+)$'
+            sensors:
+              - {key: temperature, unit: "°C", device_class: temperature}
+              - {key: humidity,    unit: "%",  device_class: humidity}
+          - id: lightsensor
+            # Response: {"value": "0"} → raw ADC integer (~0 dark, ~900 bright).
+            # No device_class: this is uncalibrated, not lux.
+            url: http://10.20.1.142:8080/api/sensor01/lightsensor/read
+            parser:
+              source: value
+              regex: '^(?P<light>\d+)$'
+            sensors:
+              - {key: light, unit: "raw"}
+      - id: sensor02
+        name: Sensor 02
+        model: esp-dht11
+        endpoints:
+          - id: dht11
+            url: http://10.20.1.142:8080/api/sensor02/dht11/value
+            parser:
+              source: value
+              regex: '^(?P<temperature>\d+)c(?P<humidity>\d+)$'
+            sensors:
+              - {key: temperature, unit: "°C", device_class: temperature}
+              - {key: humidity,    unit: "%",  device_class: humidity}
+          - id: lightsensor
+            url: http://10.20.1.142:8080/api/sensor02/lightsensor/read
+            parser:
+              source: value
+              regex: '^(?P<light>\d+)$'
+            sensors:
+              - {key: light, unit: "raw"}
+          - id: dsb
+            # DS18B20 returns a decimal °C string, e.g. {"value": "26.9375"}.
+            # Distinct key (`dsb_temperature`) so it doesn't collide with the DHT11's `temperature`.
+            url: http://10.20.1.142:8080/api/sensor02/dsb/value
+            parser:
+              source: value
+              regex: '^(?P<dsb_temperature>\d+(?:\.\d+)?)$'
+            sensors:
+              - {key: dsb_temperature, unit: "°C", device_class: temperature}
