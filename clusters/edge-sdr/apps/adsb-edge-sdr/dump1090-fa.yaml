@@ -42,7 +42,7 @@ spec:
                 - "true"
       containers:
       - name: dump1090-fa
-        image: ghcr.io/hwinther/wsh-rtl-sdr/dump1090-fa:0.2.0@sha256:9513572ea0f08422af4047dd33c373ba8939214132602d7454650c17279e8a69
+        image: ghcr.io/hwinther/wsh-rtl-sdr/dump1090-fa:0.4.0@sha256:c2a8e578dd6b88839decbed0fd7c06edcc6357a2161ea34eb8c06f0bae116149
         imagePullPolicy: IfNotPresent
         # ConfigMap then Secret: shared keys (e.g. LAT/LON) in Secret override ConfigMap.
         envFrom:
