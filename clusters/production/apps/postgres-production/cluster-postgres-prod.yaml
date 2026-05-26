@@ -1,4 +1,4 @@
-# Shared production PostgreSQL cluster — hosts clutterstock and authelia databases.
+# Shared production PostgreSQL cluster — hosts clutterstock, authelia, and grafana databases.
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
@@ -30,3 +30,8 @@ spec:
       login: true
       passwordSecret:
         name: authelia-pg-secret
+    - name: grafana
+      ensure: present
+      login: true
+      passwordSecret:
+        name: grafana-pg-secret

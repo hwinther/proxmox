@@ -1,0 +1,132 @@
+# Daily backup of the Grafana Postgres database to Proxmox Backup Server.
+#
+# Flow (per scheduled run):
+#   1. initContainer pgdump runs pg_dump -Fc using libpq env vars (PGHOST/PGUSER/PGPASSWORD/PGDATABASE)
+#      against the CNPG cluster and writes /dump/grafana.pgdump in an emptyDir.
+#   2. Main container archives /dump as a PBS .pxar snapshot — appends `--ns $PBS_NAMESPACE` and
+#      `--keyfile /etc/pbs/keyfile` only when configured (see grafana-pbs-backup-secrets.md).
+#
+# Prerequisites:
+#   1. Create Secret `grafana-pbs-backup` (see grafana-pbs-backup-secrets.md).
+#   2. CNPG cluster `postgres-prod` Ready and `grafana-pg-secret` cloned into observability-production.
+#
+# Trigger an immediate run (outside the schedule):
+#   kubectl -n observability-production create job --from=cronjob/grafana-pbs-backup grafana-pbs-backup-manual-$(date +%s)
+#
+# Image tag (PBS client): GitVersion MajorMinorPatch from .github/workflows/build-proxmox-pbs-backup-client.yml.
+# PBS client image is linux/amd64 only; postgres:18-alpine is multi-arch but pinned to amd64 here for symmetry.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: grafana-pbs-backup
+  namespace: observability-production
+spec:
+  # 04:30 Europe/Oslo daily — staggered after home-assistant (04:00).
+  schedule: "30 4 * * *"
+  timeZone: Europe/Oslo
+  # Never run two concurrent dumps of the same DB.
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 3600
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: grafana-pbs-backup
+            app.kubernetes.io/component: grafana-pbs-backup
+        spec:
+          nodeSelector:
+            kubernetes.io/arch: amd64
+          hostname: grafana-postgres
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1654
+            fsGroup: 1654
+            fsGroupChangePolicy: OnRootMismatch
+          initContainers:
+          - name: pgdump
+            image: postgres:18-alpine
+            imagePullPolicy: IfNotPresent
+            command:
+            - /bin/sh
+            - -c
+            - 'pg_dump -Fc -f /dump/grafana.pgdump'
+            env:
+            - name: PGHOST
+              value: postgres-prod-rw.postgres-production.svc.cluster.local
+            - name: PGUSER
+              value: grafana
+            - name: PGDATABASE
+              value: grafana
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-pg-secret
+                  key: password
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: "1"
+                memory: 512Mi
+            volumeMounts:
+            - name: dump
+              mountPath: /dump
+          containers:
+          - name: backup
+            image: ghcr.io/hwinther/proxmox/proxmox/pbs/backup-client:0.6.1
+            imagePullPolicy: IfNotPresent
+            command:
+            - /bin/sh
+            - -c
+            - |
+              set -eu
+              set -- backup
+              [ -n "${PBS_NAMESPACE:-}" ] && set -- "$@" --ns "$PBS_NAMESPACE"
+              [ -f /etc/pbs/keyfile ] && set -- "$@" --keyfile /etc/pbs/keyfile
+              set -- "$@" db.pxar:/dump
+              exec /usr/bin/proxmox-backup-client "$@"
+            envFrom:
+            - secretRef:
+                name: grafana-pbs-backup
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+            resources:
+              requests:
+                cpu: 100m
+                memory: 256Mi
+              limits:
+                cpu: "1"
+                memory: 512Mi
+            volumeMounts:
+            - name: dump
+              mountPath: /dump
+            - name: pbs-keyfile
+              mountPath: /etc/pbs
+              readOnly: true
+          volumes:
+          - name: dump
+            emptyDir: {}
+          # Cluster-wide PBS encryption keyfile, cloned by Kyverno from platform-production.
+          # When the source Secret is absent, the mount stays empty and --keyfile is not added.
+          - name: pbs-keyfile
+            secret:
+              secretName: pbs-encryption-keyfile
+              optional: true
+              items:
+              - key: keyfile
+                path: keyfile
+                mode: 0400

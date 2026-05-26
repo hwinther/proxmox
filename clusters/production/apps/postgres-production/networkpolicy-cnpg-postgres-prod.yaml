@@ -25,6 +25,14 @@ spec:
     ports:
     - port: 5432
       protocol: TCP
+  # Grafana pod + grafana-pbs-backup CronJob.
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: observability-production
+    ports:
+    - port: 5432
+      protocol: TCP
   - from:
     - namespaceSelector:
         matchLabels:

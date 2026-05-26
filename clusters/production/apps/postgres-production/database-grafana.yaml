@@ -1,0 +1,14 @@
+# Grafana internal config storage (users, dashboards, datasources, alert rules, sessions,
+# secure values) on the production CNPG cluster. Grafana previously stored this in SQLite on
+# a ceph-rbd PVC — moved to Postgres to eliminate "database is locked" warnings on the
+# secure-values cleanup job and to enable proper backups via the existing PBS pattern.
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: grafana
+  namespace: postgres-production
+spec:
+  cluster:
+    name: postgres-prod
+  name: grafana
+  owner: grafana

@@ -28,6 +28,26 @@ kubectl create secret generic authelia-pg-secret \
   -n postgres-production
 ```
 
+## grafana
+
+CNPG managed role **`grafana`** owns the **`grafana`** database on cluster **`postgres-prod`**.
+
+Secret **`grafana-pg-secret`** is created manually (referenced by `passwordSecret` on the managed role) and cloned by Kyverno into **`observability-production`** for the Grafana pod (envValueFrom `GF_DATABASE_PASSWORD`). Grafana previously used SQLite on a ceph-rbd PVC; switched to Postgres to eliminate "database is locked" warnings on the secure-values cleanup job and to enable PBS-style backups (see [`../observability/grafana-pbs-backup-secrets.md`](../observability/grafana-pbs-backup-secrets.md)).
+
+```bash
+kubectl create secret generic grafana-pg-secret \
+  --from-literal=password=<password> \
+  -n postgres-production
+```
+
+After the Secret is in place and Flux has applied the new role + Database, restart the Grafana pod once so it reconnects to Postgres instead of SQLite:
+
+```bash
+kubectl -n observability-production rollout restart deployment obs-kps-grafana
+```
+
+The schema is created on first boot. Existing UI-only state (UI-created dashboards, user accounts, alert rules, annotations) does **not** migrate from the old SQLite — file-provisioned dashboards reload from their ConfigMaps, and Authelia OAuth re-creates user accounts on first login.
+
 ## Adminer + OIDC
 
 **oauth2-proxy** in front of Adminer; Authelia OIDC public client **`adminer-pg-prod`** (PKCE, `two_factor`) in [`../authelia-production/authelia-helmrelease.yaml`](../authelia-production/authelia-helmrelease.yaml). Ingress **`https://adminer-pg-prod.mgmt.wsh.no`**. Default server **`postgres-prod-rw.postgres-production.svc.cluster.local`**.

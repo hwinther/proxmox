@@ -59,6 +59,14 @@ spec:
           memory: 512Mi
       testFramework:
         enabled: false
+      # Postgres storage for Grafana's internal DB (users, dashboards, alerts, sessions, secure values).
+      # Password is cloned into observability-production by Kyverno from postgres-production
+      # (see ../postgres-production/kyverno-clusterpolicy-clone-grafana-pg-secret.yaml).
+      envValueFrom:
+        GF_DATABASE_PASSWORD:
+          secretKeyRef:
+            name: grafana-pg-secret
+            key: password
       additionalDataSources:
       - name: Loki
         uid: loki
@@ -82,6 +90,15 @@ spec:
             datasourceUid: loki
             tags: [ "service.name" ]
       grafana.ini:
+        # Postgres on the production CNPG cluster — see ../postgres-production/database-grafana.yaml.
+        # The PVC at /var/lib/grafana stays mounted for plugins and the unified-storage bleve index;
+        # only the relational store moves to Postgres.
+        database:
+          type: postgres
+          host: postgres-prod-rw.postgres-production.svc.cluster.local:5432
+          name: grafana
+          user: grafana
+          ssl_mode: disable
         server:
           root_url: https://grafana.mgmt.wsh.no/
         auth:

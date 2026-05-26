@@ -4,3 +4,6 @@ metadata:
   name: observability-production
   labels:
     app.kubernetes.io/part-of: production
+    # Triggers cluster-wide Kyverno ClusterPolicy clone-pbs-encryption-keyfile
+    # to clone the keyfile Secret from platform-production into this namespace.
+    pbs.wsh.no/encryption-keyfile: "true"

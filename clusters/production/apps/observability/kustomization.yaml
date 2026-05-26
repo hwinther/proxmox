@@ -12,6 +12,9 @@ resources:
 - otel-collector-helmrelease.yaml
 - observability-ingress.yaml
 - cilium-host-to-otel-otlp-http.yaml
+- kyverno-rbac-generate-grafana-pg-secret.yaml
+- kyverno-rbac-generate-pbs-encryption-keyfile.yaml
+- grafana-pbs-backup-cronjob.yaml
 configMapGenerator:
 # Picked up by kube-prometheus-stack Grafana sidecar (label grafana_dashboard=1).
 # ASP.NET Core OTEL dashboard (patched gnet 19924).

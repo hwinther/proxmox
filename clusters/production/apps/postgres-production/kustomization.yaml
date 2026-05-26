@@ -6,6 +6,7 @@ resources:
 - cluster-postgres-prod.yaml
 - database-authelia.yaml
 - database-clutterstock.yaml
+- database-grafana.yaml
 - networkpolicy-cnpg-postgres-prod.yaml
 - cilium-networkpolicy-cnpg-apiserver.yaml
 - networkpolicy-adminer.yaml
@@ -18,3 +19,4 @@ resources:
 - cilium-cluster-nodes-to-adminer-http.yaml
 - kyverno-clusterpolicy-clone-clutterstock-pg-secret.yaml
 - kyverno-clusterpolicy-clone-authelia-pg-secret.yaml
+- kyverno-clusterpolicy-clone-grafana-pg-secret.yaml
