@@ -27,7 +27,8 @@ MQTT is optional — unset `MQTT_HOST` to run as a metrics-only exporter.
 | `MQTT_USER`          | required if `MQTT_HOST` set      |                                                |
 | `MQTT_PASS`          | required if `MQTT_HOST` set      |                                                |
 | `MQTT_CLIENT_ID`     | `esp-poller`                     |                                                |
-| `WARMUP_POLL`        | `true`                           | Send a discarded warm-up GET before each real read. Workaround for a proxy bug that returns the *previous* endpoint's reading on the first call. |
+| `POLL_ATTEMPTS`      | `3`                              | Per-endpoint attempts per cycle. The proxy can return the previous endpoint's reading (stale cache) or `{"value": "timeout"}`, so we try up to this many times and use the first response whose payload parses. |
+| `POLL_RETRY_SLEEP_SEC` | `0.4`                          | Delay between attempts (the hardware can only service one reading at a time). |
 | `LOG_LEVEL`          | `INFO`                           |                                                |
 
 ## devices.yaml shape

@@ -188,23 +188,43 @@ def export_metrics(dev: Device, ep: Endpoint, values: dict[str, float]) -> None:
 # ---- Main loop ---------------------------------------------------------------
 
 
-def poll_once(dev: Device, ep: Endpoint, mqtt_client: mqtt.Client | None, timeout: float, warmup: bool) -> None:
-    # Known proxy bug: the first GET to an endpoint returns the previous
-    # endpoint's reading; the second GET returns the fresh one. WARMUP_POLL
-    # triggers a throwaway request first when set.
-    if warmup:
+def poll_once(
+    dev: Device,
+    ep: Endpoint,
+    mqtt_client: mqtt.Client | None,
+    timeout: float,
+    attempts: int,
+    retry_sleep: float,
+) -> None:
+    # The upstream proxy has two known intermittent failure modes per endpoint:
+    #   - the first GET can return the *previous* endpoint's reading (stale cache)
+    #   - any GET can return {"value": "timeout"} when the hardware doesn't respond in time
+    # Try up to `attempts` times and use the first response whose payload parses
+    # cleanly against this endpoint's parser/sensor keys. Brief sleep between
+    # attempts because the hardware can only service one reading at a time.
+    last_err: Exception | None = None
+    last_payload: object = None
+    for attempt in range(1, attempts + 1):
         try:
-            requests.get(ep.url, timeout=timeout)
-        except requests.RequestException:
-            pass  # best-effort; if the real fetch below also fails we'll log that
-    r = requests.get(ep.url, timeout=timeout)
-    r.raise_for_status()
-    values = extract(ep, r.json())
-    # Always republish a flat numeric dict so HA Discovery's
-    # `value_template: {{ value_json.<key> }}` works whatever the upstream shape was.
-    if mqtt_client is not None:
-        mqtt_client.publish(state_topic(dev, ep), json.dumps(values), qos=0)
-    export_metrics(dev, ep, values)
+            r = requests.get(ep.url, timeout=timeout)
+            r.raise_for_status()
+            last_payload = r.json()
+            values = extract(ep, last_payload)
+        except (requests.RequestException, ValueError) as e:
+            last_err = e
+            if attempt < attempts:
+                time.sleep(retry_sleep)
+            continue
+        # Success — republish a flat numeric dict so HA Discovery's
+        # `value_template: {{ value_json.<key> }}` works whatever the upstream shape was.
+        if mqtt_client is not None:
+            mqtt_client.publish(state_topic(dev, ep), json.dumps(values), qos=0)
+        export_metrics(dev, ep, values)
+        return
+    raise RuntimeError(
+        f"endpoint {ep.id}: no parseable response after {attempts} attempts "
+        f"(last payload={last_payload!r}, last error={last_err})"
+    )
 
 
 def main() -> int:
@@ -216,7 +236,8 @@ def main() -> int:
     interval = float(os.getenv("POLL_INTERVAL_SEC", "30"))
     http_timeout = float(os.getenv("HTTP_TIMEOUT_SEC", "5"))
     metrics_port = int(os.getenv("METRICS_PORT", "9100"))
-    warmup = os.getenv("WARMUP_POLL", "true").lower() in ("1", "true", "yes")
+    poll_attempts = max(1, int(os.getenv("POLL_ATTEMPTS", "3")))
+    poll_retry_sleep = float(os.getenv("POLL_RETRY_SLEEP_SEC", "0.4"))
 
     devices = load_devices(devices_path)
     endpoint_count = sum(len(d.endpoints) for d in devices)
@@ -244,7 +265,7 @@ def main() -> int:
         for dev in devices:
             for ep in dev.endpoints:
                 try:
-                    poll_once(dev, ep, client, http_timeout, warmup)
+                    poll_once(dev, ep, client, http_timeout, poll_attempts, poll_retry_sleep)
                 except Exception as e:
                     LOG.warning("poll %s/%s failed: %s", dev.id, ep.id, e)
         # Sleep in small slices so SIGTERM stops within ~1s instead of waiting a full interval.
