@@ -31,6 +31,15 @@ spec:
     - ports:
       - port: "1883"
         protocol: TCP
+  # esp-poller publishes ESP sensor readings + HA Discovery configs.
+  - fromEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: esp-poller-production
+        app: esp-poller
+    toPorts:
+    - ports:
+      - port: "1883"
+        protocol: TCP
   - fromEntities:
     - host
     - remote-node

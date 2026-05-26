@@ -28,6 +28,7 @@ resources:
 - home-assistant-production
 - mosquitto-production
 - node-red-production
+- esp-poller-production
 - wshno
 - ingress.yaml
 - hubble-ui-ingress.yaml

@@ -1,0 +1,112 @@
+# Bump esp-poller image tag via Dependabot / manual edit; the workflow
+# .github/workflows/build-esp-poller.yml publishes images on manual dispatch.
+# Pre-rollout: create the esp-poller-mqtt Secret (see esp-poller-mqtt-secrets.md).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: esp-poller
+  namespace: esp-poller-production
+spec:
+  replicas: 1
+  # Recreate (not RollingUpdate): a second poller would double-publish to MQTT
+  # during the overlap and briefly skew Prometheus gauges.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: esp-poller
+  template:
+    metadata:
+      labels:
+        app: esp-poller
+        app.kubernetes.io/name: esp-poller
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1888
+        runAsGroup: 1888
+        fsGroup: 1888
+      containers:
+      - name: esp-poller
+        image: ghcr.io/hwinther/proxmox/esp-poller:0.6.1@sha256:9d0742e5901f0f691238d98543d72d0cc4b1f24fc82be6aa29b2607e93ddef4b
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        env:
+        - name: POLL_INTERVAL_SEC
+          value: "30"
+        - name: HTTP_TIMEOUT_SEC
+          value: "5"
+        - name: METRICS_PORT
+          value: "9100"
+        - name: MQTT_HOST
+          value: mosquitto.mosquitto-production.svc.cluster.local
+        - name: MQTT_PORT
+          value: "1883"
+        - name: MQTT_USER
+          valueFrom:
+            secretKeyRef:
+              name: esp-poller-mqtt
+              key: username
+        - name: MQTT_PASS
+          valueFrom:
+            secretKeyRef:
+              name: esp-poller-mqtt
+              key: password
+        ports:
+        - name: metrics
+          containerPort: 9100
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: metrics
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: metrics
+          initialDelaySeconds: 15
+          periodSeconds: 30
+          failureThreshold: 3
+        resources:
+          requests:
+            cpu: 20m
+            memory: 48Mi
+          limits:
+            cpu: 200m
+            memory: 128Mi
+        volumeMounts:
+        - name: devices
+          mountPath: /etc/esp-poller
+          readOnly: true
+      volumes:
+      - name: devices
+        configMap:
+          name: esp-poller-devices
+---
+# Service exists so the kube-prometheus-stack ServiceMonitor can match by selector;
+# the port name `metrics` matches the additionalServiceMonitors entry in
+# ../observability/kube-prometheus-stack-helmrelease.yaml.
+apiVersion: v1
+kind: Service
+metadata:
+  name: esp-poller
+  namespace: esp-poller-production
+  labels:
+    app.kubernetes.io/name: esp-poller
+spec:
+  type: ClusterIP
+  selector:
+    app: esp-poller
+  ports:
+  - name: metrics
+    port: 9100
+    targetPort: metrics
+    protocol: TCP

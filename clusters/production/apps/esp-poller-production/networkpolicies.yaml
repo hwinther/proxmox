@@ -1,0 +1,61 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: esp-poller
+  namespace: esp-poller-production
+spec:
+  podSelector:
+    matchLabels:
+      app: esp-poller
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Prometheus scrape of /metrics on :9100.
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: observability-production
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: prometheus
+    ports:
+    - port: 9100
+      protocol: TCP
+  egress:
+  # DNS.
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+  # Mosquitto in-cluster.
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: mosquitto-production
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: mosquitto
+    ports:
+    - port: 1883
+      protocol: TCP
+  # ESP devices on the LAN (HTTP). Narrow to the homelab range; metadata IP excluded
+  # to match the convention used elsewhere in this repo.
+  - to:
+    - ipBlock:
+        cidr: 10.20.0.0/16
+        except:
+        - 169.254.169.254/32
+    ports:
+    - port: 80
+      protocol: TCP
+    - port: 8080
+      protocol: TCP
