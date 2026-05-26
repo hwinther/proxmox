@@ -48,7 +48,7 @@ spec:
             topologyKey: kubernetes.io/hostname
       containers:
       - name: tar1090
-        image: ghcr.io/hwinther/wsh-rtl-sdr/tar1090:0.2.0@sha256:9231eafecdde641a2085fda22e856156cb09bfde248d9b9d0b90163c6ba5cf33
+        image: ghcr.io/hwinther/wsh-rtl-sdr/tar1090:0.4.0@sha256:4695bcb4880cd8dab89633477e544dde877bc59795ac04e161ff143033a7cd37
         imagePullPolicy: IfNotPresent
         envFrom:
         - configMapRef:
