@@ -27,6 +27,7 @@ MQTT is optional — unset `MQTT_HOST` to run as a metrics-only exporter.
 | `MQTT_USER`          | required if `MQTT_HOST` set      |                                                |
 | `MQTT_PASS`          | required if `MQTT_HOST` set      |                                                |
 | `MQTT_CLIENT_ID`     | `esp-poller`                     |                                                |
+| `WARMUP_POLL`        | `true`                           | Send a discarded warm-up GET before each real read. Workaround for a proxy bug that returns the *previous* endpoint's reading on the first call. |
 | `LOG_LEVEL`          | `INFO`                           |                                                |
 
 ## devices.yaml shape

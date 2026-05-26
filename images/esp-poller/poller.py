@@ -188,7 +188,15 @@ def export_metrics(dev: Device, ep: Endpoint, values: dict[str, float]) -> None:
 # ---- Main loop ---------------------------------------------------------------
 
 
-def poll_once(dev: Device, ep: Endpoint, mqtt_client: mqtt.Client | None, timeout: float) -> None:
+def poll_once(dev: Device, ep: Endpoint, mqtt_client: mqtt.Client | None, timeout: float, warmup: bool) -> None:
+    # Known proxy bug: the first GET to an endpoint returns the previous
+    # endpoint's reading; the second GET returns the fresh one. WARMUP_POLL
+    # triggers a throwaway request first when set.
+    if warmup:
+        try:
+            requests.get(ep.url, timeout=timeout)
+        except requests.RequestException:
+            pass  # best-effort; if the real fetch below also fails we'll log that
     r = requests.get(ep.url, timeout=timeout)
     r.raise_for_status()
     values = extract(ep, r.json())
@@ -208,6 +216,7 @@ def main() -> int:
     interval = float(os.getenv("POLL_INTERVAL_SEC", "30"))
     http_timeout = float(os.getenv("HTTP_TIMEOUT_SEC", "5"))
     metrics_port = int(os.getenv("METRICS_PORT", "9100"))
+    warmup = os.getenv("WARMUP_POLL", "true").lower() in ("1", "true", "yes")
 
     devices = load_devices(devices_path)
     endpoint_count = sum(len(d.endpoints) for d in devices)
@@ -235,7 +244,7 @@ def main() -> int:
         for dev in devices:
             for ep in dev.endpoints:
                 try:
-                    poll_once(dev, ep, client, http_timeout)
+                    poll_once(dev, ep, client, http_timeout, warmup)
                 except Exception as e:
                     LOG.warning("poll %s/%s failed: %s", dev.id, ep.id, e)
         # Sleep in small slices so SIGTERM stops within ~1s instead of waiting a full interval.
