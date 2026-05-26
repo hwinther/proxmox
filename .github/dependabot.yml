@@ -113,6 +113,9 @@ updates:
   - "/clusters/production/apps/node-red-production"
   - "/clusters/production/apps/mosquitto-production"
   - "/clusters/production/apps/esp-poller-production"
+  - "/clusters/production/apps/previews/clutterstock"
+  - "/clusters/production/apps/previews/clutterstock/base"
+  - "/clusters/production/apps/previews/clutterstock/databases"
   - "/clusters/production/apps/shared/production"
   - "/clusters/production/flux-system"
   schedule:
