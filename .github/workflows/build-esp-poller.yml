@@ -1,0 +1,39 @@
+name: Publish esp-poller container to GHCR
+
+# Manual-only trigger: this image isn't tied to GitVersion releases, just
+# rebuild when poller.py or its deps change.
+on:
+    workflow_dispatch:
+        inputs:
+            grype_fail_build:
+                description: "Fail the build if Grype finds vulnerabilities"
+                type: boolean
+                default: true
+
+permissions:
+    contents: read
+    packages: write
+    id-token: write
+    attestations: write
+    actions: write
+    security-events: write
+    pull-requests: write
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: false
+
+jobs:
+    esp_poller:
+        # No `secrets:` block: docker-container.yml only takes an optional npm_auth_token
+        # (unused here); GITHUB_TOKEN is auto-available to called workflows. Avoids the
+        # zizmor "secrets unconditionally inherited" finding.
+        uses: hwinther/reusable-workflows/.github/workflows/docker-container.yml@67ef4a8614e14d29e0039410f41a7ab9a7af093f # v1.58.0
+        with:
+            container_registry: ghcr.io
+            # ghcr.io/<repo-owner>/<repo>/<postfix> → ghcr.io/hwinther/proxmox/esp-poller
+            container_image_name_postfix: esp-poller
+            build_context: images/esp-poller
+            dockerfile: images/esp-poller/Dockerfile
+            grype_fail_build: ${{ github.event_name != 'workflow_dispatch' ||
+                fromJSON(github.event.inputs.grype_fail_build || 'true') }}
