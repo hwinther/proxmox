@@ -5,6 +5,12 @@
 # Release branches are not merged back. Version is extracted from branch name (e.g. release/1.2 -> 1.2.x).
 workflow: GitHubFlow/v1
 
+# ContinuousDeployment: each commit on main auto-bumps the patch component so
+# `MajorMinorPatch` (which the reusable docker-container workflow uses as the
+# image tag) is unique per push. Without this override GitHubFlow/v1 defaults
+# to ContinuousDelivery, where every commit between two `v*` tags shares the
+# same MajorMinorPatch and every workflow_dispatch overwrites the previous image.
+mode: ContinuousDeployment
+
 # Optional overrides - uncomment to customize
 # tag-prefix: '[vV]'
-# mode: ContinuousDelivery
