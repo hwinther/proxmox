@@ -25,7 +25,25 @@ concurrency:
     cancel-in-progress: false
 
 jobs:
+    # Compute a short SHA that the build job appends to gitversion-derived tags as a suffix
+    # (e.g. :0.6.1-86a584a). Without this every workflow_dispatch on main publishes the same
+    # gitversion tag (GitHubFlow/v1 keeps MajorMinorPatch constant between v* tags) and
+    # silently overwrites the previous image.
+    setup:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+        outputs:
+            short_sha: ${{ steps.sha.outputs.short_sha }}
+        steps:
+        - name: Compute short SHA
+          id: sha
+          env:
+              GITHUB_SHA: ${{ github.sha }}
+          run: echo "short_sha=${GITHUB_SHA:0:7}" >> "$GITHUB_OUTPUT"
+
     proxmox_pbs_backup_client:
+        needs: setup
         # No `secrets:` block: docker-container.yml only takes an optional npm_auth_token
         # (unused here); GITHUB_TOKEN is auto-available to called workflows. Avoids the
         # zizmor "secrets unconditionally inherited" finding.
@@ -36,5 +54,7 @@ jobs:
             container_image_name_postfix: proxmox/pbs/backup-client
             build_context: images/proxmox-pbs-backup-client
             dockerfile: images/proxmox-pbs-backup-client/Dockerfile
+            # Makes gitversion-derived tags unique per commit: :0.6.1 → :0.6.1-86a584a.
+            tag_suffix: ${{ needs.setup.outputs.short_sha }}
             grype_fail_build: ${{ github.event_name != 'workflow_dispatch' ||
                 fromJSON(github.event.inputs.grype_fail_build || 'true') }}
