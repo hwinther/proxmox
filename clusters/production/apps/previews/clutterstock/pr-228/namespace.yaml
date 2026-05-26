@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: clutterstock-preview-pr-228
+  labels:
+    app.kubernetes.io/part-of: clutterstock
+    clutterstock.wsh.no/preview: "true"
+    clutterstock.wsh.no/pr: "228"

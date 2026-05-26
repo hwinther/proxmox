@@ -1,0 +1,78 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: clutterstock-preview-pr-228
+
+resources:
+- ../base
+- namespace.yaml
+
+# `labels` (vs deprecated `commonLabels`) with includeSelectors: false avoids leaking the PR label
+# into NetworkPolicy podSelectors that target peers in other namespaces (kube-dns, redis, etc.).
+labels:
+- pairs:
+    clutterstock.wsh.no/pr: "228"
+  includeSelectors: false
+  includeTemplates: true
+
+# Image digests pin the deploy to exactly the artifacts that just passed e2e + grype. The tag
+# (newTag) is kept alongside the digest so `kubectl get deploy -o yaml | grep image:` is readable.
+images:
+- name: ghcr.io/hwinther/clutterstock/api
+  newTag: "0.26.1-PullRequest228.11"
+  digest: "sha256:4d864b3e2512216a0789be2cce31f3a3a6a137eff96282e28d02311fe554d8bf"
+- name: ghcr.io/hwinther/clutterstock/frontend
+  newTag: "0.26.1-PullRequest228.11"
+  digest: "sha256:6177a9d8da8f5a4315c918e15d127a68eb9f35dba106eb0e08d0ab1367c92fba"
+- name: ghcr.io/hwinther/clutterstock/migrator
+  newTag: "0.26.1-PullRequest228.11"
+  digest: "sha256:370ff45f757cee4c13ac18e90f605de22b684afb51023810de3bfdf2b7672a02"
+
+patches:
+- target:
+    kind: Deployment
+    name: clutterstock-api
+  patch: |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: clutterstock-api
+    spec:
+      template:
+        spec:
+          initContainers:
+          - name: migrator
+            env:
+            - name: PG_DB
+              value: clutterstock_pr228
+          containers:
+          - name: clutterstock-api
+            env:
+            - name: PG_DB
+              value: clutterstock_pr228
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: "service.namespace=clutterstock-preview-pr-228,deployment.environment=preview"
+- target:
+    kind: Deployment
+    name: clutterstock-frontend
+  patch: |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: clutterstock-frontend
+    spec:
+      template:
+        spec:
+          containers:
+          - name: clutterstock-frontend
+            env:
+            - name: PUBLIC_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
+              value: "https://clutterstock-228.preview.wsh.no/v1/traces"
+            - name: PUBLIC_ORIGIN
+              value: "https://clutterstock-228.preview.wsh.no"
+- target:
+    kind: Ingress
+    name: clutterstock
+  patch: |-
+    - op: replace
+      path: /spec/rules/0/host
+      value: clutterstock-228.preview.wsh.no
