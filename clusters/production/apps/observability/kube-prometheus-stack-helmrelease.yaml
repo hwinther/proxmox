@@ -97,7 +97,7 @@ spec:
           client_id: grafana
           use_pkce: true
           use_id_token: true
-          scopes: openid profile email groups
+          scopes: openid profile email groups offline_access
           auth_url: https://auth.wsh.no/api/oidc/authorization
           token_url: https://auth.wsh.no/api/oidc/token
           api_url: https://auth.wsh.no/api/oidc/userinfo

@@ -491,6 +491,8 @@ spec:
             - groups
             - offline_access
           # Grafana — public client + PKCE; role mapped in Grafana via groups claim.
+          # offline_access: lets Grafana 12.x rotate session tokens without bouncing the user
+          # back through the full OAuth flow on every expiry (handler=/user/auth-tokens/rotate).
           - client_id: grafana
             client_name: Grafana
             public: true
@@ -509,6 +511,7 @@ spec:
             - profile
             - email
             - groups
+            - offline_access
           # ClutterStock — SPA + API + Swashbuckle; public client + PKCE, refresh via offline_access.
           # access_token is a signed RFC 9068 JWT (aud=clutterstock-api) so .NET JwtBearer validates it
           # directly against /api/oidc/jwks.json without introspection.
