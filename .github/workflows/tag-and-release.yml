@@ -13,7 +13,8 @@ on:
             create_release:
                 description: "Opprett en GitHub Release for denne taggen"
                 required: false
-                default: "true"
+                default: true
+                type: boolean
 
 permissions:
     contents: write
