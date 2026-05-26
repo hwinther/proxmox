@@ -9,5 +9,4 @@ kind: Kustomization
 resources:
   - databases
   - kyverno-clusterpolicies.yaml
-  - pr-221
   - pr-228
