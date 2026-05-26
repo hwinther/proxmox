@@ -47,13 +47,12 @@ spec:
     ports:
     - port: 1883
       protocol: TCP
-  # ESP devices on the LAN (HTTP). Narrow to the homelab range; metadata IP excluded
-  # to match the convention used elsewhere in this repo.
+  # ESP devices on the LAN (HTTP). Narrow to the homelab range — no `except`
+  # for 169.254.169.254/32 needed since it's outside the CIDR (and the API
+  # server rejects an except that isn't a strict subset of cidr).
   - to:
     - ipBlock:
         cidr: 10.20.0.0/16
-        except:
-        - 169.254.169.254/32
     ports:
     - port: 80
       protocol: TCP
