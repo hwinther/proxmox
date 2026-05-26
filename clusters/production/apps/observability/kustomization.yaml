@@ -58,3 +58,11 @@ configMapGenerator:
     disableNameSuffixHash: true
     labels:
       grafana_dashboard: "1"
+# ESP DIY sensors (DHT11 temp/humidity, DS18B20 temp, light ADC) scraped from esp-poller-production.
+- name: grafana-dashboard-esp-sensors
+  files:
+  - dashboards/esp-sensors.json
+  options:
+    disableNameSuffixHash: true
+    labels:
+      grafana_dashboard: "1"
