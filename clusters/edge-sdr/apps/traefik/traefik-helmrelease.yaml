@@ -43,8 +43,12 @@ spec:
         maxUnavailable: 1
         maxSurge: 0
     hostNetwork: true
+    # Chart v40 moved Service.type under service.spec (PR #1686, "align syntax with
+    # upstream"). hostNetwork DaemonSet ingress comes in via the node, so keep ClusterIP
+    # rather than the new LoadBalancer default.
     service:
-      type: ClusterIP
+      spec:
+        type: ClusterIP
     ports:
       traefik:
         port: 9000
