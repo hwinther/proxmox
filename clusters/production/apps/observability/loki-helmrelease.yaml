@@ -1,3 +1,12 @@
+# Migrated 2026-05-28 from chart loki@6.55.0 (grafana/helm-charts) to loki@17.1.1
+# (grafana-community/helm-charts) because Grafana repointed the original chart at GEL
+# starting at 7.0.0 (see helmrepositories.yaml comment on grafana-community).
+#
+# At the same time, the built-in MinIO subchart was removed from 17.x — Loki now writes
+# to an external standalone MinIO Deployment in this namespace (see minio-deployment.yaml).
+# The old `obs-loki-minio-0` StatefulSet + PVC are no longer managed by this chart and
+# can be deleted after rollout: `kubectl -n observability-production delete pvc data-obs-loki-minio-0`.
+# Previous log data is intentionally not migrated (14-day retention; throwaway).
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
@@ -9,10 +18,10 @@ spec:
   chart:
     spec:
       chart: loki
-      version: "6.55.0"
+      version: "17.1.1"
       sourceRef:
         kind: HelmRepository
-        name: grafana
+        name: grafana-community
         namespace: observability-production
   values:
     deploymentMode: SingleBinary
@@ -28,25 +37,12 @@ spec:
       replicas: 1
       allocatedMemory: 256
       allocatedCPU: 100m
+    # Built-in MinIO is removed by default in chart 17.x — we point at the standalone
+    # `obs-minio` Deployment instead. ignoreMinioDeprecation silences the chart's
+    # deprecation warning that fires even when minio.enabled=false.
     minio:
-      enabled: true
-      # Buckets already exist on the MinIO PVC; chart v5.4 `mc mb` is not idempotent and fails
-      # post-upgrade when chunks/ruler/admin are present. Empty list omits the make-bucket hook
-      # container (users/policies still run). New cluster: remove `buckets: []` for first install
-      # or create buckets once manually, then restore this guard.
-      buckets: []
-      replicas: 1
-      persistence:
-        enabled: true
-        storageClass: ceph-rbd
-        storageClassName: ceph-rbd
-        # Chart default is 5Gi — too small for 14d retention. Compactor evicts by age, not capacity,
-        # so an undersized bucket stalls ingestion before retention triggers.
-        size: 20Gi
-      resources:
-        requests:
-          cpu: 50m
-          memory: 256Mi
+      enabled: false
+    ignoreMinioDeprecation: true
     loki:
       commonConfig:
         replication_factor: 1
@@ -72,6 +68,21 @@ spec:
         retention_enabled: true
       ruler:
         enable_api: true
+      # External MinIO: in-cluster Service obs-minio:9000, path-style URLs, plain HTTP
+      # (intra-cluster). accessKeyId / secretAccessKey deliberately omitted from values —
+      # the Loki S3 client reads them from AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY env
+      # vars injected via singleBinary.extraEnv below, so creds never end up in the
+      # rendered HelmRelease values or in Helm release storage.
+      storage:
+        type: s3
+        bucketNames:
+          chunks: chunks
+          ruler: ruler
+        s3:
+          endpoint: obs-minio.observability-production.svc.cluster.local:9000
+          region: us-east-1
+          s3ForcePathStyle: true
+          insecure: true
     singleBinary:
       replicas: 1
       persistence:
@@ -84,6 +95,17 @@ spec:
           memory: 512Mi
         limits:
           memory: 1536Mi
+      extraEnv:
+      - name: AWS_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: obs-minio-root
+            key: rootUser
+      - name: AWS_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: obs-minio-root
+            key: rootPassword
     backend:
       replicas: 0
     read:

@@ -16,6 +16,19 @@ spec:
   interval: 1h
   url: https://grafana.github.io/helm-charts
 ---
+# grafana-community is the OSS continuation of the loki chart after Grafana repointed
+# `grafana/helm-charts/loki` at GEL (Enterprise Logs) starting at chart 7.0.0
+# (announcement: https://github.com/grafana/loki/issues/20705). Tempo and other Grafana
+# charts stay on the original `grafana` repo above — only loki moved.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: grafana-community
+  namespace: observability-production
+spec:
+  interval: 1h
+  url: https://grafana-community.github.io/helm-charts
+---
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: HelmRepository
 metadata:
