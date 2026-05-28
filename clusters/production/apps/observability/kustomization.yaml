@@ -17,6 +17,7 @@ resources:
 - grafana-pbs-backup-cronjob.yaml
 - minio-deployment.yaml
 - minio-buckets-job.yaml
+
 configMapGenerator:
 # Picked up by kube-prometheus-stack Grafana sidecar (label grafana_dashboard=1).
 # ASP.NET Core OTEL dashboard (patched gnet 19924).

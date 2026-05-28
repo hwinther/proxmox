@@ -1,10 +1,11 @@
 # One-shot bootstrap: create the `chunks` and `ruler` buckets the Loki chart used to
 # create automatically via its built-in MinIO subchart. `mc mb -p` is idempotent so
-# this Job is safe to re-run; bump the name suffix if you ever need to force a re-run.
+# this Job is safe to re-run; bump the name suffix (v00N) to force a re-run, since a
+# Job's pod template is immutable.
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: obs-minio-init-buckets-v001
+  name: obs-minio-init-buckets-v002
   namespace: observability-production
   labels:
     app.kubernetes.io/name: obs-minio
@@ -29,10 +30,10 @@ spec:
         image: docker.io/pgsty/mc:RELEASE.2026-03-13T08-57-32Z
         imagePullPolicy: IfNotPresent
         env:
-        - name: MC_HOST_obs
-          # mc consumes MC_HOST_<alias>=http://<user>:<pw>@host:port to set up an alias
-          # without writing to ~/.mcconfig. Using the alias `obs` below.
-          value: "http://$(ROOT_USER):$(ROOT_PASSWORD)@obs-minio:9000"
+        # mc writes its config to $HOME/.mc; the container runs as uid 1000 which can't
+        # write to the default HOME=/. Point HOME at the world-writable /tmp.
+        - name: HOME
+          value: /tmp
         - name: ROOT_USER
           valueFrom:
             secretKeyRef:
@@ -47,9 +48,11 @@ spec:
         - /bin/sh
         - -ec
         - |
-          # Wait until the MinIO API responds (Deployment may still be starting).
+          # Set the alias inside the script (not via MC_HOST env) so we don't depend on
+          # Kubernetes $(VAR) interpolation ordering. `mc alias set` validates connectivity,
+          # so retry it until MinIO is up — that doubles as the readiness wait.
           for i in $(seq 1 30); do
-            mc ready obs && break
+            mc alias set obs "http://obs-minio:9000" "$ROOT_USER" "$ROOT_PASSWORD" && break
             echo "waiting for obs-minio... ($i/30)"
             sleep 3
           done
