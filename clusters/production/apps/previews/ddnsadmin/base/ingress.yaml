@@ -1,0 +1,20 @@
+# Host is patched per-PR by the overlay (ddnsadmin-<N>.preview.wsh.no). entrypoints: web because
+# the LAN nginx fronting the cluster terminates TLS with the existing *.preview.wsh.no wildcard cert.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ddnsadmin
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+spec:
+  rules:
+  - host: ddnsadmin-preview.preview.wsh.no
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ddnsadmin
+            port:
+              number: 8000
