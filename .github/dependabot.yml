@@ -116,6 +116,8 @@ updates:
   - "/clusters/production/apps/previews/clutterstock"
   - "/clusters/production/apps/previews/clutterstock/base"
   - "/clusters/production/apps/previews/clutterstock/databases"
+  - "/clusters/production/apps/previews/ddnsadmin"
+  - "/clusters/production/apps/previews/ddnsadmin/base"
   - "/clusters/production/apps/shared/production"
   - "/clusters/production/flux-system"
   schedule:

@@ -1,0 +1,41 @@
+# Single-pod app: BIND + Django live in the same container and talk over 127.0.0.1, so there is no
+# cross-pod DNS-update traffic. Ingress is just traefik -> :8000; egress needs kube-dns + general
+# internet (startup `apk add bind` pulls from the alpine CDN over 443).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ddnsadmin
+spec:
+  podSelector:
+    matchLabels:
+      app: ddnsadmin
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: traefik
+    ports:
+    - port: 8000
+      protocol: TCP
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+  # Startup pulls the `bind` apk package from the public alpine CDN; block link-local metadata.
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+        except:
+        - 169.254.169.254/32

@@ -1,0 +1,18 @@
+# Allow cluster nodes (host networking, e.g. kubelet probes through node IPs) to reach the preview
+# pod on port 8000. Mirrors the clutterstock preview pattern.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-cluster-nodes-to-ddnsadmin-http
+spec:
+  endpointSelector:
+    matchLabels:
+      app: ddnsadmin
+  ingress:
+  - fromEntities:
+    - host
+    - remote-node
+    toPorts:
+    - ports:
+      - port: "8000"
+        protocol: TCP
