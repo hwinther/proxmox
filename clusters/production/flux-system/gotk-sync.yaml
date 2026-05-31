@@ -58,6 +58,24 @@ spec:
     kind: GitRepository
     name: flux-system
 ---
+# Per-PR ephemeral preview envs for ddnsadmin. Same 1m interval as clutterstock. No cnpg dependency
+# because the ddnsadmin preview image is self-contained (BIND + sqlite + seeded example.com zone
+# baked in by scripts/start.sh), so there's no per-PR CNPG Database.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: previews-ddnsadmin
+  namespace: flux-system
+spec:
+  interval: 1m0s
+  path: ./clusters/production/apps/previews/ddnsadmin
+  prune: true
+  dependsOn:
+  - name: kyverno
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+---
 # Kyverno CRDs come from the Helm chart; policies must apply in a separate Kustomization after this is Ready.
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
