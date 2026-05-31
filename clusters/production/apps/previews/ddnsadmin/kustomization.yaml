@@ -9,4 +9,9 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
+  # Cluster-scoped exemption from `wsh-require-github-slsa-provenance` for all ddnsadmin preview
+  # namespaces. Lives once at the parent level (not in base/) because ClusterPolicyException is
+  # cluster-scoped — repeating it per-PR overlay would collide on name. The upsert/teardown
+  # workflows only touch `pr-N` entries, so this stays put across reconciles.
+  - kyverno-clusterpolicyexception-slsa.yaml
   - pr-1712
