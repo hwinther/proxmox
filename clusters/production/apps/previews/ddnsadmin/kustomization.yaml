@@ -8,4 +8,5 @@
 # CNPG database and no template/database.yaml.tpl in this tree.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-resources: []
+resources:
+  - pr-1712
