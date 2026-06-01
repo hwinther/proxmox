@@ -31,6 +31,11 @@ spec:
         app.kubernetes.io/name: ddnsadmin
     spec:
       automountServiceAccountToken: false
+      # ghcr.io/hwinther/ddnsadmin is a private GHCR package — the kubelet needs this credential to
+      # pull. The `ghcr-pull` Secret is cloned into each `ddnsadmin.wsh.no/preview=true` namespace by
+      # the clone-ddnsadmin-preview-secrets ClusterPolicy (see ../kyverno-clusterpolicies.yaml).
+      imagePullSecrets:
+      - name: ghcr-pull
       securityContext:
         # QA/demo image runs as root (BIND binds :53, chowns zone files). See hardening note above.
         runAsNonRoot: false

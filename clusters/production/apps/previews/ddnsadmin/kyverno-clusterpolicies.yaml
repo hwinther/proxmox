@@ -1,0 +1,52 @@
+# Clones the GHCR image-pull credential a ddnsadmin preview env needs into every namespace labeled
+# `ddnsadmin.wsh.no/preview=true`. Same label-driven generate pattern as
+# `clone-clutterstock-preview-secrets` (previews/clutterstock) and `clone-pbs-encryption-keyfile`
+# (platform-production) — see the pbs-encryption-keyfile-label-clone memory for the rationale.
+#
+# Why this exists: ghcr.io/hwinther/ddnsadmin is a PRIVATE GitHub package, so the kubelet cannot
+# pull it anonymously (unlike the public clutterstock packages). The per-PR preview namespaces are
+# ephemeral, so a manually-created pull secret per PR would defeat the upsert/teardown automation —
+# instead this policy stamps the credential into each preview ns automatically on namespace create.
+# The Deployment references it via `imagePullSecrets` (see base/deployment.yaml).
+#
+# Source Secret `ghcr-pull` in namespace `platform-production` is created out-of-band (see
+# ghcr-pull-secret.md) — never committed to git. When the source is missing the clone rule no-ops
+# and the preview pod stays in ImagePullBackOff until the operator creates it.
+#
+# RBAC: the cluster-wide Secret access Kyverno's admission+background controllers need to pass the
+# validate-policy webhook SAR (it treats the templated namespace `{{request.object.metadata.name}}`
+# literally) was already added by the PBS work — `kyverno-clusterrole-clone-pbs-encryption-keyfile`
+# in platform-production. The clone-source patch/update Role on `platform-production` Secrets also
+# already exists (`kyverno-clone-source-secrets`). So no extra RBAC is needed here.
+#
+# `generateExisting: true` re-applies on policy install, so the already-running pr-1712 preview ns
+# gets the secret immediately rather than only on the next namespace create.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: clone-ddnsadmin-preview-secrets
+  annotations:
+    policies.kyverno.io/title: Clone ddnsadmin preview-env GHCR pull secret
+    policies.kyverno.io/category: ddnsadmin
+    policies.kyverno.io/severity: low
+spec:
+  generateExisting: true
+  rules:
+  - name: clone-ghcr-pull
+    match:
+      any:
+      - resources:
+          kinds:
+          - Namespace
+          selector:
+            matchLabels:
+              ddnsadmin.wsh.no/preview: "true"
+    generate:
+      apiVersion: v1
+      kind: Secret
+      name: ghcr-pull
+      namespace: "{{request.object.metadata.name}}"
+      synchronize: true
+      clone:
+        namespace: platform-production
+        name: ghcr-pull
