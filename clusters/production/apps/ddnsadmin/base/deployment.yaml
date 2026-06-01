@@ -1,31 +1,24 @@
-# Production ddnsadmin deployment.
+# Shared production-shape Deployment for any ddnsadmin instance. Overlays under ../<instance>/
+# inject `metadata.namespace`, pin the image (`images:` block), and patch the env values flagged
+# REPLACE-IN-OVERLAY below. The base alone is intentionally non-runnable; rendering it directly
+# (e.g. `kustomize build base`) is for diff inspection only.
 #
-# Different from the QA / preview path (apps/previews/ddnsadmin/base/deployment.yaml) in three
-# load-bearing ways:
+# Shape vs. the preview / demo image (apps/previews/ddnsadmin/base/deployment.yaml):
+#   1. DDNSADMIN_DEMO=false: scripts/start.sh skips the in-pod BIND install, the hard-coded TSIG
+#      seed, the example.com zone bootstrap, and the demo `admin` superuser. The pod is a slim
+#      Django container that talks to an EXTERNAL BIND via TSIG (configure Zone + TsigKey rows in
+#      the Django admin once the bootstrap superuser logs in).
+#   2. Runs as non-root (UID 1654), no NET_BIND_SERVICE, all caps dropped.
+#   3. PVC-backed sqlite at /data/ddnsadmin.db (RWO). Switch DATABASE_URL to a postgres:// URL +
+#      drop the PVC if HA / multi-replica is ever wanted.
 #
-#   1. DDNSADMIN_DEMO=false: scripts/start.sh skips the in-container BIND install, the hard-coded
-#      TSIG seed, the example.com zone bootstrap, and the demo `admin` superuser. The pod runs
-#      as a slim Django container that talks to an EXTERNAL BIND via TSIG (Zones / TsigKey rows
-#      configured through the Django admin UI after the bootstrap superuser logs in).
-#
-#   2. Runs as non-root (UID 1654) — no NET_BIND_SERVICE, no chown, no named:named ownership.
-#      The QA path needs runAsUser:0 because BIND binds :53 and chowns zone files; production
-#      doesn't run BIND in-pod, so the strict securityContext applies.
-#
-#   3. PVC-backed sqlite at /data/ddnsadmin.db (RWO) — survives pod restarts. The preview path
-#      keeps the DB on the writable root FS (ephemeral on purpose). Switch DATABASE_URL to a
-#      postgres:// URL + drop the PVC if you ever need HA / multi-replica.
-#
-# Secrets contract (see secrets-bootstrap.md for the create-once values):
-#   - ddnsadmin-secrets:  SECRET_KEY, DJANGO_SUPERUSER_PASSWORD (only used when bootstrap is on)
+# Secrets contract (see secrets-bootstrap.md; both must exist in the overlay's namespace):
+#   - ddnsadmin-secrets:  SECRET_KEY, DJANGO_SUPERUSER_PASSWORD
 #   - ghcr-pull:          GHCR image-pull credential (private package).
-#                         Either clone via a Kyverno ClusterPolicy similar to the preview path,
-#                         or create directly in this namespace — see bootstrap doc.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: ddnsadmin
-  namespace: ddnsadmin-production
 spec:
   replicas: 1
   strategy:
@@ -58,27 +51,27 @@ spec:
             drop:
             - ALL
         env:
+        # --- Same across every instance ---
         - name: DDNSADMIN_DEMO
           value: "false"
         - name: DEBUG
           value: "false"
-        - name: ALLOWED_HOSTS
-          value: "ddns.wsh.no"
-        - name: WEB_PREFIX
-          value: "https://ddns.wsh.no"
         - name: DATABASE_URL
           value: "sqlite:////data/ddnsadmin.db"
         - name: DARKMYST_MAGIC
           value: "false"
-        # Production superuser is bootstrapped from the Secret on first boot. The start.sh check
-        # is idempotent (no-ops if the user already exists), so leaving the flag on across
-        # re-deploys is harmless.
+        # Idempotent — scripts/start.sh no-ops if the user already exists.
         - name: DJANGO_SUPERUSER_BOOTSTRAP
           value: "true"
         - name: DJANGO_SUPERUSER_USERNAME
           value: "admin"
+        # --- REPLACE-IN-OVERLAY (overlay must merge-patch these) ---
+        - name: WEB_PREFIX
+          value: "https://REPLACE.ME"
+        - name: ALLOWED_HOSTS
+          value: "REPLACE.ME"
         - name: DJANGO_SUPERUSER_EMAIL
-          value: "admin@wsh.no"
+          value: "REPLACE@REPLACE.ME"
         envFrom:
         - secretRef:
             name: ddnsadmin-secrets

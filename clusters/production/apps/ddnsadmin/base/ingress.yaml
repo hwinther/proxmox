@@ -1,11 +1,11 @@
-# Production ingress. Matches the cluster's Traefik+web entrypoint pattern used by clutterstock
-# and authelia. TLS is terminated upstream; the pod sees plain HTTP — `SECURE_PROXY_SSL_HEADER`
-# in dweb/settings.py makes Django trust the X-Forwarded-Proto header so CSRF is happy.
+# Per-instance ingress. The host is a placeholder; overlays MUST replace it via a JSON-Patch on
+# `.spec.rules[0].host`. TLS is terminated upstream by Traefik on the `web` entrypoint —
+# dweb/settings.py's `SECURE_PROXY_SSL_HEADER` makes Django trust the X-Forwarded-Proto header so
+# CSRF accepts POSTs from the https:// origin even though the pod sees plain HTTP.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: ddnsadmin
-  namespace: ddnsadmin-production
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
     gethomepage.dev/enabled: "true"
@@ -15,7 +15,7 @@ metadata:
     gethomepage.dev/description: Self-service DNS record administration
 spec:
   rules:
-  - host: ddns.wsh.no
+  - host: REPLACE.ME
     http:
       paths:
       - path: /

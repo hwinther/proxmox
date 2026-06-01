@@ -25,7 +25,7 @@ resources:
 - test-test
 - clutterstock-test
 - clutterstock
-- ddnsadmin-production
+- ddnsadmin
 - home-assistant-production
 - mosquitto-production
 - node-red-production

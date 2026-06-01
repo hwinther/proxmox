@@ -1,16 +1,16 @@
-# NetworkPolicy posture for the production ddnsadmin pod. Mirrors the clutterstock-api shape:
-# default-deny everything via the explicit Ingress / Egress allow lists below.
+# NetworkPolicy posture for the production-shape ddnsadmin pod. Default-deny — only the allows
+# below are open.
 #
 # Egress:
 #   - kube-dns (TCP/UDP 53) for in-cluster name resolution.
-#   - The EXTERNAL BIND host on TCP 53 (DDNS updates) and UDP 53 (check_record resolver). Replace
-#     the placeholder CIDR below with the actual nameserver IP / range.
-#   - Sentry / log shipper / metrics receivers if relevant — leave commented until needed.
+#   - External BIND host on TCP+UDP 53 (DDNS updates over TSIG + check_record resolver). The CIDR
+#     below is a permissive default covering the homelab `192.168.0.0/16` range. Overlays can
+#     tighten or replace it via a JSON-Patch on the relevant egress block when an instance lives
+#     on a different network (e.g. a friend's BIND in 10.0.0.0/8).
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: ddnsadmin
-  namespace: ddnsadmin-production
 spec:
   podSelector:
     matchLabels:
@@ -39,8 +39,7 @@ spec:
       protocol: UDP
     - port: 53
       protocol: TCP
-  # Talk to the EXTERNAL BIND server (DDNS updates over TSIG + check_record DNS queries).
-  # Replace the CIDR below with the nameserver's actual IP/range before applying.
+  # External BIND. Overlays may replace the CIDR if their BIND is reachable on a different range.
   - to:
     - ipBlock:
         cidr: 192.168.0.0/16
