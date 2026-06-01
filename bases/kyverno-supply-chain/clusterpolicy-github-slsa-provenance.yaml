@@ -110,6 +110,13 @@ spec:
       - ghcr.io/hwinther/*
       skipImageReferences:
       - ghcr.io/hwinther/wsh-rtl-sdr/*
+      # ddnsadmin is a user-owned PRIVATE GitHub repo, so actions/attest-build-provenance returns
+      # "Feature not available for user-owned private repositories" — no SLSA SigstoreBundle is ever
+      # published (attest_build_provenance_enabled=false in its CI). Cosign keyless signing still runs.
+      # Skip it here rather than via PolicyException: the cluster's admission controller runs with
+      # --enablePolicyException=false, so PolicyException objects are inert. Remove this skip if the
+      # repo is made public (and provenance re-enabled) or moves to a plan with the private Attestations API.
+      - ghcr.io/hwinther/ddnsadmin/*
       failureAction: Enforce # Note: Enforce is required for mutateDigest: true
       mutateDigest: true
       verifyDigest: true

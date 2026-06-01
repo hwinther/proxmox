@@ -8,4 +8,3 @@ resources:
 - ingress.yaml
 - networkpolicies.yaml
 - cilium-cluster-nodes-to-http.yaml
-- kyverno-policyexception-slsa.yaml
