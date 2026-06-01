@@ -1,0 +1,50 @@
+# NetworkPolicy posture for the production-shape ddnsadmin pod. Default-deny — only the allows
+# below are open.
+#
+# Egress:
+#   - kube-dns (TCP/UDP 53) for in-cluster name resolution.
+#   - External BIND host on TCP+UDP 53 (DDNS updates over TSIG + check_record resolver). The CIDR
+#     below is a permissive default covering the homelab `192.168.0.0/16` range. Overlays can
+#     tighten or replace it via a JSON-Patch on the relevant egress block when an instance lives
+#     on a different network (e.g. a friend's BIND in 10.0.0.0/8).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ddnsadmin
+spec:
+  podSelector:
+    matchLabels:
+      app: ddnsadmin
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: traefik
+    ports:
+    - port: 8000
+      protocol: TCP
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+  # External BIND. Overlays may replace the CIDR if their BIND is reachable on a different range.
+  - to:
+    - ipBlock:
+        cidr: 192.168.0.0/16
+    ports:
+    - port: 53
+      protocol: TCP
+    - port: 53
+      protocol: UDP

@@ -1,0 +1,46 @@
+# Production ddnsadmin overlay. See ../base/secrets-bootstrap.md for the prerequisite Secrets
+# (`ddnsadmin-secrets` and `ghcr-pull`) — both must exist in `ddnsadmin-production` before this
+# Deployment can start.
+#
+# Image tag/digest is pinned here so production can ride a stable build independently of any other
+# instance (e.g. the test overlay tracks a different tag).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: ddnsadmin-production
+resources:
+- ../base
+- namespace.yaml
+images:
+- name: ghcr.io/hwinther/ddnsadmin/ddnsadmin
+  newTag: "placeholder-set-on-first-deploy"
+  # digest: "sha256:..."  # uncomment + pin once the image is actually selected
+patches:
+# Strategic-merge patch on Deployment env: name-keyed so re-ordering base env doesn't silently
+# break the overlay (JSON-Patch indexes into /env/N are brittle for that reason).
+- target:
+    kind: Deployment
+    name: ddnsadmin
+  patch: |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: ddnsadmin
+    spec:
+      template:
+        spec:
+          containers:
+          - name: ddnsadmin
+            env:
+            - name: WEB_PREFIX
+              value: "https://ddns.wsh.no"
+            - name: ALLOWED_HOSTS
+              value: "ddns.wsh.no"
+            - name: DJANGO_SUPERUSER_EMAIL
+              value: "admin@wsh.no"
+- target:
+    kind: Ingress
+    name: ddnsadmin
+  patch: |-
+    - op: replace
+      path: /spec/rules/0/host
+      value: ddns.wsh.no

@@ -1,0 +1,12 @@
+# Aggregator for the production-shape ddnsadmin instances. To add another instance (e.g. a
+# friend's): create ../<instance>/{namespace.yaml,kustomization.yaml} (the kustomization patches
+# WEB_PREFIX, ALLOWED_HOSTS, DJANGO_SUPERUSER_EMAIL, and the Ingress host), add the line below,
+# create the two prerequisite Secrets per base/secrets-bootstrap.md, and Flux picks it up.
+#
+# PR-preview instances are NOT routed through here — they live under ../previews/ddnsadmin/ and
+# use the demo-shape deployment (in-pod BIND, ephemeral, runs-as-root).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- production
+- test

@@ -1,0 +1,27 @@
+# Per-instance ingress. The host is a placeholder; overlays MUST replace it via a JSON-Patch on
+# `.spec.rules[0].host`. TLS is terminated upstream by Traefik on the `web` entrypoint —
+# dweb/settings.py's `SECURE_PROXY_SSL_HEADER` makes Django trust the X-Forwarded-Proto header so
+# CSRF accepts POSTs from the https:// origin even though the pod sees plain HTTP.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ddnsadmin
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Applications
+    gethomepage.dev/name: ddnsadmin
+    gethomepage.dev/icon: mdi-dns-outline
+    gethomepage.dev/description: Self-service DNS record administration
+spec:
+  rules:
+  - host: REPLACE.ME
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ddnsadmin
+            port:
+              number: 8000

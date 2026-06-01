@@ -1,0 +1,47 @@
+# Long-lived test instance for ddnsadmin. Same production-shape as `../production/`, just at a
+# separate hostname + its own Django DB. Shares the external BIND server with production; keep
+# Zone/TsigKey rows in this instance's DB independent (different zones, or experimental settings).
+#
+# Not referenced by any CI workflow — pure manual smoke-test target. Bump the image tag/digest
+# below to test a new build before promoting it to production.
+#
+# Prerequisite Secrets (see ../base/secrets-bootstrap.md): `ddnsadmin-secrets` + `ghcr-pull`
+# in the `ddnsadmin-test` namespace.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: ddnsadmin-test
+resources:
+- ../base
+- namespace.yaml
+images:
+- name: ghcr.io/hwinther/ddnsadmin/ddnsadmin
+  newTag: "placeholder-set-on-first-deploy"
+  # digest: "sha256:..."  # uncomment + pin once the image is actually selected
+patches:
+- target:
+    kind: Deployment
+    name: ddnsadmin
+  patch: |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: ddnsadmin
+    spec:
+      template:
+        spec:
+          containers:
+          - name: ddnsadmin
+            env:
+            - name: WEB_PREFIX
+              value: "https://ddns-test.wsh.no"
+            - name: ALLOWED_HOSTS
+              value: "ddns-test.wsh.no"
+            - name: DJANGO_SUPERUSER_EMAIL
+              value: "admin@wsh.no"
+- target:
+    kind: Ingress
+    name: ddnsadmin
+  patch: |-
+    - op: replace
+      path: /spec/rules/0/host
+      value: ddns-test.wsh.no
