@@ -15,8 +15,8 @@ resources:
 - namespace.yaml
 images:
 - name: ghcr.io/hwinther/ddnsadmin/ddnsadmin
-  newTag: "placeholder-set-on-first-deploy"
-  # digest: "sha256:..."  # uncomment + pin once the image is actually selected
+  newTag: "0.14.0"
+  digest: "sha256:e5b6c16b4e27a8be63f28bfe87ca97f28ac314389bdf9a26ebef2e66b5f06ee4"
 patches:
 - target:
     kind: Deployment
