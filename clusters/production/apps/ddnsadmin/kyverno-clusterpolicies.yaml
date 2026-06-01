@@ -1,0 +1,53 @@
+# Clones the private-GHCR image-pull credential into every production-shape ddnsadmin namespace
+# (those labeled `ddnsadmin.wsh.no/ghcr-pull: "true"` — currently production/ and test/).
+#
+# Why this exists: ghcr.io/hwinther/ddnsadmin is a PRIVATE GitHub package, so the kubelet cannot
+# pull it anonymously — without a `ghcr-pull` dockerconfigjson in the namespace the pull fails with
+# `401 Unauthorized` (anonymous token denied). The Deployment references it via `imagePullSecrets`
+# (see base/deployment.yaml). This is the same label-driven clone the preview envs use
+# (clone-ddnsadmin-preview-secrets in ../previews/ddnsadmin), just keyed off a stable label instead
+# of the ephemeral per-PR one, so long-lived instances don't need a manual `kubectl create secret`.
+#
+# Source Secret `ghcr-pull` in namespace `platform-production` is created out-of-band (see
+# base/secrets-bootstrap.md, the `ghcr-pull` recipe / the preview ghcr-pull-secret.md) — never
+# committed to git. When the source is missing the clone rule no-ops and pods stay in
+# ImagePullBackOff until the operator creates it.
+#
+# NOTE: the other prerequisite Secret, `ddnsadmin-secrets` (SECRET_KEY + DJANGO_SUPERUSER_PASSWORD),
+# is per-instance unique and is NOT cloned — create it manually per base/secrets-bootstrap.md.
+#
+# RBAC: the cluster-wide Secret read + clone-source patch/update access Kyverno needs was already
+# added by the PBS work (kyverno-clusterrole-clone-pbs-encryption-keyfile +
+# kyverno-clone-source-secrets in platform-production) — no extra RBAC here.
+#
+# `generateExisting: true` re-applies on policy install, so the already-running production/test
+# namespaces get the secret immediately rather than only on the next namespace create.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: clone-ddnsadmin-ghcr-pull
+  annotations:
+    policies.kyverno.io/title: Clone ddnsadmin production-shape GHCR pull secret
+    policies.kyverno.io/category: ddnsadmin
+    policies.kyverno.io/severity: low
+spec:
+  generateExisting: true
+  rules:
+  - name: clone-ghcr-pull
+    match:
+      any:
+      - resources:
+          kinds:
+          - Namespace
+          selector:
+            matchLabels:
+              ddnsadmin.wsh.no/ghcr-pull: "true"
+    generate:
+      apiVersion: v1
+      kind: Secret
+      name: ghcr-pull
+      namespace: "{{request.object.metadata.name}}"
+      synchronize: true
+      clone:
+        namespace: platform-production
+        name: ghcr-pull

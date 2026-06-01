@@ -4,3 +4,6 @@ metadata:
   name: ddnsadmin-test
   labels:
     app.kubernetes.io/part-of: ddnsadmin-test
+    # Selected by the clone-ddnsadmin-ghcr-pull ClusterPolicy (../kyverno-clusterpolicies.yaml),
+    # which stamps the private-GHCR pull Secret into this namespace. See base/secrets-bootstrap.md.
+    ddnsadmin.wsh.no/ghcr-pull: "true"
