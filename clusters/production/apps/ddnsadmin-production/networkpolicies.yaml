@@ -1,0 +1,51 @@
+# NetworkPolicy posture for the production ddnsadmin pod. Mirrors the clutterstock-api shape:
+# default-deny everything via the explicit Ingress / Egress allow lists below.
+#
+# Egress:
+#   - kube-dns (TCP/UDP 53) for in-cluster name resolution.
+#   - The EXTERNAL BIND host on TCP 53 (DDNS updates) and UDP 53 (check_record resolver). Replace
+#     the placeholder CIDR below with the actual nameserver IP / range.
+#   - Sentry / log shipper / metrics receivers if relevant — leave commented until needed.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ddnsadmin
+  namespace: ddnsadmin-production
+spec:
+  podSelector:
+    matchLabels:
+      app: ddnsadmin
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: traefik
+    ports:
+    - port: 8000
+      protocol: TCP
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+  # Talk to the EXTERNAL BIND server (DDNS updates over TSIG + check_record DNS queries).
+  # Replace the CIDR below with the nameserver's actual IP/range before applying.
+  - to:
+    - ipBlock:
+        cidr: 192.168.0.0/16
+    ports:
+    - port: 53
+      protocol: TCP
+    - port: 53
+      protocol: UDP

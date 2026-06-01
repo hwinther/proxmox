@@ -1,11 +1,12 @@
 # Ephemeral preview-env Deployment for ddnsadmin. Namespace + image tag/digest are set per-PR by
 # the overlay; WEB_PREFIX is patched per-PR to the preview hostname.
 #
-# This is the QA/demo image (scripts/start.sh), which at startup: `apk add bind` (needs egress to
-# the alpine CDN), provisions BIND listening on 127.0.0.1:53, seeds the example.com zone + tsig-key,
-# creates the admin/5MNU6Zk4wyfhWg7n superuser, runs `manage.py axfr`, collectstatic, then
-# `runserver 0.0.0.0:8000`. Everything (DNS + sqlite) lives inside the one container — data is
-# ephemeral per pod. ddnsadmin's CLAUDE.md explicitly says this image is not a production model.
+# Runs `scripts/start.sh` in DDNSADMIN_DEMO=true mode (the default). On startup it `apk add bind`s
+# (needs egress to the alpine CDN), provisions BIND on 127.0.0.1:53, seeds the example.com zone +
+# tsig-key, creates the admin/5MNU6Zk4wyfhWg7n superuser, runs `manage.py axfr`, then collectstatic
+# and `runserver 0.0.0.0:8000`. Everything (DNS + sqlite) lives inside the one container — data is
+# ephemeral per pod. For the production-shaped deployment (no BIND, sqlite on PVC, runs as non-root)
+# see `../../ddnsadmin-production/deployment.yaml` — same image, DDNSADMIN_DEMO=false.
 #
 # SECURITY / HARDENING — needs owner review (this tree is a draft):
 #   * Runs as root and binds 127.0.0.1:53; `named -u named` then drops privileges. A "restricted"
@@ -59,6 +60,10 @@ spec:
             - SETUID
             - SETGID
         env:
+        # Explicit even though it's the default — survives a future default flip and self-documents
+        # the preview's reliance on the in-container BIND + demo seed path in scripts/start.sh.
+        - name: DDNSADMIN_DEMO
+          value: "true"
         # Allow the preview Host header (settings.py defaults to localhost-only; DEBUG=True does not
         # auto-allow because ALLOWED_HOSTS is non-empty). Wildcard is acceptable for a short-lived
         # preview behind the LAN TLS terminator.

@@ -1,0 +1,18 @@
+# Production ddnsadmin deployment. See secrets-bootstrap.md for the prerequisite Secrets.
+#
+# Image tag is pinned via the `images:` block below — point it at the digest you want to deploy
+# (the same one image-push.yml lands in GHCR on release / main).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: ddnsadmin-production
+resources:
+- namespace.yaml
+- pvc.yaml
+- deployment.yaml
+- service.yaml
+- ingress.yaml
+- networkpolicies.yaml
+images:
+- name: ghcr.io/hwinther/ddnsadmin/ddnsadmin
+  newTag: "placeholder-set-on-first-deploy"
+  # digest: "sha256:..."  # uncomment + pin once the image is actually selected

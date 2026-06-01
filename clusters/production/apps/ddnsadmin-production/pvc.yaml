@@ -1,0 +1,19 @@
+# Persistence for the sqlite DB (`/data/ddnsadmin.db`). 1Gi is excessive for the schema —
+# Zones / Records / TsigKeys / users / API request log — but Ceph RBD's minimum is conservative
+# and the rotation log can grow over time, so headroom is cheap.
+#
+# Single-writer only — the Deployment is `replicas: 1` with `strategy: Recreate` precisely
+# because sqlite + RWO cannot be scaled out. If you ever need HA, switch DATABASE_URL to a
+# postgres:// URL (CNPG, like clutterstock) and drop this PVC.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ddnsadmin-data
+  namespace: ddnsadmin-production
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: ceph-rbd
+  resources:
+    requests:
+      storage: 1Gi
