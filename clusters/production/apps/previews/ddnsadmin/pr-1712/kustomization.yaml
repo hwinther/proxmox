@@ -18,8 +18,8 @@ labels:
 # tag (newTag) is kept alongside so `kubectl get deploy -o yaml | grep image:` stays readable.
 images:
 - name: ghcr.io/hwinther/ddnsadmin/ddnsadmin
-  newTag: "0.12.1-PullRequest1712.103"
-  digest: "sha256:bf0474a3e58f8589a01b155d0e078a996c7ab1dd4068383877efe4a11d55d8c7"
+  newTag: "0.12.1-PullRequest1712.104"
+  digest: "sha256:0fbd8a4ab1fcef6b944e7a3f0db7666465c048278fb0272a5b9474de620ab0b4"
 
 patches:
 # WEB_PREFIX drives the absolute URLs Django emits (django-environ reads it in dweb/settings.py),
