@@ -15,8 +15,8 @@ resources:
 - namespace.yaml
 images:
 - name: ghcr.io/hwinther/ddnsadmin/ddnsadmin
-  newTag: "0.15.0"
-  digest: "sha256:14302b6145477b7ed9b842bf30d11ee87c647525de71d7f5b6f0b6143a8f80c3"
+  newTag: "0.16.0"
+  digest: "sha256:c18a0cc58123adac4419bacc7ce90903aa6a8c279fd2e4840e8e26b2b7b0a9af"
 patches:
 - target:
     kind: Deployment
