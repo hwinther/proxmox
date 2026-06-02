@@ -64,9 +64,14 @@ spec:
         # the preview's reliance on the in-container BIND + demo seed path in scripts/start.sh.
         - name: DDNSADMIN_DEMO
           value: "true"
-        # Allow the preview Host header (settings.py defaults to localhost-only; DEBUG=True does not
-        # auto-allow because ALLOWED_HOSTS is non-empty). Wildcard is acceptable for a short-lived
-        # preview behind the LAN TLS terminator.
+        # Don't leak tracebacks / env values from a preview. WhiteNoise (dweb/settings.py
+        # MIDDLEWARE) serves /media/ static assets at the WSGI layer, so flipping DEBUG off no
+        # longer breaks the webpack bundle URLs the way it did before WhiteNoise was wired in.
+        - name: DEBUG
+          value: "false"
+        # Allow the preview Host header (settings.py defaults to localhost-only; the previous
+        # DEBUG=True did not auto-allow because ALLOWED_HOSTS is non-empty). Wildcard is acceptable
+        # for a short-lived preview behind the LAN TLS terminator.
         - name: ALLOWED_HOSTS
           value: "*"
         # Patched per-PR by the overlay to https://ddnsadmin-<PR>.preview.wsh.no.
