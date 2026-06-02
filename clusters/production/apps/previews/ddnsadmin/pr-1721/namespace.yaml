@@ -1,8 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: ddnsadmin-preview-pr-1721
-  labels:
-    app.kubernetes.io/part-of: ddnsadmin
-    ddnsadmin.wsh.no/preview: "true"
-    ddnsadmin.wsh.no/pr: "1721"
