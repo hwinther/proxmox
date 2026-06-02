@@ -56,6 +56,12 @@ spec:
           value: "false"
         - name: DEBUG
           value: "false"
+        # Log to stdout (kubectl logs) instead of writing /code/ddnsadmin.log — the image's /code
+        # layer is read-only and the pod runs as UID 1654, so the file handler can't open it
+        # (dweb/settings.py LOGGING). The file handler is legacy/dev-only; stdout is the container
+        # norm. Without this the pod crashes at django.setup() with PermissionError on the log file.
+        - name: LOG_TO_STDOUT
+          value: "true"
         - name: DATABASE_URL
           value: "sqlite:////data/ddnsadmin.db"
         - name: DARKMYST_MAGIC
@@ -93,21 +99,33 @@ spec:
         # the read-only image layer without consuming PVC capacity.
         - name: static
           mountPath: /code/static_collected
+        # The kubelet sends the pod IP as the Host header by default; Django's ALLOWED_HOSTS would
+        # reject that with DisallowedHost (HTTP 400) and the probe would fail. Force a fixed Host
+        # that every overlay keeps in ALLOWED_HOSTS (`localhost` is also the settings.py default).
         startupProbe:
           httpGet:
             path: /ddnsadmin/login/
             port: http
+            httpHeaders:
+            - name: Host
+              value: localhost
           periodSeconds: 5
           failureThreshold: 30
         readinessProbe:
           httpGet:
             path: /ddnsadmin/login/
             port: http
+            httpHeaders:
+            - name: Host
+              value: localhost
           periodSeconds: 10
         livenessProbe:
           httpGet:
             path: /ddnsadmin/login/
             port: http
+            httpHeaders:
+            - name: Host
+              value: localhost
           periodSeconds: 30
           failureThreshold: 3
       volumes:

@@ -33,9 +33,10 @@ patches:
           - name: ddnsadmin
             env:
             - name: WEB_PREFIX
-              value: "https://ddns-test.wsh.no"
+              value: "https://ddns.test.wsh.no"
+            # localhost kept so the kubelet probes (Host: localhost) pass — see base probes.
             - name: ALLOWED_HOSTS
-              value: "ddns-test.wsh.no"
+              value: "ddns.test.wsh.no,localhost"
             - name: DJANGO_SUPERUSER_EMAIL
               value: "admin@wsh.no"
 - target:
@@ -44,4 +45,4 @@ patches:
   patch: |-
     - op: replace
       path: /spec/rules/0/host
-      value: ddns-test.wsh.no
+      value: ddns.test.wsh.no
