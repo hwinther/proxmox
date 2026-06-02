@@ -11,3 +11,4 @@ resources:
 - pvc.yaml
 - ingress.yaml
 - networkpolicies.yaml
+- cilium-cluster-nodes-to-http.yaml

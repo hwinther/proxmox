@@ -1,0 +1,22 @@
+# Traefik runs host-network (DaemonSet, pod IP == node IP), so its traffic to this pod arrives with
+# the Cilium `host`/`remote-node` identity — NOT the `traefik` namespace identity. The k8s
+# NetworkPolicy in networkpolicies.yaml only allows `namespaceSelector: traefik`, which never
+# matches host-network traffic, so without this CiliumNetworkPolicy ingress requests are dropped and
+# Traefik returns 504. Mirrors allow-cluster-nodes-to-clutterstock-http on the production apps and
+# the same file in the previews/ddnsadmin base. (k8s + Cilium policies are additive in Cilium.)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-cluster-nodes-to-ddnsadmin-http
+spec:
+  endpointSelector:
+    matchLabels:
+      app: ddnsadmin
+  ingress:
+  - fromEntities:
+    - host
+    - remote-node
+    toPorts:
+    - ports:
+      - port: "8000"
+        protocol: TCP
