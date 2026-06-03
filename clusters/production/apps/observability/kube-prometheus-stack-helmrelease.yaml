@@ -27,6 +27,13 @@ spec:
   values:
     defaultRules:
       create: true
+      # k0s false-positives: kube-proxy is replaced by Cilium (eBPF), and k0s doesn't expose the
+      # controller-manager/scheduler on a scrapeable endpoint, so these `absent()`-based rules fire
+      # permanently even though the control plane is healthy. Disable them to stop noise pages.
+      disabled:
+        KubeProxyDown: true
+        KubeControllerManagerDown: true
+        KubeSchedulerDown: true
 
     alertmanager:
       enabled: true
@@ -48,6 +55,10 @@ spec:
           # Watchdog always fires by design (dead-man's switch) — never notify on it.
           - matchers:
             - alertname="Watchdog"
+            receiver: "null"
+          # Non-actionable severities (e.g. InfoInhibitor, severity=none) shouldn't page Telegram.
+          - matchers:
+            - severity=~"info|none"
             receiver: "null"
         receivers:
         - name: "null"
