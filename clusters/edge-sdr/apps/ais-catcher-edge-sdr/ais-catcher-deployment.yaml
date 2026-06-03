@@ -42,7 +42,7 @@ spec:
                 - "true"
       containers:
       - name: ais-catcher
-        image: ghcr.io/hwinther/wsh-rtl-sdr/ais-catcher:0.4.0@sha256:bd93f370670fb9d618ef1ff958255f326e4d249f959352410b87b7d219771382
+        image: ghcr.io/hwinther/wsh-rtl-sdr/ais-catcher:0.4.1@sha256:f268101e0b6e7de5f03a5d34e5f4302b3029d2d114936bfb19a191beecb0f78c
         imagePullPolicy: IfNotPresent
         # ConfigMap first, then Secret: same key in both → Secret wins (good for API keys / EXTRA_ARGS).
         # Create Secret manually (or ExternalSecrets / SOPS); optional so the pod runs without it.

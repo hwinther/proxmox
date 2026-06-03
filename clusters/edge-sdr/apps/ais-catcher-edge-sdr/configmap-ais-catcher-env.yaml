@@ -14,3 +14,11 @@ data:
   STATION_URL: "https://ais.edge-sdr.wsh.no"
   AIS_CATCHER_PORT: "8080"
   EXTRA_ARGS: ""
+  # MQTT publishing to the production Mosquitto broker (LB VIP, reachable from the edge LAN).
+  # Non-secret settings live here; MQTT_PASSWORD lives in `ais-catcher-secret` (see README.md).
+  # Requires an `ais-catcher` user in the mosquitto passwd file (mosquitto-secrets.md).
+  MQTT_HOST: "10.20.13.100"
+  MQTT_PORT: "1883"
+  MQTT_USERNAME: "ais-catcher"
+  MQTT_TOPIC: "ais/data"
+  MQTT_MSGFORMAT: "JSON_FULL"
