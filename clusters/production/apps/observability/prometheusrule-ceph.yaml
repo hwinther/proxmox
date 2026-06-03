@@ -1,0 +1,120 @@
+# Alerting for the Proxmox-managed Ceph cluster (scraped via the static `ceph` job → ceph-mgr
+# prometheus module on the 3 mons, see kube-prometheus-stack-helmrelease.yaml). kube-prometheus-stack
+# default rules do NOT cover Ceph, so this is the only Ceph alerting. Metric names verified against
+# live Prometheus (ceph_health_status 0=OK/1=WARN/2=ERR). `release: obs-kps` so the operator's
+# ruleSelector (matchLabels release=obs-kps) picks it up.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: ceph-rules
+  namespace: observability-production
+  labels:
+    release: obs-kps
+spec:
+  groups:
+  - name: ceph.health
+    rules:
+    - alert: CephHealthError
+      expr: ceph_health_status == 2
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Ceph cluster health is ERROR"
+        description: "ceph_health_status has reported HEALTH_ERR for >5m. Check `ceph health detail`."
+    - alert: CephHealthWarning
+      expr: ceph_health_status == 1
+      for: 30m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Ceph cluster health is WARNING"
+        description: "ceph_health_status has reported HEALTH_WARN for >30m (transient scrub/rebalance warnings clear themselves). Check `ceph health detail`."
+    - alert: CephMgrNoMetrics
+      expr: absent(ceph_health_status)
+      for: 10m
+      labels:
+        severity: critical
+      annotations:
+        summary: "No Ceph metrics — active mgr unreachable"
+        description: "ceph_health_status is absent for >10m. The active ceph-mgr prometheus module may be down or all 3 scrape targets unreachable."
+  - name: ceph.osd
+    rules:
+    - alert: CephOsdDown
+      expr: ceph_osd_up == 0
+      for: 10m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Ceph OSD {{ $labels.ceph_daemon }} is down"
+        description: "OSD {{ $labels.ceph_daemon }} has been down for >10m."
+    - alert: CephOsdOut
+      expr: ceph_osd_in == 0
+      for: 30m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Ceph OSD {{ $labels.ceph_daemon }} is out"
+        description: "OSD {{ $labels.ceph_daemon }} has been marked out for >30m — capacity and redundancy reduced."
+    - alert: CephOsdHighApplyLatency
+      expr: ceph_osd_apply_latency_ms > 1000
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Ceph OSD {{ $labels.ceph_daemon }} apply latency >1s"
+        description: "OSD {{ $labels.ceph_daemon }} apply latency is {{ $value | humanize }}ms (>1000ms) for >15m."
+  - name: ceph.mon
+    rules:
+    - alert: CephMonQuorumLost
+      expr: sum(ceph_mon_quorum_status) < 2
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Ceph mon quorum lost"
+        description: "Fewer than 2 of 3 mons are in quorum for >5m — the cluster has no majority and I/O may stall."
+    - alert: CephMonQuorumDegraded
+      expr: sum(ceph_mon_quorum_status) < 3
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Ceph mon quorum degraded"
+        description: "A monitor has been out of quorum for >15m ({{ $value }}/3 in quorum)."
+  - name: ceph.capacity
+    rules:
+    - alert: CephClusterNearFull
+      expr: ceph_cluster_total_used_bytes / ceph_cluster_total_bytes > 0.85
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Ceph cluster >85% full"
+        description: "Raw usage is {{ $value | humanizePercentage }} for >15m. Plan capacity before OSDs hit the full ratio."
+    - alert: CephClusterCriticallyFull
+      expr: ceph_cluster_total_used_bytes / ceph_cluster_total_bytes > 0.90
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Ceph cluster >90% full"
+        description: "Raw usage is {{ $value | humanizePercentage }}. Approaching the full ratio at which Ceph blocks writes."
+  - name: ceph.pgs
+    rules:
+    - alert: CephPgsDegraded
+      expr: ceph_pg_degraded > 0
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Ceph has degraded PGs"
+        description: "{{ $value }} placement groups have been degraded for >15m (recovery stalled or insufficient OSDs)."
+    - alert: CephPgsUndersized
+      expr: ceph_pg_undersized > 0
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Ceph has undersized PGs"
+        description: "{{ $value }} placement groups have been undersized for >15m — fewer replicas than the pool size."

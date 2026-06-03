@@ -1,0 +1,77 @@
+# Alerting for the RabbitMQ cluster (rabbitmq-production), scraped via the inline PodMonitor in
+# kube-prometheus-stack-helmrelease.yaml (built-in rabbitmq_prometheus plugin, HTTPS :15691).
+# Metric names verified against live Prometheus. kube-prometheus-stack defaults don't cover RabbitMQ.
+# `release: obs-kps` for the operator ruleSelector. Backlog thresholds are homelab-tuned — adjust.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: rabbitmq-rules
+  namespace: observability-production
+  labels:
+    release: obs-kps
+spec:
+  groups:
+  - name: rabbitmq.availability
+    rules:
+    - alert: RabbitmqNodeDown
+      expr: up{job="observability-production/rabbitmq"} == 0
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: "RabbitMQ node {{ $labels.pod }} is down"
+        description: "Prometheus cannot scrape RabbitMQ node {{ $labels.pod }} for >5m."
+  - name: rabbitmq.alarms
+    rules:
+    - alert: RabbitmqMemoryAlarmActive
+      expr: rabbitmq_alarms_memory_used_watermark == 1
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: "RabbitMQ memory alarm active on {{ $labels.pod }}"
+        description: "The memory high-watermark alarm is active — publishers are being blocked cluster-wide."
+    - alert: RabbitmqDiskAlarmActive
+      expr: rabbitmq_alarms_free_disk_space_watermark == 1
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: "RabbitMQ free-disk alarm active on {{ $labels.pod }}"
+        description: "The free-disk-space alarm is active — publishers are being blocked cluster-wide."
+  - name: rabbitmq.resources
+    rules:
+    - alert: RabbitmqHighMemory
+      expr: rabbitmq_process_resident_memory_bytes / rabbitmq_resident_memory_limit_bytes > 0.9
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: "RabbitMQ {{ $labels.pod }} >90% of memory limit"
+        description: "Resident memory is {{ $value | humanizePercentage }} of the high-watermark limit for >10m — approaching the memory alarm."
+    - alert: RabbitmqLowDisk
+      expr: rabbitmq_disk_space_available_bytes < 2e9
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: "RabbitMQ {{ $labels.pod }} low free disk"
+        description: "Free disk is {{ $value | humanize1024 }}B (<2GB) for >10m — approaching the free-disk alarm."
+  - name: rabbitmq.backlog
+    rules:
+    - alert: RabbitmqMessagesBacklog
+      expr: sum(rabbitmq_queue_messages_ready) > 1000
+      for: 30m
+      labels:
+        severity: warning
+      annotations:
+        summary: "RabbitMQ ready-message backlog"
+        description: "{{ $value }} messages ready (unconsumed) cluster-wide for >30m — consumers may be down or too slow. Tune threshold for your workload."
+    - alert: RabbitmqUnackedBacklog
+      expr: sum(rabbitmq_queue_messages_unacked) > 1000
+      for: 30m
+      labels:
+        severity: warning
+      annotations:
+        summary: "RabbitMQ unacked-message backlog"
+        description: "{{ $value }} messages delivered-but-unacknowledged cluster-wide for >30m — a consumer may be stuck holding messages. Tune threshold for your workload."

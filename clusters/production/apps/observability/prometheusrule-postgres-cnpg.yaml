@@ -1,0 +1,55 @@
+# Alerting for the CloudNativePG Postgres clusters (postgres-prod, testdb, cluttertestdb), scraped
+# via the inline PodMonitors in kube-prometheus-stack-helmrelease.yaml (CNPG's own exporter on :9187,
+# metric prefix cnpg_*). NOT the prometheus-community postgres_exporter, so awesome-prometheus-alerts'
+# pg_* rules don't apply — these are adapted to CNPG's metric names (verified against live Prometheus).
+# kube-prometheus-stack defaults don't cover Postgres. `release: obs-kps` for the operator ruleSelector.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: postgres-cnpg-rules
+  namespace: observability-production
+  labels:
+    release: obs-kps
+spec:
+  groups:
+  - name: cnpg.availability
+    rules:
+    - alert: CnpgInstanceDown
+      expr: up{job=~"observability-production/cnpg-.*"} == 0
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: "CNPG instance {{ $labels.pod }} is down"
+        description: "Prometheus cannot scrape CNPG instance {{ $labels.pod }} ({{ $labels.job }}) for >5m — the pod or its exporter is unavailable."
+    - alert: CnpgCollectorErrors
+      expr: cnpg_collector_up == 0
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "CNPG metrics collector failing on {{ $labels.pod }}"
+        description: "cnpg_collector_up=0 on {{ $labels.pod }} for >5m — the instance is scrapeable but its internal metric queries are failing."
+  - name: cnpg.connections
+    rules:
+    - alert: CnpgTooManyConnections
+      expr: |
+        sum by (namespace, pod) (cnpg_backends_total)
+          > on (namespace, pod)
+        (0.85 * max by (namespace, pod) (cnpg_pg_settings_setting{name="max_connections"}))
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: "CNPG {{ $labels.pod }} >85% of max_connections"
+        description: "{{ $labels.pod }} has used >85% of its max_connections for >10m — risk of refused connections."
+  - name: cnpg.replication
+    rules:
+    - alert: CnpgReplicationLagHigh
+      expr: max by (namespace, pod) (cnpg_pg_replication_lag) > 300
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: "CNPG replication lag >5m on {{ $labels.pod }}"
+        description: "Replication lag on {{ $labels.pod }} is {{ $value | humanizeDuration }} (>300s) for >10m."

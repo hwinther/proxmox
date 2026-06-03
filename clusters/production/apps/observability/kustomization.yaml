@@ -15,6 +15,11 @@ resources:
 - kyverno-rbac-generate-grafana-pg-secret.yaml
 - kyverno-rbac-generate-pbs-encryption-keyfile.yaml
 - grafana-pbs-backup-cronjob.yaml
+# Tier-1 custom alerting (gaps not covered by kube-prometheus-stack defaults): Ceph, CNPG Postgres,
+# RabbitMQ. Labeled release=obs-kps so the operator ruleSelector picks them up.
+- prometheusrule-ceph.yaml
+- prometheusrule-postgres-cnpg.yaml
+- prometheusrule-rabbitmq.yaml
 - minio-deployment.yaml
 - minio-buckets-job.yaml
 
