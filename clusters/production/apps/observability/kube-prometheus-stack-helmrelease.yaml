@@ -54,7 +54,7 @@ spec:
         - name: telegram
           telegram_configs:
           - bot_token_file: /etc/alertmanager/secrets/alertmanager-telegram/bot-token
-            chat_id: 8606561349
+            chat_id: 6729302334
             send_resolved: true
             # Plain text (no MarkdownV2/HTML) so alert descriptions with . - ( ) % > don't break parsing.
             parse_mode: ""
