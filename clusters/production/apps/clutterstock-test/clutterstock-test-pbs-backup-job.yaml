@@ -30,6 +30,9 @@ spec:
   jobTemplate:
     spec:
       backoffLimit: 2
+      # Auto-delete the finished Job + its pod ~2 days after completion (TTL-after-finished
+      # controller). Also reaps manual `--from=cronjob` runs, which the *JobsHistoryLimit don't.
+      ttlSecondsAfterFinished: 172800
       template:
         metadata:
           labels:
