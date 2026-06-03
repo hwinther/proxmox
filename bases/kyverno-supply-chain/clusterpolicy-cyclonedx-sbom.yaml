@@ -47,6 +47,12 @@ spec:
     - imageReferences:
       - ghcr.io/hwinther/wsh-rtl-sdr/*
       - ghcr.io/wshno/*
+      # sdr-base / sdr-build debug-dev base images are built by build-sdr-images.yml (not the
+      # reusable workflow) and carry no SBOM attestation; skip them to keep PolicyReports clean.
+      # See clusterpolicy-github-slsa-provenance.yaml for the full rationale and the Enforce block.
+      skipImageReferences:
+      - ghcr.io/hwinther/wsh-rtl-sdr/sdr-base*
+      - ghcr.io/hwinther/wsh-rtl-sdr/sdr-build*
       # Audit mode: mutateDigest requires Enforce, so it (and verifyDigest) are off here.
       # When the pipeline starts emitting this attestation, flip to Enforce + re-enable both.
       failureAction: Audit

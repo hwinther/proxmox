@@ -54,6 +54,18 @@ spec:
     # even if someone else hijacks the reusable, only wsh-rtl-sdr-initiated builds verify.
     - imageReferences:
       - ghcr.io/hwinther/wsh-rtl-sdr/*
+      # sdr-base / sdr-build are debug/dev base images built by wsh-rtl-sdr's own
+      # build-sdr-images.yml (NOT the reusable docker-container.yml) on a branch ref, so their
+      # attestation SAN is build-sdr-images.yml@refs/heads/main — it fails this regex and the
+      # branch ref is rejected outright. Skip them so the radio-pi02 sdr-base-debug pod admits
+      # (clusters/edge-sdr/apps/sdr-base-debug-edge-sdr). The published feeders (tar1090,
+      # dump1090-fa, ais-catcher, …) still go through the reusable path and stay verified.
+      # Admission runs --enablePolicyException=false, so skipImageReferences (not a PolicyException)
+      # is the only working carve-out. Remove once build-sdr-images.yml publishes via the reusable
+      # workflow from a tag/SHA.
+      skipImageReferences:
+      - ghcr.io/hwinther/wsh-rtl-sdr/sdr-base*
+      - ghcr.io/hwinther/wsh-rtl-sdr/sdr-build*
       failureAction: Enforce # Note: Enforce is required for mutateDigest: true
       mutateDigest: true
       verifyDigest: true
