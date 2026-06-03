@@ -1,0 +1,55 @@
+# Disposable debug/dev shell on radio-pi02 running the trixie SDR base image.
+#
+# Unlike the feeders (ais-catcher, dump1090-fa, tar1090) this is the *base* image with no
+# long-running service, so it just `sleep infinity` and waits for `kubectl exec`. Scheduling is
+# pinned to radio-pi02 by hostname (not the antenna labels) so production feeders on radio-pi01
+# stay untouched while you poke at trixie. Privileged + hostPath /dev/bus/usb give raw USB SDR
+# access (rtl_test / rtl_sdr by hand) — see kyverno-policyexception-hostpath.yaml.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sdr-base-debug
+  namespace: sdr-base-debug-edge-sdr
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: sdr-base-debug
+  template:
+    metadata:
+      labels:
+        app: sdr-base-debug
+        app.kubernetes.io/name: sdr-base-debug
+        app.kubernetes.io/part-of: sdr-base-debug-edge-sdr
+    spec:
+      tolerations:
+      - key: node-type
+        operator: Equal
+        value: edge-sdr
+        effect: NoSchedule
+      nodeSelector:
+        kubernetes.io/hostname: radio-pi02
+      containers:
+      - name: sdr-base-debug
+        image: ghcr.io/hwinther/wsh-rtl-sdr/sdr-base:0.4.0-trixie@sha256:589cc206e10c3d85d3c6233973357a9bd04880901e6e66db348682475909a89a
+        imagePullPolicy: IfNotPresent
+        command: ["sleep", "infinity"]
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: dev-bus-usb
+          mountPath: /dev/bus/usb
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: "1"
+            memory: 256Mi
+      volumes:
+      - name: dev-bus-usb
+        hostPath:
+          path: /dev/bus/usb
+          type: Directory

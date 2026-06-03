@@ -1,0 +1,21 @@
+# Exempt the sdr-base-debug pod from wsh-disallow-host-path (USB device access under /dev/bus/usb).
+apiVersion: kyverno.io/v2
+kind: PolicyException
+metadata:
+  name: sdr-base-debug-hostpath-usb
+  namespace: sdr-base-debug-edge-sdr
+spec:
+  exceptions:
+  - policyName: wsh-disallow-host-path
+    ruleNames:
+    - host-path
+  match:
+    any:
+    - resources:
+        kinds:
+        - Pod
+        namespaces:
+        - sdr-base-debug-edge-sdr
+        selector:
+          matchLabels:
+            app: sdr-base-debug

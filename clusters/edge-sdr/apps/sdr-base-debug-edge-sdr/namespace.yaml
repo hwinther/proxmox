@@ -1,0 +1,8 @@
+# Namespace **sdr-base-debug-edge-sdr** — disposable debug/dev shell on radio-pi02 running the
+# trixie SDR base image. No Ingress; reach it with `kubectl exec` (see README.md).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sdr-base-debug-edge-sdr
+  labels:
+    app.kubernetes.io/part-of: sdr-base-debug-edge-sdr
