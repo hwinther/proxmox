@@ -1,9 +1,12 @@
-# SDR base debug (edge-sdr)
+# SDR build debug (edge-sdr)
 
-Disposable **debug / development** pod on **radio-pi02** running the **trixie** SDR base image
-(`ghcr.io/hwinther/wsh-rtl-sdr/sdr-base:0.4.0-trixie`). Unlike the feeders this is the *base*
-image with no service — it just `sleep infinity` so you can `kubectl exec` in and run the SDR
-tooling by hand against the USB radio.
+Disposable **debug / development** pod on **radio-pi02** running the **trixie** SDR build image
+(`ghcr.io/hwinther/wsh-rtl-sdr/sdr-build:0.4.0-trixie`) — the base image plus the compiler/build
+toolchain, so you can compile and test SDR stacks in-pod. Unlike the feeders it runs no service —
+it just `sleep infinity` so you can `kubectl exec` in and work against the USB radio by hand.
+
+> The namespace/Deployment keep the `sdr-base-debug` name (it predates the switch to the build
+> image); only the image changed. Rename later if it bothers you.
 
 ## Scheduling (hardware)
 
@@ -31,8 +34,9 @@ rtl_test -t
 
 ## Bumping the image
 
-Edit the tag + digest in [deployment.yaml](deployment.yaml). Base images are published from the
-`hwinther/wsh-rtl-sdr` repo as `0.4.0-<debian-release>` (trixie / bookworm / bullseye / buster).
+Edit the tag + digest in [deployment.yaml](deployment.yaml). sdr-base / sdr-build images are
+published from the `hwinther/wsh-rtl-sdr` repo as `0.4.0-<debian-release>` (trixie / bookworm /
+bullseye / buster). Both are covered by the supply-chain policy skip (`sdr-base*` / `sdr-build*`).
 
 ## Teardown
 
