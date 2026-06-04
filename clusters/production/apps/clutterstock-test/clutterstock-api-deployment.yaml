@@ -83,6 +83,14 @@ spec:
             secretKeyRef:
               name: clutterstock-test-rabbitmq
               key: password
+        # Shared Redis/Valkey (redis.shared-production) — same authenticated connection string the
+        # frontend uses (clutterstock-valkey/redis-url), exposed under the .NET config key. Egress is
+        # already permitted by the clutterstock-api NetworkPolicy's 0.0.0.0/0 rule.
+        - name: Redis__ConnectionString
+          valueFrom:
+            secretKeyRef:
+              name: clutterstock-valkey
+              key: redis-url
         ports:
         - name: http
           containerPort: 8080
