@@ -18,14 +18,14 @@ labels:
 # (newTag) is kept alongside the digest so `kubectl get deploy -o yaml | grep image:` is readable.
 images:
 - name: ghcr.io/hwinther/clutterstock/api
-  newTag: "0.26.1-PullRequest243.24"
-  digest: "sha256:702f37a8d23c02c8118eaa7e471f5eb88e69080fd6eb0e2ae895798966cf9e83"
+  newTag: "0.26.1-PullRequest243.26"
+  digest: "sha256:c8864590413394b92923a3596b49e8b13fe85cbbde7c897e5c44e5cb6e16d322"
 - name: ghcr.io/hwinther/clutterstock/frontend
-  newTag: "0.26.1-PullRequest243.24"
-  digest: "sha256:30e1e4e37975e12ccd58169cec73e625d83d2c68a5c5d272f6481e93ce029ac8"
+  newTag: "0.26.1-PullRequest243.26"
+  digest: "sha256:81df4b141fba8a9e0e3b18f86aab54c064a21f78bba4b2713137cc0d40454f89"
 - name: ghcr.io/hwinther/clutterstock/migrator
-  newTag: "0.26.1-PullRequest243.24"
-  digest: "sha256:5378fb0457f4e8ea1e75c854e9679da5dc8bbbd5bfef2f7db6c746826bca4912"
+  newTag: "0.26.1-PullRequest243.26"
+  digest: "sha256:2b0fa51b7202980edf31971f98baa32d494e870cd4ad069ec6d50fcc9de4c202"
 
 patches:
 - target:
