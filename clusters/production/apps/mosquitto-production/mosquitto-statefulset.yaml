@@ -162,10 +162,10 @@ spec:
   # Cluster (not Local): the Cilium L2 announcement lease for this VIP (CiliumL2AnnouncementPolicy
   # `lan-l2`, all control-plane nodes) typically lands on a node that is NOT running this single
   # mosquitto replica. With Local the announcing node has no local backend, so external clients get
-  # "connection refused". Cluster lets the announcing node forward to the backend node. Tradeoff:
-  # the client IP is SNATed to the forwarding node's CiliumInternalIP (in 10.244.0.0/16), so the
-  # allow-mqtt-to-mosquitto policy allows that range (see cilium-mqtt-ingress.yaml). MQTT auth
-  # (password_file) remains the real access gate.
+  # "connection refused". Cluster lets the announcing node forward to the backend node. Consequence:
+  # the client is SNATed to the forwarding node's CiliumInternalIP (Cilium identity `world`), so the
+  # allow-mqtt-to-mosquitto policy permits `world` on 1883 (CIDR rules can't match cluster-internal
+  # IPs). L3 access is gated by the external firewall + MQTT auth (password_file), not this policy.
   externalTrafficPolicy: Cluster
   selector:
     app: mosquitto

@@ -40,26 +40,16 @@ spec:
     - ports:
       - port: "1883"
         protocol: TCP
+  # host/remote-node covers node-network sources (e.g. hostNetwork Traefik). `world` is required for
+  # external publishers via the LoadBalancer VIP / NodePort: with externalTrafficPolicy: Cluster the
+  # client is SNATed to the forwarding node's CiliumInternalIP, which Cilium classifies as `world`
+  # — and CIDR rules can't match cluster-internal IPs, so a fromCIDR rule does not work here. Network
+  # reachability on 1883 is therefore open; MQTT auth (password_file) is the real access gate (see the
+  # Service comment in mosquitto-statefulset.yaml). In-cluster consumers stay scoped via fromEndpoints above.
   - fromEntities:
     - host
     - remote-node
-    toPorts:
-    - ports:
-      - port: "1883"
-        protocol: TCP
-  - fromCIDR:
-    - 10.20.0.0/16
-    toPorts:
-    - ports:
-      - port: "1883"
-        protocol: TCP
-  # LoadBalancer/NodePort traffic with externalTrafficPolicy: Cluster is SNATed to the forwarding
-  # node's CiliumInternalIP (pod CIDR 10.244.0.0/16), which Cilium classifies as `world` (not
-  # remote-node) — so the rules above never match it. This range is required for external publishers
-  # (edge AIS-catcher, LAN ESP/IoT) to reach the broker via the VIP. MQTT auth is the real gate; this
-  # only narrows the network surface to in-cluster + forwarded LB traffic.
-  - fromCIDR:
-    - 10.244.0.0/16
+    - world
     toPorts:
     - ports:
       - port: "1883"
