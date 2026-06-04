@@ -13,6 +13,8 @@ HA_USER=homeassistant
 HA_PW="$(openssl rand -base64 24 | tr -d '\n')"
 ESP_USER=esp
 ESP_PW="$(openssl rand -base64 24 | tr -d '\n')"
+MQTTUI_USER=mqttui
+MQTTUI_PW="$(openssl rand -base64 24 | tr -d '\n')"
 # AIS-catcher (edge-sdr) publishes the AIS stream here. Keep it ALPHANUMERIC — it goes in the
 # broker URL (mqtt://user:pass@host) in AIS-catcher's -Q flag, which can't take @ : / in userinfo.
 AIS_USER=ais-catcher
@@ -23,6 +25,7 @@ docker run --rm --entrypoint sh eclipse-mosquitto:2.0.20 -c '
   touch /tmp/passwd
   mosquitto_passwd -b /tmp/passwd '"$HA_USER"' '"$HA_PW"'
   mosquitto_passwd -b /tmp/passwd '"$ESP_USER"' '"$ESP_PW"'
+  mosquitto_passwd -b /tmp/passwd '"$MQTTUI_USER"' '"$MQTTUI_PW"'
   mosquitto_passwd -b /tmp/passwd '"$AIS_USER"' '"$AIS_PW"'
   cat /tmp/passwd' > passwd
 
