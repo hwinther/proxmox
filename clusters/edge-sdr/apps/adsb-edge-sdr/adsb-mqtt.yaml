@@ -51,7 +51,7 @@ spec:
             topologyKey: kubernetes.io/hostname
       containers:
       - name: adsb-mqtt
-        image: ghcr.io/hwinther/wsh-rtl-sdr/adsb-mqtt:0.4.1@sha256:420d49229f443898c8e54b218d0701af4fe3c1127cf464108a024e5e45735776
+        image: ghcr.io/hwinther/wsh-rtl-sdr/adsb-mqtt:0.4.1@sha256:0d6b98f88e3378055cee5844c6f496ebe641a95d9439dec5b90dbe101a3c7319
         imagePullPolicy: IfNotPresent
         env:
         - name: MQTT_HOST
