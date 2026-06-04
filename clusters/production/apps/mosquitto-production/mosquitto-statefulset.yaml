@@ -159,10 +159,13 @@ metadata:
     lbipam.cilium.io/ips: "10.20.13.100"
 spec:
   type: LoadBalancer
-  # Cluster (not Local): single-replica StatefulSet may not run on the
-  # L2-announcing node; Cluster lets any node forward. Client IP is SNATed,
-  # which is fine — access is gated by MQTT auth, not source IP.
-  externalTrafficPolicy: Cluster
+  # Local (not Cluster): the allow-mqtt-to-mosquitto CiliumNetworkPolicy gates ingress by source
+  # CIDR (10.20.0.0/16). externalTrafficPolicy: Cluster SNATs the client to a per-node cilium IP
+  # (10.244.x, identity `world`), which that policy drops — so external publishers (edge AIS-catcher,
+  # LAN ESP/IoT) silently time out. Local preserves the real client IP so the CIDR rule matches.
+  # With Cilium L2 announcement, Local announces the VIP only from the node running the backend, so
+  # the single-replica StatefulSet and the announcing node always co-locate (no forwarding needed).
+  externalTrafficPolicy: Local
   selector:
     app: mosquitto
   ports:
