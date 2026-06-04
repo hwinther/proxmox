@@ -53,3 +53,14 @@ spec:
     - ports:
       - port: "1883"
         protocol: TCP
+  # LoadBalancer/NodePort traffic with externalTrafficPolicy: Cluster is SNATed to the forwarding
+  # node's CiliumInternalIP (pod CIDR 10.244.0.0/16), which Cilium classifies as `world` (not
+  # remote-node) — so the rules above never match it. This range is required for external publishers
+  # (edge AIS-catcher, LAN ESP/IoT) to reach the broker via the VIP. MQTT auth is the real gate; this
+  # only narrows the network surface to in-cluster + forwarded LB traffic.
+  - fromCIDR:
+    - 10.244.0.0/16
+    toPorts:
+    - ports:
+      - port: "1883"
+        protocol: TCP

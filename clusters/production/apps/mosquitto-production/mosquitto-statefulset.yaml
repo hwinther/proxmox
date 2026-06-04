@@ -159,13 +159,14 @@ metadata:
     lbipam.cilium.io/ips: "10.20.13.100"
 spec:
   type: LoadBalancer
-  # Local (not Cluster): the allow-mqtt-to-mosquitto CiliumNetworkPolicy gates ingress by source
-  # CIDR (10.20.0.0/16). externalTrafficPolicy: Cluster SNATs the client to a per-node cilium IP
-  # (10.244.x, identity `world`), which that policy drops — so external publishers (edge AIS-catcher,
-  # LAN ESP/IoT) silently time out. Local preserves the real client IP so the CIDR rule matches.
-  # With Cilium L2 announcement, Local announces the VIP only from the node running the backend, so
-  # the single-replica StatefulSet and the announcing node always co-locate (no forwarding needed).
-  externalTrafficPolicy: Local
+  # Cluster (not Local): the Cilium L2 announcement lease for this VIP (CiliumL2AnnouncementPolicy
+  # `lan-l2`, all control-plane nodes) typically lands on a node that is NOT running this single
+  # mosquitto replica. With Local the announcing node has no local backend, so external clients get
+  # "connection refused". Cluster lets the announcing node forward to the backend node. Tradeoff:
+  # the client IP is SNATed to the forwarding node's CiliumInternalIP (in 10.244.0.0/16), so the
+  # allow-mqtt-to-mosquitto policy allows that range (see cilium-mqtt-ingress.yaml). MQTT auth
+  # (password_file) remains the real access gate.
+  externalTrafficPolicy: Cluster
   selector:
     app: mosquitto
   ports:
