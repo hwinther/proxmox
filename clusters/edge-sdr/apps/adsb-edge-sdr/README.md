@@ -58,3 +58,33 @@ Do **not** commit files that contain real credentials. Use the command above, Se
 
 - Shared JSON for tar1090 uses hostPath **`/var/lib/k8s-edge-sdr/dump1090-fa`** on the node; **tar1090** is scheduled on the same node as **dump1090-fa** (`podAffinity`).
 - Put **API keys and precise LAT/LON/ALT** in **`adsb-secret`**; keep **non-identifying defaults** in `configmap-adsb-env.yaml` if you want the repo to apply without a Secret (Secret still optional except for Piaware’s `FEEDER_ID` in practice).
+
+## MQTT publishing
+
+[`adsb-mqtt.yaml`](adsb-mqtt.yaml) runs a small publisher (`ghcr.io/hwinther/wsh-rtl-sdr/adsb-mqtt`,
+built from `hwinther/wsh-rtl-sdr/images/adsb-mqtt`) that polls dump1090-fa's `aircraft.json` and
+republishes the **full snapshot** (~1 Hz) to the production Mosquitto broker for downstream apps —
+not Home Assistant. It co-locates with dump1090-fa (`podAffinity`) and reads the same shared
+hostPath read-only; HTTP `/data/aircraft.json` isn't served by this dump1090-fa image.
+
+Non-secret settings are env on the Deployment; the password is in `adsb-mqtt-secret`:
+
+| Setting | Default | Notes |
+| --- | --- | --- |
+| `MQTT_HOST` | `10.20.13.100` | Mosquitto LoadBalancer VIP (reachable from the edge LAN). |
+| `MQTT_PORT` | `1883` | Plain MQTT (no TLS listener yet). |
+| `MQTT_USERNAME` | `adsb` | Must exist in the mosquitto passwd file — see [mosquitto-secrets.md](../../../production/apps/mosquitto-production/mosquitto-secrets.md). |
+| `MQTT_PASSWORD` | — | **Secret only** (`adsb-mqtt-secret`). |
+| `MQTT_TOPIC` | `adsb/aircraft` | Full aircraft.json blob per poll; consumer parses the `aircraft[]` array. |
+| `POLL_INTERVAL` | `1` | Seconds between snapshots. Publisher skips republishing if the blob is unchanged. |
+
+Prerequisites: (1) build the `adsb-mqtt` image in `hwinther/wsh-rtl-sdr`, then pin its tag/digest in
+[adsb-mqtt.yaml](adsb-mqtt.yaml); (2) create the `adsb` mosquitto user and the Secret:
+
+```bash
+kubectl create secret generic adsb-mqtt-secret -n adsb-edge-sdr \
+  --from-literal=MQTT_PASSWORD='YourAlphanumericPassword'
+```
+
+Inspect with the `mqttui` web UI in `mosquitto-production`, or
+`mosquitto_sub -h 10.20.13.100 -u adsb -P '…' -t 'adsb/#' -v`.

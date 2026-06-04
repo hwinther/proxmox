@@ -8,4 +8,5 @@ resources:
 - tar1090.yaml
 - tar1090-ingress.yaml
 - adsb-feeders.yaml
+- adsb-mqtt.yaml
 - kyverno-policyexception-hostpath.yaml

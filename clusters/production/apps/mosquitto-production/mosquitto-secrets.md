@@ -19,6 +19,9 @@ MQTTUI_PW="$(openssl rand -base64 24 | tr -d '\n')"
 # broker URL (mqtt://user:pass@host) in AIS-catcher's -Q flag, which can't take @ : / in userinfo.
 AIS_USER=ais-catcher
 AIS_PW="$(openssl rand -hex 18)"
+# adsb-mqtt (edge-sdr) publishes dump1090-fa's aircraft.json snapshots here.
+ADSB_USER=adsb
+ADSB_PW="$(openssl rand -hex 18)"
 
 # Build the passwd file with the same image the broker uses.
 docker run --rm --entrypoint sh eclipse-mosquitto:2.0.20 -c '
@@ -27,6 +30,7 @@ docker run --rm --entrypoint sh eclipse-mosquitto:2.0.20 -c '
   mosquitto_passwd -b /tmp/passwd '"$ESP_USER"' '"$ESP_PW"'
   mosquitto_passwd -b /tmp/passwd '"$MQTTUI_USER"' '"$MQTTUI_PW"'
   mosquitto_passwd -b /tmp/passwd '"$AIS_USER"' '"$AIS_PW"'
+  mosquitto_passwd -b /tmp/passwd '"$ADSB_USER"' '"$ADSB_PW"'
   cat /tmp/passwd' > passwd
 
 kubectl create secret generic mosquitto-auth \
@@ -42,6 +46,8 @@ Record `HA_USER`/`HA_PW` — they go into Home Assistant's MQTT config entry
 `10.20.13.100`, port `1883`). `AIS_USER`/`AIS_PW` go into the `ais-catcher-secret`
 (`MQTT_PASSWORD`) in `ais-catcher-edge-sdr` — see
 [ais-catcher README](../../../edge-sdr/apps/ais-catcher-edge-sdr/README.md#mqtt-publishing).
+`ADSB_USER`/`ADSB_PW` go into the `adsb-mqtt-secret` (`MQTT_PASSWORD`) in `adsb-edge-sdr` — see
+[adsb README](../../../edge-sdr/apps/adsb-edge-sdr/README.md#mqtt-publishing).
 
 To add/rotate a user later: regenerate the file the same way and
 `kubectl create secret ... --dry-run=client -o yaml | kubectl apply -f -`, then
