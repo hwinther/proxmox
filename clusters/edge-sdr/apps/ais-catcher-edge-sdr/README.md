@@ -23,6 +23,7 @@ Use the Secret for **exact positions** (`LAT`, `LON`) so coordinates are not com
 | `LAT`                   | Station latitude (decimal degrees); overrides ConfigMap.                                                                          |
 | `LON`                   | Station longitude (decimal degrees); overrides ConfigMap.                                                                         |
 | `EXTRA_ARGS`            | Extra CLI flags for AIS-catcher (e.g. `-u host port key`, `-Q mqtt://...`).                                                       |
+| `MQTT_PASSWORD`         | Password for the `ais-catcher` Mosquitto user (see [MQTT publishing](#mqtt-publishing)). Keep alphanumeric (goes in the broker URL). |
 | Any other ConfigMap key | Same names as in **`ais-catcher-env`** (`DEVICE_INDEX`, `STATION_URL`, `BIASTEE`, …) if you need to override without editing Git. |
 
 ### Example: create the Secret
@@ -46,3 +47,31 @@ kubectl create secret generic ais-catcher-secret -n ais-catcher-edge-sdr \
 To rotate, replace the Secret (e.g. delete and recreate, or `kubectl create secret ... --dry-run=client -o yaml | kubectl apply -f -` with a manifest generated locally and **never** committed).
 
 Do **not** commit files that contain real credentials. Use the commands above, Sealed Secrets, SOPS, or External Secrets instead.
+
+## MQTT publishing
+
+AIS-catcher publishes each decoded message to the production **Mosquitto** broker so other apps can
+consume the stream (not Home Assistant — generic data pipeline). The image's start script enables it
+when `MQTT_HOST` is set; non-secret settings are in [`configmap-ais-catcher-env.yaml`](configmap-ais-catcher-env.yaml):
+
+| Setting | Default | Notes |
+| --- | --- | --- |
+| `MQTT_HOST` | `10.20.13.100` | Mosquitto LoadBalancer VIP (reachable from the edge LAN). |
+| `MQTT_PORT` | `1883` | Plain MQTT (no TLS listener yet). |
+| `MQTT_USERNAME` | `ais-catcher` | Must exist in the mosquitto passwd file — see [mosquitto-secrets.md](../../../production/apps/mosquitto-production/mosquitto-secrets.md). |
+| `MQTT_PASSWORD` | — | **Secret only** (`ais-catcher-secret`). Keep alphanumeric (embedded in the broker URL). |
+| `MQTT_TOPIC` | `ais/data` | Supports templates, e.g. `ais/%mmsi%` or `ais/%type%/%mmsi%`. |
+| `MQTT_MSGFORMAT` | `JSON_FULL` | One of NMEA, NMEA_TAG, FULL, JSON_NMEA, JSON_SPARSE, JSON_FULL. |
+
+Prerequisites: (1) a new image build with MQTT support in the start script
+(`hwinther/wsh-rtl-sdr`), then bump the tag/digest in [ais-catcher-deployment.yaml](ais-catcher-deployment.yaml);
+(2) create the `ais-catcher` mosquitto user and put its password in `ais-catcher-secret`:
+
+```bash
+kubectl create secret generic ais-catcher-secret -n ais-catcher-edge-sdr \
+  --from-literal=EXTRA_ARGS='-u hub.shipxplorer.com 37615 YOUR_API_KEY' \
+  --from-literal=MQTT_PASSWORD='YourAlphanumericPassword'
+```
+
+Inspect the live stream with the `mqttui` web UI in `mosquitto-production`, or
+`mosquitto_sub -h 10.20.13.100 -u ais-catcher -P '…' -t 'ais/#' -v`.
