@@ -46,4 +46,4 @@ spec:
         severity: info
       annotations:
         summary: "Flux {{ $labels.kind }} {{ $labels.exported_namespace }}/{{ $labels.name }} suspended >2h"
-        description: "Reconciliation has been suspended for >2h — Git changes to this resource are not being applied. Run `flux resume {{ $labels.kind | lower }} -n {{ $labels.exported_namespace }} {{ $labels.name }}` if unintended."
+        description: "Reconciliation has been suspended for >2h — Git changes to this resource are not being applied. Run `flux resume {{ $labels.kind | toLower }} -n {{ $labels.exported_namespace }} {{ $labels.name }}` if unintended."
