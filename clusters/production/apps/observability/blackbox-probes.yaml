@@ -29,7 +29,6 @@ spec:
   targets:
     staticConfig:
       static:
-      - https://clutterstock.wsh.no
       - https://www.wsh.no
       labels:
         probe_origin: vps-external
@@ -54,12 +53,11 @@ spec:
   targets:
     staticConfig:
       static:
+      # clutterstock 302s on / (app redirect), so it lives here rather than the strict http_2xx Probe.
+      - https://clutterstock.wsh.no
       - https://auth.wsh.no
       - https://ddns.wsh.no
-      - https://ddnsadmin.wsh.no
       - https://node-red.wsh.no
       - https://home-assistant.wsh.no
-      - https://rabbitmq.wsh.no
-      - https://pbs.wsh.no
       labels:
         probe_origin: vps-external

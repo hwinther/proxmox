@@ -54,8 +54,12 @@ probe_ssl_earliest_cert_expiry{probe_origin="vps-external"}
 
 | Module | Used for | Pass criteria |
 |---|---|---|
-| `http_2xx` | `clutterstock.wsh.no`, `www.wsh.no` | HTTP 2xx + valid TLS |
-| `http_public` | auth-gated / redirecting services (`auth`, `ddns`, `ddnsadmin`, `node-red`, `home-assistant`, `rabbitmq`, `pbs`) | HTTP 200/3xx/401/403 + valid TLS (fails on 5xx/TLS/timeout) |
+| `http_2xx` | `www.wsh.no` | HTTP 2xx + valid TLS |
+| `http_public` | redirecting / auth-gated services (`clutterstock` [302s], `auth`, `ddns`, `node-red`, `home-assistant`) | HTTP 200/3xx/401/403 + valid TLS (fails on 5xx/TLS/timeout) |
+
+Only publicly-routable **HTTP** ingresses belong here. Internal-only services and non-HTTP endpoints
+are intentionally excluded — e.g. `rabbitmq.wsh.no` (AMQPS broker on :5671, not a web app) and
+`pbs.wsh.no` (Proxmox Backup Server backup target / a k8s label key, not a public site).
 
 Re-bucket hosts between the two Probes as you learn each endpoint's real unauthenticated response.
 `*.mgmt.wsh.no` is intentionally **not** probed — it resolves to LAN IPs and is unreachable externally.
