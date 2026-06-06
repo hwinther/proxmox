@@ -1,0 +1,30 @@
+# blackbox-exporter modules for external *.wsh.no probing. Referenced by the Probe CRDs' `module`
+# field (clusters/production/apps/observability/blackbox-probes.yaml).
+modules:
+  # Strict: core public apps must return HTTP 2xx over valid TLS. Used for clutterstock.wsh.no, www.
+  http_2xx:
+    prober: http
+    timeout: 10s
+    http:
+      method: GET
+      valid_http_versions: [ "HTTP/1.1", "HTTP/2.0" ]
+      # empty valid_status_codes = default 2xx only
+      valid_status_codes: []
+      follow_redirects: false
+      fail_if_not_ssl: true
+      preferred_ip_protocol: ip4
+      ip_protocol_fallback: false
+
+  # Lenient: auth-gated / redirecting services where an unauthenticated GET legitimately returns
+  # 200/3xx/401/403. Still fails on 5xx, TLS errors, and timeouts. fail_if_not_ssl keeps it HTTPS-only.
+  http_public:
+    prober: http
+    timeout: 10s
+    http:
+      method: GET
+      valid_http_versions: [ "HTTP/1.1", "HTTP/2.0" ]
+      valid_status_codes: [ 200, 301, 302, 303, 307, 308, 401, 403 ]
+      follow_redirects: false
+      fail_if_not_ssl: true
+      preferred_ip_protocol: ip4
+      ip_protocol_fallback: false

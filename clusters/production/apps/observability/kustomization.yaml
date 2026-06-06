@@ -20,13 +20,19 @@ resources:
 - prometheusrule-ceph.yaml
 - prometheusrule-postgres-cnpg.yaml
 - prometheusrule-rabbitmq.yaml
-# Tier-2 custom alerting: Flux GitOps health (controllers are otherwise unscraped — flux-podmonitor.yaml),
-# cert-manager TLS expiry/renewal (scrape enabled via the cert-manager HelmRelease values), and Mosquitto
-# (metrics from the exporter sidecar + PodMonitor in mosquitto-production).
+# Tier-2 custom alerting: Flux GitOps health (controllers are otherwise unscraped — flux-podmonitor.yaml;
+# per-object Ready/suspended via the dedicated Flux kube-state-metrics instance), cert-manager TLS
+# expiry/renewal (scrape enabled via the cert-manager HelmRelease values), and Mosquitto (metrics from
+# the exporter sidecar + PodMonitor in mosquitto-production).
 - flux-podmonitor.yaml
+- kube-state-metrics-flux-helmrelease.yaml
 - prometheusrule-flux.yaml
 - prometheusrule-cert-manager.yaml
 - prometheusrule-mosquitto.yaml
+# External endpoint probing via the off-cluster VPS blackbox-exporter (infra/blackbox-vps/), scraped
+# over the tunnel. Set the prober.url tunnel IP in blackbox-probes.yaml before pushing.
+- blackbox-probes.yaml
+- prometheusrule-blackbox.yaml
 - minio-deployment.yaml
 - minio-buckets-job.yaml
 
