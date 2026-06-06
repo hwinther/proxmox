@@ -1,0 +1,24 @@
+# External blackbox-exporter, run on the off-cluster VPS to probe *.wsh.no from an internet vantage
+# point. The cluster Prometheus scrapes it over the existing tunnel via Probe CRDs
+# (clusters/production/apps/observability/blackbox-probes.yaml).
+#
+# SECURITY: bind the published port to the TUNNEL interface IP only — never 0.0.0.0 — so the exporter
+# is reachable from the cluster over the tunnel but not from the public internet. Set TUNNEL_IP below
+# (or in a .env file) to the VPS's tunnel address; that same IP goes into the Probes' prober.url.
+services:
+  blackbox:
+    image: quay.io/prometheus/blackbox-exporter:v0.28.0
+    container_name: blackbox-exporter
+    restart: unless-stopped
+    command:
+    - --config.file=/etc/blackbox/blackbox.yml
+    volumes:
+    - ./blackbox.yml:/etc/blackbox/blackbox.yml:ro
+    ports:
+    # Only the tunnel interface — e.g. TUNNEL_IP=10.10.0.2 → 10.10.0.2:9115. Do NOT expose publicly.
+    - "${TUNNEL_IP}:9115:9115"
+    read_only: true
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL

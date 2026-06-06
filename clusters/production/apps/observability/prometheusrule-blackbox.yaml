@@ -1,0 +1,43 @@
+# Alerts on the external blackbox probes (blackbox-probes.yaml, run from the off-cluster VPS).
+# release=obs-kps so the operator ruleSelector picks it up. All series are scoped by
+# probe_origin="vps-external" so these never collide with any future in-cluster probes.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: blackbox-external
+  labels:
+    release: obs-kps
+spec:
+  groups:
+  - name: blackbox-external
+    rules:
+    # The endpoint is unreachable / failing from the internet (TLS error, timeout, or a status the
+    # module rejects — 5xx for core apps). This is the user-facing "the site is down" signal.
+    - alert: ExternalEndpointDown
+      expr: probe_success{probe_origin="vps-external"} == 0
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: "External probe failing: {{ $labels.instance }}"
+        description: "{{ $labels.instance }} has failed external probing from the VPS for >5m (probe_success=0). Reachability/TLS/HTTP-status problem on the public path — DNS, internet, or the nginx front-end. Check probe_http_status_code and probe_ssl_earliest_cert_expiry for this instance."
+    # The TLS cert SERVED to the internet expires soon. cert-manager rules track the internal renewal
+    # state; this catches the front-end serving a stale/wrong cert. Single warning threshold to avoid
+    # duplicating cert-manager's two-tier paging.
+    - alert: ExternalEndpointCertExpiringSoon
+      expr: (probe_ssl_earliest_cert_expiry{probe_origin="vps-external"} - time()) < 14 * 86400
+      for: 1h
+      labels:
+        severity: warning
+      annotations:
+        summary: "Public TLS cert for {{ $labels.instance }} expires in {{ $value | humanizeDuration }}"
+        description: "The certificate served externally for {{ $labels.instance }} expires in {{ $value | humanizeDuration }}. If cert-manager shows the cert as renewed, the front-end may be serving a stale cert."
+    # Sustained slow responses from the outside — degraded UX even if not fully down.
+    - alert: ExternalEndpointSlow
+      expr: probe_duration_seconds{probe_origin="vps-external"} > 5
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Slow external response: {{ $labels.instance }}"
+        description: "{{ $labels.instance }} has taken >5s to respond to external probes for >10m (currently {{ $value | humanizeDuration }})."

@@ -1,0 +1,65 @@
+# External (internet-vantage) endpoint probing. The blackbox-exporter runs on the off-cluster VPS
+# (see infra/blackbox-vps/) so probes traverse the real public path — external DNS, the internet, the
+# nginx TLS front-end — catching user-facing failures the in-cluster metrics miss (e.g. the front-end
+# truncation incident). Prometheus reaches the VPS blackbox over the existing tunnel.
+#
+# prober.url must be the VPS's TUNNEL IP (not its public IP — the exporter binds to the tunnel only).
+# >>> REPLACE 10.0.0.0-PLACEHOLDER below with the VPS tunnel address before pushing. <<<
+#
+# release=obs-kps so the operator probeSelector picks these up. Each target series gets instance=<url>
+# and the probe_origin=vps-external label (used by prometheusrule-blackbox.yaml).
+#
+# mgmt endpoints are intentionally NOT probed: *.mgmt.wsh.no resolves to LAN IPs and is unreachable
+# from the internet by design.
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  name: external-core-apps
+  namespace: observability-production
+  labels:
+    release: obs-kps
+spec:
+  interval: 60s
+  scrapeTimeout: 15s
+  # http_2xx module (defined in infra/blackbox-vps/blackbox.yml) requires HTTP 2xx + valid TLS.
+  module: http_2xx
+  prober:
+    url: 10.0.0.0-PLACEHOLDER:9115
+    scheme: http
+  targets:
+    staticConfig:
+      static:
+      - https://clutterstock.wsh.no
+      - https://www.wsh.no
+      labels:
+        probe_origin: vps-external
+---
+# Auth-gated / redirecting public services: an unauthenticated GET legitimately returns 200/3xx/401/403,
+# so the lenient http_public module treats those as success (still fails on 5xx / TLS errors / timeouts).
+# Re-bucket hosts between this and external-core-apps as you learn each one's real response.
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  name: external-public-services
+  namespace: observability-production
+  labels:
+    release: obs-kps
+spec:
+  interval: 60s
+  scrapeTimeout: 15s
+  module: http_public
+  prober:
+    url: 10.0.0.0-PLACEHOLDER:9115
+    scheme: http
+  targets:
+    staticConfig:
+      static:
+      - https://auth.wsh.no
+      - https://ddns.wsh.no
+      - https://ddnsadmin.wsh.no
+      - https://node-red.wsh.no
+      - https://home-assistant.wsh.no
+      - https://rabbitmq.wsh.no
+      - https://pbs.wsh.no
+      labels:
+        probe_origin: vps-external
