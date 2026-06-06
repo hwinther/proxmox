@@ -1,0 +1,19 @@
+# Scrapes the mosquitto-exporter sidecar (port metrics/9234 on the broker pod). release=obs-kps so the
+# obs-kps Prometheus podMonitorSelector picks it up (it watches all namespaces). Operator sets the
+# series job label to <namespace>/<name> → job="mosquitto-production/mosquitto"
+# (used by the MosquittoDown rule in ../observability/prometheusrule-mosquitto.yaml).
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: mosquitto
+  namespace: mosquitto-production
+  labels:
+    release: obs-kps
+spec:
+  selector:
+    matchLabels:
+      app: mosquitto
+  podMetricsEndpoints:
+  - port: metrics
+    interval: 30s
+    scrapeTimeout: 10s

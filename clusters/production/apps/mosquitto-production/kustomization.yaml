@@ -4,6 +4,7 @@ resources:
 - namespace.yaml
 - mosquitto-configmap.yaml
 - mosquitto-statefulset.yaml
+- mosquitto-podmonitor.yaml
 - cilium-mqtt-ingress.yaml
 - kyverno-rbac-generate-pbs-encryption-keyfile.yaml
 - mosquitto-pbs-backup-cronjob.yaml

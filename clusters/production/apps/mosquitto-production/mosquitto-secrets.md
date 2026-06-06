@@ -22,6 +22,10 @@ AIS_PW="$(openssl rand -hex 18)"
 # adsb-mqtt (edge-sdr) publishes dump1090-fa's aircraft.json snapshots here.
 ADSB_USER=adsb
 ADSB_PW="$(openssl rand -hex 18)"
+# mosquitto-exporter sidecar subscribes to $SYS/# to expose Prometheus metrics. No ACL file is in use,
+# so any authenticated user can read $SYS — a dedicated read-only user keeps it auditable/rotatable.
+MON_USER=monitor
+MON_PW="$(openssl rand -base64 24 | tr -d '\n')"
 
 # Build the passwd file with the same image the broker uses.
 docker run --rm --entrypoint sh eclipse-mosquitto:2.0.20 -c '
@@ -31,6 +35,7 @@ docker run --rm --entrypoint sh eclipse-mosquitto:2.0.20 -c '
   mosquitto_passwd -b /tmp/passwd '"$MQTTUI_USER"' '"$MQTTUI_PW"'
   mosquitto_passwd -b /tmp/passwd '"$AIS_USER"' '"$AIS_PW"'
   mosquitto_passwd -b /tmp/passwd '"$ADSB_USER"' '"$ADSB_PW"'
+  mosquitto_passwd -b /tmp/passwd '"$MON_USER"' '"$MON_PW"'
   cat /tmp/passwd' > passwd
 
 kubectl create secret generic mosquitto-auth \
@@ -38,6 +43,13 @@ kubectl create secret generic mosquitto-auth \
   --from-file=passwd=./passwd
 
 rm -f passwd
+
+# The exporter sidecar reads its login from a separate Secret (envFrom MQTT_USER/MQTT_PASS). These
+# values are NOT the password file — they're the plaintext monitor credentials the exporter logs in with.
+kubectl create secret generic mosquitto-exporter-auth \
+  --namespace mosquitto-production \
+  --from-literal=username="$MON_USER" \
+  --from-literal=password="$MON_PW"
 ```
 
 Record `HA_USER`/`HA_PW` — they go into Home Assistant's MQTT config entry
@@ -48,6 +60,8 @@ Record `HA_USER`/`HA_PW` — they go into Home Assistant's MQTT config entry
 [ais-catcher README](../../../edge-sdr/apps/ais-catcher-edge-sdr/README.md#mqtt-publishing).
 `ADSB_USER`/`ADSB_PW` go into the `adsb-mqtt-secret` (`MQTT_PASSWORD`) in `adsb-edge-sdr` — see
 [adsb README](../../../edge-sdr/apps/adsb-edge-sdr/README.md#mqtt-publishing).
+`MON_USER`/`MON_PW` are consumed only by the `mosquitto-exporter-auth` Secret above (the
+mosquitto-exporter sidecar) — no other system needs them.
 
 To add/rotate a user later: regenerate the file the same way and
 `kubectl create secret ... --dry-run=client -o yaml | kubectl apply -f -`, then

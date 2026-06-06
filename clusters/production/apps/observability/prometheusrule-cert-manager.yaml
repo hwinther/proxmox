@@ -1,0 +1,50 @@
+# cert-manager TLS health. Metrics come from the cert-manager controller (port 9402), scraped via the
+# chart's ServiceMonitor enabled in ../cert-manager/install/cert-manager-helmrelease.yaml. Not covered
+# by kube-prometheus-stack defaults. release=obs-kps so the operator ruleSelector picks it up.
+#
+# An expired or failed-to-renew cert is a user-visible TLS outage on *.wsh.no, so these matter even
+# though renewals are automatic — they catch the case where automation itself breaks (ACME/DNS-01,
+# rate limits, issuer misconfig).
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: cert-manager
+  labels:
+    release: obs-kps
+spec:
+  groups:
+  - name: cert-manager
+    rules:
+    # 7–21 days to expiry: renewal should have happened by now (cert-manager renews at 2/3 of lifetime,
+    # typically ~30d out for 90d Let's Encrypt certs). Warning window stops at 7d so it never overlaps
+    # the critical rule below (no double-page).
+    - alert: CertManagerCertExpiringSoon
+      expr: |
+        (certmanager_certificate_expiration_timestamp_seconds - time()) < 1814400
+          and
+        (certmanager_certificate_expiration_timestamp_seconds - time()) >= 604800
+      for: 1h
+      labels:
+        severity: warning
+      annotations:
+        summary: "TLS cert {{ $labels.namespace }}/{{ $labels.name }} expires in {{ $value | humanizeDuration }}"
+        description: "Certificate {{ $labels.namespace }}/{{ $labels.name }} expires in {{ $value | humanizeDuration }} and has not renewed. Check `kubectl describe certificate -n {{ $labels.namespace }} {{ $labels.name }}` and the issuer/ACME order."
+    # <7 days: renewal is clearly broken — imminent outage.
+    - alert: CertManagerCertExpiringCritical
+      expr: (certmanager_certificate_expiration_timestamp_seconds - time()) < 604800
+      for: 1h
+      labels:
+        severity: critical
+      annotations:
+        summary: "TLS cert {{ $labels.namespace }}/{{ $labels.name }} expires in {{ $value | humanizeDuration }}"
+        description: "Certificate {{ $labels.namespace }}/{{ $labels.name }} expires in {{ $value | humanizeDuration }} and renewal has NOT succeeded — imminent TLS failure. Inspect the Certificate, CertificateRequest, and Order/Challenge resources."
+    # The Certificate's Ready condition is False — issuance or renewal is actively failing (independent
+    # of how close expiry is; catches a cert that never issued in the first place).
+    - alert: CertManagerCertNotReady
+      expr: certmanager_certificate_ready_status{condition="True"} == 0
+      for: 1h
+      labels:
+        severity: warning
+      annotations:
+        summary: "TLS cert {{ $labels.namespace }}/{{ $labels.name }} not Ready"
+        description: "Certificate {{ $labels.namespace }}/{{ $labels.name }} has Ready!=True for >1h — issuance/renewal is failing. Check its CertificateRequest and Order for the error."
