@@ -1,10 +1,14 @@
-# Flux GitOps health. Metrics come from flux-podmonitor.yaml (gotk_* series exported by the
-# kustomize/helm/source/notification controllers). Not covered by kube-prometheus-stack defaults.
-# release=obs-kps so the operator ruleSelector picks it up.
+# Flux GitOps health. Metrics come from flux-podmonitor.yaml. release=obs-kps so the operator
+# ruleSelector picks it up. Not covered by kube-prometheus-stack defaults.
 #
-# NOTE on labels: the gotk_* series carry the *reconciled object's* namespace in `namespace`, but the
-# PodMonitor target also has a `namespace` label (flux-system). With default honor_labels=false the
-# scraped one is renamed → the object namespace appears as `exported_namespace`. Rules group on that.
+# IMPORTANT (Flux v2.8): the controllers do NOT expose gotk_reconcile_condition / gotk_suspend_status
+# (those were removed). Per-object Ready=False detection now requires a kube-state-metrics
+# custom-resource-state config (fluxcd/flux2-monitoring-example) — none is deployed here yet, so these
+# rules use the controllers' built-in controller-runtime metrics instead:
+#   - up                              → controller reachable/alive
+#   - controller_runtime_reconcile_total{result="error"} → reconcile failures, labeled by `controller`
+#     (kustomization, helmrelease, gitrepository, …). Coarser than per-object, but real.
+# Follow-up to add precise per-Kustomization/HelmRelease Ready alerts: deploy the KSM CR-state config.
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
@@ -15,19 +19,9 @@ spec:
   groups:
   - name: flux-gitops
     rules:
-    # A Kustomization/HelmRelease/GitRepository/etc. stuck not-Ready for >15m: drift is no longer being
-    # applied. 15m absorbs normal transient retries (e.g. a HelmRelease upgrade in progress).
-    - alert: FluxReconciliationFailure
-      expr: max by (exported_namespace, name, kind) (gotk_reconcile_condition{type="Ready",status="False"}) == 1
-      for: 15m
-      labels:
-        severity: warning
-      annotations:
-        summary: "Flux {{ $labels.kind }} {{ $labels.exported_namespace }}/{{ $labels.name }} failing to reconcile"
-        description: "{{ $labels.kind }} {{ $labels.exported_namespace }}/{{ $labels.name }} has had Ready=False for >15m — GitOps is no longer converging this resource. Check `flux get all -A` / controller logs."
-    # All of a controller's metrics endpoints are unreachable → that controller is down/crashlooping
-    # and nothing it owns reconciles. The operator sets the job label to <podmonitor-namespace>/<name>;
-    # flux-podmonitor.yaml is forced into observability-production by the kustomization → this job name.
+    # A controller's metrics endpoint is unreachable → it's down/crashlooping and nothing it owns
+    # reconciles. job set to <podmonitor-namespace>/<name> by the operator (flux-podmonitor.yaml lives
+    # in observability-production). Per-pod so the alert names which controller.
     - alert: FluxControllerDown
       expr: up{job="observability-production/flux"} == 0
       for: 10m
@@ -36,14 +30,14 @@ spec:
       annotations:
         summary: "Flux controller {{ $labels.pod }} is down"
         description: "Flux controller pod {{ $labels.pod }} has been unscrapeable for >10m. While down, the resources it owns are not reconciled."
-    # Suspended = reconciliation intentionally paused (`flux suspend`). Usually deliberate during
-    # maintenance/debugging, so this is info (non-paging via the severity=~info|none → null route) and
-    # fires only after 2h to catch a suspend someone forgot to lift.
-    - alert: FluxResourceSuspended
-      expr: max by (exported_namespace, name, kind) (gotk_suspend_status) == 1
-      for: 2h
+    # Sustained reconcile errors from a controller → it is persistently failing to apply something
+    # (bad manifest, failing Helm upgrade, unreachable Git/OCI source, etc.). A transient blip won't
+    # hold rate>0 across the 15m window; a genuinely stuck resource will. `controller` says which kind.
+    - alert: FluxReconcileErrors
+      expr: sum by (controller) (rate(controller_runtime_reconcile_total{job="observability-production/flux",result="error"}[5m])) > 0
+      for: 15m
       labels:
-        severity: info
+        severity: warning
       annotations:
-        summary: "Flux {{ $labels.kind }} {{ $labels.exported_namespace }}/{{ $labels.name }} suspended >2h"
-        description: "Reconciliation has been suspended for >2h — Git changes to this resource are not being applied. Run `flux resume {{ $labels.kind | toLower }} -n {{ $labels.exported_namespace }} {{ $labels.name }}` if unintended."
+        summary: "Flux {{ $labels.controller }} controller has persistent reconcile errors"
+        description: "The Flux {{ $labels.controller }} controller has been returning reconcile errors continuously for >15m — GitOps is not converging some resource of this kind. Run `flux get all -A` and check the controller logs."
