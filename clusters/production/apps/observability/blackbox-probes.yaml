@@ -3,8 +3,8 @@
 # nginx TLS front-end — catching user-facing failures the in-cluster metrics miss (e.g. the front-end
 # truncation incident). Prometheus reaches the VPS blackbox over the existing tunnel.
 #
-# prober.url must be the VPS's TUNNEL IP (not its public IP — the exporter binds to the tunnel only).
-# >>> REPLACE 10.0.0.0-PLACEHOLDER below with the VPS tunnel address before pushing. <<<
+# prober.url is the VPS's TUNNEL IP (10.31.0.3) — not its public IP; the exporter binds to the tunnel
+# only. Keep this in sync with TUNNEL_IP in infra/blackbox-vps/.
 #
 # release=obs-kps so the operator probeSelector picks these up. Each target series gets instance=<url>
 # and the probe_origin=vps-external label (used by prometheusrule-blackbox.yaml).
@@ -24,7 +24,7 @@ spec:
   # http_2xx module (defined in infra/blackbox-vps/blackbox.yml) requires HTTP 2xx + valid TLS.
   module: http_2xx
   prober:
-    url: 10.0.0.0-PLACEHOLDER:9115
+    url: 10.31.0.3:9115
     scheme: http
   targets:
     staticConfig:
@@ -49,7 +49,7 @@ spec:
   scrapeTimeout: 15s
   module: http_public
   prober:
-    url: 10.0.0.0-PLACEHOLDER:9115
+    url: 10.31.0.3:9115
     scheme: http
   targets:
     staticConfig:
