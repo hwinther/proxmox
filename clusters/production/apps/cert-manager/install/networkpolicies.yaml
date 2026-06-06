@@ -20,6 +20,15 @@ spec:
     - namespaceSelector:
         matchLabels:
           kubernetes.io/metadata.name: cert-manager
+  # Prometheus (obs-kps, in observability-production) scrapes the controller metrics on 9402 via the
+  # chart's ServiceMonitor. Without this the default-deny ingress drops the scrape and the target is up=0.
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: observability-production
+    ports:
+    - port: 9402
+      protocol: TCP
   egress:
   - to:
     - namespaceSelector:

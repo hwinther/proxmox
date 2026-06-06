@@ -40,6 +40,16 @@ spec:
     - ports:
       - port: "1883"
         protocol: TCP
+  # Prometheus (obs-kps) scrapes the mosquitto-exporter sidecar on 9234. Without this the default-deny
+  # drops the scrape and the PodMonitor target is down (context deadline exceeded).
+  - fromEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: observability-production
+        app.kubernetes.io/name: prometheus
+    toPorts:
+    - ports:
+      - port: "9234"
+        protocol: TCP
   # host/remote-node covers node-network sources (e.g. hostNetwork Traefik). `world` is required for
   # external publishers via the LoadBalancer VIP / NodePort: with externalTrafficPolicy: Cluster the
   # client is SNATed to the forwarding node's CiliumInternalIP, which Cilium classifies as `world`

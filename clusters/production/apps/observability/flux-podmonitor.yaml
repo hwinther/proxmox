@@ -15,9 +15,10 @@ spec:
     matchNames:
     - flux-system
   selector:
+    # control-plane: controller is only on the Deployments, not the pod template — selecting on it
+    # matches zero pods. part-of: flux is on every controller pod and each exposes http-prom.
     matchLabels:
       app.kubernetes.io/part-of: flux
-      control-plane: controller
   podMetricsEndpoints:
   # Operator sets the series `job` label to <podmonitor-namespace>/<name>. This object is namespaced
   # into observability-production → job="observability-production/flux" (FluxControllerDown rule).
