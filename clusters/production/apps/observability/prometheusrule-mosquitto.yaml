@@ -1,0 +1,35 @@
+# Mosquitto MQTT broker health. Metrics come from the mosquitto-exporter sidecar (see
+# ../mosquitto-production/mosquitto-statefulset.yaml), scraped by the `mosquitto` PodMonitor in
+# mosquitto-production. release=obs-kps so the operator ruleSelector picks it up.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: mosquitto
+  labels:
+    release: obs-kps
+spec:
+  groups:
+  - name: mosquitto
+    rules:
+    # Exporter's /metrics endpoint unscrapeable → the broker pod is down/crashlooping. HA, the ESP
+    # devices, and the AIS/ADSB publishers all lose their broker. job set by PodMonitor namespace/name.
+    - alert: MosquittoDown
+      expr: up{job="mosquitto-production/mosquitto"} == 0
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Mosquitto MQTT broker is down"
+        description: "The mosquitto-exporter on {{ $labels.pod }} has been unscrapeable for >5m — the broker is likely down. MQTT clients (Home Assistant, ESP devices, AIS/ADSB feeds) cannot publish or subscribe."
+    # broker_clients_connected counts the exporter's own loopback session, so the floor is 1. Dropping
+    # to <=1 means every other client (HA, ESP, ais-catcher, adsb-mqtt) has disconnected — a broker or
+    # auth/networking fault rather than a single noisy client. (If the exporter itself can't authenticate
+    # the series is absent, not 0 — that case shows up as missing metrics, with MosquittoDown unaffected.)
+    - alert: MosquittoNoExternalClients
+      expr: broker_clients_connected <= 1
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Mosquitto has no clients beyond the exporter"
+        description: "broker_clients_connected has been <=1 for >15m — only the metrics exporter is connected; all publishers/subscribers have dropped. Check the broker, the mosquitto LB VIP (10.20.13.100), and the AIS/ADSB feeder pods."

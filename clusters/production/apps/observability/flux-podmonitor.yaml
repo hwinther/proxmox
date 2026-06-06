@@ -1,0 +1,26 @@
+# Scrapes the Flux controllers' Prometheus metrics (port http-prom / 8080 on the controller pods).
+# The flux-system Services only expose the controllers' HTTP API on port 80 — NOT the metrics port —
+# so a ServiceMonitor can't reach metrics; a PodMonitor against the pods is the supported path
+# (mirrors fluxcd/flux2-monitoring-example). This object is forced into observability-production by
+# the kustomization's namespace transformer, so namespaceSelector points it back at flux-system.
+# Picked up by the operator via the release=obs-kps label (Prometheus podMonitorSelector).
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: flux
+  labels:
+    release: obs-kps
+spec:
+  namespaceSelector:
+    matchNames:
+    - flux-system
+  selector:
+    matchLabels:
+      app.kubernetes.io/part-of: flux
+      control-plane: controller
+  podMetricsEndpoints:
+  # Operator sets the series `job` label to <podmonitor-namespace>/<name>. This object is namespaced
+  # into observability-production → job="observability-production/flux" (FluxControllerDown rule).
+  - port: http-prom
+    interval: 60s
+    scrapeTimeout: 20s

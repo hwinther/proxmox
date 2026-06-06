@@ -101,6 +101,54 @@ spec:
           readOnly: true
         - name: data
           mountPath: /mosquitto/data
+      # Prometheus exporter sidecar: subscribes to $SYS/# over loopback and exposes broker metrics
+      # (broker_clients_connected, broker_uptime, broker_messages_*) on :9234. Scraped by the
+      # `mosquitto` PodMonitor; alerts in observability/prometheusrule-mosquitto.yaml. Auth comes from
+      # the `monitor` broker user via the mosquitto-exporter-auth Secret (see mosquitto-secrets.md);
+      # the Secret is optional so the pod still starts before it exists (metrics just stay empty until
+      # the broker accepts the login).
+      - name: exporter
+        image: docker.io/sapcc/mosquitto-exporter:0.8.0
+        imagePullPolicy: IfNotPresent
+        args:
+        - --endpoint
+        - tcp://localhost:1883
+        env:
+        - name: MQTT_USER
+          valueFrom:
+            secretKeyRef:
+              name: mosquitto-exporter-auth
+              key: username
+              optional: true
+        - name: MQTT_PASS
+          valueFrom:
+            secretKeyRef:
+              name: mosquitto-exporter-auth
+              key: password
+              optional: true
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        ports:
+        - name: metrics
+          containerPort: 9234
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: metrics
+          initialDelaySeconds: 5
+          periodSeconds: 15
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            cpu: 100m
+            memory: 64Mi
       volumes:
       - name: config
         configMap:

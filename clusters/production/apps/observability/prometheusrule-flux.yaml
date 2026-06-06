@@ -1,0 +1,49 @@
+# Flux GitOps health. Metrics come from flux-podmonitor.yaml (gotk_* series exported by the
+# kustomize/helm/source/notification controllers). Not covered by kube-prometheus-stack defaults.
+# release=obs-kps so the operator ruleSelector picks it up.
+#
+# NOTE on labels: the gotk_* series carry the *reconciled object's* namespace in `namespace`, but the
+# PodMonitor target also has a `namespace` label (flux-system). With default honor_labels=false the
+# scraped one is renamed → the object namespace appears as `exported_namespace`. Rules group on that.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: flux-gitops
+  labels:
+    release: obs-kps
+spec:
+  groups:
+  - name: flux-gitops
+    rules:
+    # A Kustomization/HelmRelease/GitRepository/etc. stuck not-Ready for >15m: drift is no longer being
+    # applied. 15m absorbs normal transient retries (e.g. a HelmRelease upgrade in progress).
+    - alert: FluxReconciliationFailure
+      expr: max by (exported_namespace, name, kind) (gotk_reconcile_condition{type="Ready",status="False"}) == 1
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Flux {{ $labels.kind }} {{ $labels.exported_namespace }}/{{ $labels.name }} failing to reconcile"
+        description: "{{ $labels.kind }} {{ $labels.exported_namespace }}/{{ $labels.name }} has had Ready=False for >15m — GitOps is no longer converging this resource. Check `flux get all -A` / controller logs."
+    # All of a controller's metrics endpoints are unreachable → that controller is down/crashlooping
+    # and nothing it owns reconciles. The operator sets the job label to <podmonitor-namespace>/<name>;
+    # flux-podmonitor.yaml is forced into observability-production by the kustomization → this job name.
+    - alert: FluxControllerDown
+      expr: up{job="observability-production/flux"} == 0
+      for: 10m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Flux controller {{ $labels.pod }} is down"
+        description: "Flux controller pod {{ $labels.pod }} has been unscrapeable for >10m. While down, the resources it owns are not reconciled."
+    # Suspended = reconciliation intentionally paused (`flux suspend`). Usually deliberate during
+    # maintenance/debugging, so this is info (non-paging via the severity=~info|none → null route) and
+    # fires only after 2h to catch a suspend someone forgot to lift.
+    - alert: FluxResourceSuspended
+      expr: max by (exported_namespace, name, kind) (gotk_suspend_status) == 1
+      for: 2h
+      labels:
+        severity: info
+      annotations:
+        summary: "Flux {{ $labels.kind }} {{ $labels.exported_namespace }}/{{ $labels.name }} suspended >2h"
+        description: "Reconciliation has been suspended for >2h — Git changes to this resource are not being applied. Run `flux resume {{ $labels.kind | lower }} -n {{ $labels.exported_namespace }} {{ $labels.name }}` if unintended."
