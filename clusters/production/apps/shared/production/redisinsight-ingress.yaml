@@ -7,8 +7,9 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: web
     traefik.ingress.kubernetes.io/router.middlewares: headlamp-production-authelia-forwardauth@kubernetescrd
     gethomepage.dev/enabled: "true"
-    gethomepage.dev/group: Management
+    gethomepage.dev/group: Data
     gethomepage.dev/name: RedisInsight (production Valkey)
+    gethomepage.dev/siteMonitor: https://redis-prod.mgmt.wsh.no
     gethomepage.dev/icon: redis
     gethomepage.dev/description: shared-production Valkey (Redis protocol) — preconnected to redis.shared-production.svc.cluster.local
     gethomepage.dev/weight: "5"

@@ -79,8 +79,9 @@ spec:
       annotations:
         traefik.ingress.kubernetes.io/router.entrypoints: web
         gethomepage.dev/enabled: "true"
-        gethomepage.dev/group: Management
+        gethomepage.dev/group: Platform
         gethomepage.dev/name: Authelia
+        gethomepage.dev/siteMonitor: https://auth.wsh.no
         gethomepage.dev/icon: mdi-shield-account
         gethomepage.dev/description: SSO / OIDC issuer at auth.wsh.no (Headlamp + Traefik forward auth)
       rulesOverride:

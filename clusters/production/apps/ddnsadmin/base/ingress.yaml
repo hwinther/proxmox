@@ -9,7 +9,7 @@ metadata:
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
     gethomepage.dev/enabled: "true"
-    gethomepage.dev/group: Applications
+    gethomepage.dev/group: Apps
     gethomepage.dev/name: ddnsadmin
     gethomepage.dev/icon: mdi-dns-outline
     gethomepage.dev/description: Self-service DNS record administration

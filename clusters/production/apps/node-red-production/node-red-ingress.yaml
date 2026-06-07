@@ -9,8 +9,9 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
     traefik.ingress.kubernetes.io/router.middlewares: node-red-production-authelia-forwardauth@kubernetescrd
     gethomepage.dev/enabled: "true"
-    gethomepage.dev/group: Applications
+    gethomepage.dev/group: Apps
     gethomepage.dev/name: Node-RED
+    gethomepage.dev/siteMonitor: https://node-red.wsh.no
     gethomepage.dev/icon: node-red
     gethomepage.dev/description: Flow-based automation editor
 spec:

@@ -9,8 +9,9 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
     traefik.ingress.kubernetes.io/router.middlewares: home-assistant-production-authelia-forwardauth@kubernetescrd
     gethomepage.dev/enabled: "true"
-    gethomepage.dev/group: Applications
+    gethomepage.dev/group: Apps
     gethomepage.dev/name: Home Assistant
+    gethomepage.dev/siteMonitor: https://home-assistant.wsh.no
     gethomepage.dev/icon: mdi-home-assistant
     gethomepage.dev/description: Home automation (network/IP integrations)
 spec:

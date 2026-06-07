@@ -33,11 +33,66 @@ data:
   settings.yaml: |
     title: Production Management
     favicon: https://gethomepage.dev/favicon.ico
+    headerStyle: clean
+    # Group order + per-group layout. Groups are populated from the ingress gethomepage.dev/group
+    # annotations (Apps/Observability/Data/Platform) plus the static Infrastructure tiles in
+    # services.yaml. Any group not listed here still renders, appended after these.
+    layout:
+      Apps:
+        style: row
+        columns: 4
+      Observability:
+        style: row
+        columns: 4
+      Data:
+        style: row
+        columns: 4
+      Platform:
+        style: row
+        columns: 4
+      Infrastructure:
+        style: row
+        columns: 4
   custom.css: ""
   custom.js: ""
   bookmarks.yaml: ""
-  services.yaml: ""
+  # Static tiles that have no in-cluster Ingress to auto-discover from. The Proxmox VE / PBS hosts are
+  # on the LAN, reachable over the homepage pod's existing egress (no netpol). Secrets are injected as
+  # {{HOMEPAGE_VAR_*}} from the `homepage-secrets` Secret (envFrom in the Deployment) — substitution
+  # works in this file but NOT in ingress annotations. See homepage-secrets.md.
+  # The proxmox widget `password` is the API-token SECRET; `username` is user@realm!tokenid.
+  services.yaml: |
+    - Infrastructure:
+        - Proxmox VE:
+            icon: proxmox
+            href: "{{HOMEPAGE_VAR_PROXMOX_URL}}"
+            description: Virtualization + Ceph cluster
+            siteMonitor: "{{HOMEPAGE_VAR_PROXMOX_URL}}"
+            widget:
+              type: proxmox
+              url: "{{HOMEPAGE_VAR_PROXMOX_URL}}"
+              username: "{{HOMEPAGE_VAR_PROXMOX_USER}}"
+              password: "{{HOMEPAGE_VAR_PROXMOX_TOKEN}}"
+        - Proxmox Backup Server:
+            icon: proxmox
+            href: "{{HOMEPAGE_VAR_PBS_URL}}"
+            description: Backup datastores
+            siteMonitor: "{{HOMEPAGE_VAR_PBS_URL}}"
+            widget:
+              type: proxmoxbackupserver
+              url: "{{HOMEPAGE_VAR_PBS_URL}}"
+              username: "{{HOMEPAGE_VAR_PBS_USER}}"
+              password: "{{HOMEPAGE_VAR_PBS_TOKEN}}"
   widgets.yaml: |
+    - greeting:
+        text_size: xl
+        text: Production
+    - datetime:
+        text_size: xl
+        format:
+          dateStyle: short
+          timeStyle: short
+          hourCycle: h23
     - kubernetes:
         cluster:
           show: true
@@ -54,12 +109,9 @@ data:
         provider: duckduckgo
         target: _blank
   docker.yaml: ""
-  proxmox.yaml: |
-    ---
-    # pve:
-    # url: https://proxmox.host.or.ip:8006
-    # token: username@pam!Token ID
-    # secret: secret
+  # Legacy file kept only to satisfy the Deployment subPath mount; the Proxmox widget is configured
+  # inline in services.yaml (Phase B), not here.
+  proxmox.yaml: ""
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -163,6 +215,13 @@ spec:
               fieldPath: status.podIP
         - name: HOMEPAGE_ALLOWED_HOSTS
           value: "$(MY_POD_IP):3000,mgmt.wsh.no"
+        # HOMEPAGE_VAR_* values for services.yaml widget credentials (Proxmox/PBS). Optional so the pod
+        # still starts before the Secret exists; widgets just stay empty until it's created. See
+        # homepage-secrets.md.
+        envFrom:
+        - secretRef:
+            name: homepage-secrets
+            optional: true
         ports:
         - name: http
           containerPort: 3000

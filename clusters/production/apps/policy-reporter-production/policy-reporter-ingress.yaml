@@ -7,8 +7,9 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: web
     traefik.ingress.kubernetes.io/router.middlewares: headlamp-production-authelia-forwardauth@kubernetescrd
     gethomepage.dev/enabled: "true"
-    gethomepage.dev/group: Management
+    gethomepage.dev/group: Observability
     gethomepage.dev/name: Policy Reporter
+    gethomepage.dev/siteMonitor: https://policy-reporter.mgmt.wsh.no
     gethomepage.dev/icon: mdi-clipboard-text-search
     gethomepage.dev/description: Kyverno policy reports dashboard
 spec:
