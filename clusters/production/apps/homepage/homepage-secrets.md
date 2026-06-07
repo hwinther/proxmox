@@ -28,6 +28,10 @@ PBS instance (OSL and KS); each yields its own token secret:
 proxmox-backup-manager user create homepage@pbs
 proxmox-backup-manager acl update / Audit --auth-id homepage@pbs
 proxmox-backup-manager user generate-token homepage@pbs homepage   # -> prints the secret
+# REQUIRED: PBS tokens are privilege-separated by default — the token has its own (empty) ACL and the
+# effective permission is the intersection of the user's and the token's. Without this grant the widget
+# fails with "permission check failed" on /nodes/localhost/status.
+proxmox-backup-manager acl update / Audit --auth-id 'homepage@pbs!homepage'
 ```
 
 ### Create the Secret
