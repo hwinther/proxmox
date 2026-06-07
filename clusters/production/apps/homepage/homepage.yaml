@@ -88,17 +88,45 @@ data:
               url: http://obs-kps-grafana.observability-production.svc.cluster.local:80
               username: "{{HOMEPAGE_VAR_GRAFANA_USER}}"
               password: "{{HOMEPAGE_VAR_GRAFANA_PASSWORD}}"
+        - Alertmanager:
+            icon: mdi-bell-alert
+            href: https://alertmanager.mgmt.wsh.no/
+            description: Prometheus alerts
+            siteMonitor: https://alertmanager.mgmt.wsh.no
+            # homepage has no native alertmanager widget — customapi counts active (firing, non-silenced)
+            # alerts via the v2 API. No credential (in-cluster AM has no auth). Note: the Watchdog alert
+            # always fires by design, so the count's floor is 1.
+            widget:
+              type: customapi
+              url: http://obs-kps-kube-prometheus-st-alertmanager.observability-production.svc.cluster.local:9093/api/v2/alerts?active=true&silenced=false&inhibited=false
+              refreshInterval: 30000
+              mappings:
+                - label: Firing
+                  format: size
     - Data:
         - RabbitMQ:
             icon: mdi-rabbit
             href: https://rabbitmq.mgmt.wsh.no/
             description: HA broker management
             siteMonitor: https://rabbitmq.mgmt.wsh.no
+            # homepage has no native rabbitmq widget type — use customapi against the management
+            # /api/overview. The homepage user needs the `monitoring` tag (read-only).
             widget:
-              type: rabbitmq
-              url: http://rabbitmq.rabbitmq-production.svc.cluster.local:15672
+              type: customapi
+              url: http://rabbitmq.rabbitmq-production.svc.cluster.local:15672/api/overview
               username: "{{HOMEPAGE_VAR_RABBITMQ_USER}}"
               password: "{{HOMEPAGE_VAR_RABBITMQ_PASSWORD}}"
+              refreshInterval: 30000
+              mappings:
+                - field: object_totals.queues
+                  label: Queues
+                  format: number
+                - field: queue_totals.messages
+                  label: Messages
+                  format: number
+                - field: object_totals.connections
+                  label: Connections
+                  format: number
     - Infrastructure:
         - Proxmox VE:
             icon: proxmox

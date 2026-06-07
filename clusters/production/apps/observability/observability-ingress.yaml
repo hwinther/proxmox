@@ -148,16 +148,10 @@ metadata:
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
     traefik.ingress.kubernetes.io/router.middlewares: headlamp-production-authelia-forwardauth@kubernetescrd
-    gethomepage.dev/enabled: "true"
-    gethomepage.dev/group: Observability
+    # Auto-discovery disabled — Alertmanager is a static tile in homepage services.yaml (customapi
+    # widget; homepage has no native alertmanager widget type).
+    gethomepage.dev/enabled: "false"
     gethomepage.dev/name: Alertmanager
-    gethomepage.dev/siteMonitor: https://alertmanager.mgmt.wsh.no
-    gethomepage.dev/icon: mdi-bell-alert
-    gethomepage.dev/description: Prometheus alerts
-    # Live firing-alert counts. No credential (in-cluster AM has no auth) so the widget can live on the
-    # annotation; URL is the in-cluster service. Reachability via allow-homepage-to-widget-targets.
-    gethomepage.dev/widget.type: alertmanager
-    gethomepage.dev/widget.url: http://obs-kps-kube-prometheus-st-alertmanager.observability-production.svc.cluster.local:9093
 spec:
   rules:
   - host: alertmanager.mgmt.wsh.no
