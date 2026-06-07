@@ -1,0 +1,21 @@
+# Edge SDR Raspberry Pi SoC temperature. node-exporter (edge-sdr) already exports node_thermal_zone_temp;
+# the Pis throttle around 80–85°C, so warn before that. Dashboard: edge-node-temps.json.
+# release=obs-kps so the operator ruleSelector picks it up.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: node-temp
+  labels:
+    release: obs-kps
+spec:
+  groups:
+  - name: node-temp
+    rules:
+    - alert: RpiHighTemperature
+      expr: node_thermal_zone_temp{instance=~"radio-pi.*"} > 75
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Raspberry Pi {{ $labels.instance }} running hot ({{ $value | humanize }}°C)"
+        description: "{{ $labels.instance }} SoC temperature has been >75°C for 10m (currently {{ $value | humanize }}°C). The Pi throttles around 80–85°C — check airflow/fan."

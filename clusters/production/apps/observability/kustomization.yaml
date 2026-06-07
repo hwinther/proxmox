@@ -33,6 +33,8 @@ resources:
 # over the tunnel. Set the prober.url tunnel IP in blackbox-probes.yaml before pushing.
 - blackbox-probes.yaml
 - prometheusrule-blackbox.yaml
+# Edge Pi SoC temperature alert (metric already shipped by edge node-exporter). Dashboard below.
+- prometheusrule-node-temp.yaml
 - minio-deployment.yaml
 - minio-buckets-job.yaml
 
@@ -83,6 +85,14 @@ configMapGenerator:
 - name: grafana-dashboard-esp-sensors
   files:
   - dashboards/esp-sensors.json
+  options:
+    disableNameSuffixHash: true
+    labels:
+      grafana_dashboard: "1"
+# Edge SDR Raspberry Pi SoC temperatures (node_thermal_zone_temp from edge node-exporter).
+- name: grafana-dashboard-edge-node-temps
+  files:
+  - dashboards/edge-node-temps.json
   options:
     disableNameSuffixHash: true
     labels:
