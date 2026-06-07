@@ -128,16 +128,50 @@ data:
                   label: Connections
                   format: number
     - Infrastructure:
-        - Proxmox VE:
+        # One Proxmox cluster, 4 nodes. The proxmox widget's VM/LXC counts are cluster-wide on every
+        # tile; the `node:` field pins each tile's CPU/mem to that node. Same URL+token (cluster-wide
+        # auth). siteMonitor omitted — the widget itself reflects reachability, and 4 identical pings to
+        # the cluster URL would be redundant.
+        - PVE office-pve-amd:
             icon: proxmox
             href: "{{HOMEPAGE_VAR_PROXMOX_URL}}"
-            description: Virtualization + Ceph cluster
-            siteMonitor: "{{HOMEPAGE_VAR_PROXMOX_URL}}"
+            description: Cluster node
             widget:
               type: proxmox
               url: "{{HOMEPAGE_VAR_PROXMOX_URL}}"
               username: "{{HOMEPAGE_VAR_PROXMOX_USER}}"
               password: "{{HOMEPAGE_VAR_PROXMOX_TOKEN}}"
+              node: office-pve-amd
+        - PVE office-pve-i9:
+            icon: proxmox
+            href: "{{HOMEPAGE_VAR_PROXMOX_URL}}"
+            description: Cluster node
+            widget:
+              type: proxmox
+              url: "{{HOMEPAGE_VAR_PROXMOX_URL}}"
+              username: "{{HOMEPAGE_VAR_PROXMOX_USER}}"
+              password: "{{HOMEPAGE_VAR_PROXMOX_TOKEN}}"
+              node: office-pve-i9
+        - PVE shuttle01:
+            icon: proxmox
+            href: "{{HOMEPAGE_VAR_PROXMOX_URL}}"
+            description: Cluster node
+            widget:
+              type: proxmox
+              url: "{{HOMEPAGE_VAR_PROXMOX_URL}}"
+              username: "{{HOMEPAGE_VAR_PROXMOX_USER}}"
+              password: "{{HOMEPAGE_VAR_PROXMOX_TOKEN}}"
+              node: shuttle01
+        - PVE shuttle02:
+            icon: proxmox
+            href: "{{HOMEPAGE_VAR_PROXMOX_URL}}"
+            description: Cluster node
+            widget:
+              type: proxmox
+              url: "{{HOMEPAGE_VAR_PROXMOX_URL}}"
+              username: "{{HOMEPAGE_VAR_PROXMOX_USER}}"
+              password: "{{HOMEPAGE_VAR_PROXMOX_TOKEN}}"
+              node: shuttle02
         - PBS (OSL):
             icon: proxmox
             href: "{{HOMEPAGE_VAR_PBS_OSL_URL}}"
