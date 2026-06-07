@@ -45,3 +45,8 @@ patches:
     - op: replace
       path: /spec/rules/0/host
       value: ddns.wsh.no
+    # Homepage health ping. Set here (not in base) because the base host is a REPLACE.ME placeholder
+    # shared with preview overlays; this tile's real host is ddns.wsh.no.
+    - op: add
+      path: /metadata/annotations/gethomepage.dev~1siteMonitor
+      value: https://ddns.wsh.no

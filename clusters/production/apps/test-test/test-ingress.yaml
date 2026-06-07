@@ -6,8 +6,9 @@ metadata:
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
     gethomepage.dev/enabled: "true"
-    gethomepage.dev/group: Applications
+    gethomepage.dev/group: Apps
     gethomepage.dev/name: Test (repo sample)
+    gethomepage.dev/siteMonitor: https://test.test.wsh.no
     gethomepage.dev/icon: mdi-application-outline
     gethomepage.dev/description: Sample test app — API under /api/; Swagger under /swagger
     gethomepage.dev/pod-selector: app in (test-frontend, test-api)

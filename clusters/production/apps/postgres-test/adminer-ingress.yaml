@@ -8,8 +8,9 @@ metadata:
     # and HTTPS to Traefik (`websecure`). Without `websecure`, https://… to Traefik :443 returns 404.
     traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
     gethomepage.dev/enabled: "true"
-    gethomepage.dev/group: Management
+    gethomepage.dev/group: Data
     gethomepage.dev/name: Adminer (Postgres test tier)
+    gethomepage.dev/siteMonitor: https://adminer-pg-test.mgmt.wsh.no
     gethomepage.dev/icon: mdi-database-outline
     gethomepage.dev/description: Adminer for CNPG postgres-test (OIDC via oauth2-proxy + Authelia); default testdb-rw
     gethomepage.dev/weight: "12"

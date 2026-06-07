@@ -9,8 +9,9 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
     traefik.ingress.kubernetes.io/router.middlewares: headlamp-production-authelia-forwardauth@kubernetescrd
     gethomepage.dev/enabled: "true"
-    gethomepage.dev/group: Management
+    gethomepage.dev/group: Platform
     gethomepage.dev/name: Headlamp
+    gethomepage.dev/siteMonitor: https://headlamp.mgmt.wsh.no
     gethomepage.dev/icon: mdi-view-dashboard-variant
     gethomepage.dev/description: Kubernetes UI with Flux GitOps plugin
 spec:

@@ -6,8 +6,9 @@ metadata:
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
     gethomepage.dev/enabled: "true"
-    gethomepage.dev/group: Management
+    gethomepage.dev/group: Observability
     gethomepage.dev/name: Grafana
+    gethomepage.dev/siteMonitor: https://grafana.mgmt.wsh.no
     gethomepage.dev/icon: grafana
     gethomepage.dev/description: Observability dashboards
 spec:
@@ -59,8 +60,9 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: web
     traefik.ingress.kubernetes.io/router.middlewares: observability-production-otel-cors@kubernetescrd
     gethomepage.dev/enabled: "true"
-    gethomepage.dev/group: Management
+    gethomepage.dev/group: Observability
     gethomepage.dev/name: OpenTelemetry Collector
+    gethomepage.dev/siteMonitor: https://otel.mgmt.wsh.no
     gethomepage.dev/icon: opentelemetry
     gethomepage.dev/description: OTLP HTTP endpoint
     # Ingress name is not a pod label; match the OTel Helm release (same as test cluster).
@@ -149,8 +151,9 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: web
     traefik.ingress.kubernetes.io/router.middlewares: headlamp-production-authelia-forwardauth@kubernetescrd
     gethomepage.dev/enabled: "true"
-    gethomepage.dev/group: Management
+    gethomepage.dev/group: Observability
     gethomepage.dev/name: Alertmanager
+    gethomepage.dev/siteMonitor: https://alertmanager.mgmt.wsh.no
     gethomepage.dev/icon: mdi-bell-alert
     gethomepage.dev/description: Prometheus alerts
 spec:

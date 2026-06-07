@@ -7,8 +7,9 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: web
     traefik.ingress.kubernetes.io/router.middlewares: headlamp-production-authelia-forwardauth@kubernetescrd
     gethomepage.dev/enabled: "true"
-    gethomepage.dev/group: Management
+    gethomepage.dev/group: Data
     gethomepage.dev/name: RedisInsight (test Valkey)
+    gethomepage.dev/siteMonitor: https://redis-test.mgmt.wsh.no
     gethomepage.dev/icon: redis
     gethomepage.dev/description: shared-test Valkey (Redis protocol) — preconnected to redis.shared-test.svc.cluster.local
     gethomepage.dev/weight: "10"
