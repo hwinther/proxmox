@@ -16,6 +16,7 @@ resources:
 - topology-permission-clutterstock-prod.yaml
 - networkpolicy-rabbitmq.yaml
 - cilium-cluster-nodes-to-rabbitmq-management.yaml
+- cilium-homepage-to-rabbitmq-management.yaml
 - rabbitmq-management-ingress.yaml
 # Patches: label rabbitmq-system so trust-manager's wsh-internal-ca Bundle renders the ConfigMap
 # there, then mount it into the topology operator Pod so Go's x509 trust includes our self-signed

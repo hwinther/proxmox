@@ -62,6 +62,43 @@ data:
   # works in this file but NOT in ingress annotations. See homepage-secrets.md.
   # The proxmox widget `password` is the API-token SECRET; `username` is user@realm!tokenid.
   services.yaml: |
+    # In-cluster widgets: defined statically (not via Ingress annotations) because their credentials
+    # come from {{HOMEPAGE_VAR_*}}, which only substitutes in this file. Auto-discovery is disabled on
+    # the matching Ingresses (gethomepage.dev/enabled:"false") to avoid duplicate tiles. Reachability
+    # is granted by the allow-homepage-to-widget-targets CiliumNetworkPolicy. Alertmanager stays
+    # auto-discovered (no credential) with its widget set via annotations.
+    - Apps:
+        - Home Assistant:
+            icon: mdi-home-assistant
+            href: https://home-assistant.wsh.no/
+            description: Home automation
+            siteMonitor: https://home-assistant.wsh.no
+            widget:
+              type: homeassistant
+              url: http://home-assistant.home-assistant-production.svc.cluster.local:8123
+              key: "{{HOMEPAGE_VAR_HASS_TOKEN}}"
+    - Observability:
+        - Grafana:
+            icon: grafana
+            href: https://grafana.mgmt.wsh.no/
+            description: Observability dashboards
+            siteMonitor: https://grafana.mgmt.wsh.no
+            widget:
+              type: grafana
+              url: http://obs-kps-grafana.observability-production.svc.cluster.local:80
+              username: "{{HOMEPAGE_VAR_GRAFANA_USER}}"
+              password: "{{HOMEPAGE_VAR_GRAFANA_PASSWORD}}"
+    - Data:
+        - RabbitMQ:
+            icon: mdi-rabbit
+            href: https://rabbitmq.mgmt.wsh.no/
+            description: HA broker management
+            siteMonitor: https://rabbitmq.mgmt.wsh.no
+            widget:
+              type: rabbitmq
+              url: http://rabbitmq.rabbitmq-production.svc.cluster.local:15672
+              username: "{{HOMEPAGE_VAR_RABBITMQ_USER}}"
+              password: "{{HOMEPAGE_VAR_RABBITMQ_PASSWORD}}"
     - Infrastructure:
         - Proxmox VE:
             icon: proxmox

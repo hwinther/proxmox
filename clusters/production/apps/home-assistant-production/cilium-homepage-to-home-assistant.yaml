@@ -1,0 +1,21 @@
+# Allow the homepage dashboard (platform-production) to reach Home Assistant's HTTP API for its widget
+# (entity/automation counts). Mirrors allow-node-red-to-home-assistant-http. Egress side is granted by
+# allow-homepage-to-widget-targets in platform-production.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-homepage-to-home-assistant-http
+  namespace: home-assistant-production
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: home-assistant
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        app.kubernetes.io/name: homepage
+        k8s:io.kubernetes.pod.namespace: platform-production
+    toPorts:
+    - ports:
+      - port: "8123"
+        protocol: TCP

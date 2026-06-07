@@ -6,14 +6,10 @@ metadata:
   namespace: rabbitmq-production
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
-    gethomepage.dev/enabled: "true"
-    gethomepage.dev/group: Data
+    # Auto-discovery disabled — RabbitMQ is a static tile in homepage services.yaml (the widget needs
+    # management-API credentials, which can't live in annotations). See homepage-secrets.md.
+    gethomepage.dev/enabled: "false"
     gethomepage.dev/name: RabbitMQ
-    gethomepage.dev/siteMonitor: https://rabbitmq.mgmt.wsh.no
-    gethomepage.dev/icon: mdi-rabbit
-    gethomepage.dev/description: HA broker management — rabbitmq-production cluster
-    gethomepage.dev/weight: "8"
-    gethomepage.dev/pod-selector: app.kubernetes.io/name=rabbitmq
 spec:
   rules:
   - host: rabbitmq.mgmt.wsh.no

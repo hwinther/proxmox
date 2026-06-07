@@ -46,7 +46,12 @@ kubectl create secret generic homepage-secrets \
   --from-literal=HOMEPAGE_VAR_PBS_OSL_TOKEN='<pbs-osl-token-secret>' \
   --from-literal=HOMEPAGE_VAR_PBS_KS_URL='https://pbs.ks.wsh.no:8007' \
   --from-literal=HOMEPAGE_VAR_PBS_KS_USER='homepage@pbs!homepage' \
-  --from-literal=HOMEPAGE_VAR_PBS_KS_TOKEN='<pbs-ks-token-secret>'
+  --from-literal=HOMEPAGE_VAR_PBS_KS_TOKEN='<pbs-ks-token-secret>' \
+  --from-literal=HOMEPAGE_VAR_GRAFANA_USER='homepage' \
+  --from-literal=HOMEPAGE_VAR_GRAFANA_PASSWORD='<grafana-viewer-password>' \
+  --from-literal=HOMEPAGE_VAR_RABBITMQ_USER='homepage' \
+  --from-literal=HOMEPAGE_VAR_RABBITMQ_PASSWORD='<rabbitmq-monitoring-password>' \
+  --from-literal=HOMEPAGE_VAR_HASS_TOKEN='<home-assistant-long-lived-token>'
 # then: kubectl -n platform-production rollout restart deployment/homepage
 ```
 
@@ -54,23 +59,35 @@ kubectl create secret generic homepage-secrets \
 > those hosts a cert homepage trusts, or front them with a trusted endpoint. There is no per-widget
 > skip-verify for the proxmox widgets.
 
-## In-cluster widgets (follow-up: Grafana / Alertmanager / RabbitMQ / Home Assistant)
+## In-cluster widgets (Grafana / Alertmanager / RabbitMQ / Home Assistant)
 
-These need two things the LAN widgets don't, so they're a separate pass:
+These are wired (static tiles in `services.yaml`; their Ingresses set `gethomepage.dev/enabled:"false"`
+to avoid duplicates). Reachability: the homepage pod's `0.0.0.0/0` egress does **not** cover
+cluster-internal pods (Cilium can't match cluster identities by CIDR — same limit as the
+mosquitto/cert-manager scrape work), so `homepage/networkpolicies.yaml` adds an egress CNP to each
+target; RabbitMQ + Home Assistant also get `allow-homepage-*` ingress CNPs in their namespaces
+(Grafana/Alertmanager are unrestricted in observability-production). **Alertmanager** needs no
+credential — its widget is set via Ingress annotations and isn't in the Secret.
 
-1. **Network**: the homepage pod must reach the service in-cluster. The pod's `0.0.0.0/0` egress does
-   **not** cover cluster-internal pods (Cilium can't match cluster identities by CIDR — same limit as
-   the mosquitto/cert-manager scrape work), so each needs a CiliumNetworkPolicy egress from homepage
-   to the target, plus an ingress allowance on the target if it has a default-deny policy.
-2. **Config**: the credential must live in `services.yaml` (not the annotation), so each tile is
-   converted from auto-discovered to a static `services.yaml` entry with `gethomepage.dev/enabled:
-   "false"` on its Ingress to avoid a duplicate tile.
+| Widget | In-cluster URL | Credential vars |
+|---|---|---|
+| Alertmanager | `…alertmanager.observability-production:9093` | none |
+| Grafana | `obs-kps-grafana.observability-production:80` | `HOMEPAGE_VAR_GRAFANA_USER` / `…_PASSWORD` |
+| RabbitMQ | `rabbitmq.rabbitmq-production:15672` | `HOMEPAGE_VAR_RABBITMQ_USER` / `…_PASSWORD` |
+| Home Assistant | `home-assistant.home-assistant-production:8123` | `HOMEPAGE_VAR_HASS_TOKEN` |
 
-Planned `HOMEPAGE_VAR_*` for that pass (add to the same Secret when wired):
+### Creating the credentials (read-only where possible)
 
-| Widget | Type | In-cluster URL | Auth |
-|---|---|---|---|
-| Alertmanager | `alertmanager` | `http://obs-kps-kube-prometheus-st-alertmanager.observability-production:9093` | none |
-| Grafana | `grafana` | `http://obs-kps-grafana.observability-production:80` | `HOMEPAGE_VAR_GRAFANA_USER/PASSWORD` (local admin; basic_auth API) |
-| RabbitMQ | `rabbitmq` | `http://rabbitmq.rabbitmq-production:15672` | `HOMEPAGE_VAR_RABBITMQ_USER/PASSWORD` (mgmt user) |
-| Home Assistant | `homeassistant` | `http://home-assistant.home-assistant-production:8123` | `HOMEPAGE_VAR_HASS_TOKEN` (long-lived token) |
+- **Grafana** — basic-auth works on the API even with the login form disabled (`auth.basic` is on by
+  default). Create a Viewer user named `homepage` (Administration → Users, or via the admin API) and use
+  its password. Avoid using the admin account.
+- **RabbitMQ** — create a `monitoring`-tag user (read-only management):
+  ```bash
+  kubectl -n rabbitmq-production exec sts/rabbitmq-server -c rabbitmq -- \
+    rabbitmqctl add_user homepage '<password>'
+  kubectl -n rabbitmq-production exec sts/rabbitmq-server -c rabbitmq -- \
+    rabbitmqctl set_user_tags homepage monitoring
+  kubectl -n rabbitmq-production exec sts/rabbitmq-server -c rabbitmq -- \
+    rabbitmqctl set_permissions -p / homepage '' '' '.*'   # read-only
+  ```
+- **Home Assistant** — Profile → Security → Long-lived access tokens → Create Token.
