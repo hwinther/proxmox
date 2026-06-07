@@ -78,9 +78,19 @@ credential — its widget is set via Ingress annotations and isn't in the Secret
 
 ### Creating the credentials (read-only where possible)
 
-- **Grafana** — basic-auth works on the API even with the login form disabled (`auth.basic` is on by
-  default). Create a Viewer user named `homepage` (Administration → Users, or via the admin API) and use
-  its password. Avoid using the admin account.
+- **Grafana** — the login form is disabled (`disable_login_form: true`), so the **UI invite/create-user
+  flow fails** ("Cannot invite external user when login is disabled"). Create the local user via the
+  **admin API** instead (basic-auth still works on the API — `auth.basic` is separate and on by default).
+  New users get Viewer automatically (`users.auto_assign_org_role: Viewer`):
+  ```bash
+  ADMIN_USER=$(kubectl -n observability-production get secret obs-kps-grafana -o jsonpath='{.data.admin-user}' | base64 -d)
+  ADMIN_PW=$(kubectl -n observability-production get secret obs-kps-grafana -o jsonpath='{.data.admin-password}' | base64 -d)
+  kubectl -n observability-production port-forward svc/obs-kps-grafana 3000:80 &
+  curl -s -u "$ADMIN_USER:$ADMIN_PW" -H 'Content-Type: application/json' \
+    -X POST http://localhost:3000/api/admin/users \
+    -d '{"name":"homepage","login":"homepage","password":"<homepage-password>"}'
+  ```
+  Use `homepage` / `<homepage-password>` for `HOMEPAGE_VAR_GRAFANA_USER`/`_PASSWORD`. Avoid the admin account.
 - **RabbitMQ** — create a `monitoring`-tag user (read-only management):
   ```bash
   kubectl -n rabbitmq-production exec sts/rabbitmq-server -c rabbitmq -- \
