@@ -5,12 +5,10 @@ metadata:
   namespace: observability-production
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
-    gethomepage.dev/enabled: "true"
-    gethomepage.dev/group: Observability
+    # Auto-discovery disabled — Grafana is a static tile in homepage services.yaml (the widget needs
+    # credentials, which can't live in annotations). See homepage-secrets.md.
+    gethomepage.dev/enabled: "false"
     gethomepage.dev/name: Grafana
-    gethomepage.dev/siteMonitor: https://grafana.mgmt.wsh.no
-    gethomepage.dev/icon: grafana
-    gethomepage.dev/description: Observability dashboards
 spec:
   rules:
   - host: grafana.mgmt.wsh.no
@@ -156,6 +154,10 @@ metadata:
     gethomepage.dev/siteMonitor: https://alertmanager.mgmt.wsh.no
     gethomepage.dev/icon: mdi-bell-alert
     gethomepage.dev/description: Prometheus alerts
+    # Live firing-alert counts. No credential (in-cluster AM has no auth) so the widget can live on the
+    # annotation; URL is the in-cluster service. Reachability via allow-homepage-to-widget-targets.
+    gethomepage.dev/widget.type: alertmanager
+    gethomepage.dev/widget.url: http://obs-kps-kube-prometheus-st-alertmanager.observability-production.svc.cluster.local:9093
 spec:
   rules:
   - host: alertmanager.mgmt.wsh.no

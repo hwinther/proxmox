@@ -51,3 +51,51 @@ spec:
   egress:
   - toEntities:
     - kube-apiserver
+---
+# Egress for the in-cluster service widgets (homepage.yaml services.yaml). The k8s NP's 0.0.0.0/0 egress
+# does NOT cover cluster-internal pods (Cilium can't match cluster identities by CIDR), so each target
+# needs an explicit toEndpoints rule. Targets also allow homepage on their ingress side (Grafana/
+# Alertmanager are unrestricted in observability-production; RabbitMQ + Home Assistant get matching
+# allow-homepage-* CNPs in their namespaces).
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-homepage-to-widget-targets
+  namespace: platform-production
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: homepage
+  egress:
+  - toEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: observability-production
+        app.kubernetes.io/name: grafana
+    toPorts:
+    - ports:
+      - port: "80"
+        protocol: TCP
+  - toEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: observability-production
+        app.kubernetes.io/name: alertmanager
+    toPorts:
+    - ports:
+      - port: "9093"
+        protocol: TCP
+  - toEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: rabbitmq-production
+        app.kubernetes.io/name: rabbitmq
+    toPorts:
+    - ports:
+      - port: "15672"
+        protocol: TCP
+  - toEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: home-assistant-production
+        app.kubernetes.io/name: home-assistant
+    toPorts:
+    - ports:
+      - port: "8123"
+        protocol: TCP

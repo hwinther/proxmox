@@ -1,0 +1,21 @@
+# Allow the homepage dashboard (platform-production) to reach the RabbitMQ management API (15672) for
+# its widget (queue/message stats). The rabbitmq pods are default-deny ingress (NetworkPolicy rabbitmq);
+# this CNP adds the homepage allowance (union). Egress side is granted by allow-homepage-to-widget-targets.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-homepage-to-rabbitmq-management
+  namespace: rabbitmq-production
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: rabbitmq
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        app.kubernetes.io/name: homepage
+        k8s:io.kubernetes.pod.namespace: platform-production
+    toPorts:
+    - ports:
+      - port: "15672"
+        protocol: TCP

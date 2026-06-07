@@ -8,12 +8,10 @@ metadata:
     gethomepage.dev/href: "https://home-assistant.wsh.no/"
     traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
     traefik.ingress.kubernetes.io/router.middlewares: home-assistant-production-authelia-forwardauth@kubernetescrd
-    gethomepage.dev/enabled: "true"
-    gethomepage.dev/group: Apps
+    # Auto-discovery disabled — Home Assistant is a static tile in homepage services.yaml (the widget
+    # needs a long-lived token, which can't live in annotations). See homepage-secrets.md.
+    gethomepage.dev/enabled: "false"
     gethomepage.dev/name: Home Assistant
-    gethomepage.dev/siteMonitor: https://home-assistant.wsh.no
-    gethomepage.dev/icon: mdi-home-assistant
-    gethomepage.dev/description: Home automation (network/IP integrations)
 spec:
   rules:
   - host: home-assistant.wsh.no
