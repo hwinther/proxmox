@@ -61,7 +61,8 @@ metadata:
     gethomepage.dev/group: Observability
     gethomepage.dev/name: OpenTelemetry Collector
     gethomepage.dev/siteMonitor: https://otel.mgmt.wsh.no
-    gethomepage.dev/icon: opentelemetry
+    # 'opentelemetry' isn't in homepage's default (dashboard-icons) set; use the simple-icons variant.
+    gethomepage.dev/icon: si-opentelemetry
     gethomepage.dev/description: OTLP HTTP endpoint
     # Ingress name is not a pod label; match the OTel Helm release (same as test cluster).
     gethomepage.dev/pod-selector: app.kubernetes.io/instance=obs-otel-collector
