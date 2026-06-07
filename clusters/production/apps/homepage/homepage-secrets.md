@@ -22,7 +22,8 @@ pveum user token add homepage@pve homepage --privsep 0
 # -> prints the token value (the "secret"); note the full id homepage@pve!homepage
 ```
 
-**Proxmox Backup Server** — Configuration → Access Control → API Token, role `Audit`:
+**Proxmox Backup Server** — Configuration → Access Control → API Token, role `Audit`. Run on **each**
+PBS instance (OSL and KS); each yields its own token secret:
 ```bash
 proxmox-backup-manager user create homepage@pbs
 proxmox-backup-manager acl update / Audit --auth-id homepage@pbs
@@ -36,9 +37,12 @@ kubectl create secret generic homepage-secrets \
   --from-literal=HOMEPAGE_VAR_PROXMOX_URL='https://<pve-host-or-ip>:8006' \
   --from-literal=HOMEPAGE_VAR_PROXMOX_USER='homepage@pve!homepage' \
   --from-literal=HOMEPAGE_VAR_PROXMOX_TOKEN='<pve-token-secret>' \
-  --from-literal=HOMEPAGE_VAR_PBS_URL='https://pbs.wsh.no:8007' \
-  --from-literal=HOMEPAGE_VAR_PBS_USER='homepage@pbs!homepage' \
-  --from-literal=HOMEPAGE_VAR_PBS_TOKEN='<pbs-token-secret>'
+  --from-literal=HOMEPAGE_VAR_PBS_OSL_URL='https://pbs.osl.wsh.no:8007' \
+  --from-literal=HOMEPAGE_VAR_PBS_OSL_USER='homepage@pbs!homepage' \
+  --from-literal=HOMEPAGE_VAR_PBS_OSL_TOKEN='<pbs-osl-token-secret>' \
+  --from-literal=HOMEPAGE_VAR_PBS_KS_URL='https://pbs.ks.wsh.no:8007' \
+  --from-literal=HOMEPAGE_VAR_PBS_KS_USER='homepage@pbs!homepage' \
+  --from-literal=HOMEPAGE_VAR_PBS_KS_TOKEN='<pbs-ks-token-secret>'
 # then: kubectl -n platform-production rollout restart deployment/homepage
 ```
 

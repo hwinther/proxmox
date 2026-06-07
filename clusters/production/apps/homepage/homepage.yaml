@@ -73,16 +73,26 @@ data:
               url: "{{HOMEPAGE_VAR_PROXMOX_URL}}"
               username: "{{HOMEPAGE_VAR_PROXMOX_USER}}"
               password: "{{HOMEPAGE_VAR_PROXMOX_TOKEN}}"
-        - Proxmox Backup Server:
+        - PBS (OSL):
             icon: proxmox
-            href: "{{HOMEPAGE_VAR_PBS_URL}}"
-            description: Backup datastores
-            siteMonitor: "{{HOMEPAGE_VAR_PBS_URL}}"
+            href: "{{HOMEPAGE_VAR_PBS_OSL_URL}}"
+            description: Backup server — OSL
+            siteMonitor: "{{HOMEPAGE_VAR_PBS_OSL_URL}}"
             widget:
               type: proxmoxbackupserver
-              url: "{{HOMEPAGE_VAR_PBS_URL}}"
-              username: "{{HOMEPAGE_VAR_PBS_USER}}"
-              password: "{{HOMEPAGE_VAR_PBS_TOKEN}}"
+              url: "{{HOMEPAGE_VAR_PBS_OSL_URL}}"
+              username: "{{HOMEPAGE_VAR_PBS_OSL_USER}}"
+              password: "{{HOMEPAGE_VAR_PBS_OSL_TOKEN}}"
+        - PBS (KS):
+            icon: proxmox
+            href: "{{HOMEPAGE_VAR_PBS_KS_URL}}"
+            description: Backup server — KS
+            siteMonitor: "{{HOMEPAGE_VAR_PBS_KS_URL}}"
+            widget:
+              type: proxmoxbackupserver
+              url: "{{HOMEPAGE_VAR_PBS_KS_URL}}"
+              username: "{{HOMEPAGE_VAR_PBS_KS_USER}}"
+              password: "{{HOMEPAGE_VAR_PBS_KS_TOKEN}}"
   widgets.yaml: |
     - greeting:
         text_size: xl
