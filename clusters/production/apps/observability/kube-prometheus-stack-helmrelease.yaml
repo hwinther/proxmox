@@ -292,6 +292,9 @@ spec:
             labels: { node: shuttle01 }
           - targets: [ '10.20.4.35:9633' ]
             labels: { node: shuttle02 }
+          # Standalone PBS at the KS site (10.30.0.6, reached over the site link) — not a PVE cluster node.
+          - targets: [ '10.30.0.6:9633' ]
+            labels: { node: pbs-ks }
         resources:
           requests:
             cpu: 200m
