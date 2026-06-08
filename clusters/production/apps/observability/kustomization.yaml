@@ -35,6 +35,8 @@ resources:
 - prometheusrule-blackbox.yaml
 # Edge Pi SoC temperature alert (metric already shipped by edge node-exporter). Dashboard below.
 - prometheusrule-node-temp.yaml
+# Disk SMART health/wear from smartctl_exporter on the PVE hosts (scrape job in the helmrelease).
+- prometheusrule-smartctl.yaml
 - minio-deployment.yaml
 - minio-buckets-job.yaml
 
@@ -93,6 +95,14 @@ configMapGenerator:
 - name: grafana-dashboard-edge-node-temps
   files:
   - dashboards/edge-node-temps.json
+  options:
+    disableNameSuffixHash: true
+    labels:
+      grafana_dashboard: "1"
+# Disk SMART health/wear (smartctl_exporter on the PVE hosts).
+- name: grafana-dashboard-disk-health
+  files:
+  - dashboards/disk-health.json
   options:
     disableNameSuffixHash: true
     labels:

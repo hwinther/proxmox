@@ -278,6 +278,20 @@ spec:
             - 10.20.4.18:9283
             - 10.20.4.20:9283
             - 10.20.4.34:9283
+        # smartctl_exporter on each PVE host (systemd, :9633) — disk SMART/wear for the Ceph SSDs and the
+        # raw-passthrough HDDs (host sees them; virtio guests can't). `node` label = host name. Alerts:
+        # prometheusrule-smartctl.yaml; dashboard: dashboards/disk-health.json. Hosts must allow
+        # 10.20.13.0/24 -> :9633 (same as the :9283 ceph rule).
+        - job_name: smartctl
+          static_configs:
+          - targets: [ '10.20.4.18:9633' ]
+            labels: { node: office-pve-amd }
+          - targets: [ '10.20.4.20:9633' ]
+            labels: { node: office-pve-i9 }
+          - targets: [ '10.20.4.34:9633' ]
+            labels: { node: shuttle01 }
+          - targets: [ '10.20.4.35:9633' ]
+            labels: { node: shuttle02 }
         resources:
           requests:
             cpu: 200m
