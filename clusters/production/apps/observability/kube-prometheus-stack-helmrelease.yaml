@@ -302,7 +302,7 @@ spec:
           static_configs:
           - targets: [ '10.31.0.2:6060' ]
             labels: { host: abyss, role: agent }
-          - targets: [ '10.20.4.1:6060' ]
+          - targets: [ '10.20.13.1:6060' ]
             labels: { host: opnsense, role: lapi }
         # crowdsec-firewall-bouncer on abyss (banned IP count, dropped packets/bytes at the edge).
         - job_name: crowdsec-firewall-bouncer
