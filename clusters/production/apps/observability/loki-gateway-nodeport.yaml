@@ -1,4 +1,8 @@
-# LAN / cross-cluster access to Loki push (e.g. edge-sdr Fluent Bit). In-cluster clients keep using ClusterIP obs-loki-gateway.
+# LAN / cross-cluster access to Loki push (e.g. edge-sdr Fluent Bit, abyss CrowdSec logs).
+# In-cluster clients keep using ClusterIP obs-loki-gateway.
+# targetPort must be `http` (nginx :8080): since chart 17.x the gateway pod has an exporter
+# sidecar that owns the name `http-metrics` (:4040, Go) — pointing there returns
+# "404 page not found" on every push and silently drops all external log shipping.
 apiVersion: v1
 kind: Service
 metadata:
@@ -11,5 +15,5 @@ spec:
     app.kubernetes.io/component: gateway
   ports:
   - port: 80
-    targetPort: http-metrics
+    targetPort: http
     nodePort: 30080

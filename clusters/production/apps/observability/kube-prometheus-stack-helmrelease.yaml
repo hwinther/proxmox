@@ -295,6 +295,20 @@ spec:
           # Standalone PBS at the KS site (10.30.0.6, reached over the site link) — not a PVE cluster node.
           - targets: [ '10.30.0.6:9633' ]
             labels: { node: pbs-ks }
+        # CrowdSec attack/ban telemetry for the edge-security dashboard (alerts:
+        # prometheusrule-crowdsec.yaml). Host-side setup and topology: private-apps repo
+        # infra/crowdsec-vps/.
+        - job_name: crowdsec
+          static_configs:
+          - targets: [ '10.31.0.2:6060' ]
+            labels: { host: abyss, role: agent }
+          - targets: [ '10.20.4.1:6060' ]
+            labels: { host: opnsense, role: lapi }
+        # crowdsec-firewall-bouncer on abyss (banned IP count, dropped packets/bytes at the edge).
+        - job_name: crowdsec-firewall-bouncer
+          static_configs:
+          - targets: [ '10.31.0.2:60601' ]
+            labels: { host: abyss }
         resources:
           requests:
             cpu: 200m

@@ -52,6 +52,13 @@ spec:
         enabled: false
       metrics:
         enabled: true
+      # OPNsense remote syslog (NAXSI/nginx) — see otel-syslog-nodeport.yaml for the LAN entry point.
+      # 5514 (not 514): the collector runs unprivileged and can't bind ports <1024.
+      syslog-udp:
+        enabled: true
+        containerPort: 5514
+        servicePort: 5514
+        protocol: UDP
     alternateConfig:
       extensions:
         health_check:
@@ -63,12 +70,26 @@ spec:
               endpoint: ${env:MY_POD_IP}:4317
             http:
               endpoint: ${env:MY_POD_IP}:4318
+        # OPNsense remote syslog (System > Settings > Logging > Remote) with "rfc5424" ticked.
+        # If OPNsense is left on the default BSD format, switch protocol to rfc3164 (and note
+        # rfc3164 timestamps carry no timezone — they are then interpreted in UTC).
+        syslog:
+          udp:
+            listen_address: ${env:MY_POD_IP}:5514
+          protocol: rfc5424
       processors:
         batch: {}
         memory_limiter:
           check_interval: 5s
           limit_percentage: 80
           spike_limit_percentage: 25
+        # Loki maps the service.name resource attribute to the service_name index label —
+        # this is what the edge-security dashboard and the retention_stream override key on.
+        resource/syslog:
+          attributes:
+          - key: service.name
+            value: opnsense
+            action: upsert
       exporters:
         otlp:
           endpoint: obs-tempo.observability-production.svc.cluster.local:4317
@@ -107,4 +128,8 @@ spec:
           logs:
             receivers: [ otlp ]
             processors: [ memory_limiter, batch ]
+            exporters: [ otlphttp/loki ]
+          logs/syslog:
+            receivers: [ syslog ]
+            processors: [ memory_limiter, resource/syslog, batch ]
             exporters: [ otlphttp/loki ]

@@ -1,0 +1,33 @@
+# Alerts for the edge CrowdSec telemetry (scrape jobs `crowdsec` / `crowdsec-firewall-bouncer`
+# in kube-prometheus-stack-helmrelease.yaml: LAPI on OPNsense over the LAN, agent + bouncer on
+# the abyss VPS over the tunnel). release=obs-kps so the operator ruleSelector picks it up.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: crowdsec-edge
+  labels:
+    release: obs-kps
+spec:
+  groups:
+  - name: crowdsec-edge
+    rules:
+    # A dead tunnel or VPS would otherwise look like "no attacks" on the edge-security dashboard —
+    # absence of data must page, not reassure. Fires per job (LAPI and bouncer separately).
+    - alert: CrowdsecScrapeDown
+      expr: up{job=~"crowdsec|crowdsec-firewall-bouncer"} == 0
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: "CrowdSec telemetry from {{ $labels.host }} is down ({{ $labels.job }})"
+        description: "Prometheus has not been able to scrape {{ $labels.job }} on {{ $labels.instance }} for >10m. For host=abyss check the tunnel and the VPS firewall; for host=opnsense check the os-crowdsec service and its prometheus listener. While this fires, the edge-security dashboard is blind, not quiet."
+    # Sustained burst of scenario triggers — something is actively hammering the edge. Bucket
+    # overflows are local detections only (community blocklist imports don't count here).
+    - alert: CrowdsecBanSpike
+      expr: sum(increase(cs_bucket_overflowed_total[1h])) > 50
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: "CrowdSec ban spike at the edge: {{ $value | humanize }} scenario triggers in 1h"
+        description: "More than 50 CrowdSec scenario overflows in the last hour on the edge VPS (sustained >15m). Check the edge-security dashboard for the scenarios and source IPs involved — this is a live attack or a misbehaving client being repeatedly re-banned."

@@ -12,12 +12,12 @@ This guide is tailored for a **multi-node** k0s cluster on Proxmox VMs, using **
 
 ## 1. Plan addresses before installing
 
-| Range | Typical default | Check |
-|--------|-----------------|--------|
-| **Pod CIDR** | e.g. `10.244.0.0/16` | Must **not** overlap Proxmox LAN, storage networks, or **Ceph public/cluster** subnets |
-| **Service CIDR** | e.g. `10.96.0.0/12` | Same as above — unique on your estate |
-| **API server** | TCP **6443** on controller(s) | Workers and CLI use this; pick a **stable** target (see §5) |
-| **Konnectivity** | TCP **8132** (k0s) | Required worker → controller path per [k0s networking](https://docs.k0sproject.io/stable/networking/) |
+| Range            | Typical default               | Check                                                                                                 |
+| ---------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------- |
+| **Pod CIDR**     | e.g. `10.244.0.0/16`          | Must **not** overlap Proxmox LAN, storage networks, or **Ceph public/cluster** subnets                |
+| **Service CIDR** | e.g. `10.96.0.0/12`           | Same as above — unique on your estate                                                                 |
+| **API server**   | TCP **6443** on controller(s) | Workers and CLI use this; pick a **stable** target (see §5)                                           |
+| **Konnectivity** | TCP **8132** (k0s)            | Required worker → controller path per [k0s networking](https://docs.k0sproject.io/stable/networking/) |
 
 Changing CNI **after** the cluster is initialized is effectively a **redeploy** for k0s — choose **`provider: custom`** and Cilium **from day one** if that is your target.
 
@@ -48,10 +48,10 @@ metadata:
 spec:
   network:
     provider: custom
-    podCIDR: 10.244.0.0/16      # adjust — no overlap with LAN/Ceph
-    serviceCIDR: 10.96.0.0/12   # adjust
+    podCIDR: 10.244.0.0/16 # adjust — no overlap with LAN/Ceph
+    serviceCIDR: 10.96.0.0/12 # adjust
     kubeProxy:
-      disabled: true            # only with Cilium kube-proxy replacement; else omit/false
+      disabled: true # only with Cilium kube-proxy replacement; else omit/false
 ```
 
 ### CoreDNS
@@ -80,14 +80,14 @@ spec:
 
 See also [Configure the aggregation layer](https://kubernetes.io/docs/tasks/extend-kubernetes/configure-aggregation-layer/) (note near the end on **enable-aggregator-routing**). The repo example [`k0s.yaml.example`](k0s.yaml.example) includes this flag next to **Cilium + kube-proxy disabled**.
 
-#### Verifying the *running* apiserver (not only `k0s.yaml`)
+#### Verifying the _running_ apiserver (not only `k0s.yaml`)
 
 There is **no** cluster API that lists kube-apiserver flags. Use the **controller node** and/or **indirect** checks:
 
-| What | How |
-|------|-----|
-| **Config file syntax** | On a controller: `sudo k0s config validate --config /etc/k0s/k0s.yaml` (catches YAML/schema issues; does not prove the running process matched the file before restart). |
-| **Process command line** | On **each** controller, k0s runs **kube-apiserver** on the host. Inspect argv, e.g. `pgrep -af kube-apiserver` or `tr '\0' ' ' < /proc/$(pgrep -o -f kube-apiserver)/cmdline` and confirm **`--enable-aggregator-routing=true`** appears. |
+| What                              | How                                                                                                                                                                                                                                                                                                                                                                                                                |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Config file syntax**            | On a controller: `sudo k0s config validate --config /etc/k0s/k0s.yaml` (catches YAML/schema issues; does not prove the running process matched the file before restart).                                                                                                                                                                                                                                           |
+| **Process command line**          | On **each** controller, k0s runs **kube-apiserver** on the host. Inspect argv, e.g. `pgrep -af kube-apiserver` or `tr '\0' ' ' < /proc/$(pgrep -o -f kube-apiserver)/cmdline` and confirm **`--enable-aggregator-routing=true`** appears.                                                                                                                                                                          |
 | **Indirect (aggregation target)** | `kubectl describe apiservice v1beta1.spdx.softwarecomposition.kubescape.io` (or `… -o yaml`): if **`FailedDiscoveryCheck`** URLs use a **pod IP** (e.g. `https://10.244.x.x:8443/...`) instead of a **Service ClusterIP** (an address inside your **`serviceCIDR`**), aggregator routing is **likely** active; **`No agent available`** then points at **Konnectivity** / path to pod network, not a missing flag. |
 
 If discovery still fails after that, treat it as **Konnectivity or host firewall**: ensure workers reach controllers on **8132**, and review k0s networking / firewalld notes (similar symptoms appear when the control plane cannot open paths to pod/service networks).
@@ -121,10 +121,10 @@ The **kubescape-operator** chart’s **node-agent** DaemonSet only picks up cont
 
    **SSH / kubeconfig:** The `cilium` CLI queries the API the same way as **`kubectl`** (via **`KUBECONFIG`**). If you run `cilium status` on a shell with **no** kubeconfig, client-go falls back to **`http://localhost:8080`**, you get **`dial tcp [::1]:8080: connect: connection refused`**, and the summary shows **errors** for Cilium, Envoy, and the operator even when the dataplane on that node is fine. **Fix:** point **`KUBECONFIG`** at a file whose **`server:`** URL is reachable **from that host** (not `127.0.0.1:6443` on workers unless the API really listens there).
 
-   | Node role | Typical approach |
-   |-----------|------------------|
-   | **Controller** | `export KUBECONFIG=/var/lib/k0s/pki/admin.conf` (default k0s data dir), or `sudo k0s kubeconfig admin > "$HOME/.kube/config"` once, then `cilium status`. |
-   | **Worker** | **`admin.conf` is usually not on workers** — use a kubeconfig copied from a controller (with **`server:`** set to the same API endpoint Cilium uses, e.g. your stable controller IP **`6443`**), or run **`cilium status`** only from a machine that already has cluster admin access. |
+   | Node role      | Typical approach                                                                                                                                                                                                                                                                       |
+   | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | **Controller** | `export KUBECONFIG=/var/lib/k0s/pki/admin.conf` (default k0s data dir), or `sudo k0s kubeconfig admin > "$HOME/.kube/config"` once, then `cilium status`.                                                                                                                              |
+   | **Worker**     | **`admin.conf` is usually not on workers** — use a kubeconfig copied from a controller (with **`server:`** set to the same API endpoint Cilium uses, e.g. your stable controller IP **`6443`**), or run **`cilium status`** only from a machine that already has cluster admin access. |
 
    **`DaemonSet Ready` but `cilium` shows errors / `error dialing backend: No agent available`:** The summary can still show **Cilium: N errors** while **DaemonSets are 3/3** and **Cluster Pods … managed by Cilium** looks healthy. In that case the CLI has already talked to the API successfully; the errors come from **`kubectl exec`** (or equivalent) into each **cilium-agent** pod to run **`cilium-dbg status`** inside the container. That path is **API server → kubelet** streaming. On **k0s**, broken **Konnectivity** (workers must reach controllers on **TCP 8132**, see the table in §1) often surfaces as **`No agent available`** for **`kubectl exec`**, **`kubectl logs`**, and the same for **Kyverno webhooks** / **aggregated APIs** that need a working control-plane-to-node path. **Checks:** confirm **`kube-system`** pods **konnectivity-agent** (per node) and **konnectivity-server** (controllers) are **Running**; from a worker, `nc -zv <controller-ip> 8132` (or your **`agentPort`**); review host firewalls (§1). **Workaround to inspect one node without exec:** on that host, use **`crictl`** / **`ctr`** to **exec** into the **cilium** container and run **`cilium-dbg status`** (or use Cilium’s host-mounted debug socket if your install exposes it).
 
@@ -138,10 +138,10 @@ Joining workers **before** Cilium runs can leave nodes without a working pod CNI
 
 For **kube-proxy replacement**, Cilium needs the **Kubernetes API** address as seen **from every node** (including **workers**).
 
-| Wrong | Right |
-|--------|--------|
+| Wrong                                                                | Right                                                                                                                  |
+| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | **`127.0.0.1:6443` on workers** (treating loopback as the apiserver) | On a worker, nothing listens for the **cluster** API on **6443** — that is wrong unless you mean something else below. |
-| **`127.0.0.1:7443` without `nodeLocalLoadBalancing`** | Envoy is not bound on every node; use a **controller IP / VIP** and **`6443`** instead. |
+| **`127.0.0.1:7443` without `nodeLocalLoadBalancing`**                | Envoy is not bound on every node; use a **controller IP / VIP** and **`6443`** instead.                                |
 
 **Use one of:**
 
@@ -217,7 +217,7 @@ kubectl run -n default netcheck --rm -it --restart=Never --image=curlimages/curl
 
 Symptoms often appear together: **Kyverno / admission webhooks** to a **Service ClusterIP**, **`kubectl exec` / `kubectl logs`**, **`cilium status` per-agent errors**, and **`FailedDiscoveryCheck`** on some **`APIService`** objects. All need a working path from the **apiserver** (and Konnectivity, where used) to **kubelet** and to **Service VIPs** programmed by **Cilium kube-proxy replacement**. Work **top to bottom**; stop when the checks pass.
 
-#### 0. HA (multi-controller): enable `nodeLocalLoadBalancing` — *the* #1 cause
+#### 0. HA (multi-controller): enable `nodeLocalLoadBalancing` — _the_ #1 cause
 
 On a **multi-controller** k0s cluster with **`nodeLocalLoadBalancing.enabled: false`** (the default), k0s writes a **single** controller IP into the konnectivity-agent DaemonSet (`--proxy-server-host`). Every agent connects to **that one** konnectivity-server. The other controllers' konnectivity-servers have **zero agents** registered. Because each apiserver uses its **own local** konnectivity-server (via UDS), any request that hits one of the "orphaned" controllers fails with **`No agent available`** — for **exec**, **logs**, **admission webhooks**, and **aggregated APIs**.
 
@@ -235,12 +235,12 @@ ssh root@<controller> "ps aux | grep konnectivity-server | grep server-id"
 **Fix:** enable **`nodeLocalLoadBalancing`** in **every** controller's `/etc/k0s/k0s.yaml`:
 
 ```yaml
-    nodeLocalLoadBalancing:
-      enabled: true
-      envoyProxy:
-        apiServerBindPort: 7443
-        konnectivityServerBindPort: 7132
-      type: EnvoyProxy
+nodeLocalLoadBalancing:
+  enabled: true
+  envoyProxy:
+    apiServerBindPort: 7443
+    konnectivityServerBindPort: 7132
+  type: EnvoyProxy
 ```
 
 This starts a local **Envoy** on each node that load-balances to **all** controllers' **6443** and **8132**. k0s then sets `--proxy-server-host=localhost --proxy-server-port=7132`, so every agent connects to every konnectivity-server through the local proxy. Also update **Cilium** `k8sServiceHost` to `127.0.0.1` / `k8sServicePort` to `7443` (the Envoy API port).
@@ -367,11 +367,11 @@ kubectl -n kube-system logs deploy/hubble-relay --tail=50 | grep -E 'error=|x509
 
 Interpretation:
 
-| `error=` snippet | Action |
-|------------------|--------|
-| `x509` / `certificate` / `*.local.hubble-grpc` vs `hubble-peer.default` | **TLS / cluster-name drift** — regenerate secrets (below). |
-| `operation not permitted` dialing ClusterIP | **`internalTrafficPolicy: Cluster`** on `hubble-peer` and/or BPF note in §7. |
-| `connection refused` / `timeout` | Agents not listening, network, or wrong `hubble-peer` endpoints. |
+| `error=` snippet                                                        | Action                                                                       |
+| ----------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `x509` / `certificate` / `*.local.hubble-grpc` vs `hubble-peer.default` | **TLS / cluster-name drift** — regenerate secrets (below).                   |
+| `operation not permitted` dialing ClusterIP                             | **`internalTrafficPolicy: Cluster`** on `hubble-peer` and/or BPF note in §7. |
+| `connection refused` / `timeout`                                        | Agents not listening, network, or wrong `hubble-peer` endpoints.             |
 
 ### Regenerate Hubble TLS secrets (after changing `cluster.name` or fixing a mismatch)
 
@@ -451,6 +451,53 @@ kubectl -n kube-system get svc hubble-ui
 
 ---
 
+## Operational hard rules (lessons from the 2026-05 Cilium incident)
+
+A rolling Proxmox patch-reboot dropped etcd below quorum and cascaded into a multi-day
+cross-node datapath outage. Durable rules so it doesn't repeat:
+
+- **One control-plane node down at a time.** Run `scripts/k0s-reconverge-check.sh` to **GO**
+  between every controller restart/reboot — losing etcd quorum (2 of 3) is what triggered
+  the whole incident.
+- **Pre-flight any cluster-wide Cilium endpoint change** (`k8sServicePort` etc.): confirm
+  `127.0.0.1:<port>` LISTEN on **all** nodes via `/proc/net/tcp` (hex `:1D13`=7443,
+  `:192B`=6443, state `0A`) before flipping. A naive flip nearly caused a full outage.
+- **k0s helm extensions have no GitOps reconcile**: a stuck `pending-upgrade` Helm release
+  (`sh.helm.release.v1.cilium.*` secret) silently blocked Cilium upgrades for 43 days.
+  Periodically check `kubectl -n kube-system get charts.helm.k0sproject.io` and those
+  secret statuses.
+- **k0s static config drift is invisible**: live `/etc/k0s/k0s.yaml` had drifted from
+  `infra/k0s/k0s.yaml.example` (`k8sServicePort` 6443 vs 7443). Periodically diff live ↔ repo.
+- **NLLB binding depends on `/etc/hosts`**: hand-built Alpine nodes had `localhost` → `::1`,
+  so the k0s node-local LB bound IPv6-only `[::1]:7443` while Cilium dials IPv4. Ensure
+  `getent hosts localhost` → `127.0.0.1` on every node (cloud-init-built nodes are correct;
+  prefer reprovisioning over hand-patching for durable parity).
+- **Tooling on the Alpine nodes is unreliable** (`ss`, `nc -z`, `/dev/tcp`, `crictl` gave
+  false negatives). Use `/proc/net/tcp{,6}`, `envoy.yaml`, and `cilium-dbg` for
+  authoritative answers.
+
+### Known host hazard: Realtek r8169 NICs blackhole VXLAN
+
+The Proxmox host **office-pve-i9** has a Realtek `r8169` NIC with the VXLAN/UDP tunnel
+checksum-offload bug: it **blackholes VXLAN-encapsulated TCP/UDP while ICMP and native node
+traffic (etcd/SSH/kubectl) keep working**, so a guest k0s node on that host looks healthy at
+the node level but drops all cross-node pod traffic. Count-based `tcpdump` comparisons are
+misleading — corrupted packets transit the wire and are dropped at the receiver on bad
+checksum. During the incident this was misdiagnosed twice (first as a node-intrinsic fault
+on the guest, then the host was wrongly exonerated by packet counts).
+
+**Fix (verified):** disable offloads on the host NIC and persist in
+`/etc/network/interfaces`:
+
+```sh
+ethtool -K enge0 gro off gso off tso off tx off rx off
+```
+
+Treat any Realtek-NIC PVE host as suspect for VXLAN workloads; the Intel-NIC hosts were
+unaffected.
+
+---
+
 ## 9. Third-party articles
 
 Blog posts (e.g. [OneUptime – Configure Cilium on k0s](https://oneuptime.com/blog/post/2026-03-13-configure-cilium-k0s/view)) are useful for **workflow**, but often use **`127.0.0.1`** as `k8sServiceHost` (suitable only on a **single** controller where that matches reality) and may include **misleading CoreDNS commentary**. Prefer **this file** + **k0s/Cilium versioned docs** for values you actually apply.
@@ -470,4 +517,4 @@ Blog posts (e.g. [OneUptime – Configure Cilium on k0s](https://oneuptime.com/b
 - [ ] Cilium **Ready**; basic pod + **DNS** check passed
 - [ ] **`kubectl exec`** works to pods on **every** node (Konnectivity healthy)
 - [ ] Then: Ceph CSI, then workloads / Flux
-- [ ] **Hubble:** `cluster.name` aligned with Hubble TLS; `peerService.internalTrafficPolicy: Cluster`; Relay **Ready** (`cilium status`)  
+- [ ] **Hubble:** `cluster.name` aligned with Hubble TLS; `peerService.internalTrafficPolicy: Cluster`; Relay **Ready** (`cilium status`)

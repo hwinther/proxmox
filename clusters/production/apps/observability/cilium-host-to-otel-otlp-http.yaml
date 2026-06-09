@@ -27,6 +27,18 @@ spec:
         protocol: TCP
       - port: "4318"
         protocol: TCP
+  # OPNsense remote syslog via NodePort 30514 (otel-syslog-nodeport.yaml). NodePort traffic is
+  # SNAT'd to the receiving node with kube-proxy replacement (identity host/remote-node); world
+  # is included in case a direct (non-SNAT) path ever applies. Exposure control is the LAN-only
+  # NodePort + OPNsense being the only sender, not this policy.
+  - fromEntities:
+    - host
+    - remote-node
+    - world
+    toPorts:
+    - ports:
+      - port: "5514"
+        protocol: UDP
   # Prometheus metrics scrape (ServiceMonitor obs-otel-collector).
   - fromEndpoints:
     - matchLabels:

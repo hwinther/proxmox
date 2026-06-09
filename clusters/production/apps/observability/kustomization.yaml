@@ -37,6 +37,11 @@ resources:
 - prometheusrule-node-temp.yaml
 # Disk SMART health/wear from smartctl_exporter on the PVE hosts (scrape job in the helmrelease).
 - prometheusrule-smartctl.yaml
+# Edge security: CrowdSec (scrape jobs in the helmrelease, logs via fluent-bit -> Loki;
+# host setup in the private-apps repo infra/crowdsec-vps/) + NAXSI via remote syslog into
+# the OTel collector (NodePort 30514/udp). Dashboard below (edge-security.json).
+- otel-syslog-nodeport.yaml
+- prometheusrule-crowdsec.yaml
 - minio-deployment.yaml
 - minio-buckets-job.yaml
 
@@ -103,6 +108,14 @@ configMapGenerator:
 - name: grafana-dashboard-disk-health
   files:
   - dashboards/disk-health.json
+  options:
+    disableNameSuffixHash: true
+    labels:
+      grafana_dashboard: "1"
+# Edge attack history: CrowdSec (Prometheus + Loki) and OPNsense NAXSI (Loki via syslog).
+- name: grafana-dashboard-edge-security
+  files:
+  - dashboards/edge-security.json
   options:
     disableNameSuffixHash: true
     labels:

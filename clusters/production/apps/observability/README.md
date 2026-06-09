@@ -56,6 +56,12 @@ In **`obs-loki`**, the Loki **SingleBinary** process is a **StatefulSet** named 
 
 **kube-prometheus-stack** also creates many **StatefulSets** (Prometheus, Alertmanager) and **DaemonSets** (node-exporter), not only Deployments.
 
+## Edge security (CrowdSec + NAXSI)
+
+Dashboard `dashboards/edge-security.json` (uid `edge-security`): CrowdSec metrics via the `crowdsec` / `crowdsec-firewall-bouncer` scrape jobs, CrowdSec logs via the Loki NodePort, and syslog (UDP, RFC5424) → NodePort **`:30514`** (`obs-otel-syslog-nodeport`) → OTel collector `syslog` receiver → Loki (`service_name` label). Alerts in `prometheusrule-crowdsec.yaml` — `CrowdsecScrapeDown` exists because a dead source would otherwise render the dashboard as "no attacks". Loki keeps the security streams for **90d** (`retention_stream`); everything else stays on the 14d default.
+
+Host-side setup and topology are documented in the **private-apps repo** (`infra/crowdsec-vps/`).
+
 ## OTel collector metrics
 
 Prometheus scrapes the collector self-metrics via **additionalServiceMonitors** in `obs-kps` (Service port name `metrics`, `:8888`).
