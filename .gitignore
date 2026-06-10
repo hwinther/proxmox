@@ -230,3 +230,4 @@ config.ini
 
 # Claude code files
 .claude/
+.mcp.json

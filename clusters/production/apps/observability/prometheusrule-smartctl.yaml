@@ -20,16 +20,36 @@ spec:
       annotations:
         summary: "SMART health FAILED: {{ $labels.node }} {{ $labels.device }}"
         description: "Disk {{ $labels.device }} on {{ $labels.node }} reports SMART overall-health = FAILED. Back up / plan replacement."
-    # Reallocated (5), current-pending (197), offline-uncorrectable (198) raw counts > 0 — the classic
-    # signs a disk (HDD or SATA SSD) is going bad. attribute_id keeps it vendor-neutral.
-    - alert: SmartReallocatedOrPendingSectors
-      expr: smartctl_device_attribute{attribute_id=~"5|197|198",attribute_value_type="raw"} > 0
+    # Bad-sector alerting is trend-based, not presence-based: a disk with an old, stable
+    # reallocation scar (shuttle02 sdd: 40 sectors, flat) would otherwise fire forever and
+    # train us to ignore it. Three signals instead:
+    # 1) Pending (197) / offline-uncorrectable (198) > 0 — sectors unreadable RIGHT NOW.
+    - alert: SmartPendingOrUncorrectableSectors
+      expr: smartctl_device_attribute{attribute_id=~"197|198",attribute_value_type="raw"} > 0
       for: 15m
       labels:
         severity: warning
       annotations:
-        summary: "Bad sectors on {{ $labels.node }} {{ $labels.device }} ({{ $labels.attribute_name }}={{ $value }})"
-        description: "{{ $labels.device }} on {{ $labels.node }} has {{ $labels.attribute_name }} (id {{ $labels.attribute_id }}) raw={{ $value }}. Reallocated/pending/uncorrectable sectors indicate a failing disk — watch the trend and plan replacement."
+        summary: "Unreadable sectors on {{ $labels.node }} {{ $labels.device }} ({{ $labels.attribute_name }}={{ $value }})"
+        description: "{{ $labels.device }} on {{ $labels.node }} has {{ $labels.attribute_name }} (id {{ $labels.attribute_id }}) raw={{ $value }} — sectors the drive currently cannot read. Check what data lives there and plan replacement."
+    # 2) Any bad-sector counter GROWING — the actual disk-is-dying signal.
+    - alert: SmartBadSectorsGrowing
+      expr: delta(smartctl_device_attribute{attribute_id=~"5|197|198",attribute_value_type="raw"}[24h]) > 0
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Bad sectors increasing on {{ $labels.node }} {{ $labels.device }} (+{{ $value }} in 24h)"
+        description: "{{ $labels.device }} on {{ $labels.node }}: {{ $labels.attribute_name }} (id {{ $labels.attribute_id }}) grew by {{ $value }} in the last 24h. An actively degrading surface — plan replacement."
+    # 3) Large absolute reallocation count, even if stable — scar big enough to matter.
+    - alert: SmartReallocatedSectorsHigh
+      expr: smartctl_device_attribute{attribute_id="5",attribute_value_type="raw"} > 200
+      for: 1h
+      labels:
+        severity: warning
+      annotations:
+        summary: "High reallocated-sector count on {{ $labels.node }} {{ $labels.device }} ({{ $value }})"
+        description: "{{ $labels.device }} on {{ $labels.node }} has {{ $value }} reallocated sectors. Even if stable, a scar this size warrants planning replacement."
     # NVMe wear: percentage_used is 0–100 (≥100 = past rated endurance).
     - alert: SmartNvmeWearHigh
       expr: smartctl_device_percentage_used >= 90
