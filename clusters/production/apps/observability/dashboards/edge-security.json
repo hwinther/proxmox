@@ -435,6 +435,57 @@
       ],
       "options": { "sortBy": [{ "displayName": "Value", "desc": true }] },
       "fieldConfig": { "defaults": { "decimals": 0 }, "overrides": [] }
+    },
+    {
+      "id": 16,
+      "type": "timeseries",
+      "title": "fail2ban bans (abyss + dns-master)",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 54 },
+      "targets": [
+        {
+          "expr": "sum by (host, jail) (count_over_time({job=\"fail2ban\"} |~ `\\] Ban ` | regexp `\\[(?P<jail>[^\\]]+)\\] Ban` [$__auto]))",
+          "legendFormat": "{{host}} {{jail}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "min": 0,
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 60,
+            "stacking": { "mode": "normal" },
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["sum"]
+        }
+      }
+    },
+    {
+      "id": 17,
+      "type": "logs",
+      "title": "fail2ban events",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 54 },
+      "targets": [
+        { "expr": "{job=\"fail2ban\"} |~ `Ban|Unban|Found`", "refId": "A" }
+      ],
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": true,
+        "sortOrder": "Descending",
+        "dedupStrategy": "none",
+        "enableLogDetails": true
+      }
     }
   ]
 }

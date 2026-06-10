@@ -68,6 +68,9 @@ spec:
         - selector: '{job="crowdsec"}'
           priority: 1
           period: 2160h
+        - selector: '{job="fail2ban"}'
+          priority: 1
+          period: 2160h
         - selector: '{service_name="opnsense"}'
           priority: 1
           period: 2160h
