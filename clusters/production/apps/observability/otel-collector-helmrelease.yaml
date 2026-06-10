@@ -59,6 +59,41 @@ spec:
         containerPort: 5514
         servicePort: 5514
         protocol: UDP
+    # GeoLite2-City database for the geoip processor (edge-security dashboard attack map).
+    # Fetched at pod start with the free MaxMind license key (Secret maxmind-license — see
+    # maxmind-geoip-secrets.md). emptyDir, not PVC: a RWO volume would deadlock rolling
+    # updates, and the DB is a throwaway weekly snapshot anyway (re-fetched per restart).
+    # Trade-off: if MaxMind is unreachable through all retries at pod start, the pod stays
+    # in Init and the whole logs pipeline waits — fluent-bit senders buffer, UDP syslog drops.
+    initContainers:
+    - name: geoip-db
+      image: alpine:3.22
+      command: [ sh, -c ]
+      args:
+      - |
+        set -e
+        for i in 1 2 3 4 5; do
+          wget -qO /tmp/geo.tgz "https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-City&license_key=${MAXMIND_LICENSE_KEY}&suffix=tar.gz" && break
+          echo "GeoLite2 download attempt $i failed; retrying in 15s"; sleep 15
+        done
+        tar -xzf /tmp/geo.tgz -C /tmp
+        mv /tmp/GeoLite2-City_*/GeoLite2-City.mmdb /geoip/GeoLite2-City.mmdb
+      env:
+      - name: MAXMIND_LICENSE_KEY
+        valueFrom:
+          secretKeyRef:
+            name: maxmind-license
+            key: license-key
+      volumeMounts:
+      - name: geoip-db
+        mountPath: /geoip
+    extraVolumes:
+    - name: geoip-db
+      emptyDir: {}
+    extraVolumeMounts:
+    - name: geoip-db
+      mountPath: /etc/geoip
+      readOnly: true
     alternateConfig:
       extensions:
         health_check:
@@ -90,6 +125,27 @@ spec:
           - key: service.name
             value: opnsense
             action: upsert
+        # Pull the attacker IP out of the raw syslog body into source.address so the geoip
+        # processor can enrich it. Two shapes: NAXSI events ("ip=1.2.3.4&server=...") and
+        # nginx access lines ("... nginx: 1.2.3.4 - ..."). Lines matching neither (error-log
+        # chatter, plugin messages) pass through untouched.
+        transform/source-ip:
+          error_mode: ignore
+          log_statements:
+          - context: log
+            statements:
+            - 'merge_maps(cache, ExtractPatterns(body, "ip=(?P<naxsi>\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})&server="), "insert") where IsMatch(body, "NAXSI_FMT")'
+            - 'set(attributes["source.address"], cache["naxsi"]) where cache["naxsi"] != nil'
+            - 'merge_maps(cache, ExtractPatterns(body, "nginx: (?P<access>\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}) - "), "insert") where attributes["source.address"] == nil'
+            - 'set(attributes["source.address"], cache["access"]) where attributes["source.address"] == nil and cache["access"] != nil'
+        # Adds geo.* attributes (country ISO code, city, lat/lon) from source.address via the
+        # GeoLite2 DB the init container fetched. Attributes become Loki structured metadata
+        # (geo_country_iso_code etc.) — the edge-security attack map aggregates on them.
+        geoip:
+          context: record
+          providers:
+            maxmind:
+              database_path: /etc/geoip/GeoLite2-City.mmdb
       exporters:
         otlp:
           endpoint: obs-tempo.observability-production.svc.cluster.local:4317
@@ -131,5 +187,5 @@ spec:
             exporters: [ otlphttp/loki ]
           logs/syslog:
             receivers: [ syslog ]
-            processors: [ memory_limiter, resource/syslog, batch ]
+            processors: [ memory_limiter, transform/source-ip, geoip, resource/syslog, batch ]
             exporters: [ otlphttp/loki ]

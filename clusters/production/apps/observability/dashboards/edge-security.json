@@ -366,6 +366,75 @@
         "dedupStrategy": "none",
         "enableLogDetails": true
       }
+    },
+    {
+      "id": 14,
+      "type": "geomap",
+      "title": "Attack origins (NAXSI events by country)",
+      "description": "geo_country_iso_code is structured metadata added by the OTel geoip processor (MaxMind GeoLite2) — only events ingested after that was enabled have it.",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 11, "w": 15, "x": 0, "y": 43 },
+      "targets": [
+        {
+          "expr": "topk(30, sum by (geo_country_iso_code) (count_over_time({service_name=\"opnsense\"} |= `NAXSI_FMT` | geo_country_iso_code != `` [$__range])))",
+          "queryType": "instant",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "view": { "id": "zero", "lat": 25, "lon": 10, "zoom": 1.6 },
+        "basemap": { "type": "default", "name": "Basemap" },
+        "controls": {
+          "showZoom": true,
+          "mouseWheelZoom": false,
+          "showAttribution": true
+        },
+        "tooltip": { "mode": "details" },
+        "layers": [
+          {
+            "type": "markers",
+            "name": "attacks by country",
+            "location": {
+              "mode": "lookup",
+              "lookup": "geo_country_iso_code",
+              "gazetteer": "public/gazetteer/countries.json"
+            },
+            "config": {
+              "style": {
+                "size": { "field": "Value", "min": 4, "max": 25 },
+                "color": { "field": "Value" },
+                "opacity": 0.6
+              },
+              "showLegend": false
+            }
+          }
+        ]
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "color": { "mode": "continuous-YlRd" }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 15,
+      "type": "table",
+      "title": "Top attack countries (range)",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 11, "w": 9, "x": 15, "y": 43 },
+      "targets": [
+        {
+          "expr": "topk(15, sum by (geo_country_iso_code, geo_country_name) (count_over_time({service_name=\"opnsense\"} |= `NAXSI_FMT` | geo_country_iso_code != `` [$__range])))",
+          "queryType": "instant",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "options": { "sortBy": [{ "displayName": "Value", "desc": true }] },
+      "fieldConfig": { "defaults": { "decimals": 0 }, "overrides": [] }
     }
   ]
 }
