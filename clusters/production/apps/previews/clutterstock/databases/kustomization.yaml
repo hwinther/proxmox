@@ -4,5 +4,4 @@
 # namespaces; isolating Database CRs from preview-namespace transformation is the simplest fix).
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-resources:
-  - pr-234.yaml
+resources: []
