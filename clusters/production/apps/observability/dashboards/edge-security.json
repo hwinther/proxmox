@@ -496,7 +496,7 @@
       "gridPos": { "h": 11, "w": 15, "x": 0, "y": 63 },
       "targets": [
         {
-          "expr": "topk(30, sum by (geo_country_iso_code) (count_over_time({job=\"crowdsec\"} | geo_country_iso_code != `` [$__range])))",
+          "expr": "topk(30, sum by (geo_country_iso_code) (count_over_time({job=\"crowdsec\"} | geo_country_iso_code != `` | geo_country_iso_code != `null` [$__range])))",
           "queryType": "instant",
           "instant": true,
           "refId": "A"
@@ -547,7 +547,7 @@
       "gridPos": { "h": 11, "w": 9, "x": 15, "y": 63 },
       "targets": [
         {
-          "expr": "topk(15, sum by (geo_country_iso_code) (count_over_time({job=\"crowdsec\"} | geo_country_iso_code != `` [$__range])))",
+          "expr": "topk(15, sum by (geo_country_iso_code) (count_over_time({job=\"crowdsec\"} | geo_country_iso_code != `` | geo_country_iso_code != `null` [$__range])))",
           "queryType": "instant",
           "instant": true,
           "refId": "A"
