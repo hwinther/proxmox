@@ -47,6 +47,12 @@ spec:
         maxUnavailable: 1
         maxSurge: 0
     hostNetwork: true
+    # Single-tenant cluster: allow Ingress/IngressRoute in any namespace to reference
+    # Middlewares in other namespaces (used for the canonical authelia-forwardauth in
+    # authelia-production instead of a per-namespace copy).
+    providers:
+      kubernetesCRD:
+        allowCrossNamespace: true
     # Sized from observed usage (1-2m CPU, 74-126Mi across the DaemonSet); no CPU limit
     # to avoid throttling the ingress data path.
     resources:
