@@ -58,6 +58,10 @@ spec:
             mode: kubernetes
           routingMode: tunnel
           tunnelProtocol: vxlan
+          # Agent metrics on :9962 (cilium_*). Scraped by the cilium-agent PodMonitor in
+          # clusters/production/apps/observability/cilium-podmonitors.yaml.
+          prometheus:
+            enabled: true
           hubble:
             enabled: true
             relay:
@@ -71,6 +75,17 @@ spec:
               auto:
                 enabled: true
                 method: helm
+            # Hubble metrics on :9965 (hubble_*). drop carries source/destination namespace
+            # labels so NetworkPolicy denials are attributable per namespace (netpol-baseline
+            # rollout). Scraped by the same PodMonitor as the agent metrics.
+            metrics:
+              enabled:
+              - dns
+              - drop:labelsContext=source_namespace,destination_namespace
+              - tcp
+              - flow
+              - icmp
+              - port-distribution
           # Raspberry Pi edge nodes use taint node-type=edge-sdr:NoSchedule (see
           # raspberry-pi-worker.md). Cilium's chart default is tolerations: [{ operator: Exists }],
           # which schedules on any tainted node. Keep that (or an explicit edge-sdr entry) if you

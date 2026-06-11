@@ -25,6 +25,9 @@ resources:
 # expiry/renewal (scrape enabled via the cert-manager HelmRelease values), and Mosquitto (metrics from
 # the exporter sidecar + PodMonitor in mosquitto-production).
 - flux-podmonitor.yaml
+# Cilium agent/operator + Hubble metrics (hubble_drop_total backs netpol-rollout drop visibility;
+# requires prometheus.enabled + hubble.metrics.enabled in the k0s Cilium values on each controller).
+- cilium-podmonitors.yaml
 - kube-state-metrics-flux-helmrelease.yaml
 - prometheusrule-flux.yaml
 - prometheusrule-cert-manager.yaml

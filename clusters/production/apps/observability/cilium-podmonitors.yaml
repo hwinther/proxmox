@@ -1,0 +1,46 @@
+# Scrapes Cilium agent metrics (:9962, cilium_*), Hubble metrics (:9965, hubble_* incl.
+# hubble_drop_total for NetworkPolicy denial visibility), and operator metrics (:9963).
+# Cilium is installed via the k0s Helm extension stanza (k0s.yaml on each controller, see
+# infra/k0s/k0s.yaml.example) — agent/hubble metrics ports only exist once `prometheus.enabled`
+# and `hubble.metrics.enabled` are set in those values; until then the agent endpoints match
+# nothing (harmless). PodMonitor (not ServiceMonitor): agent + operator are hostNetwork pods
+# and the chart-managed Services/labels vary by version, so scraping pods directly is simpler.
+# Namespaced into observability-production by the kustomization; picked up via release=obs-kps.
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: cilium-agent
+  labels:
+    release: obs-kps
+spec:
+  namespaceSelector:
+    matchNames:
+    - kube-system
+  selector:
+    matchLabels:
+      k8s-app: cilium
+  podMetricsEndpoints:
+  - port: prometheus
+    interval: 60s
+    scrapeTimeout: 20s
+  - port: hubble-metrics
+    interval: 60s
+    scrapeTimeout: 20s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: cilium-operator
+  labels:
+    release: obs-kps
+spec:
+  namespaceSelector:
+    matchNames:
+    - kube-system
+  selector:
+    matchLabels:
+      io.cilium/app: operator
+  podMetricsEndpoints:
+  - port: prometheus
+    interval: 60s
+    scrapeTimeout: 20s
