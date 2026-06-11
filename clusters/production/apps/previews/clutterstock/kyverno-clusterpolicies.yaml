@@ -64,9 +64,13 @@ spec:
       clone:
         namespace: clutterstock-test
         name: clutterstock-test-rabbitmq
-  # Valkey/Redis URL. Same sharing model as RabbitMQ — preview frontends use the shared-test redis
-  # via the URL in this Secret. Key collisions across previews are accepted (short-lived).
-  - name: clone-clutterstock-valkey
+  # Valkey/Redis URL. NOT cloned from clutterstock-test like the rules above: previews run their
+  # own ephemeral Valkey in-namespace (base/valkey.yaml) because shared-test's Redis NetworkPolicy
+  # denies preview namespaces (pr-243 retry-looped against it) and the shared README forbids
+  # routing previews there. Generated (not cloned) so the URL points at the local Service; the
+  # Secret keeps the same name/key so the deployments' env wiring is unchanged.
+  # data is base64 of redis://redis:6379/0 (same URI shape as the shared secret, no auth).
+  - name: generate-clutterstock-valkey
     match:
       any:
       - resources:
@@ -81,6 +85,7 @@ spec:
       name: clutterstock-valkey
       namespace: "{{request.object.metadata.name}}"
       synchronize: true
-      clone:
-        namespace: clutterstock-test
-        name: clutterstock-valkey
+      data:
+        type: Opaque
+        data:
+          redis-url: cmVkaXM6Ly9yZWRpczo2Mzc5LzA=

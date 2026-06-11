@@ -65,6 +65,14 @@ spec:
     ports:
     - port: 5672
       protocol: TCP
+  # Same-namespace egress to the per-preview Valkey (valkey.yaml).
+  - to:
+    - podSelector:
+        matchLabels:
+          app: redis
+    ports:
+    - port: 6379
+      protocol: TCP
   - to:
     - ipBlock:
         cidr: 0.0.0.0/0
@@ -108,15 +116,41 @@ spec:
     - podSelector:
         matchLabels:
           app: clutterstock-api
+  # Same-namespace egress to the per-preview Valkey (valkey.yaml).
   - to:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: shared-test
-      podSelector:
+    - podSelector:
         matchLabels:
           app: redis
+    ports:
+    - port: 6379
+      protocol: TCP
   - to:
     - ipBlock:
         cidr: 0.0.0.0/0
         except:
         - 169.254.169.254/32
+---
+# Per-preview Valkey: only the preview API/frontend may connect; Valkey initiates nothing
+# (no egress rules + Egress policyType = egress denied).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: redis
+spec:
+  podSelector:
+    matchLabels:
+      app: redis
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: clutterstock-api
+    - podSelector:
+        matchLabels:
+          app: clutterstock-frontend
+    ports:
+    - port: 6379
+      protocol: TCP

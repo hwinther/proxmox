@@ -111,10 +111,11 @@ spec:
             secretKeyRef:
               name: clutterstock-test-rabbitmq
               key: password
-        # Shared Redis/Valkey — same connection string the preview frontend uses. The
-        # clutterstock-valkey Secret is cloned into every preview namespace by
-        # clone-clutterstock-preview-secrets (see ../kyverno-clusterpolicies.yaml); egress is
-        # permitted by the clutterstock-api NetworkPolicy's 0.0.0.0/0 rule.
+        # Per-preview ephemeral Valkey (valkey.yaml) — same connection string the preview
+        # frontend uses. The clutterstock-valkey Secret (redis://redis:6379/0) is generated
+        # in-namespace by clone-clutterstock-preview-secrets (see ../kyverno-clusterpolicies.yaml);
+        # egress is the same-namespace app:redis rule in networkpolicies.yaml (Cilium never
+        # matches in-cluster pods via ipBlock 0.0.0.0/0).
         - name: Redis__ConnectionString
           valueFrom:
             secretKeyRef:

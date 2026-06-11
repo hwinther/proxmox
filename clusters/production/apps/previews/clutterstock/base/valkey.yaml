@@ -1,0 +1,86 @@
+# Per-preview ephemeral Valkey. Previews must NOT use shared-test's Redis (see
+# clusters/production/apps/shared/README): its NetworkPolicy denies preview namespaces, and the
+# k8s-NP `0.0.0.0/0` egress rule never covers in-cluster pods under Cilium — pr-243 retry-looped
+# ~3 drops/s against shared-test before teardown. A namespace-local instance isolates keys per PR
+# and dies with the preview.
+#
+# No auth and no persistence on purpose: data is throwaway, the namespace is short-lived, and
+# ingress is restricted to the preview API/frontend pods by the `redis` NetworkPolicy.
+# Deployment (not StatefulSet): emptyDir means there is no state worth ordered handover.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+        app.kubernetes.io/component: cache
+        app.kubernetes.io/name: valkey
+    spec:
+      securityContext:
+        fsGroup: 1000
+      containers:
+      - name: redis
+        # Same image/tag as shared-production/shared-test so Dependabot bumps stay in lockstep.
+        image: valkey/valkey:9-alpine
+        command:
+        - valkey-server
+        - --dir
+        - /data
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          runAsNonRoot: true
+          runAsUser: 999
+          runAsGroup: 1000
+        ports:
+        - name: redis
+          containerPort: 6379
+        readinessProbe:
+          tcpSocket:
+            port: redis
+          initialDelaySeconds: 2
+          periodSeconds: 10
+        livenessProbe:
+          tcpSocket:
+            port: redis
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 6
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            cpu: 200m
+            memory: 128Mi
+        volumeMounts:
+        - name: data
+          mountPath: /data
+      volumes:
+      - name: data
+        emptyDir:
+          sizeLimit: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+spec:
+  type: ClusterIP
+  ports:
+  - port: 6379
+    targetPort: redis
+    protocol: TCP
+    name: redis
+  selector:
+    app: redis
