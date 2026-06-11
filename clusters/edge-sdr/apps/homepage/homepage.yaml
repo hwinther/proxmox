@@ -161,7 +161,7 @@ spec:
       containers:
       - name: homepage
         # Semver tag for Dependabot; supply-chain / verifyImages policies may mutate to digest at admission.
-        image: ghcr.io/gethomepage/homepage:v1.13.1
+        image: ghcr.io/gethomepage/homepage:v1.13.2
         imagePullPolicy: IfNotPresent
         securityContext:
           allowPrivilegeEscalation: false
