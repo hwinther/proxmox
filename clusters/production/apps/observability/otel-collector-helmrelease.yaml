@@ -70,7 +70,7 @@ spec:
     # in Init and the whole logs pipeline waits — fluent-bit senders buffer, UDP syslog drops.
     initContainers:
     - name: geoip-db
-      image: alpine:3.22
+      image: alpine:3.24
       command: [ sh, -c ]
       args:
       - |
