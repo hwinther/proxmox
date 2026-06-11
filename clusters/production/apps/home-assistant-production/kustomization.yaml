@@ -3,7 +3,6 @@ kind: Kustomization
 resources:
 - namespace.yaml
 - home-assistant-statefulset.yaml
-- traefik-middleware-authelia-forwardauth.yaml
 - home-assistant-ingress.yaml
 - cilium-cluster-nodes-to-http.yaml
 - cilium-node-red-to-home-assistant.yaml

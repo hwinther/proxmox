@@ -3,7 +3,6 @@ kind: Kustomization
 resources:
 - namespace.yaml
 - node-red-statefulset.yaml
-- traefik-middleware-authelia-forwardauth.yaml
 - node-red-ingress.yaml
 - cilium-cluster-nodes-to-http.yaml
 - kyverno-rbac-generate-pbs-encryption-keyfile.yaml
