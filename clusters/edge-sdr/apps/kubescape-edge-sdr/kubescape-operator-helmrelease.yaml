@@ -4,6 +4,9 @@ metadata:
   name: kubescape
   namespace: kubescape-edge-sdr
 spec:
+  # Detect manual changes to Helm-managed resources (warn-only; flip to enabled per-release once proven quiet).
+  driftDetection:
+    mode: warn
   interval: 30m
   # node-agent pulls eBPF-heavy image and waits for /readyz on every node; allow slow clusters.
   timeout: 30m

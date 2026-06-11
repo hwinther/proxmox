@@ -14,6 +14,9 @@ metadata:
   name: ceph-csi-rbd
   namespace: ceph-csi-edge-sdr
 spec:
+  # Detect manual changes to Helm-managed resources (warn-only; flip to enabled per-release once proven quiet).
+  driftDetection:
+    mode: warn
   interval: 30m
   # Pi / slow pulls: avoid Helm timeout before nodeplugin + provisioner become Ready (was leaving old DS with liveness-prometheus).
   timeout: 30m

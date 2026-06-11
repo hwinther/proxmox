@@ -6,6 +6,9 @@ metadata:
   name: prometheus-agent
   namespace: prometheus-agent-edge-sdr
 spec:
+  # Detect manual changes to Helm-managed resources (warn-only; flip to enabled per-release once proven quiet).
+  driftDetection:
+    mode: warn
   interval: 30m
   timeout: 15m
   install:

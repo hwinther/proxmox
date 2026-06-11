@@ -13,6 +13,9 @@ metadata:
   name: obs-loki
   namespace: observability-production
 spec:
+  # Detect manual changes to Helm-managed resources (warn-only; flip to enabled per-release once proven quiet).
+  driftDetection:
+    mode: warn
   interval: 30m
   timeout: 20m
   chart:

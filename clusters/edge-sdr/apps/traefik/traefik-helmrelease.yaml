@@ -20,6 +20,9 @@ metadata:
   name: traefik
   namespace: traefik
 spec:
+  # Detect manual changes to Helm-managed resources (warn-only; flip to enabled per-release once proven quiet).
+  driftDetection:
+    mode: warn
   interval: 30m
   ## CRDs applied from traefik-crds.yaml (same chart version); avoid Helm/Flux ordering issues.
   install:
