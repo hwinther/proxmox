@@ -4,6 +4,8 @@
 # (in ../databases/) so kustomize's namespace transform does not overwrite its `postgres-test` ns.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+components:
+- ../../../../../../bases/netpol-baseline
 resources:
 - deployment-api.yaml
 - deployment-frontend.yaml

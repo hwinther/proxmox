@@ -1,0 +1,89 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: home-assistant
+  namespace: home-assistant-production
+spec:
+  podSelector:
+    matchLabels:
+      app: home-assistant
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Traefik: standard NP covers pod-to-pod; cilium-cluster-nodes-to-http covers host/remote-node
+  # (Traefik hostNetwork). homepage + node-red ingress is granted by their dedicated CNPs.
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: traefik
+    ports:
+    - port: 8123
+      protocol: TCP
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+  # MQTT broker (HA's mqtt integration; allow-mqtt-to-mosquitto covers the ingress side).
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: mosquitto-production
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: mosquitto
+    ports:
+    - port: 1883
+      protocol: TCP
+  # Cloud integrations + LAN IoT devices (Cilium: matches `world` incl. LAN IPs, never
+  # in-cluster pods — new in-cluster targets need explicit rules like mosquitto above).
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+        except:
+        - 169.254.169.254/32
+---
+# PBS backup Jobs (filesystem variant): DNS + HTTPS + PBS API port. No Postgres — backs up the PVC.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: home-assistant-pbs-backup
+  namespace: home-assistant-production
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: home-assistant-pbs-backup
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+        except:
+        - 169.254.169.254/32
+    ports:
+    - port: 443
+      protocol: TCP
+    - port: 8007
+      protocol: TCP
