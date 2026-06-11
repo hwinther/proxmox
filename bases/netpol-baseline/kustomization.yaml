@@ -1,0 +1,18 @@
+# Namespace-baseline network policies (default-deny floor + universal allows).
+# Consume as a kustomize Component; the consuming kustomization MUST set `namespace:`
+# (resources here carry none):
+#
+#   namespace: myapp-production
+#   components:
+#   - ../../../../bases/netpol-baseline
+#
+# Per-app allows stay in the app directory: cilium-cluster-nodes-to-http.yaml for
+# Traefik (hostNetwork → host/remote-node entities, invisible to plain NetworkPolicy),
+# CNP toEntities kube-apiserver where needed, and app-specific egress (remember:
+# Cilium socket-LB means egress rules must allow the pod targetPort, not the service port).
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+resources:
+- default-deny.yaml
+- allow-dns-egress.yaml
+- allow-prometheus-scrape.yaml
