@@ -125,19 +125,21 @@ spec:
           - key: service.name
             value: opnsense
             action: upsert
-        # Pull the attacker IP out of the raw syslog body into source.address so the geoip
-        # processor can enrich it. Two shapes: NAXSI events ("ip=1.2.3.4&server=...") and
-        # nginx access lines ("... nginx: 1.2.3.4 - ..."). Lines matching neither (error-log
-        # chatter, plugin messages) pass through untouched.
+        # Pull the attacker IP into source.address so the geoip processor can enrich it. Two
+        # shapes arrive on different paths: NAXSI/error lines come via syslog-ng as RFC5424
+        # and PARSE cleanly — their text lands in attributes["message"] (body becomes a
+        # structured form ExtractPatterns can't read); nginx access lines come from the plugin
+        # as RFC3164, FAIL the rfc5424 parser, and keep the raw line in body. So read NAXSI
+        # from message, access from body. error_mode ignore: lines matching neither pass through.
         transform/source-ip:
           error_mode: ignore
           log_statements:
           - context: log
             statements:
-            - 'merge_maps(cache, ExtractPatterns(body, "ip=(?P<naxsi>\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})&server="), "insert") where IsMatch(body, "NAXSI_FMT")'
-            - 'set(attributes["source.address"], cache["naxsi"]) where cache["naxsi"] != nil'
-            - 'merge_maps(cache, ExtractPatterns(body, "nginx: (?P<access>\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}) - "), "insert") where attributes["source.address"] == nil'
-            - 'set(attributes["source.address"], cache["access"]) where attributes["source.address"] == nil and cache["access"] != nil'
+            - 'merge_maps(cache, ExtractPatterns(attributes["message"], "ip=(?P<ip>\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})&server="), "upsert") where attributes["message"] != nil and IsMatch(attributes["message"], "NAXSI_FMT")'
+            - 'set(attributes["source.address"], cache["ip"]) where cache["ip"] != nil'
+            - 'merge_maps(cache, ExtractPatterns(body, "nginx: (?P<ip>\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}) - "), "upsert") where attributes["source.address"] == nil'
+            - 'set(attributes["source.address"], cache["ip"]) where attributes["source.address"] == nil and cache["ip"] != nil'
         # Adds geo.* attributes (country ISO code, city, lat/lon) from source.address via the
         # GeoLite2 DB the init container fetched. Attributes become Loki structured metadata
         # (geo_country_iso_code etc.) — the edge-security attack map aggregates on them.

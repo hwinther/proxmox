@@ -110,8 +110,11 @@ spec:
         requests:
           cpu: 50m
           memory: 256Mi
+        # Bumped 512Mi -> 768Mi: the pod was OOMKilled (exit 137) hovering at ~507Mi of the
+        # old 512Mi limit, causing intermittent Traefik 503 "no available server" while it
+        # restarted. Geomap/heavier dashboards push it over. Recreate strategy (RWO PVC).
         limits:
-          memory: 512Mi
+          memory: 768Mi
       testFramework:
         enabled: false
       # Postgres storage for Grafana's internal DB (users, dashboards, alerts, sessions, secure values).
