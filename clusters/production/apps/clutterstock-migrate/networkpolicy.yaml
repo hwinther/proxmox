@@ -1,0 +1,35 @@
+# Migrator Job egress: DNS + Postgres. Required since clutterstock-production carries the
+# netpol-baseline default-deny floor and the migrate pods match none of the app policies in
+# clusters/production/apps/clutterstock/networkpolicies.yaml. Ingress side is already covered:
+# postgres-prod allows the whole clutterstock-production namespace on 5432.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: clutterstock-migrate
+  namespace: clutterstock-production
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: clutterstock-migrate
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: postgres-production
+    ports:
+    - port: 5432
+      protocol: TCP
