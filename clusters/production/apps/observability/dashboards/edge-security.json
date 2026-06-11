@@ -416,11 +416,12 @@
             },
             "config": {
               "style": {
-                "size": { "field": "Value", "min": 4, "max": 25 },
-                "color": { "field": "Value" },
-                "opacity": 0.6
+                "size": { "fixed": 8 },
+                "color": { "fixed": "red" },
+                "opacity": 0.8,
+                "symbol": { "fixed": "img/icons/marker/circle.svg" }
               },
-              "showLegend": false
+              "showLegend": true
             }
           }
         ]
@@ -550,11 +551,12 @@
             },
             "config": {
               "style": {
-                "size": { "field": "Value", "min": 4, "max": 25 },
-                "color": { "field": "Value" },
-                "opacity": 0.6
+                "size": { "fixed": 8 },
+                "color": { "fixed": "#00c8ff" },
+                "opacity": 0.8,
+                "symbol": { "fixed": "img/icons/marker/circle.svg" }
               },
-              "showLegend": false
+              "showLegend": true
             }
           }
         ]
