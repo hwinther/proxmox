@@ -23,11 +23,14 @@ spec:
         description: "Prometheus has not been able to scrape {{ $labels.job }} on {{ $labels.instance }} for >10m. For host=abyss check the tunnel and the VPS firewall; for host=opnsense check the os-crowdsec service and its prometheus listener. While this fires, the edge-security dashboard is blind, not quiet."
     # Sustained burst of scenario triggers — something is actively hammering the edge. Bucket
     # overflows are local detections only (community blocklist imports don't count here).
+    # Threshold calibrated 2026-06: normal background noise is ~30-40/h (http-probing,
+    # sensitive-files, ssh-bf sweeps); routine scanner gusts reach ~80/h and self-resolve.
+    # 150/h sustained means something abnormal is happening.
     - alert: CrowdsecBanSpike
-      expr: sum(increase(cs_bucket_overflowed_total[1h])) > 50
+      expr: sum(increase(cs_bucket_overflowed_total[1h])) > 150
       for: 15m
       labels:
         severity: warning
       annotations:
         summary: "CrowdSec ban spike at the edge: {{ $value | humanize }} scenario triggers in 1h"
-        description: "More than 50 CrowdSec scenario overflows in the last hour on the edge VPS (sustained >15m). Check the edge-security dashboard for the scenarios and source IPs involved — this is a live attack or a misbehaving client being repeatedly re-banned."
+        description: "More than 150 CrowdSec scenario overflows in the last hour (sustained >15m) — several times the normal scanner background. Check the edge-security dashboard for the scenarios and source IPs involved — this is a live attack or a misbehaving client being repeatedly re-banned."

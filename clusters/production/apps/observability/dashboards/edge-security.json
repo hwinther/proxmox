@@ -486,6 +486,75 @@
         "dedupStrategy": "none",
         "enableLogDetails": true
       }
+    },
+    {
+      "id": 18,
+      "type": "geomap",
+      "title": "CrowdSec local detections by country",
+      "description": "geo_* is structured metadata added by the abyss fluent-bit geoip2 filter on the agent's 'Ip X performed scenario' lines — local detections only (CAPI community-blocklist bans are not local detections and are not mapped).",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 11, "w": 15, "x": 0, "y": 63 },
+      "targets": [
+        {
+          "expr": "topk(30, sum by (geo_country_iso_code) (count_over_time({job=\"crowdsec\"} | geo_country_iso_code != `` [$__range])))",
+          "queryType": "instant",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "view": { "id": "zero", "lat": 25, "lon": 10, "zoom": 1.6 },
+        "basemap": { "type": "default", "name": "Basemap" },
+        "controls": {
+          "showZoom": true,
+          "mouseWheelZoom": false,
+          "showAttribution": true
+        },
+        "tooltip": { "mode": "details" },
+        "layers": [
+          {
+            "type": "markers",
+            "name": "detections by country",
+            "location": {
+              "mode": "lookup",
+              "lookup": "geo_country_iso_code",
+              "gazetteer": "public/gazetteer/countries.json"
+            },
+            "config": {
+              "style": {
+                "size": { "field": "Value", "min": 4, "max": 25 },
+                "color": { "field": "Value" },
+                "opacity": 0.6
+              },
+              "showLegend": false
+            }
+          }
+        ]
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "color": { "mode": "continuous-BlPu" }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 19,
+      "type": "table",
+      "title": "Top CrowdSec detection countries (range)",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 11, "w": 9, "x": 15, "y": 63 },
+      "targets": [
+        {
+          "expr": "topk(15, sum by (geo_country_iso_code) (count_over_time({job=\"crowdsec\"} | geo_country_iso_code != `` [$__range])))",
+          "queryType": "instant",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "options": { "sortBy": [{ "displayName": "Value", "desc": true }] },
+      "fieldConfig": { "defaults": { "decimals": 0 }, "overrides": [] }
     }
   ]
 }
