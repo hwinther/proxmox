@@ -7,7 +7,7 @@ metadata:
     # Homepage infers http:// when spec.tls is absent (see gethomepage resource-helpers getUrlFromIngress).
     gethomepage.dev/href: "https://node-red.wsh.no/"
     traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
-    traefik.ingress.kubernetes.io/router.middlewares: node-red-production-authelia-forwardauth@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: authelia-production-authelia-forwardauth@kubernetescrd
     gethomepage.dev/enabled: "true"
     gethomepage.dev/group: Apps
     gethomepage.dev/name: Node-RED

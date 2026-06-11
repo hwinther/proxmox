@@ -6,7 +6,7 @@ metadata:
   annotations:
     gethomepage.dev/href: "https://mqtt.mgmt.wsh.no/"
     traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
-    traefik.ingress.kubernetes.io/router.middlewares: mosquitto-production-authelia-forwardauth@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: authelia-production-authelia-forwardauth@kubernetescrd
     gethomepage.dev/enabled: "true"
     gethomepage.dev/group: Platform
     gethomepage.dev/name: MQTT UI

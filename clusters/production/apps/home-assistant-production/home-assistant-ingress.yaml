@@ -7,7 +7,7 @@ metadata:
     # Homepage infers http:// when spec.tls is absent (see gethomepage resource-helpers getUrlFromIngress).
     gethomepage.dev/href: "https://home-assistant.wsh.no/"
     traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
-    traefik.ingress.kubernetes.io/router.middlewares: home-assistant-production-authelia-forwardauth@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: authelia-production-authelia-forwardauth@kubernetescrd
     # Auto-discovery disabled — Home Assistant is a static tile in homepage services.yaml (the widget
     # needs a long-lived token, which can't live in annotations). See homepage-secrets.md.
     gethomepage.dev/enabled: "false"
