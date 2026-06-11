@@ -63,6 +63,13 @@ spec:
             port: 30005
           initialDelaySeconds: 15
           periodSeconds: 10
+        livenessProbe:
+          tcpSocket:
+            port: 30005
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 6
         startupProbe:
           tcpSocket:
             port: 30005

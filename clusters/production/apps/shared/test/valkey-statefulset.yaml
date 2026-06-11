@@ -47,6 +47,13 @@ spec:
             port: redis
           initialDelaySeconds: 2
           periodSeconds: 10
+        livenessProbe:
+          tcpSocket:
+            port: redis
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 6
         resources:
           requests:
             cpu: 50m

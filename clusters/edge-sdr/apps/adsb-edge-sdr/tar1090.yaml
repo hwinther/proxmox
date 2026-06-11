@@ -65,6 +65,13 @@ spec:
             port: 80
           initialDelaySeconds: 20
           periodSeconds: 15
+        livenessProbe:
+          tcpSocket:
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 6
         resources:
           requests:
             cpu: 50m
