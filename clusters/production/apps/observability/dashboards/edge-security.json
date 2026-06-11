@@ -370,16 +370,30 @@
     {
       "id": 14,
       "type": "geomap",
-      "title": "Attack origins (NAXSI events by country)",
-      "description": "geo_country_iso_code is structured metadata added by the OTel geoip processor (MaxMind GeoLite2) — only events ingested after that was enabled have it.",
+      "title": "Attack origins (NAXSI events)",
+      "description": "Coordinate markers from geo_location_lat/lon (OTel geoip, MaxMind GeoLite2-City) — city-level. Coords not country-lookup because MaxMind emits 2-letter ISO and Grafana's countries gazetteer is keyed 3-letter. Only events ingested after geoip was enabled carry coords.",
       "datasource": { "type": "loki", "uid": "loki" },
       "gridPos": { "h": 11, "w": 15, "x": 0, "y": 43 },
       "targets": [
         {
-          "expr": "topk(30, sum by (geo_country_iso_code) (count_over_time({service_name=\"opnsense\"} |= `NAXSI_FMT` | geo_country_iso_code != `` [$__range])))",
+          "expr": "topk(50, sum by (geo_location_lat, geo_location_lon, geo_country_iso_code) (count_over_time({service_name=\"opnsense\"} |= `NAXSI_FMT` | geo_location_lat != `` [$__range])))",
           "queryType": "instant",
           "instant": true,
           "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "geo_location_lat",
+                "destinationType": "number"
+              },
+              { "targetField": "geo_location_lon", "destinationType": "number" }
+            ]
+          }
         }
       ],
       "options": {
@@ -394,11 +408,11 @@
         "layers": [
           {
             "type": "markers",
-            "name": "attacks by country",
+            "name": "attacks",
             "location": {
-              "mode": "lookup",
-              "lookup": "geo_country_iso_code",
-              "gazetteer": "public/gazetteer/countries.json"
+              "mode": "coords",
+              "latitude": "geo_location_lat",
+              "longitude": "geo_location_lon"
             },
             "config": {
               "style": {
@@ -490,16 +504,30 @@
     {
       "id": 18,
       "type": "geomap",
-      "title": "CrowdSec local detections by country",
-      "description": "geo_* is structured metadata added by the abyss fluent-bit geoip2 filter on the agent's 'Ip X performed scenario' lines — local detections only (CAPI community-blocklist bans are not local detections and are not mapped).",
+      "title": "CrowdSec local detections",
+      "description": "Coordinate markers from geo_location_lat/lon (abyss fluent-bit geoip2, on the agent's 'Ip X performed scenario' lines) — local detections only (CAPI community-blocklist bans are not local detections and are not mapped).",
       "datasource": { "type": "loki", "uid": "loki" },
       "gridPos": { "h": 11, "w": 15, "x": 0, "y": 63 },
       "targets": [
         {
-          "expr": "topk(30, sum by (geo_country_iso_code) (count_over_time({job=\"crowdsec\"} | geo_country_iso_code != `` | geo_country_iso_code != `null` [$__range])))",
+          "expr": "topk(50, sum by (geo_location_lat, geo_location_lon, geo_country_iso_code) (count_over_time({job=\"crowdsec\"} | geo_location_lat != `` | geo_location_lat != `null` [$__range])))",
           "queryType": "instant",
           "instant": true,
           "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "geo_location_lat",
+                "destinationType": "number"
+              },
+              { "targetField": "geo_location_lon", "destinationType": "number" }
+            ]
+          }
         }
       ],
       "options": {
@@ -514,11 +542,11 @@
         "layers": [
           {
             "type": "markers",
-            "name": "detections by country",
+            "name": "detections",
             "location": {
-              "mode": "lookup",
-              "lookup": "geo_country_iso_code",
-              "gazetteer": "public/gazetteer/countries.json"
+              "mode": "coords",
+              "latitude": "geo_location_lat",
+              "longitude": "geo_location_lon"
             },
             "config": {
               "style": {
