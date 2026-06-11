@@ -1,0 +1,85 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: node-red
+  namespace: node-red-production
+spec:
+  podSelector:
+    matchLabels:
+      app: node-red
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Traefik: standard NP covers pod-to-pod; cilium-cluster-nodes-to-http covers host/remote-node (Traefik hostNetwork).
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: traefik
+    ports:
+    - port: 1880
+      protocol: TCP
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+  # Home Assistant (flows call the HA API; allow-node-red-to-home-assistant-http covers the ingress side).
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: home-assistant-production
+    ports:
+    - port: 8123
+      protocol: TCP
+  # Flows are user-configured at runtime and may call arbitrary external APIs. Cilium: this matches
+  # `world` only, never in-cluster pods — new in-cluster targets need explicit rules like HA above.
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+        except:
+        - 169.254.169.254/32
+---
+# PBS backup Jobs (filesystem variant): DNS + HTTPS + PBS API port. No Postgres — backs up the PVC.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: node-red-pbs-backup
+  namespace: node-red-production
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: node-red-pbs-backup
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+        except:
+        - 169.254.169.254/32
+    ports:
+    - port: 443
+      protocol: TCP
+    - port: 8007
+      protocol: TCP

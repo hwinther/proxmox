@@ -58,6 +58,18 @@ spec:
     ports:
     - port: 5432
       protocol: TCP
+  # Shared Valkey (Redis__ConnectionString in the API deployment). Cilium never matches in-cluster
+  # pods via the 0.0.0.0/0 rule below, so this needs its own rule (the frontend already has one).
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: shared-test
+      podSelector:
+        matchLabels:
+          app: redis
+    ports:
+    - port: 6379
+      protocol: TCP
   - to:
     - ipBlock:
         cidr: 0.0.0.0/0

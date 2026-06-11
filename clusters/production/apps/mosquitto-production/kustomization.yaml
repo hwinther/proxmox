@@ -1,10 +1,15 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+# namespace: is required by the netpol-baseline component (its policies carry no namespace).
+namespace: mosquitto-production
+components:
+- ../../../../bases/netpol-baseline
 resources:
 - namespace.yaml
 - mosquitto-configmap.yaml
 - mosquitto-statefulset.yaml
 - mosquitto-podmonitor.yaml
+- networkpolicies.yaml
 - cilium-mqtt-ingress.yaml
 - kyverno-rbac-generate-pbs-encryption-keyfile.yaml
 - mosquitto-pbs-backup-cronjob.yaml

@@ -1,9 +1,14 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+# namespace: is required by the netpol-baseline component (its policies carry no namespace).
+namespace: node-red-production
+components:
+- ../../../../bases/netpol-baseline
 resources:
 - namespace.yaml
 - node-red-statefulset.yaml
 - node-red-ingress.yaml
+- networkpolicies.yaml
 - cilium-cluster-nodes-to-http.yaml
 - kyverno-rbac-generate-pbs-encryption-keyfile.yaml
 - node-red-pbs-backup-cronjob.yaml

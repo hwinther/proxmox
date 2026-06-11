@@ -1,0 +1,81 @@
+# The broker itself needs no NetworkPolicy: its ingress (HA / mqttui / esp-poller / world-via-VIP on
+# 1883, Prometheus on 9234) is fully governed by the allow-mqtt-to-mosquitto CNP, and it initiates
+# no egress (no bridges). Under the netpol-baseline default-deny, CNP allows still apply (union).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mqttui
+  namespace: mosquitto-production
+spec:
+  podSelector:
+    matchLabels:
+      app: mqttui
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Traefik: standard NP covers pod-to-pod; cilium-cluster-nodes-to-mqttui-http covers host/remote-node (Traefik hostNetwork).
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: traefik
+    ports:
+    - port: 5000
+      protocol: TCP
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+  # Same-namespace broker subscription (matches the mqttui fromEndpoints rule in cilium-mqtt-ingress.yaml).
+  - to:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: mosquitto
+    ports:
+    - port: 1883
+      protocol: TCP
+---
+# PBS backup Jobs (filesystem variant): DNS + HTTPS + PBS API port. No Postgres — backs up the PVC.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mosquitto-pbs-backup
+  namespace: mosquitto-production
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: mosquitto-pbs-backup
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+        except:
+        - 169.254.169.254/32
+    ports:
+    - port: 443
+      protocol: TCP
+    - port: 8007
+      protocol: TCP
