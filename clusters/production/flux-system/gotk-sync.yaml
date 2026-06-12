@@ -13,6 +13,11 @@ spec:
     name: flux-system
   url: https://github.com/hwinther/proxmox.git
 ---
+# force: Jobs are immutable, and Kyverno's verifyImages mutateDigest rewrites the pod template's
+# image (tag -> tag@sha256) at admission — so the stored Job never matches git, and any re-apply
+# of the Job under the same name fails with "field is immutable", wedging the whole Kustomization.
+# force recreates the Job instead; safe here because EF migrations are idempotent and the
+# versioned job name (-vNNN) controls when a migration is intended to run.
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
@@ -22,10 +27,12 @@ spec:
   interval: 10m0s
   path: ./clusters/production/apps/clutterstock-migrate
   prune: true
+  force: true
   sourceRef:
     kind: GitRepository
     name: flux-system
 ---
+# force: see clutterstock-migrate above.
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
@@ -35,6 +42,7 @@ spec:
   interval: 10m0s
   path: ./clusters/production/apps/clutterstock-test-migrate
   prune: true
+  force: true
   sourceRef:
     kind: GitRepository
     name: flux-system
