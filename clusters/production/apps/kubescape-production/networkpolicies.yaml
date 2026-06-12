@@ -80,3 +80,28 @@ spec:
     - ports:
       - port: "8443"
         protocol: TCP
+---
+# Aggregated API (v1beta1.spdx/v1beta1.softwarecomposition): apiserver → storage pod :8443
+# (Service storage 443→8443). Same identity caveat as the webhook CNP above: apiserver-originated
+# traffic arrives as host/remote-node, not the kube-apiserver entity. Without this the namespace
+# NetworkPolicy's ingress rules (kubescape-production + observability-production only) drop the
+# calls — seen as a steady (non-pod)→kubescape-production hubble_drop_total and intermittent
+# KubeAggregatedAPIDown (~80% available) alerts.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-apiserver-to-kubescape-storage
+  namespace: kubescape-production
+spec:
+  endpointSelector:
+    matchLabels:
+      app: storage
+  ingress:
+  - fromEntities:
+    - host
+    - remote-node
+    - kube-apiserver
+    toPorts:
+    - ports:
+      - port: "8443"
+        protocol: TCP

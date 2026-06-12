@@ -44,6 +44,14 @@ spec:
     ports:
     - port: 1883
       protocol: TCP
+  # In-cluster HA integrations in other namespaces opt in by labelling their namespace
+  # home-assistant.wsh.no/integration="true" (same enrol-by-label pattern as the PBS
+  # encryption keyfile clone — keeps sibling-repo namespace names out of this repo).
+  # The target side still needs its own ingress allow for the HA pod.
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          home-assistant.wsh.no/integration: "true"
   # Cloud integrations + LAN IoT devices (Cilium: matches `world` incl. LAN IPs, never
   # in-cluster pods — new in-cluster targets need explicit rules like mosquitto above).
   - to:

@@ -6,7 +6,8 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      app.kubernetes.io/name: ui
+      # Chart labels pods policy-reporter-ui (not "ui") — verify with kubectl get pods --show-labels.
+      app.kubernetes.io/name: policy-reporter-ui
   policyTypes:
   - Ingress
   - Egress
@@ -90,7 +91,8 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      app.kubernetes.io/name: kyverno-plugin
+      # Chart labels pods policy-reporter-kyverno-plugin (not "kyverno-plugin").
+      app.kubernetes.io/name: policy-reporter-kyverno-plugin
   policyTypes:
   - Ingress
   - Egress
@@ -135,7 +137,7 @@ spec:
       operator: In
       values:
       - policy-reporter
-      - kyverno-plugin
+      - policy-reporter-kyverno-plugin
   egress:
   - toEntities:
     - kube-apiserver
