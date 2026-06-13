@@ -15,6 +15,8 @@ resources:
 - topology-permission-clutterstock-test.yaml
 - topology-permission-clutterstock-prod.yaml
 - networkpolicy-rabbitmq.yaml
+- networkpolicy-baseline.yaml
+- cilium-rabbitmq-to-apiserver.yaml
 - cilium-cluster-nodes-to-rabbitmq-management.yaml
 - cilium-homepage-to-rabbitmq-management.yaml
 - rabbitmq-management-ingress.yaml

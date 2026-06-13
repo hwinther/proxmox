@@ -14,6 +14,7 @@ spec:
       app.kubernetes.io/component: rabbitmq
   policyTypes:
   - Ingress
+  - Egress
   ingress:
   - from:
     - podSelector: {}
@@ -94,4 +95,23 @@ spec:
           kubernetes.io/metadata.name: observability-production
     ports:
     - port: 15691
+      protocol: TCP
+  egress:
+  # Inter-node clustering (epmd 4369, Erlang distribution 25672) to peer broker pods in this
+  # namespace. DNS is covered by allow-dns-egress; apiserver peer discovery by
+  # cilium-rabbitmq-to-apiserver.yaml. Mirror the in-namespace ingress port set for symmetry.
+  - to:
+    - podSelector: {}
+    ports:
+    - port: 4369
+      protocol: TCP
+    - port: 5672
+      protocol: TCP
+    - port: 5671
+      protocol: TCP
+    - port: 15672
+      protocol: TCP
+    - port: 15671
+      protocol: TCP
+    - port: 25672
       protocol: TCP

@@ -1,0 +1,18 @@
+# RabbitMQ uses rabbit_peer_discovery_k8s — each broker queries the Kubernetes API to find its
+# peers at boot (and on restart, to rejoin the cluster). Under the default-deny floor the broker
+# pods need explicit apiserver egress or a restarted node cannot re-form the cluster.
+# Egress to the apiserver uses the kube-apiserver entity (same pattern as the other
+# allow-*-to-apiserver CNPs; verified working on this k0s/konnectivity cluster).
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-rabbitmq-to-apiserver
+  namespace: rabbitmq-production
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: rabbitmq
+      app.kubernetes.io/component: rabbitmq
+  egress:
+  - toEntities:
+    - kube-apiserver

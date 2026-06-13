@@ -1,0 +1,54 @@
+# netpol-baseline floor, inlined with explicit namespace rather than via the
+# bases/netpol-baseline component. The component relies on the kustomization's `namespace:`
+# directive, which we cannot set here: this kustomization also pulls the upstream
+# cluster-operator (creating rabbitmq-system) and namespaces resources explicitly, so a blanket
+# namespace transform would wrongly re-home the operators into rabbitmq-production.
+# Mirror of bases/netpol-baseline: default-deny floor + DNS egress + Prometheus scrape ingress.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: rabbitmq-production
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns-egress
+  namespace: rabbitmq-production
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-prometheus-scrape
+  namespace: rabbitmq-production
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: observability-production
