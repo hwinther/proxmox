@@ -5,6 +5,7 @@ resources:
 - kyverno-rbac-clone-source-secrets.yaml
 - cluster.yaml
 - cluster-cluttertestdb.yaml
+- networkpolicy-baseline.yaml
 - networkpolicy-cnpg.yaml
 - networkpolicy-cnpg-cluttertestdb.yaml
 - networkpolicy-adminer.yaml

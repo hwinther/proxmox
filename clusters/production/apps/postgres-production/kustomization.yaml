@@ -7,6 +7,7 @@ resources:
 - database-authelia.yaml
 - database-clutterstock.yaml
 - database-grafana.yaml
+- networkpolicy-baseline.yaml
 - networkpolicy-cnpg-postgres-prod.yaml
 - cilium-networkpolicy-cnpg-apiserver.yaml
 - networkpolicy-adminer.yaml
