@@ -1,0 +1,32 @@
+# Egress for the ceph-csi-rbd provisioner Deployment (the only pod-network workload here; the
+# nodeplugin DaemonSet is hostNetwork and therefore exempt from pod NetworkPolicy, so the RBD
+# data path is unaffected by the netpol-baseline floor).
+#
+# The provisioner's CSI sidecars (provisioner/attacher/resizer/snapshotter) watch PVC/PV/
+# VolumeAttachment/VolumeSnapshot via the apiserver; csi-rbdplugin creates/deletes/resizes/snapshots
+# RBD images by talking to the Ceph public network (mons 10.20.4.18/.20/.34:3300 msgr2, plus OSDs).
+# DNS comes from the netpol-baseline allow-dns-egress; metrics scrape ingress from allow-prometheus-scrape.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: ceph-csi-provisioner
+  namespace: ceph-csi-production
+spec:
+  endpointSelector:
+    matchLabels:
+      app: ceph-csi-rbd
+      component: provisioner
+  egress:
+  - toEntities:
+    - kube-apiserver
+  - toCIDR:
+    - 10.20.4.0/24
+    toPorts:
+    - ports:
+      - port: "3300"
+        protocol: TCP
+      - port: "6789"
+        protocol: TCP
+      - port: "6800"
+        endPort: 7568
+        protocol: TCP
