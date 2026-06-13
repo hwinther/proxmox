@@ -1,0 +1,41 @@
+# CNPG operator network rules, layered on the netpol-baseline floor (DNS + Prometheus-scrape of
+# :8080 come from the component; this CNP adds the operator-specific ingress/egress).
+#
+# Ingress: admission + conversion webhooks. The apiserver calls cnpg-webhook-service:443 →
+# pod webhook-server:9443. On k0s the apiserver-originated traffic arrives as host/remote-node
+# (CiliumInternalIP via konnectivity), not the kube-apiserver entity — allow all three.
+# Egress: the operator watches/updates CRs + manages Pods/PVCs via the apiserver, and queries each
+# instance manager (postgres-production / postgres-test on 8000) plus direct pg (5432). The postgres
+# NPs already allow ingress from cnpg-system on 5432+8000 (networkpolicy-cnpg-*).
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: cnpg-operator
+  namespace: cnpg-system
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: cloudnative-pg
+  ingress:
+  - fromEntities:
+    - host
+    - remote-node
+    - kube-apiserver
+    toPorts:
+    - ports:
+      - port: "9443"
+        protocol: TCP
+  egress:
+  - toEntities:
+    - kube-apiserver
+  - toEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: postgres-production
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: postgres-test
+    toPorts:
+    - ports:
+      - port: "5432"
+        protocol: TCP
+      - port: "8000"
+        protocol: TCP
