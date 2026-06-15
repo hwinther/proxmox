@@ -1,0 +1,48 @@
+# NetworkPolicy regression detector. After the netpol-baseline rollout, sustained POLICY_DENIED
+# drops should be ~0; a new/rising drop flow means a policy is blocking traffic it shouldn't.
+# Metric: hubble_drop_total (Cilium Hubble, scraped by cilium-podmonitors.yaml; the drop context
+# carries source_namespace + destination_namespace via the k0s.yaml Hubble metrics config).
+# release=obs-kps so the operator ruleSelector picks it up.
+#
+# `for: 15m` deliberately rides out the 2-4 min POLICY_DENIED churn that a Cilium agent restart
+# causes (see konnectivity-lease-flap notes) so a routine cilium roll doesn't page.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: network-policy
+  labels:
+    release: obs-kps
+spec:
+  groups:
+  - name: network-policy
+    rules:
+    # Primary signal: in-cluster pod-to-pod denials (both namespaces populated). This is the clean
+    # netpol-regression indicator — a service that can no longer reach another service. The benign
+    # residual drops (cloud-metadata probes, kubescape host sensors) all target non-pod destinations
+    # (destination_namespace="") and are excluded by construction, so the baseline here is 0.
+    - alert: NetworkPolicyPodToPodDrops
+      expr: |
+        sum by (source_namespace, destination_namespace) (
+          rate(hubble_drop_total{reason="POLICY_DENIED", destination_namespace!=""}[10m])
+        ) > 0.1
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: "NetworkPolicy blocking {{ $labels.source_namespace }} -> {{ $labels.destination_namespace }}"
+        description: "Cilium is dropping pod-to-pod traffic {{ $labels.source_namespace }} -> {{ $labels.destination_namespace }} (POLICY_DENIED) at {{ $value | humanize }}/s for >15m. A NetworkPolicy is likely missing an allow rule after a change. Inspect with `hubble observe --namespace {{ $labels.source_namespace }} --verdict DROPPED`."
+    # Secondary: external/egress denials (destination is non-pod: world, nodes, the metadata IP).
+    # Noisier — the known-benign baseline is excluded by source namespace. Remove an exclusion once
+    # that flow is fixed (kubescape host-sensor drops are still open; kyverno/cert-manager hit only
+    # the intentionally-blocked 169.254.169.254 metadata IP).
+    - alert: NetworkPolicyEgressDrops
+      expr: |
+        sum by (source_namespace) (
+          rate(hubble_drop_total{reason="POLICY_DENIED", destination_namespace="", source_namespace!~"kubescape-production|kyverno|cert-manager"}[10m])
+        ) > 0.5
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: "NetworkPolicy blocking egress from {{ $labels.source_namespace }}"
+        description: "Cilium is dropping outbound traffic from {{ $labels.source_namespace }} to non-pod destinations (POLICY_DENIED) at {{ $value | humanize }}/s for >15m — likely a missing egress allow (external API, PBS, apiserver). Inspect with `hubble observe --namespace {{ $labels.source_namespace }} --verdict DROPPED`."

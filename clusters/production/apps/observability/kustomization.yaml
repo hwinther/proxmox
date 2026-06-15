@@ -31,6 +31,8 @@ resources:
 # Cilium agent/operator + Hubble metrics (hubble_drop_total backs netpol-rollout drop visibility;
 # requires prometheus.enabled + hubble.metrics.enabled in the k0s Cilium values on each controller).
 - cilium-podmonitors.yaml
+# NetworkPolicy regression alerts off hubble_drop_total (netpol-baseline rollout safety net).
+- prometheusrule-network-policy.yaml
 - kube-state-metrics-flux-helmrelease.yaml
 - prometheusrule-flux.yaml
 - prometheusrule-cert-manager.yaml
