@@ -18,10 +18,12 @@ spec:
   - toEntities:
     - kube-apiserver
 ---
-# Prometheus scrapes everything: in-cluster pods in every namespace (toEndpoints {}), the nodes'
-# kubelet/cadvisor and the in-cluster node-exporter (host/remote-node), and external static targets
-# (Ceph mgr 10.20.4.x:9283, smartctl_exporter :9633, Proxmox exporters :6060/:60601, blackbox VPS) =
-# world on arbitrary ports. This is effectively unrestricted egress, matching Prometheus's role.
+# Prometheus scrapes everything. `cluster` = all in-cluster endpoints in EVERY namespace (plus
+# nodes); a bare toEndpoints: [{}] only matches the policy's OWN namespace in Cilium, which silently
+# blocked every cross-namespace scrape (postgres/rabbitmq/cert-manager/flux/coredns/...). host/
+# remote-node cover kubelet/cadvisor/node-exporter; world covers external static targets (Ceph mgr
+# 10.20.4.x:9283, smartctl_exporter :9633, Proxmox exporters :6060/:60601, blackbox VPS).
+# Effectively unrestricted egress, matching Prometheus's role.
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -32,9 +34,8 @@ spec:
     matchLabels:
       app.kubernetes.io/name: prometheus
   egress:
-  - toEndpoints:
-    - {}
   - toEntities:
+    - cluster
     - host
     - remote-node
     - world
