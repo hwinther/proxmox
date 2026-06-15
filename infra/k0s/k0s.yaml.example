@@ -48,6 +48,22 @@ spec:
           cluster:
             name: default
           kubeProxyReplacement: true
+          # eBPF masquerade (replaces the iptables-based masquerade datapath). REQUIRED by
+          # egressGateway below — the egress gateway feature SNATs selected pod traffic to the
+          # gateway node's egress IP in BPF, so iptables masquerade cannot be in the path. This is
+          # the risky change: it moves all node SNAT from iptables to eBPF, so roll it in a
+          # maintenance window and verify every app's outbound connectivity afterwards (DNS,
+          # PBS backups, OIDC/JWKS to auth.wsh.no, GHCR pulls, external DBs). Requires
+          # kubeProxyReplacement: true (above).
+          bpf:
+            masquerade: true
+          # Egress gateway: pins selected pods' outbound traffic to a fixed egress IP on a gateway
+          # node, so an upstream firewall can allow that single source IP to reach any ip/port.
+          # Bind a workload to it with a CiliumEgressGatewayPolicy (selects pods + destinationCIDRs,
+          # names the egressGateway node via nodeSelector + the interface/egressIP). Works with
+          # routingMode: tunnel (vxlan). Hard-depends on bpf.masquerade: true above.
+          egressGateway:
+            enabled: true
           # With nodeLocalLoadBalancing enabled, each node (including workers) has a local
           # Envoy on apiServerBindPort (default 7443) → 127.0.0.1:7443 is correct everywhere.
           # Without that, workers need a real controller IP/VIP:6443, not loopback.

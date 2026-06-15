@@ -314,6 +314,76 @@ flux reconcile kustomization flux-system -n flux-system --timeout 15m
 
 ---
 
+## Egress gateway (dedicated egress IP via eBPF masquerade)
+
+**Goal:** pin selected pods' **outbound** traffic to a single, fixed **egress IP** living on a
+**gateway node**, so an upstream firewall (OPNsense) can allowlist *that one source IP* for broad
+outbound instead of the whole pod/node range. Bound per-workload with a
+**`CiliumEgressGatewayPolicy`** (selects pods + `destinationCIDRs`, names the gateway node and its
+egress IP/interface). This is **outbound only** — inbound to the workload is a separate path
+(LoadBalancer VIP / port-forward, see note below).
+
+### The two Helm values (already in [`k0s.yaml.example`](k0s.yaml.example))
+
+```yaml
+bpf:
+  masquerade: true        # eBPF masquerade — REQUIRED by egressGateway; replaces iptables SNAT
+egressGateway:
+  enabled: true
+```
+
+Dependency chain: **`egressGateway`** → **`bpf.masquerade: true`** → **`kubeProxyReplacement: true`**.
+Compatible with this cluster's **`routingMode: tunnel` / `tunnelProtocol: vxlan`** datapath.
+
+### Why this is the risky change
+
+Enabling **`bpf.masquerade: true`** moves **all node SNAT** off **iptables** and into **eBPF**.
+Every workload's outbound path changes, not just the one you're pinning. **Roll it in a maintenance
+window** and **verify every app's outbound connectivity afterwards** — treat it like any
+cluster-wide datapath flip (see the **Operational hard rules** below).
+
+### Roll procedure (multi-controller)
+
+Same discipline as §6 step 0 — **one controller at a time**, never lose etcd quorum:
+
+1. Land the two values in **every** controller's `/etc/k0s/k0s.yaml` (diff live ↔ repo first; static
+   config drift is invisible — see hard rules).
+2. `scripts/k0s-reconverge-check.sh` must say **GO** before each controller restart.
+3. `k0s stop && k0s start` on controller #1 → wait `kubectl get nodes -w` Ready → repeat #2, #3.
+4. Roll the **cilium** DaemonSet if the operator doesn't (`kubectl -n kube-system rollout restart ds/cilium`),
+   then `cilium status` clean on every node.
+
+### Verify (do these before declaring success)
+
+- **Outbound still works for existing apps** — the SNAT datapath changed for everyone. Spot-check:
+  in-cluster **DNS**, **PBS backups**, controller→**`auth.wsh.no`** OIDC/JWKS, **GHCR** image pulls,
+  **CNPG**/external DB egress.
+- **`hubble_drop_total`** (already in Prometheus) shows no new egress drops; the **VPS blackbox
+  probes** (`probe_success{probe_origin="vps-external"}`) stay green.
+- **SNAT confirmation** — once a `CiliumEgressGatewayPolicy` is live, traffic from the selected pod
+  to an external echo (or the OPNsense firewall log) shows the **egress IP** as source, and other
+  pods are **unchanged**. `cilium-dbg bpf egress list` on the gateway node shows the mapping.
+
+### Picking the gateway node + egress IP
+
+- **Do NOT make a Realtek-`r8169` host the gateway.** Pod→gateway redirect rides the **VXLAN
+  tunnel**; the office-pve-i9 r8169 NIC blackholes VXLAN (see **Known host hazard** below), so a
+  gateway there would silently drop redirected egress. Pick a stable Intel-NIC node.
+- The **egress IP** is a **free static LAN IP** on the gateway node's **`eth0`** (10.20.13.0/24),
+  **outside the DHCP range** and **outside any LoadBalancer VIP range**. It is **distinct** from the
+  workload's inbound VIP.
+
+### Note: inbound VIP is a separate, public-repo concern
+
+The egress gateway does nothing for **inbound**. If the workload is reached on a fixed LAN IP via a
+**Cilium LoadBalancer** service, that VIP must be in the **`CiliumLoadBalancerIPPool`**
+([`clusters/production/apps/cilium-lb/ciliumloadbalancerippool.yaml`](../../clusters/production/apps/cilium-lb/ciliumloadbalancerippool.yaml),
+currently a **single** address `10.20.13.100`) and announced by the **L2 policy** (currently
+control-plane nodes only). Expanding the pool / announcement is a **proxmox-repo** change, separate
+from both the egress policy and the workload manifests.
+
+---
+
 ## 7. Hubble Relay (stay healthy)
 
 Keep **Cilium + Hubble** values **in `k0s`’s Cilium Helm stanza** (see [`k0s.yaml.example`](k0s.yaml.example) or [`k0s.production.example.yaml`](k0s.production.example.yaml)) so upgrades do not silently strip Hubble. That file pins **`cluster.name`**, **`hubble.relay.peerService.internalTrafficPolicy: Cluster`**, and **`hubble.tls.auto`** (`method: helm`) — all of which matter for a stable **Hubble Relay**.
