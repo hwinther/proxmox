@@ -115,3 +115,120 @@ spec:
       protocol: TCP
     - port: 8007
       protocol: TCP
+---
+# INGRESS from outside the namespace, which the default-deny floor otherwise drops (these paths
+# previously relied on observability having no floor at all). Traefik is hostNetwork so it arrives
+# as host/remote-node; NodePort traffic is SNAT'd to the receiving node (host/remote-node) with
+# kube-proxy replacement, world included for any non-SNAT path. LAN-only NodePorts are the real
+# exposure control.
+#
+# Grafana UI via Traefik (grafana.mgmt.wsh.no -> svc 80 -> pod 3000).
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: grafana-ingress
+  namespace: observability-production
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
+  ingress:
+  - fromEntities:
+    - host
+    - remote-node
+    toPorts:
+    - ports:
+      - port: "3000"
+        protocol: TCP
+---
+# Alertmanager UI via Traefik (alertmanager.mgmt.wsh.no) and the homepage widget (platform-production).
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: alertmanager-ingress
+  namespace: observability-production
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: alertmanager
+  ingress:
+  - fromEntities:
+    - host
+    - remote-node
+    toPorts:
+    - ports:
+      - port: "9093"
+        protocol: TCP
+  - fromEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: platform-production
+        app.kubernetes.io/name: homepage
+    toPorts:
+    - ports:
+      - port: "9093"
+        protocol: TCP
+---
+# Prometheus remote_write + ad-hoc queries via NodePort 30081 (edge prometheus-agent, workstation).
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: prometheus-nodeport-ingress
+  namespace: observability-production
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: prometheus
+  ingress:
+  - fromEntities:
+    - host
+    - remote-node
+    - world
+    toPorts:
+    - ports:
+      - port: "9090"
+        protocol: TCP
+---
+# Loki push via NodePort 30080 (edge fluent-bit). Intra-namespace readers (Grafana datasource,
+# otel) are covered by the netpol-baseline allow-prometheus-scrape ingress.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: loki-gateway-nodeport-ingress
+  namespace: observability-production
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: loki
+      app.kubernetes.io/component: gateway
+  ingress:
+  - fromEntities:
+    - host
+    - remote-node
+    - world
+    toPorts:
+    - ports:
+      - port: "8080"
+        protocol: TCP
+---
+# kube-prometheus-stack admission webhook (obs-kps-kube-prometheus-st-admission): the apiserver
+# calls the operator on :10250 to validate/mutate PrometheusRule + AlertmanagerConfig CRs. Under the
+# floor this must be allowed or applying any PrometheusRule change fails admission. apiserver-origin
+# arrives as host/remote-node (konnectivity) on k0s, not the kube-apiserver entity.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: prometheus-operator-webhook-ingress
+  namespace: observability-production
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: kube-prometheus-stack-prometheus-operator
+  ingress:
+  - fromEntities:
+    - host
+    - remote-node
+    - kube-apiserver
+    toPorts:
+    - ports:
+      - port: "10250"
+        protocol: TCP
