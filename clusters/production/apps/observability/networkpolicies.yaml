@@ -1,0 +1,117 @@
+# Egress policies layered on the netpol-baseline floor (default-deny + DNS + Prometheus-scrape
+# ingress come from the component). observability talks to a lot of things; rules are scoped per
+# component, with Prometheus deliberately broad (it scrapes every namespace + nodes + external hosts).
+#
+# All pods: intra-namespace (datasource queries, Loki/Tempo->MinIO, results-cache, memberlist) and
+# the Kubernetes API (operator, kube-state-metrics, Prometheus service discovery).
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: observability-common-egress
+  namespace: observability-production
+spec:
+  endpointSelector: {}
+  egress:
+  - toEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: observability-production
+  - toEntities:
+    - kube-apiserver
+---
+# Prometheus scrapes everything: in-cluster pods in every namespace (toEndpoints {}), the nodes'
+# kubelet/cadvisor and the in-cluster node-exporter (host/remote-node), and external static targets
+# (Ceph mgr 10.20.4.x:9283, smartctl_exporter :9633, Proxmox exporters :6060/:60601, blackbox VPS) =
+# world on arbitrary ports. This is effectively unrestricted egress, matching Prometheus's role.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: prometheus-scrape-egress
+  namespace: observability-production
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: prometheus
+  egress:
+  - toEndpoints:
+    - {}
+  - toEntities:
+    - host
+    - remote-node
+    - world
+---
+# External HTTPS for the components that call out: Grafana OIDC (auth.wsh.no — may resolve to a node
+# IP, hence host/remote-node as well as world), Alertmanager -> Telegram, OTel collector -> MaxMind
+# GeoLite2 download. 443 only.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: observability-https-egress
+  namespace: observability-production
+spec:
+  endpointSelector:
+    matchExpressions:
+    - key: app.kubernetes.io/name
+      operator: In
+      values:
+      - grafana
+      - alertmanager
+      - opentelemetry-collector
+  egress:
+  - toEntities:
+    - world
+    - host
+    - remote-node
+    toPorts:
+    - ports:
+      - port: "443"
+        protocol: TCP
+---
+# Grafana (relational backend) and its PBS backup Job (pg_dump) connect to the Grafana database in
+# the postgres-prod CNPG cluster.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: grafana-postgres-egress
+  namespace: observability-production
+spec:
+  podSelector:
+    matchExpressions:
+    - key: app.kubernetes.io/name
+      operator: In
+      values:
+      - grafana
+      - grafana-pbs-backup
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: postgres-production
+    ports:
+    - port: 5432
+      protocol: TCP
+---
+# PBS backup Job: HTTPS + PBS API port to the (off-cluster) Proxmox Backup Server.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: grafana-pbs-backup-egress
+  namespace: observability-production
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: grafana-pbs-backup
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+        except:
+        - 169.254.169.254/32
+    ports:
+    - port: 443
+      protocol: TCP
+    - port: 8007
+      protocol: TCP
