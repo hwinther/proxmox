@@ -144,6 +144,31 @@
     font-family:var(--mono);font-size:.8rem;color:var(--faint);line-height:1.4}
   .legend span b{color:var(--cyan);font-weight:600}
 
+  code{font-family:var(--mono);color:var(--ink);background:rgba(54,214,231,.10);
+    padding:1px 5px;border-radius:5px;font-size:.9em}
+
+  /* split layout: bullets + diagram side by side */
+  .split{display:grid;grid-template-columns:1fr 1.08fr;gap:34px;align-items:center;margin-top:24px}
+  .split .points{margin-top:0}
+
+  /* inline SVG diagrams */
+  .diagram{width:100%}
+  .diagram svg{width:100%;height:auto;max-height:46vh;display:block}
+  .dg-cap{margin-top:12px;font-size:.85rem;color:var(--faint);line-height:1.4;text-align:center}
+  .diagram.hero{max-width:1000px;margin:0 auto}
+  .diagram.hero svg{max-height:54vh}
+  .dg-box{fill:var(--panel2);stroke:var(--line);stroke-width:1.5}
+  .dg-box.acc{stroke:var(--cyan)} .dg-box.amb{stroke:var(--amber)}
+  .dg-bar{fill:var(--panel);stroke:var(--line);stroke-width:1.5}
+  .dg-band{fill:none;stroke:var(--cyan);stroke-width:1.4;stroke-dasharray:5 4}
+  .dg-t{fill:var(--ink);font-family:var(--mono);font-weight:600}
+  .dg-s{fill:var(--muted);font-family:var(--sans)}
+  .dg-n{fill:var(--cyan);font-family:var(--mono);font-weight:600}
+  .dg-n.amb{fill:var(--amber)}
+  .dg-edge{stroke:var(--faint);stroke-width:1.7;fill:none}
+  .dg-edge.acc{stroke:var(--cyan)} .dg-edge.dash{stroke-dasharray:5 4}
+  .dg-ahf{fill:var(--faint)} .dg-ahc{fill:var(--cyan)} .dg-aha{fill:var(--amber)}
+
   /* two column compare */
   .cols{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:30px}
   .card{
@@ -212,7 +237,7 @@
   @media (max-width:820px){
     .analogy{grid-template-columns:1fr}
     .analogy .head{display:none}
-    .cols,.takeaways{grid-template-columns:1fr}
+    .cols,.takeaways,.split{grid-template-columns:1fr}
     .grid{grid-template-columns:1fr 1fr}
   }
 
@@ -346,16 +371,45 @@
     <div class="wrap">
       <div class="kicker stg">04 · Fundamentet</div>
       <h2 class="stg">Plattformen — et datasenter på noen få bokser</h2>
-      <ul class="points">
-        <li class="stg"><b>Proxmox</b> <span>— virtualiseringen i bunn (VM-er og LXC), som vår «hypervisor-etasje»</span></li>
-        <li class="stg"><b>k0s</b> <span>— en lettvekts Kubernetes-distribusjon: 3-node HA control plane + workers</span></li>
-        <li class="stg"><b>2× Raspberry Pi (edge)</b> <span>— egne ARM-noder reservert for radio-/SDR-arbeid</span></li>
-        <li class="stg"><b>Ceph</b> <span>— delt, replikert lagring i hypervisor-laget (StorageClass <code>ceph-rbd</code>)</span></li>
-      </ul>
-      <div class="meta stg">
-        <span class="tag">x86 <b>VM-workers</b></span>
-        <span class="tag">ARM64 <b>edge-noder</b></span>
-        <span class="tag">selvhelbredende <b>lagring</b></span>
+      <div class="split">
+        <ul class="points stg">
+          <li><b>Proxmox</b> <span>— virtualisering i bunn (VM / LXC)</span></li>
+          <li><b>k0s</b> <span>— lettvekts Kubernetes: 3-node HA control plane + workers</span></li>
+          <li><b>2× Raspberry Pi</b> <span>— ARM-edge-noder for radio/SDR</span></li>
+          <li><b>Ceph</b> <span>— delt, replikert lagring (<code>ceph-rbd</code>)</span></li>
+        </ul>
+        <div class="diagram stg">
+          <svg viewBox="0 0 540 292" role="img" aria-label="Plattform-topologi">
+            <defs>
+              <marker id="pF" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" class="dg-ahf"/></marker>
+            </defs>
+            <text x="270" y="16" text-anchor="middle" class="dg-n" font-size="13">k0s · én Kubernetes-klynge</text>
+            <line x1="40" y1="28" x2="500" y2="28" class="dg-edge"/>
+            <!-- nodes -->
+            <rect class="dg-box acc" x="12"  y="44" width="160" height="80" rx="12"/>
+            <text x="92"  y="80"  text-anchor="middle" class="dg-t" font-size="15">Control plane</text>
+            <text x="92"  y="102" text-anchor="middle" class="dg-n" font-size="13">3× HA</text>
+            <rect class="dg-box" x="190" y="44" width="160" height="80" rx="12"/>
+            <text x="270" y="80"  text-anchor="middle" class="dg-t" font-size="15">Workers</text>
+            <text x="270" y="102" text-anchor="middle" class="dg-s" font-size="12">x86_64</text>
+            <rect class="dg-box" x="368" y="44" width="160" height="80" rx="12"/>
+            <text x="448" y="78"  text-anchor="middle" class="dg-t" font-size="15">Edge-noder</text>
+            <text x="448" y="99"  text-anchor="middle" class="dg-s" font-size="12">2× Raspberry Pi</text>
+            <text x="448" y="115" text-anchor="middle" class="dg-n" font-size="11">ARM64</text>
+            <!-- connectors to proxmox -->
+            <line x1="92"  y1="124" x2="92"  y2="158" class="dg-edge" marker-end="url(#pF)"/>
+            <line x1="270" y1="124" x2="270" y2="158" class="dg-edge" marker-end="url(#pF)"/>
+            <line x1="448" y1="124" x2="448" y2="158" class="dg-edge" marker-end="url(#pF)"/>
+            <!-- proxmox -->
+            <rect class="dg-bar" x="12" y="160" width="516" height="50" rx="10"/>
+            <text x="270" y="190" text-anchor="middle" class="dg-t" font-size="15">Proxmox — virtualisering (VM / LXC)</text>
+            <!-- ceph -->
+            <rect class="dg-bar" x="12" y="226" width="516" height="50" rx="10"/>
+            <text x="270" y="256" text-anchor="middle" class="dg-t" font-size="15">Ceph — delt, replikert lagring (<tspan class="dg-n" font-size="13">ceph-rbd</tspan>)</text>
+            <line x1="270" y1="210" x2="270" y2="226" class="dg-edge"/>
+          </svg>
+          <div class="dg-cap">Noen få fysiske bokser — én logisk klynge.</div>
+        </div>
       </div>
     </div>
   </section>
@@ -365,17 +419,47 @@
     <div class="wrap">
       <div class="kicker stg">05 · Leveranse</div>
       <h2 class="stg">GitOps med <span class="accent">Flux</span></h2>
-      <p class="lede stg">Flux er agenten som speiler Git inn i klyngen — en
-      utrullingspipeline som aldri slutter å følge med.</p>
-      <ul class="points">
-        <li class="stg"><b>Én repo styrer to klynger</b> <span>— produksjon og edge-SDR, hver sin sti</span></li>
-        <li class="stg"><b>Avhengighetsrekkefølge</b> <span>— databaser før appene som bruker dem, CRD-er før objektene</span></li>
-        <li class="stg"><b>Automatiske bilde-oppdateringer</b> <span>— nye versjoner foreslås som commits (Dependabot)</span></li>
-      </ul>
-      <div class="analogy-note stg">
-        <div class="ic">🔁</div>
-        <p>Sammenlign med en <b>release-pipeline</b> — men i stedet for å kjøre én
-        gang ved deploy, sjekker den hvert tiende minutt at alt fortsatt stemmer.</p>
+      <div class="split">
+        <div class="stg">
+          <p class="lede" style="margin:0 0 16px">Flux er agenten som speiler Git inn i klyngen.</p>
+          <ul class="points">
+            <li><b>Push til Git</b> <span>→ endringen ruller ut av seg selv</span></li>
+            <li><b>Én repo, to klynger</b> <span>— produksjon og edge-SDR</span></li>
+            <li><b>Avhengighetsrekkefølge</b> <span>— databaser før appene som bruker dem</span></li>
+          </ul>
+        </div>
+        <div class="diagram stg">
+          <svg viewBox="0 0 540 296" role="img" aria-label="GitOps-løkken">
+            <defs>
+              <marker id="gF" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" class="dg-ahf"/></marker>
+              <marker id="gC" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" class="dg-ahc"/></marker>
+              <marker id="gA" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" class="dg-aha"/></marker>
+            </defs>
+            <!-- nodes -->
+            <rect class="dg-box" x="18"  y="38" width="138" height="62" rx="12"/>
+            <text x="87"  y="66" text-anchor="middle" class="dg-t" font-size="15">Utvikler</text>
+            <text x="87"  y="86" text-anchor="middle" class="dg-s" font-size="11.5">endrer kode</text>
+            <rect class="dg-box" x="204" y="38" width="138" height="62" rx="12"/>
+            <text x="273" y="66" text-anchor="middle" class="dg-t" font-size="15">Git</text>
+            <text x="273" y="86" text-anchor="middle" class="dg-s" font-size="11.5">kilden til sannhet</text>
+            <rect class="dg-box acc" x="204" y="176" width="138" height="62" rx="12"/>
+            <text x="273" y="204" text-anchor="middle" class="dg-t" font-size="15">Flux</text>
+            <text x="273" y="224" text-anchor="middle" class="dg-n" font-size="11.5">speiler Git</text>
+            <rect class="dg-box" x="390" y="176" width="138" height="62" rx="12"/>
+            <text x="459" y="204" text-anchor="middle" class="dg-t" font-size="15">Klynge</text>
+            <text x="459" y="224" text-anchor="middle" class="dg-s" font-size="11.5">kjører appene</text>
+            <!-- edges -->
+            <line x1="156" y1="69"  x2="204" y2="69"  class="dg-edge" marker-end="url(#gF)"/>
+            <text x="180" y="60" text-anchor="middle" class="dg-s" font-size="11">push</text>
+            <line x1="273" y1="100" x2="273" y2="176" class="dg-edge" marker-end="url(#gF)"/>
+            <text x="283" y="142" class="dg-s" font-size="11">leser</text>
+            <line x1="342" y1="207" x2="390" y2="207" class="dg-edge acc" marker-end="url(#gC)"/>
+            <text x="366" y="198" text-anchor="middle" class="dg-n" font-size="11">ruller ut</text>
+            <path d="M459,238 L459,270 L273,270 L273,238" class="dg-edge dash" stroke="#ffb454" marker-end="url(#gA)"/>
+            <text x="366" y="286" text-anchor="middle" class="dg-n amb" font-size="11">retter avvik · kontinuerlig</text>
+          </svg>
+          <div class="dg-cap">≈ en release-pipeline som aldri slutter å sjekke at alt stemmer.</div>
+        </div>
       </div>
     </div>
   </section>
@@ -385,16 +469,50 @@
     <div class="wrap">
       <div class="kicker stg">06 · Nettverk</div>
       <h2 class="stg">Nettverk med <span class="accent">Cilium</span> (eBPF)</h2>
-      <ul class="points">
-        <li class="stg"><b>eBPF i kjernen</b> <span>— erstatter kube-proxy; ruting skjer effektivt i Linux-kjernen</span></li>
-        <li class="stg"><b>Hubble</b> <span>— et levende kart over hvem som snakker med hvem, i sanntid</span></li>
-        <li class="stg"><b>Egress-gateway</b> <span>— fast utgående IP-adresse for trafikk ut av klyngen</span></li>
-        <li class="stg"><b>Lastbalansering på L2</b> <span>— tjenester får ekte IP-er ut på hjemmenettet</span></li>
-      </ul>
-      <div class="analogy-note stg">
-        <div class="ic">🔍</div>
-        <p>Tenk <b>software-definert nettverk + Wireshark-innsyn</b>, innebygd —
-        i stedet for brannmurregler spredt på hver enkelt server.</p>
+      <div class="split">
+        <ul class="points stg">
+          <li><b>eBPF i kjernen</b> <span>— erstatter kube-proxy</span></li>
+          <li><b>Hubble</b> <span>— sanntidskart over hvem som snakker med hvem</span></li>
+          <li><b>Egress-gateway</b> <span>— fast utgående IP ut av klyngen</span></li>
+          <li><b>NetworkPolicy</b> <span>— egen «brannmur» per app</span></li>
+        </ul>
+        <div class="diagram stg">
+          <svg viewBox="0 0 560 232" role="img" aria-label="Forespørselsvei gjennom klyngen">
+            <defs>
+              <marker id="rF" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" class="dg-ahf"/></marker>
+              <marker id="rC" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" class="dg-ahc"/></marker>
+            </defs>
+            <!-- Authelia above Traefik -->
+            <rect class="dg-box amb" x="206" y="6" width="152" height="46" rx="10"/>
+            <text x="282" y="28" text-anchor="middle" class="dg-n amb" font-size="14">Authelia</text>
+            <text x="282" y="44" text-anchor="middle" class="dg-s" font-size="11">SSO · forward-auth</text>
+            <line x1="282" y1="52" x2="282" y2="84" class="dg-edge dash" stroke="#36d6e7" marker-end="url(#rC)"/>
+            <!-- pipeline -->
+            <g font-size="13.5">
+              <rect class="dg-box" x="8"   y="86" width="96" height="58" rx="11"/>
+              <text x="56"  y="120" text-anchor="middle" class="dg-t">Internett</text>
+              <rect class="dg-box" x="122" y="86" width="96" height="58" rx="11"/>
+              <text x="170" y="113" text-anchor="middle" class="dg-t">nginx</text>
+              <text x="170" y="131" text-anchor="middle" class="dg-s" font-size="11">TLS</text>
+              <rect class="dg-box acc" x="236" y="86" width="96" height="58" rx="11"/>
+              <text x="284" y="113" text-anchor="middle" class="dg-t">Traefik</text>
+              <text x="284" y="131" text-anchor="middle" class="dg-s" font-size="11">ingress</text>
+              <rect class="dg-box" x="350" y="86" width="96" height="58" rx="11"/>
+              <text x="398" y="120" text-anchor="middle" class="dg-t">Service</text>
+              <rect class="dg-box" x="464" y="86" width="88" height="58" rx="11"/>
+              <text x="508" y="120" text-anchor="middle" class="dg-t">Pod</text>
+            </g>
+            <line x1="104" y1="115" x2="122" y2="115" class="dg-edge" marker-end="url(#rF)"/>
+            <line x1="218" y1="115" x2="236" y2="115" class="dg-edge" marker-end="url(#rF)"/>
+            <line x1="332" y1="115" x2="350" y2="115" class="dg-edge" marker-end="url(#rF)"/>
+            <line x1="446" y1="115" x2="464" y2="115" class="dg-edge acc" marker-end="url(#rC)"/>
+            <text x="455" y="106" text-anchor="middle" class="dg-n" font-size="10">netpol</text>
+            <!-- cilium band -->
+            <rect class="dg-band" x="8" y="166" width="544" height="42" rx="10"/>
+            <text x="280" y="192" text-anchor="middle" class="dg-n" font-size="13">Cilium (eBPF) + Hubble — ser &amp; styrer all trafikk i kjernen</text>
+          </svg>
+          <div class="dg-cap">≈ software-definert nettverk + Wireshark-innsyn, innebygd.</div>
+        </div>
       </div>
     </div>
   </section>
@@ -522,7 +640,56 @@
     </div>
   </section>
 
-  <!-- 13 — OPPSUMMERING -->
+  <!-- 13 — SHOWCASE: PREVIEW PER PR -->
+  <section class="slide">
+    <div class="wrap">
+      <div class="kicker stg">12 · Showcase</div>
+      <h2 class="stg">En hel app — <span class="accent">per Pull Request</span></h2>
+      <p class="lede stg" style="max-width:62ch">Alt vi har sett satt sammen til én arbeidsflyt: én label gir et komplett, isolert miljø — med egen database, eget nettverk og full innsyn.</p>
+      <div class="diagram hero stg">
+        <svg viewBox="0 0 960 260" role="img" aria-label="Preview-miljø per Pull Request">
+          <defs>
+            <marker id="sF" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" class="dg-ahf"/></marker>
+            <marker id="sC" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" class="dg-ahc"/></marker>
+            <marker id="sA" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" class="dg-aha"/></marker>
+          </defs>
+          <!-- process -->
+          <rect class="dg-box amb" x="16"  y="86" width="150" height="64" rx="12"/>
+          <text x="91"  y="113" text-anchor="middle" class="dg-t" font-size="15">Pull Request</text>
+          <text x="91"  y="132" text-anchor="middle" class="dg-n amb" font-size="11.5">+ deploy-feature</text>
+          <rect class="dg-box" x="206" y="86" width="150" height="64" rx="12"/>
+          <text x="281" y="113" text-anchor="middle" class="dg-t" font-size="15">GitHub Actions</text>
+          <text x="281" y="132" text-anchor="middle" class="dg-s" font-size="11.5">bygg + signer</text>
+          <rect class="dg-box" x="396" y="86" width="130" height="64" rx="12"/>
+          <text x="461" y="113" text-anchor="middle" class="dg-t" font-size="15">Git</text>
+          <text x="461" y="132" text-anchor="middle" class="dg-s" font-size="11.5">overlay committes</text>
+          <rect class="dg-box acc" x="566" y="86" width="120" height="64" rx="12"/>
+          <text x="626" y="113" text-anchor="middle" class="dg-t" font-size="15">Flux</text>
+          <text x="626" y="132" text-anchor="middle" class="dg-n" font-size="11.5">reconcile</text>
+          <!-- preview env panel -->
+          <rect class="dg-box acc" x="726" y="40" width="218" height="156" rx="14"/>
+          <text x="835" y="66" text-anchor="middle" class="dg-t" font-size="14">Preview-miljø</text>
+          <rect class="dg-bar" x="742" y="78" width="186" height="26" rx="8"/>
+          <text x="835" y="96" text-anchor="middle" class="dg-n" font-size="12">ns: clutterstock-pr-N</text>
+          <text x="835" y="126" text-anchor="middle" class="dg-s" font-size="12">API · Frontend · migrator</text>
+          <text x="835" y="145" text-anchor="middle" class="dg-s" font-size="12">egen Postgres-DB + Valkey</text>
+          <rect class="dg-bar" x="742" y="156" width="186" height="28" rx="8"/>
+          <text x="835" y="175" text-anchor="middle" class="dg-n amb" font-size="10.5">clutterstock-pr-N.test.wsh.no</text>
+          <!-- forward edges -->
+          <line x1="166" y1="118" x2="206" y2="118" class="dg-edge" marker-end="url(#sF)"/>
+          <line x1="356" y1="118" x2="396" y2="118" class="dg-edge" marker-end="url(#sF)"/>
+          <line x1="526" y1="118" x2="566" y2="118" class="dg-edge" marker-end="url(#sF)"/>
+          <line x1="686" y1="118" x2="726" y2="118" class="dg-edge acc" marker-end="url(#sC)"/>
+          <!-- teardown -->
+          <path d="M835,196 L835,236 L91,236 L91,150" class="dg-edge dash" stroke="#ffb454" marker-end="url(#sA)"/>
+          <text x="463" y="252" text-anchor="middle" class="dg-n amb" font-size="11.5">Lukk PR → Flux rydder opp av seg selv</text>
+        </svg>
+        <div class="dg-cap">Egen URL, egen database, egen «brannmur» — kun fordi PR-en finnes. Dette demonstrerer vi live.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 14 — OPPSUMMERING -->
   <section class="slide">
     <div class="wrap">
       <div class="kicker stg">Oppsummering</div>
