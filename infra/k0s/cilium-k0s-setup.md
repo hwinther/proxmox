@@ -342,16 +342,42 @@ Every workload's outbound path changes, not just the one you're pinning. **Roll 
 window** and **verify every app's outbound connectivity afterwards** — treat it like any
 cluster-wide datapath flip (see the **Operational hard rules** below).
 
-### Roll procedure (multi-controller)
+### Roll procedure (multi-controller) — verified sequence
 
-Same discipline as §6 step 0 — **one controller at a time**, never lose etcd quorum:
+This is the **actual working order** (corrected after the 2026-06-15 rollout, where the naive
+"restart each k0s node and assume it applies" approach silently did nothing — see **Rollout
+gotchas** below). The Helm-value change and the dataplane change are **two separate steps**: k0s
+renders the new `cilium-config`, but the running agents do **not** pick it up until you roll them.
 
-1. Land the two values in **every** controller's `/etc/k0s/k0s.yaml` (diff live ↔ repo first; static
-   config drift is invisible — see hard rules).
-2. `scripts/k0s-reconverge-check.sh` must say **GO** before each controller restart.
-3. `k0s stop && k0s start` on controller #1 → wait `kubectl get nodes -w` Ready → repeat #2, #3.
-4. Roll the **cilium** DaemonSet if the operator doesn't (`kubectl -n kube-system rollout restart ds/cilium`),
-   then `cilium status` clean on every node.
+1. **Update `/etc/k0s/k0s.yaml` on _every_ controller** (prod01/02/03), not just one — static
+   config drift is invisible (see hard rules), and only the **leader** renders the chart (next step).
+2. **Restart k0s on the leader controller.** Only the leader reconciles `spec.extensions.helm` into
+   the `Chart` CR, reading **its own local file**. Find it via the lease holder:
+   `kubectl -n kube-node-lease get lease k0s-endpoint-reconciler -o jsonpath='{.spec.holderIdentity}'`
+   (cross-reference `k0s-ctrl-k0s-<node>` lease holders to map the identity → node). Run
+   `scripts/k0s-reconverge-check.sh` → **GO** first; restarting the leader hands leadership to
+   another controller, which must already carry the values (step 1).
+3. **Confirm the config rendered** before touching the dataplane:
+   ```bash
+   kubectl -n kube-system get cm cilium-config -o jsonpath='{.data.enable-bpf-masquerade} {.data.enable-egress-gateway}{"\n"}'
+   # expect: true true   (note: the egress key is `enable-egress-gateway`, NOT enable-ipv4-egress-gateway)
+   ```
+4. **Roll the cilium-operator FIRST**, then wait for the egress CRD:
+   ```bash
+   kubectl -n kube-system rollout restart deploy/cilium-operator
+   kubectl -n kube-system rollout status  deploy/cilium-operator --timeout=120s
+   kubectl get crd ciliumegressgatewaypolicies.cilium.io   # must exist before rolling agents
+   ```
+5. **Canary one _worker_ agent**, confirm it goes Ready and flips to BPF, before mass-rolling:
+   ```bash
+   kubectl -n kube-system delete pod -l k8s-app=cilium --field-selector spec.nodeName=<worker>
+   kubectl -n kube-system wait --for=condition=ready pod -l k8s-app=cilium --field-selector spec.nodeName=<worker> --timeout=180s
+   POD=$(kubectl -n kube-system get pods -l k8s-app=cilium --field-selector spec.nodeName=<worker> -o jsonpath='{.items[0].metadata.name}')
+   kubectl -n kube-system exec "$POD" -c cilium-agent -- cilium-dbg status | grep Masquerading   # expect: BPF [eth0, eth1]
+   ```
+6. **Roll the rest one at a time**, workers before controllers, gating on Ready + `BPF` per node.
+   `Masquerading: BPF [eth0, eth1]` (unscoped, both NICs) is correct here — it preserves the Ceph
+   SNAT path on eth1 (see the eth1 note under **Picking the gateway node**).
 
 ### Verify (do these before declaring success)
 
@@ -363,6 +389,34 @@ Same discipline as §6 step 0 — **one controller at a time**, never lose etcd 
 - **SNAT confirmation** — once a `CiliumEgressGatewayPolicy` is live, traffic from the selected pod
   to an external echo (or the OPNsense firewall log) shows the **egress IP** as source, and other
   pods are **unchanged**. `cilium-dbg bpf egress list` on the gateway node shows the mapping.
+
+### Rollout gotchas (learned the hard way, 2026-06-15)
+
+Three non-obvious traps, each of which silently stalled the rollout until found. They bite in this
+order:
+
+1. **Only the leader controller renders Helm extensions, from its _own_ `/etc/k0s/k0s.yaml`.** This
+   cluster runs **static config** (no `clusterconfig` CR — `kubectl -n kube-system get clusterconfig`
+   returns `the server doesn't have a resource type`). Editing a non-leader's file and restarting it
+   does **nothing**: the `Chart` CR keeps the old values, `cilium-config` never changes. The leader
+   is whoever holds the `k0s-endpoint-reconciler` lease (also `k0s-autopilot-controller`,
+   `kube-controller-manager`). Update all controllers' files; restart the leader to apply.
+2. **A `cilium-config` change does NOT restart the agents.** Cilium reads masquerade mode only at
+   agent startup. `k0s stop && k0s start` on a node restarts the controller process but leaves the
+   cilium **pod** running (containerd keeps it), so the dataplane stays on **IPTables** even though
+   the ConfigMap says otherwise. You must explicitly roll `ds/cilium` (per node or `rollout
+   restart`). Confirm with `cilium-dbg status | grep Masquerading` — the live agent is the source of
+   truth, not the ConfigMap.
+3. **The cilium-operator must roll _before_ the agents.** Enabling egress gateway makes each agent
+   block at startup on `Still waiting for Cilium Operator to register CRDs
+   [crd:ciliumegressgatewaypolicies.cilium.io]`. That CRD is created by the **operator**, which is
+   still the old pod (started before the feature was enabled) and never creates it — so the agent
+   wedges (startup probe `connection refused` on `:9879`, pod `Running` but never `Ready`). A blanket
+   `rollout restart ds/cilium` would wedge **all** agents at once. Roll the operator first, wait for
+   the CRD, then canary one worker agent.
+
+Bonus: the Cilium **1.19** config key is **`enable-egress-gateway`**, not the older
+`enable-ipv4-egress-gateway` — grep for the right key when verifying.
 
 ### Picking the gateway node + egress IP
 
