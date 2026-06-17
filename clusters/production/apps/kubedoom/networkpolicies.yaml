@@ -1,0 +1,36 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: kubedoom
+  namespace: kubedoom
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: kubedoom
+  policyTypes:
+  - Ingress
+  ingress:
+  # Traefik -> noVNC web on the pod targetPort 6080 (socket-LB translates the svc port first).
+  # The host/remote-node path (Traefik runs hostNetwork) is covered by cilium-cluster-nodes-to-http.
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: traefik
+    ports:
+    - port: 6080
+      protocol: TCP
+---
+# Egress for kubedoom's kubectl (list/delete pods). DNS egress comes from the netpol-baseline
+# component; no external/internet egress is needed.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-kubedoom-to-apiserver
+  namespace: kubedoom
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: kubedoom
+  egress:
+  - toEntities:
+    - kube-apiserver

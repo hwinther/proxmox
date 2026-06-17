@@ -1,0 +1,19 @@
+# Traefik runs as a hostNetwork DaemonSet, so its traffic to the pod arrives as the host/remote-node
+# identity (invisible to plain NetworkPolicy). Allow it to reach the noVNC web port (pod 6080).
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-cluster-nodes-to-kubedoom-http
+  namespace: kubedoom
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: kubedoom
+  ingress:
+  - fromEntities:
+    - host
+    - remote-node
+    toPorts:
+    - ports:
+      - port: "6080"
+        protocol: TCP

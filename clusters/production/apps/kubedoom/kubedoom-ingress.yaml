@@ -1,0 +1,24 @@
+# Browser access to noVNC at doom.mgmt.wsh.no, gated by Authelia forwardauth (same middleware as
+# the other *.mgmt.wsh.no UIs). The mgmt path is internal-nginx routed and skips NAXSI, so Authelia
+# is the only gate in front of a cluster-wide pod-killer — keep that client list tight.
+# No gethomepage.* annotations on purpose: a pod-killer should not be advertised on the dashboard.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kubedoom
+  namespace: kubedoom
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.middlewares: authelia-production-authelia-forwardauth@kubernetescrd
+spec:
+  rules:
+  - host: doom.mgmt.wsh.no
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: kubedoom
+            port:
+              number: 80

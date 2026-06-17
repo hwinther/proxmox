@@ -1,0 +1,85 @@
+# Kube DOOM — play id's DOOM where every on-map monster is a live cluster pod; killing a monster
+# runs `kubectl delete pod`. DANGER: cluster-wide (see rbac.yaml) — a stray rocket can delete a
+# real prod pod (Postgres, Authelia, …). Dormant by default: replicas: 0. Start a session by
+# scaling to 1 (see README.md), play at https://doom.mgmt.wsh.no (Authelia-gated), scale back to 0.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubedoom
+  namespace: kubedoom
+  labels:
+    app.kubernetes.io/name: kubedoom
+    app.kubernetes.io/part-of: production
+spec:
+  # Dormant. A cluster-wide pod-killer should not run 24/7; scale to 1 only while playing.
+  # Flux owns this field, so a manual `kubectl scale` is reverted on the next reconcile — to play,
+  # either set this to 1 and commit, or `flux suspend kustomization apps` for a quick session.
+  replicas: 0
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kubedoom
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kubedoom
+        app.kubernetes.io/component: chaos
+        app.kubernetes.io/part-of: production
+    spec:
+      serviceAccountName: kubedoom
+      automountServiceAccountToken: true  # kubedoom execs kubectl against the apiserver
+      containers:
+      - name: kubedoom
+        image: ghcr.io/storax/kubedoom:0.6.0
+        # No NAMESPACE env => kubedoom runs `kubectl get pods -A` => every pod cluster-wide is a
+        # monster. Set env NAMESPACE=<ns> to scope the monsters to a single namespace instead.
+        ports:
+        - name: vnc
+          containerPort: 5900
+        securityContext:
+          # dosbox + x11vnc require root; the wsh-require-run-as-non-root finding is accepted via
+          # kyverno-policyexception-kubedoom.yaml. Escalation is still disabled.
+          allowPrivilegeEscalation: false
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
+      - name: novnc
+        # noVNC + websockify bridge: browser <-> localhost:5900 (same pod netns). Upstream ships
+        # latest-only (no semver tags), so pinned by digest per the compliance SKILL (latest-only
+        # upstream -> pin @sha256). Resolved from ghcr.io/wavyland/novnc:latest.
+        image: ghcr.io/wavyland/novnc@sha256:45b5c4700c166819668d0b13c894560559c8f7867cb147228634572f2cc1e765
+        args:
+        - "6080"
+        - "localhost:5900"
+        ports:
+        - name: http-web
+          containerPort: 6080
+        securityContext:
+          allowPrivilegeEscalation: false
+        resources:
+          requests:
+            cpu: 25m
+            memory: 32Mi
+          limits:
+            cpu: 100m
+            memory: 64Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubedoom
+  namespace: kubedoom
+  labels:
+    app.kubernetes.io/name: kubedoom
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: kubedoom
+  ports:
+  - name: http-web
+    port: 80
+    targetPort: 6080
+    protocol: TCP

@@ -31,5 +31,7 @@ resources:
 - node-red-production
 - esp-poller-production
 - wshno
+# Chaos toy: cluster-wide pod-killer (DOOM), dormant by default (replicas: 0). See kubedoom/README.md.
+- kubedoom
 - ingress.yaml
 - hubble-ui-ingress.yaml

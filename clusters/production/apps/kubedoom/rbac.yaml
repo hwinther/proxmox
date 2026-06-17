@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kubedoom
+  namespace: kubedoom
+---
+# DELIBERATELY scoped to pods get/list/delete cluster-wide — NOT the upstream manifest's
+# cluster-admin binding. This is the minimum kubedoom needs (`kubectl get pods -A` to enumerate
+# monsters + `kubectl delete pod` to kill one) and the most a VNC/noVNC-exposed pod should ever
+# hold. It can still delete ANY pod in ANY namespace — that is the "cluster-wide" blast radius
+# you chose; it cannot do anything else (no exec, no secrets, no other resources).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kubedoom
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kubedoom
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubedoom
+subjects:
+- kind: ServiceAccount
+  name: kubedoom
+  namespace: kubedoom

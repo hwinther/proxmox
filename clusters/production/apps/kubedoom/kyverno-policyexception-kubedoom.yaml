@@ -1,0 +1,21 @@
+# kubedoom runs DOOM via dosbox + x11vnc, which need root (the image has no non-root mode).
+# wsh-require-run-as-non-root is Audit-only so this doesn't gate admission — it just keeps the
+# accepted root pod out of the PolicyReports / kubescape noise, same as headlamp's init exception.
+apiVersion: kyverno.io/v2
+kind: PolicyException
+metadata:
+  name: kubedoom-root
+  namespace: kubedoom
+spec:
+  exceptions:
+  - policyName: wsh-require-run-as-non-root
+    ruleNames:
+    - run-as-non-root
+    - autogen-run-as-non-root
+  match:
+    any:
+    - resources:
+        kinds:
+        - Pod
+        namespaces:
+        - kubedoom
