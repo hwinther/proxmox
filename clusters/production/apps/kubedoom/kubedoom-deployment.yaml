@@ -11,10 +11,10 @@ metadata:
     app.kubernetes.io/name: kubedoom
     app.kubernetes.io/part-of: production
 spec:
-  # Dormant. A cluster-wide pod-killer should not run 24/7; scale to 1 only while playing.
-  # Flux owns this field, so a manual `kubectl scale` is reverted on the next reconcile — to play,
-  # either set this to 1 and commit, or `flux suspend kustomization apps` for a quick session.
-  replicas: 0
+  # Scoped to a single namespace (NAMESPACE env below), so leaving it at 1 is low-risk: the monsters
+  # — and what it can delete — are only that namespace's pods. Scale to 0 when you're done if you'd
+  # rather it not run idle.
+  replicas: 1
   selector:
     matchLabels:
       app.kubernetes.io/name: kubedoom
@@ -30,8 +30,12 @@ spec:
       containers:
       - name: kubedoom
         image: ghcr.io/storax/kubedoom:0.6.0
-        # No NAMESPACE env => kubedoom runs `kubectl get pods -A` => every pod cluster-wide is a
-        # monster. Set env NAMESPACE=<ns> to scope the monsters to a single namespace instead.
+        env:
+        # Scopes the monsters to one namespace (`kubectl get pods -n $NAMESPACE`). Without it
+        # kubedoom lists ALL namespaces and the cluster-wide count lags the game. kubedoom can't
+        # span multiple namespaces — change this value to play a different map.
+        - name: NAMESPACE
+          value: clutterstock-test
         ports:
         - name: vnc
           containerPort: 5900
