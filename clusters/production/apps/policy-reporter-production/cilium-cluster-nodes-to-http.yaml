@@ -4,9 +4,12 @@ metadata:
   name: allow-cluster-nodes-to-policy-reporter-http
   namespace: policy-reporter-production
 spec:
+  # Chart labels the UI pod `policy-reporter-ui` (NOT `ui`) — matching the NetworkPolicy in
+  # networkpolicies.yaml. With `ui` this CNP matched no pod, so once the netpol-baseline
+  # default-deny floor was added, hostNetwork-Traefik → UI was blackholed (504).
   endpointSelector:
     matchLabels:
-      app.kubernetes.io/name: ui
+      app.kubernetes.io/name: policy-reporter-ui
   ingress:
   - fromEntities:
     - host
