@@ -161,6 +161,19 @@ spec:
     provider: custom
     serviceCIDR: 10.96.0.0/12
   scheduler: {}
+  # Worker (kubelet) config overrides, selected per node at join time with
+  # `k0s install worker --profile <name>`. The `edge-sdr` profile caps per-container log
+  # files so chatty pods don't churn the Raspberry Pi SD cards — e.g. konnectivity-agent
+  # logs a "Determined server count" line per control-stream reconnect, which bursts to
+  # ~1/s during a WAN/VPN blip at the radio-pi site. Defaults (~10Mi x 5 files) are fine on
+  # VM workers; workers that join without --profile keep those. See raspberry-pi-worker.md
+  # § "kubelet log rotation". Pair with the tmpfs-on-/var/log/pods option there for SD wear.
+  workerProfiles:
+    - name: edge-sdr
+      values:
+        # Merged into the node's KubeletConfiguration.
+        containerLogMaxSize: "5Mi"
+        containerLogMaxFiles: 3
   storage:
     etcd:
       ca:
