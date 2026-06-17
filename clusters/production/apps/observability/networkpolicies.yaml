@@ -123,7 +123,8 @@ spec:
 # kube-proxy replacement, world included for any non-SNAT path. LAN-only NodePorts are the real
 # exposure control.
 #
-# Grafana UI via Traefik (grafana.mgmt.wsh.no -> svc 80 -> pod 3000).
+# Grafana UI via Traefik (grafana.mgmt.wsh.no -> svc 80 -> pod 3000) + the homepage widget
+# (platform-production), which polls Grafana's in-cluster service. Mirrors alertmanager-ingress.
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -137,6 +138,14 @@ spec:
   - fromEntities:
     - host
     - remote-node
+    toPorts:
+    - ports:
+      - port: "3000"
+        protocol: TCP
+  - fromEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: platform-production
+        app.kubernetes.io/name: homepage
     toPorts:
     - ports:
       - port: "3000"
