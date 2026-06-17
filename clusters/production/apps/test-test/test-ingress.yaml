@@ -6,6 +6,9 @@ metadata:
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
     gethomepage.dev/enabled: "true"
+    # Without an explicit href, homepage builds the tile URL from the first ingress path (/api).
+    # Point it at the frontend root instead.
+    gethomepage.dev/href: "https://test.test.wsh.no/"
     gethomepage.dev/group: Apps
     gethomepage.dev/name: Test (repo sample)
     gethomepage.dev/siteMonitor: https://test.test.wsh.no
