@@ -14,7 +14,7 @@ spec:
   # Scoped to a single namespace (NAMESPACE env below), so leaving it at 1 is low-risk: the monsters
   # — and what it can delete — are only that namespace's pods. Scale to 0 when you're done if you'd
   # rather it not run idle.
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels:
       app.kubernetes.io/name: kubedoom
@@ -26,7 +26,7 @@ spec:
         app.kubernetes.io/part-of: production
     spec:
       serviceAccountName: kubedoom
-      automountServiceAccountToken: true  # kubedoom execs kubectl against the apiserver
+      automountServiceAccountToken: true # kubedoom execs kubectl against the apiserver
       containers:
       - name: kubedoom
         image: ghcr.io/storax/kubedoom:0.6.0
