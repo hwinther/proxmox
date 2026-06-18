@@ -5,6 +5,8 @@ metadata:
   namespace: clutterstock-production
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
+    # Homepage otherwise derives the link from the first Ingress path (/api); pin the frontend root.
+    gethomepage.dev/href: "https://clutterstock.wsh.no/"
     gethomepage.dev/enabled: "true"
     gethomepage.dev/group: Apps
     gethomepage.dev/name: Clutterstock
@@ -47,6 +49,8 @@ metadata:
   namespace: clutterstock-test
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
+    # Homepage otherwise derives the link from the first Ingress path (/api); pin the frontend root.
+    gethomepage.dev/href: "https://clutterstock.test.wsh.no/"
     gethomepage.dev/enabled: "true"
     gethomepage.dev/group: Apps
     gethomepage.dev/name: Clutterstock (test)
