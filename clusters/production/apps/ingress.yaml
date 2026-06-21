@@ -106,13 +106,20 @@ spec:
   - host: wsh.no
     http:
       paths:
-      # Curated Valheim snapshot JSON, same-origin (Traefik longest-prefix routes this before /).
-      # Backed by the valheim-status service, NOT the site image. Keeps Grafana/Prometheus private.
+      # Curated game-server snapshot JSON, same-origin (Traefik longest-prefix routes these before /).
+      # Backed by the <game>-status services, NOT the site image. Keeps Grafana/Prometheus private.
       - path: /api/valheim
         pathType: Prefix
         backend:
           service:
             name: valheim-status
+            port:
+              number: 8080
+      - path: /api/enshrouded
+        pathType: Prefix
+        backend:
+          service:
+            name: enshrouded-status
             port:
               number: 8080
       - path: /
@@ -132,6 +139,13 @@ spec:
         backend:
           service:
             name: valheim-status
+            port:
+              number: 8080
+      - path: /api/enshrouded
+        pathType: Prefix
+        backend:
+          service:
+            name: enshrouded-status
             port:
               number: 8080
       - path: /

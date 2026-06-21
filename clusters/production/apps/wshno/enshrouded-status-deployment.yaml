@@ -1,26 +1,27 @@
-# Snapshot service backing the public wsh.no Valheim widget. Two tiny containers sharing an emptyDir:
+# Snapshot service backing the public wsh.no Enshrouded widget. Mirror of valheim-status: two tiny
+# containers sharing an emptyDir, both running the shared game-status/refresh.py (GAME=enshrouded).
 #   - refresher: queries in-cluster Prometheus on a timer, writes /data/status.json (stdlib python)
-#   - web:       nginx serving ONLY that file at /api/valheim/ (no proxy, no live query path)
+#   - web:       nginx serving ONLY that file at /api/enshrouded/ (no proxy, no live query path)
 # Neither Prometheus nor Grafana is exposed — the browser only ever sees the curated JSON.
 # Lives in wshno-production alongside the site; fronted by Traefik via the wsh.no Ingress.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: valheim-status
+  name: enshrouded-status
   namespace: wshno-production
   labels:
-    app: valheim-status
-    app.kubernetes.io/name: valheim-status
+    app: enshrouded-status
+    app.kubernetes.io/name: enshrouded-status
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: valheim-status
+      app: enshrouded-status
   template:
     metadata:
       labels:
-        app: valheim-status
-        app.kubernetes.io/name: valheim-status
+        app: enshrouded-status
+        app.kubernetes.io/name: enshrouded-status
     spec:
       automountServiceAccountToken: false
       securityContext:
@@ -36,10 +37,10 @@ spec:
         command: ["python3", "/app/refresh.py"]
         env:
         - name: GAME
-          value: "valheim"
+          value: "enshrouded"
         # Display name shown on wsh.no/status (matches the in-game Steam browser name).
         - name: SERVER_NAME
-          value: "Geirangerheim"
+          value: "Innhyllet"
         # Query Prometheus via its in-cluster ClusterIP service. (The NodePort path fails for an
         # in-cluster pod: Cilium socket-LB keeps the source pod identity, which Prometheus's
         # host/remote-node/world ingress doesn't match -> POLICY_DENIED. A dedicated Prometheus
@@ -108,21 +109,21 @@ spec:
       volumes:
       - name: scripts
         configMap:
-          name: valheim-status
+          name: enshrouded-status
       - name: data
         emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: valheim-status
+  name: enshrouded-status
   namespace: wshno-production
   labels:
-    app: valheim-status
+    app: enshrouded-status
 spec:
   type: ClusterIP
   selector:
-    app: valheim-status
+    app: enshrouded-status
   ports:
   - name: http
     port: 8080

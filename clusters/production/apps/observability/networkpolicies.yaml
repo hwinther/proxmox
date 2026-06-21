@@ -198,10 +198,11 @@ spec:
       - port: "9090"
         protocol: TCP
 ---
-# In-cluster read-only API access to Prometheus 9090. The wshno valheim-status snapshot service
-# (wshno-production) queries a fixed set of series to build the public wsh.no/status JSON. NodePort
-# access from an in-cluster pod doesn't work (Cilium socket-LB preserves the pod identity, which the
-# host/remote-node/world rule above doesn't match), so this allows the pod's identity explicitly.
+# In-cluster read-only API access to Prometheus 9090. The wshno <game>-status snapshot services
+# (wshno-production: valheim-status, enshrouded-status, ...) each query a fixed set of series to build
+# the public wsh.no/status JSON. NodePort access from an in-cluster pod doesn't work (Cilium socket-LB
+# preserves the pod identity, which the host/remote-node/world rule above doesn't match), so this
+# allows those pods' identities explicitly (matched by the app=*-status label set).
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -215,7 +216,12 @@ spec:
   - fromEndpoints:
     - matchLabels:
         k8s:io.kubernetes.pod.namespace: wshno-production
-        app: valheim-status
+      matchExpressions:
+      - key: app
+        operator: In
+        values:
+        - valheim-status
+        - enshrouded-status
     toPorts:
     - ports:
       - port: "9090"

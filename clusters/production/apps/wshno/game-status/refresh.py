@@ -1,7 +1,11 @@
-# Snapshot writer for the public wsh.no Valheim widget. Every INTERVAL seconds it queries the
-# in-cluster Prometheus (read-only) for a small, fixed set of series and writes /data/status.json,
+# Snapshot writer for the public wsh.no game-server widgets. Every INTERVAL seconds it queries the
+# in-cluster Prometheus (read-only) for a small, fixed set of A2S series and writes /data/status.json,
 # which the nginx sidecar serves. This is the ONLY thing that ever touches Prometheus — the browser
 # only sees the curated JSON, so neither Prometheus nor Grafana is exposed.
+#
+# Game-agnostic: one copy of this script backs every <game>-status Deployment. The game is selected
+# by the GAME env (-> the `{app="<GAME>"}` series selector); SERVER_NAME sets the display name. So
+# adding a game is just another Deployment with GAME/SERVER_NAME set — no code change here.
 #
 # Prometheus is reached via its in-cluster ClusterIP service (PROM_URL env). A matching ingress allow
 # on the Prometheus pod (observability-production/networkpolicies.yaml) is required — its default
@@ -14,10 +18,11 @@ import urllib.request
 
 PROM = os.environ["PROM_URL"].rstrip("/")
 OUT = "/data/status.json"
+GAME = os.environ.get("GAME", "valheim")
 WINDOW = int(os.environ.get("WINDOW_SECONDS", str(24 * 3600)))
 STEP = int(os.environ.get("STEP_SECONDS", "300"))
 INTERVAL = int(os.environ.get("INTERVAL_SECONDS", "60"))
-SEL = '{app="valheim"}'
+SEL = '{app="%s"}' % GAME
 
 
 def _get(path, params):
@@ -42,7 +47,7 @@ def series(expr, now):
 def build():
     now = int(time.time())
     return {
-        "server": os.environ.get("SERVER_NAME", "Geirangerheim"),
+        "server": os.environ.get("SERVER_NAME", GAME.capitalize()),
         "updated": now,
         "up": instant(f"a2s_server_up{SEL}"),
         "players": instant(f"a2s_server_players{SEL}"),
@@ -62,7 +67,7 @@ def main():
             with open(tmp, "w") as f:
                 json.dump(snap, f, separators=(",", ":"))
             os.replace(tmp, OUT)  # atomic — nginx never serves a half-written file
-            print(f"snapshot ok: up={snap['up']} players={snap['players']}", flush=True)
+            print(f"snapshot ok: game={GAME} up={snap['up']} players={snap['players']}", flush=True)
         except Exception as e:  # keep the last good file; just log and retry
             print(f"snapshot error: {e}", flush=True)
         time.sleep(INTERVAL)

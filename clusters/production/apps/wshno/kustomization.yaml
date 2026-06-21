@@ -8,14 +8,23 @@ resources:
 - namespace.yaml
 - wshno-deployment.yaml
 - cilium-cluster-nodes-to-http.yaml
-# Snapshot service for the public Valheim widget (queries Prometheus, serves curated JSON only).
+# Snapshot services for the public game-server widgets (query Prometheus, serve curated JSON only).
+# One Deployment + netpol per game; all share game-status/refresh.py (selected via the GAME env).
 - valheim-status-deployment.yaml
 - valheim-status-networkpolicies.yaml
+- enshrouded-status-deployment.yaml
+- enshrouded-status-networkpolicies.yaml
 
 configMapGenerator:
-# refresher script + nginx config for valheim-status. Hashed name (no disableNameSuffixHash) so the
-# Deployment rolls automatically when either file changes; kustomize rewrites the volume reference.
+# Shared game-agnostic refresher script + per-game nginx config. Hashed names (no
+# disableNameSuffixHash) so each Deployment rolls automatically when its files change; kustomize
+# rewrites the volume references. `key=path` keeps the in-pod filenames (refresh.py / web.conf)
+# stable while the source files live under game-status/.
 - name: valheim-status
   files:
-  - valheim-status/refresh.py
-  - valheim-status/web.conf
+  - refresh.py=game-status/refresh.py
+  - web.conf=game-status/valheim.web.conf
+- name: enshrouded-status
+  files:
+  - refresh.py=game-status/refresh.py
+  - web.conf=game-status/enshrouded.web.conf
