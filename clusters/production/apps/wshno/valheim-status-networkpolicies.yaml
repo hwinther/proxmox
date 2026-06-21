@@ -2,8 +2,11 @@
 # netpol-baseline component). Two allows, both minimal:
 #   1. Traefik (hostNetwork -> host/remote-node) may reach the web container on 8080 — mirrors the
 #      site's allow-cluster-nodes-to-wshno-http.
-#   2. The refresher may reach Prometheus via the node NodePort (host/remote-node :30081) to pull the
-#      curated series. Using the NodePort keeps this self-contained (no observability netpol change).
+#   2. The refresher may reach the Prometheus ClusterIP service on 9090 to pull the curated series.
+#      (DNS to resolve the svc name is already allowed by the netpol-baseline component.) The matching
+#      Prometheus-side ingress allow lives in observability-production/networkpolicies.yaml — a NodePort
+#      shortcut does NOT work here: Cilium socket-LB keeps this pod's identity, which Prometheus's
+#      host/remote-node/world ingress drops.
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -25,17 +28,18 @@ spec:
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: allow-valheim-status-to-prometheus-nodeport
+  name: allow-valheim-status-to-prometheus
   namespace: wshno-production
 spec:
   endpointSelector:
     matchLabels:
       app: valheim-status
   egress:
-  - toEntities:
-    - host
-    - remote-node
+  - toEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: observability-production
+        app.kubernetes.io/name: prometheus
     toPorts:
     - ports:
-      - port: "30081"
+      - port: "9090"
         protocol: TCP

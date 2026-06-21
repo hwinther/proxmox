@@ -35,14 +35,12 @@ spec:
         image: python:3.12-alpine
         command: ["python3", "/app/refresh.py"]
         env:
-        - name: HOST_IP
-          valueFrom:
-            fieldRef:
-              fieldPath: status.hostIP
-        # Query Prometheus via its NodePort on this pod's own node (already allowed by
-        # prometheus-nodeport-ingress -> no observability netpol change needed).
+        # Query Prometheus via its in-cluster ClusterIP service. (The NodePort path fails for an
+        # in-cluster pod: Cilium socket-LB keeps the source pod identity, which Prometheus's
+        # host/remote-node/world ingress doesn't match -> POLICY_DENIED. A dedicated Prometheus
+        # ingress allow covers this pod instead — see observability-production/networkpolicies.yaml.)
         - name: PROM_URL
-          value: "http://$(HOST_IP):30081"
+          value: "http://obs-kps-kube-prometheus-st-prometheus.observability-production.svc.cluster.local:9090"
         - name: INTERVAL_SECONDS
           value: "60"
         securityContext:

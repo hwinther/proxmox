@@ -198,6 +198,29 @@ spec:
       - port: "9090"
         protocol: TCP
 ---
+# In-cluster read-only API access to Prometheus 9090. The wshno valheim-status snapshot service
+# (wshno-production) queries a fixed set of series to build the public wsh.no/status JSON. NodePort
+# access from an in-cluster pod doesn't work (Cilium socket-LB preserves the pod identity, which the
+# host/remote-node/world rule above doesn't match), so this allows the pod's identity explicitly.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: prometheus-wshno-status-query-ingress
+  namespace: observability-production
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: prometheus
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: wshno-production
+        app: valheim-status
+    toPorts:
+    - ports:
+      - port: "9090"
+        protocol: TCP
+---
 # Loki push via NodePort 30080 (edge fluent-bit). Intra-namespace readers (Grafana datasource,
 # otel) are covered by the netpol-baseline allow-prometheus-scrape ingress.
 apiVersion: cilium.io/v2

@@ -3,9 +3,9 @@
 # which the nginx sidecar serves. This is the ONLY thing that ever touches Prometheus — the browser
 # only sees the curated JSON, so neither Prometheus nor Grafana is exposed.
 #
-# Prometheus is reached via its NodePort on the pod's OWN node (HOST_IP:30081): that path is already
-# allowed by the prometheus-nodeport-ingress policy (host/remote-node), so no change to the
-# observability network policies is needed. Stdlib only — no pip install, no extra image layers.
+# Prometheus is reached via its in-cluster ClusterIP service (PROM_URL env). A matching ingress allow
+# on the Prometheus pod (observability-production/networkpolicies.yaml) is required — its default
+# ingress only permits host/remote-node/world, not in-cluster pods. Stdlib only — no pip install.
 import json
 import os
 import time
