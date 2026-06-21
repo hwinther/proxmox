@@ -1,0 +1,24 @@
+# Host is patched per-PR by the overlay (wshno-<N>.preview.wsh.no). entrypoints: web because the LAN
+# nginx fronting the cluster terminates TLS with the existing *.preview.wsh.no wildcard cert.
+#
+# NOTE: previews serve the static site only — the /status page's /api/valheim/* fetch has no backend
+# here (the valheim-status service lives in wshno-production), so the widget shows "could not load".
+# That's expected; previews exist to test UI/site changes, not the live status backend.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: wshno
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+spec:
+  rules:
+  - host: wshno-preview.preview.wsh.no
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: wshno
+            port:
+              number: 8080

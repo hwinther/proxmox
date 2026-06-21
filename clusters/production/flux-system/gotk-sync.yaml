@@ -84,6 +84,21 @@ spec:
     kind: GitRepository
     name: flux-system
 ---
+# Per-PR ephemeral preview envs for wshno (the wsh.no site). Single PUBLIC static image, no per-PR
+# database / secret / pull credential, so no cnpg or kyverno dependency — just static manifests.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: previews-wshno
+  namespace: flux-system
+spec:
+  interval: 1m0s
+  path: ./clusters/production/apps/previews/wshno
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+---
 # Kyverno CRDs come from the Helm chart; policies must apply in a separate Kustomization after this is Ready.
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization

@@ -1,0 +1,71 @@
+# Ephemeral preview-env Deployment for wshno. Namespace + image tag/digest are set per-PR by the
+# overlay. Single PUBLIC static image (nginx serving the Vite/React build) — no DB, secrets, or pull
+# credential. Mirrors ../../wshno/wshno-deployment.yaml but with imagePullPolicy: Always so a rebuilt
+# PR image is always pulled, and no metadata.namespace (the overlay's namespace: directive sets it).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wshno
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wshno
+  template:
+    metadata:
+      labels:
+        app: wshno
+        app.kubernetes.io/name: wshno
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        # nginxinc/nginx-unprivileged already declares USER 101; runAsNonRoot satisfies Kyverno.
+        runAsNonRoot: true
+      containers:
+      - name: wshno
+        # Tag + digest are replaced per-PR by the overlay's `images:` transform (matched by name),
+        # so the :placeholder tag here is never deployed as-is.
+        image: ghcr.io/wshno/wshno/web:placeholder
+        imagePullPolicy: Always
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          requests:
+            cpu: 25m
+            memory: 32Mi
+          limits:
+            cpu: 100m
+            memory: 64Mi
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        readinessProbe:
+          tcpSocket:
+            port: http
+          initialDelaySeconds: 3
+          periodSeconds: 10
+        livenessProbe:
+          tcpSocket:
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 6
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wshno
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8080
+    targetPort: http
+    protocol: TCP
+    name: http
+  selector:
+    app: wshno

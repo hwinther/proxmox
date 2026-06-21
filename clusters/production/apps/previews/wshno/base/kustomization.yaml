@@ -1,0 +1,12 @@
+# Shared kustomize base for wshno PR preview environments. Every per-PR overlay under ../pr-<N>/
+# references this base. Resources here intentionally have no metadata.namespace so the overlay's
+# namespace: directive populates it. A static site needs no egress, so netpol-baseline (default-deny
+# + DNS) plus the Traefik->:8080 allow is the whole policy surface.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+components:
+- ../../../../../../bases/netpol-baseline
+resources:
+- deployment.yaml
+- ingress.yaml
+- cilium-cluster-nodes-to-http.yaml
