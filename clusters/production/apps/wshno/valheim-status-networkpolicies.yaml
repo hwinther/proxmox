@@ -1,0 +1,41 @@
+# Network policy for the valheim-status snapshot service (wshno-production is default-deny via the
+# netpol-baseline component). Two allows, both minimal:
+#   1. Traefik (hostNetwork -> host/remote-node) may reach the web container on 8080 — mirrors the
+#      site's allow-cluster-nodes-to-wshno-http.
+#   2. The refresher may reach Prometheus via the node NodePort (host/remote-node :30081) to pull the
+#      curated series. Using the NodePort keeps this self-contained (no observability netpol change).
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-cluster-nodes-to-valheim-status-http
+  namespace: wshno-production
+spec:
+  endpointSelector:
+    matchLabels:
+      app: valheim-status
+  ingress:
+  - fromEntities:
+    - host
+    - remote-node
+    toPorts:
+    - ports:
+      - port: "8080"
+        protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-valheim-status-to-prometheus-nodeport
+  namespace: wshno-production
+spec:
+  endpointSelector:
+    matchLabels:
+      app: valheim-status
+  egress:
+  - toEntities:
+    - host
+    - remote-node
+    toPorts:
+    - ports:
+      - port: "30081"
+        protocol: TCP

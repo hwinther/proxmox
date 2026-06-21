@@ -106,6 +106,15 @@ spec:
   - host: wsh.no
     http:
       paths:
+      # Curated Valheim snapshot JSON, same-origin (Traefik longest-prefix routes this before /).
+      # Backed by the valheim-status service, NOT the site image. Keeps Grafana/Prometheus private.
+      - path: /api/valheim
+        pathType: Prefix
+        backend:
+          service:
+            name: valheim-status
+            port:
+              number: 8080
       - path: /
         pathType: Prefix
         backend:
@@ -118,6 +127,13 @@ spec:
   - host: www.wsh.no
     http:
       paths:
+      - path: /api/valheim
+        pathType: Prefix
+        backend:
+          service:
+            name: valheim-status
+            port:
+              number: 8080
       - path: /
         pathType: Prefix
         backend:

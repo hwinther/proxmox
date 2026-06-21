@@ -8,3 +8,14 @@ resources:
 - namespace.yaml
 - wshno-deployment.yaml
 - cilium-cluster-nodes-to-http.yaml
+# Snapshot service for the public Valheim widget (queries Prometheus, serves curated JSON only).
+- valheim-status-deployment.yaml
+- valheim-status-networkpolicies.yaml
+
+configMapGenerator:
+# refresher script + nginx config for valheim-status. Hashed name (no disableNameSuffixHash) so the
+# Deployment rolls automatically when either file changes; kustomize rewrites the volume reference.
+- name: valheim-status
+  files:
+  - valheim-status/refresh.py
+  - valheim-status/web.conf
