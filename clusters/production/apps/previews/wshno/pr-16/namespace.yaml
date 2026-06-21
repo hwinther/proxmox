@@ -1,8 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: wshno-preview-pr-16
-  labels:
-    app.kubernetes.io/part-of: wshno
-    wshno.wsh.no/preview: "true"
-    wshno.wsh.no/pr: "16"
