@@ -1,0 +1,136 @@
+# Snapshot service backing the public wsh.no Satisfactory widget. Mirror of valheim/enshrouded-status:
+# two tiny containers sharing an emptyDir, both running the shared game-status/refresh.py — but with
+# METRICS_FLAVOR=satisfactory, because Satisfactory has no Steam A2S. "up" comes from the VPS blackbox
+# TCP probe (probe_success{app="satisfactory"}); players/tech tier come from the in-cluster
+# satisfactory_* exporter sidecar (token-gated — null until the API-token Secret is set in
+# satisfactory-production). Neither Prometheus nor Grafana is exposed — the browser only sees the JSON.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: satisfactory-status
+  namespace: wshno-production
+  labels:
+    app: satisfactory-status
+    app.kubernetes.io/name: satisfactory-status
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: satisfactory-status
+  template:
+    metadata:
+      labels:
+        app: satisfactory-status
+        app.kubernetes.io/name: satisfactory-status
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        # Both containers run as the unprivileged nginx uid (101); fsGroup makes the shared
+        # emptyDir group-writable so the refresher (101) can write and nginx (101) can read.
+        runAsNonRoot: true
+        runAsUser: 101
+        runAsGroup: 101
+        fsGroup: 101
+      containers:
+      - name: refresher
+        image: python:3.12-alpine
+        command: ["python3", "/app/refresh.py"]
+        env:
+        - name: GAME
+          value: "satisfactory"
+        # Satisfactory has no Steam A2S series; source up from the VPS blackbox probe and the rich
+        # stats from the in-cluster satisfactory_* exporter (see game-status/refresh.py).
+        - name: METRICS_FLAVOR
+          value: "satisfactory"
+        # Display name shown on wsh.no/status — the in-game server name (Satisfactory has no Steam
+        # browser name; the server is claimed/named in-game).
+        - name: SERVER_NAME
+          value: "Unsatisfactory II: FACSIT Boogaloo"
+        # Query Prometheus via its in-cluster ClusterIP service. (The NodePort path fails for an
+        # in-cluster pod: Cilium socket-LB keeps the source pod identity, which Prometheus's
+        # host/remote-node/world ingress doesn't match -> POLICY_DENIED. A dedicated Prometheus
+        # ingress allow covers this pod instead — see observability-production/networkpolicies.yaml.)
+        - name: PROM_URL
+          value: "http://obs-kps-kube-prometheus-st-prometheus.observability-production.svc.cluster.local:9090"
+        - name: INTERVAL_SECONDS
+          value: "60"
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            cpu: 100m
+            memory: 64Mi
+        volumeMounts:
+        - name: scripts
+          mountPath: /app/refresh.py
+          subPath: refresh.py
+          readOnly: true
+        - name: data
+          mountPath: /data
+      - name: web
+        image: nginxinc/nginx-unprivileged:alpine
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 3
+          periodSeconds: 10
+        livenessProbe:
+          tcpSocket:
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          failureThreshold: 6
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            cpu: 100m
+            memory: 32Mi
+        volumeMounts:
+        - name: scripts
+          mountPath: /etc/nginx/conf.d/default.conf
+          subPath: web.conf
+          readOnly: true
+        - name: data
+          mountPath: /data
+          readOnly: true
+      volumes:
+      - name: scripts
+        configMap:
+          name: satisfactory-status
+      - name: data
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: satisfactory-status
+  namespace: wshno-production
+  labels:
+    app: satisfactory-status
+spec:
+  type: ClusterIP
+  selector:
+    app: satisfactory-status
+  ports:
+  - name: http
+    port: 8080
+    targetPort: http
+    protocol: TCP

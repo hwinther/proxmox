@@ -122,6 +122,13 @@ spec:
             name: enshrouded-status
             port:
               number: 8080
+      - path: /api/satisfactory
+        pathType: Prefix
+        backend:
+          service:
+            name: satisfactory-status
+            port:
+              number: 8080
       - path: /
         pathType: Prefix
         backend:
@@ -146,6 +153,13 @@ spec:
         backend:
           service:
             name: enshrouded-status
+            port:
+              number: 8080
+      - path: /api/satisfactory
+        pathType: Prefix
+        backend:
+          service:
+            name: satisfactory-status
             port:
               number: 8080
       - path: /

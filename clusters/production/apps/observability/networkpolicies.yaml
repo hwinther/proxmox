@@ -222,6 +222,7 @@ spec:
         values:
         - valheim-status
         - enshrouded-status
+        - satisfactory-status
     toPorts:
     - ports:
       - port: "9090"

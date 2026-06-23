@@ -1,0 +1,45 @@
+# Network policy for the satisfactory-status snapshot service (wshno-production is default-deny via the
+# netpol-baseline component). Mirror of valheim/enshrouded-status-networkpolicies.yaml — two minimal
+# allows:
+#   1. Traefik (hostNetwork -> host/remote-node) may reach the web container on 8080.
+#   2. The refresher may reach the Prometheus ClusterIP service on 9090 to pull the curated series.
+#      (DNS to resolve the svc name is already allowed by the netpol-baseline component.) The matching
+#      Prometheus-side ingress allow lives in observability-production/networkpolicies.yaml — a NodePort
+#      shortcut does NOT work here: Cilium socket-LB keeps this pod's identity, which Prometheus's
+#      host/remote-node/world ingress drops.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-cluster-nodes-to-satisfactory-status-http
+  namespace: wshno-production
+spec:
+  endpointSelector:
+    matchLabels:
+      app: satisfactory-status
+  ingress:
+  - fromEntities:
+    - host
+    - remote-node
+    toPorts:
+    - ports:
+      - port: "8080"
+        protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-satisfactory-status-to-prometheus
+  namespace: wshno-production
+spec:
+  endpointSelector:
+    matchLabels:
+      app: satisfactory-status
+  egress:
+  - toEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: observability-production
+        app.kubernetes.io/name: prometheus
+    toPorts:
+    - ports:
+      - port: "9090"
+        protocol: TCP

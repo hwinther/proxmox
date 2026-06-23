@@ -14,6 +14,8 @@ resources:
 - valheim-status-networkpolicies.yaml
 - enshrouded-status-deployment.yaml
 - enshrouded-status-networkpolicies.yaml
+- satisfactory-status-deployment.yaml
+- satisfactory-status-networkpolicies.yaml
 
 configMapGenerator:
 # Shared game-agnostic refresher script + per-game nginx config. Hashed names (no
@@ -28,3 +30,7 @@ configMapGenerator:
   files:
   - refresh.py=game-status/refresh.py
   - web.conf=game-status/enshrouded.web.conf
+- name: satisfactory-status
+  files:
+  - refresh.py=game-status/refresh.py
+  - web.conf=game-status/satisfactory.web.conf
