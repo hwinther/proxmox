@@ -28,3 +28,14 @@ modules:
       fail_if_not_ssl: true
       preferred_ip_protocol: ip4
       ip_protocol_fallback: false
+
+  # Raw TCP connect — just opens a connection, no HTTP/TLS semantics. For game-server ports with no
+  # Steam A2S query (e.g. Satisfactory 7777): probe_success=1 means the port is reachable end-to-end
+  # (WAN forward + server up). Referenced cross-repo by private-apps'
+  # clusters/production/apps/satisfactory-production/scrapeconfig-blackbox-external.yaml.
+  tcp_connect:
+    prober: tcp
+    timeout: 5s
+    tcp:
+      preferred_ip_protocol: ip4
+      ip_protocol_fallback: false
