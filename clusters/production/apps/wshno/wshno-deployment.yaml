@@ -22,7 +22,7 @@ spec:
         runAsNonRoot: true
       containers:
       - name: wshno
-        image: ghcr.io/wshno/wshno/web:0.7.0@sha256:6c7f5f82452446dea08d3b7aa167b10e462631eed393bd42b73be51dc588553f
+        image: ghcr.io/wshno/wshno/web:0.8.0@sha256:0072563b4405d0235b2e9ab893fbdbf9f905f07bdf5664b310e029fe2d43b732
         imagePullPolicy: IfNotPresent
         securityContext:
           allowPrivilegeEscalation: false
