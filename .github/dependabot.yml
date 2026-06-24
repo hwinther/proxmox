@@ -99,6 +99,7 @@ updates:
   - "/clusters/production/apps/ddnsadmin/production"
   - "/clusters/production/apps/ddnsadmin/test"
   - "/clusters/production/apps/headlamp-production"
+  - "/clusters/production/apps/kubedoom"
   - "/clusters/production/apps/kubescape-production"
   - "/clusters/production/apps/kyverno"
   - "/clusters/production/apps/kyverno-policies"
@@ -123,6 +124,8 @@ updates:
   - "/clusters/production/apps/previews/clutterstock/databases"
   - "/clusters/production/apps/previews/ddnsadmin"
   - "/clusters/production/apps/previews/ddnsadmin/base"
+  - "/clusters/production/apps/previews/wshno"
+  - "/clusters/production/apps/previews/wshno/base"
   - "/clusters/production/apps/shared/production"
   - "/clusters/production/flux-system"
   schedule:
