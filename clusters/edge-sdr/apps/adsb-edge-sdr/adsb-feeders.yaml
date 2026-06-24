@@ -176,7 +176,7 @@ spec:
                 - "true"
       containers:
       - name: adsbexchange
-        image: ghcr.io/hwinther/wsh-rtl-sdr/adsbexchange:0.4.0@sha256:bbba125f0500635ceafc02b627c3b42e06ffa4adf186b9ceefd120145d64b649
+        image: ghcr.io/hwinther/wsh-rtl-sdr/adsbexchange:0.5.0@sha256:1e3c50b03195326d17c033bed72217d0da06387e716bbfd97cb5f16a671b9038
         imagePullPolicy: IfNotPresent
         envFrom:
         - configMapRef:
