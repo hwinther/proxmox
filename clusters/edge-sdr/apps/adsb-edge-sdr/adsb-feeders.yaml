@@ -234,7 +234,7 @@ spec:
                 - "true"
       containers:
       - name: opensky
-        image: ghcr.io/hwinther/wsh-rtl-sdr/opensky:0.4.0@sha256:b69acfe579f2673be16ef4385ea9d2811b85ac550ed679d4b68192afd02d69c4
+        image: ghcr.io/hwinther/wsh-rtl-sdr/opensky:0.5.0@sha256:9509a4755512c511543cd45eef285b0c4023cbbf75a9e30a8704c3afe93d2ddb
         imagePullPolicy: IfNotPresent
         envFrom:
         - configMapRef:
