@@ -16,6 +16,8 @@ resources:
 - enshrouded-status-networkpolicies.yaml
 - satisfactory-status-deployment.yaml
 - satisfactory-status-networkpolicies.yaml
+- spaceengineers-status-deployment.yaml
+- spaceengineers-status-networkpolicies.yaml
 
 configMapGenerator:
 # Shared game-agnostic refresher script + per-game nginx config. Hashed names (no
@@ -34,3 +36,7 @@ configMapGenerator:
   files:
   - refresh.py=game-status/refresh.py
   - web.conf=game-status/satisfactory.web.conf
+- name: spaceengineers-status
+  files:
+  - refresh.py=game-status/refresh.py
+  - web.conf=game-status/spaceengineers.web.conf

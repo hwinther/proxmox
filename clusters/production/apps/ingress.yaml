@@ -129,6 +129,13 @@ spec:
             name: satisfactory-status
             port:
               number: 8080
+      - path: /api/spaceengineers
+        pathType: Prefix
+        backend:
+          service:
+            name: spaceengineers-status
+            port:
+              number: 8080
       - path: /
         pathType: Prefix
         backend:
@@ -160,6 +167,13 @@ spec:
         backend:
           service:
             name: satisfactory-status
+            port:
+              number: 8080
+      - path: /api/spaceengineers
+        pathType: Prefix
+        backend:
+          service:
+            name: spaceengineers-status
             port:
               number: 8080
       - path: /
