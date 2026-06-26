@@ -223,6 +223,7 @@ spec:
         - valheim-status
         - enshrouded-status
         - satisfactory-status
+        - spaceengineers-status
     toPorts:
     - ports:
       - port: "9090"
