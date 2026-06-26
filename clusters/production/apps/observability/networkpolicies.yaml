@@ -224,6 +224,10 @@ spec:
         - enshrouded-status
         - satisfactory-status
         - spaceengineers-status
+    # private-apps game-discord status-panel queries the same series for its per-channel Discord panel.
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: game-discord-production
+        app: status-panel
     toPorts:
     - ports:
       - port: "9090"
