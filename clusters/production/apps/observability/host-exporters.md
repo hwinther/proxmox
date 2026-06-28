@@ -1,0 +1,78 @@
+# Host exporters on the bare-metal Proxmox / PBS hosts
+
+The physical hosts run two Prometheus exporters as **plain systemd services** (not Kubernetes — the
+hosts are outside the cluster). Prometheus scrapes them via static jobs in
+[`kube-prometheus-stack-helmrelease.yaml`](kube-prometheus-stack-helmrelease.yaml)
+(`prometheusSpec.additionalScrapeConfigs`):
+
+| Exporter           | Port  | Scrape job          | Alerts / dashboard                                         |
+| ------------------ | ----- | ------------------- | ---------------------------------------------------------- |
+| smartctl_exporter  | 9633  | `smartctl`          | `prometheusrule-smartctl.yaml`, `dashboards/disk-health.json` |
+| node-exporter      | 9100  | `node-exporter-pve` | stock `Node*` rules + `prometheusrule-node-temp.yaml` (CPU temp) |
+
+Hosts and their `node` label (the scrape job sets `instance` = this name):
+
+| Host             | IP          | Role                                  |
+| ---------------- | ----------- | ------------------------------------- |
+| `office-pve-amd` | 10.20.4.18  | PVE + Ceph OSD (AMD, `k10temp`)       |
+| `office-pve-i9`  | 10.20.4.20  | PVE + Ceph OSD (Intel, `coretemp`)    |
+| `shuttle01`      | 10.20.4.34  | PVE + Ceph OSD                        |
+| `shuttle02`      | 10.20.4.35  | PVE (not a Ceph node)                 |
+| `pbs-ks`         | 10.30.0.6   | Standalone PBS, KS site (over link)   |
+
+## Why node-exporter on the hosts
+
+The kube-prometheus-stack ships ~25 `Node*` rules (filesystem fill, CPU, memory, clock sync, NIC
+RX/TX errors, systemd unit failures, conntrack, RAID), but they only match series with
+`job="node-exporter"`. Without a host exporter those rules cover **only the k0s VMs and edge Pis** —
+the hypervisors themselves were monitored for disk SMART and nothing else. The `node-exporter-pve`
+job is **relabeled to `job=node-exporter`** so the existing rules and the stock Grafana
+"Node Exporter / Nodes" dashboards pick up the bare metal with no new rules (the one exception is
+x86 CPU/package temperature, which the default set doesn't cover — added in
+`prometheusrule-node-temp.yaml` as `NodeCpuOverheating`).
+
+## Install (per host)
+
+Debian-based (Proxmox VE and Proxmox Backup Server both qualify):
+
+```bash
+apt-get update && apt-get install -y prometheus-node-exporter lm-sensors
+# hwmon CPU temps: make sure the right driver is loaded so node_hwmon_temp_celsius is populated
+sensors-detect --auto        # loads coretemp (Intel) or k10temp (AMD); persists to /etc/modules
+systemctl enable --now prometheus-node-exporter
+# verify locally
+curl -s localhost:9100/metrics | grep -E '^node_hwmon_temp_celsius' | head
+```
+
+The Debian package enables a sensible default collector set (incl. `hwmon`, `systemd`, `filesystem`,
+`netdev`). No extra flags needed; if you install the upstream tarball instead, run it with at least
+`--collector.hwmon --collector.systemd` and a matching unit file.
+
+## Firewall (per host)
+
+Allow the cluster subnet to reach `:9100`, exactly like the existing `:9633` / `:9283` rules. On PVE:
+
+```bash
+# /etc/pve/firewall/<node>.fw  (or the host firewall GUI) — IN ACCEPT from 10.20.13.0/24 to tcp/9100
+```
+
+`pbs-ks` is reached over the site link on the same path as its `:9633`; open `:9100` the same way.
+
+## Verify end-to-end
+
+```bash
+# from a k0s node (has cluster-subnet source IP):
+for ip in 10.20.4.18 10.20.4.20 10.20.4.34 10.20.4.35 10.30.0.6; do
+  echo -n "$ip "; curl -s -o /dev/null -w '%{http_code}\n' http://$ip:9100/metrics; done
+
+# from Prometheus (NodePort :30081) after Flux reconciles the scrape config:
+#   up{job="node-exporter"}                         -> now includes the 5 hosts
+#   node_filesystem_avail_bytes{instance="shuttle01"} -> Node* rules now evaluate for the host
+#   node_hwmon_temp_celsius{instance="office-pve-amd"} -> confirm the CPU sensor labels
+```
+
+**AMD caveat:** Intel `coretemp` appears in the `chip` label (`*coretemp*`); AMD `k10temp`'s `chip`
+is a PCI address, so after node-exporter is live on `office-pve-amd` confirm the labels and, if the
+`NodeCpuOverheating` regex doesn't match, widen it (e.g. `sensor=~"Tctl|Tccd.*|Package.*"` or a
+`node_hwmon_chip_names` join). Dry-run rule changes server-side before pushing:
+`kubectl apply --dry-run=server -f prometheusrule-node-temp.yaml`.

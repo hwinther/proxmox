@@ -39,6 +39,10 @@ ceph config set mgr mgr/prometheus/exclude_perf_counters false   # IOPS / Cluste
 
 The perf-counters flag adds ~50 series per OSD; fine at homelab scale, the upstream warning only applies to clusters with hundreds of OSDs.
 
+## Host exporters (bare-metal Proxmox / PBS)
+
+The physical hosts run `smartctl_exporter` (`:9633`) and `node-exporter` (`:9100`) as plain systemd services, scraped via the static `smartctl` / `node-exporter-pve` jobs in `kube-prometheus-stack-helmrelease.yaml`. The `node-exporter-pve` job is relabeled to `job=node-exporter` so the stock `Node*` rules and Grafana node dashboards cover the bare metal (CPU/host filesystem/memory/NIC errors), not just the k0s VMs. Install + firewall runbook: [`host-exporters.md`](host-exporters.md).
+
 ## Helm releases
 
 | HelmRelease          | Purpose                                             |

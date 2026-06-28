@@ -315,6 +315,26 @@ spec:
           static_configs:
           - targets: [ '10.31.0.2:60601' ]
             labels: { host: abyss }
+        # node-exporter on each PVE host + PBS (systemd, :9100). Relabeled to job=node-exporter so the
+        # stock kube-prometheus-stack Node* rules + Grafana dashboards cover the bare metal too (without
+        # it they only match the k0s VMs / edge Pis). CPU temp alert: prometheusrule-node-temp.yaml.
+        # Install runbook: host-exporters.md. Hosts must allow 10.20.13.0/24 -> :9100 (same as :9633).
+        - job_name: node-exporter-pve
+          static_configs:
+          - targets: [ '10.20.4.18:9100' ]
+            labels: { node: office-pve-amd }
+          - targets: [ '10.20.4.20:9100' ]
+            labels: { node: office-pve-i9 }
+          - targets: [ '10.20.4.34:9100' ]
+            labels: { node: shuttle01 }
+          - targets: [ '10.20.4.35:9100' ]
+            labels: { node: shuttle02 }
+          # Standalone PBS at the KS site (reached over the site link) — not a PVE cluster node.
+          - targets: [ '10.30.0.6:9100' ]
+            labels: { node: pbs-ks }
+          relabel_configs:
+          - { target_label: job, replacement: node-exporter }
+          - { source_labels: [ node ], target_label: instance }
         resources:
           requests:
             cpu: 200m

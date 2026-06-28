@@ -52,3 +52,24 @@ spec:
       annotations:
         summary: "NVMe {{ $labels.node }} {{ $labels.device }} running hot ({{ $value | humanize }}°C)"
         description: "NVMe {{ $labels.device }} on {{ $labels.node }} has been >70°C for 15m (currently {{ $value | humanize }}°C) — at/above its throttle point. Check heatsink/airflow."
+    # PVE host CPU/package temperature via node-exporter's hwmon collector (see the node-exporter-pve
+    # scrape job in kube-prometheus-stack-helmrelease.yaml). Intel shows as chip "*coretemp*"; AMD
+    # k10temp's chip label is a PCI address, so verify the selector against live labels on
+    # office-pve-amd and widen (sensor=~"Tctl|Package.*" or a node_hwmon_chip_names join) if needed.
+    # Tjunction is ~95–100°C (throttle); warn well below.
+    - alert: NodeCpuOverheating
+      expr: max by (instance, node) (node_hwmon_temp_celsius{chip=~".*coretemp.*|.*k10temp.*"}) > 85
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: "CPU on {{ $labels.node }} running hot ({{ $value | humanize }}°C)"
+        description: "CPU package temp on {{ $labels.node }} has been >85°C for 10m (currently {{ $value | humanize }}°C). Check fans/airflow; throttling starts ~95–100°C."
+    - alert: NodeCpuOverheatingCritical
+      expr: max by (instance, node) (node_hwmon_temp_celsius{chip=~".*coretemp.*|.*k10temp.*"}) > 95
+      for: 2m
+      labels:
+        severity: critical
+      annotations:
+        summary: "CPU on {{ $labels.node }} critically hot ({{ $value | humanize }}°C)"
+        description: "CPU package temp on {{ $labels.node }} is >95°C (currently {{ $value | humanize }}°C) — at/above throttle. Risk of thermal shutdown; fix cooling now."
