@@ -52,13 +52,14 @@ spec:
       annotations:
         summary: "NVMe {{ $labels.node }} {{ $labels.device }} running hot ({{ $value | humanize }}°C)"
         description: "NVMe {{ $labels.device }} on {{ $labels.node }} has been >70°C for 15m (currently {{ $value | humanize }}°C) — at/above its throttle point. Check heatsink/airflow."
-    # PVE host CPU/package temperature via node-exporter's hwmon collector (see the node-exporter-pve
-    # scrape job in kube-prometheus-stack-helmrelease.yaml). Intel shows as chip "*coretemp*"; AMD
-    # k10temp's chip label is a PCI address, so verify the selector against live labels on
-    # office-pve-amd and widen (sensor=~"Tctl|Package.*" or a node_hwmon_chip_names join) if needed.
-    # Tjunction is ~95–100°C (throttle); warn well below.
+    # PVE host CPU/package temperature via node-exporter's hwmon collector (node-exporter-pve scrape
+    # job). Match CPU chips through a node_hwmon_chip_names join, NOT the chip label: the chip label is
+    # unreliable (Intel = "platform_coretemp_0", but AMD k10temp shows as a PCI address like
+    # "pci0000:00_0000:00:18_3"), whereas chip_name is "coretemp"/"k10temp". The join also keeps the
+    # NVMe sensors out (they read 80°C+ here and are covered by SmartNvmeOverheating). Verified against
+    # live labels on office-pve-amd (AMD) + office-pve-i9 (Intel). Tjunction ~95–100°C; warn well below.
     - alert: NodeCpuOverheating
-      expr: max by (instance, node) (node_hwmon_temp_celsius{chip=~".*coretemp.*|.*k10temp.*"}) > 85
+      expr: max by (instance, node) (node_hwmon_temp_celsius * on (instance, chip) group_left node_hwmon_chip_names{chip_name=~"coretemp|k10temp"}) > 85
       for: 10m
       labels:
         severity: warning
@@ -66,7 +67,7 @@ spec:
         summary: "CPU on {{ $labels.node }} running hot ({{ $value | humanize }}°C)"
         description: "CPU package temp on {{ $labels.node }} has been >85°C for 10m (currently {{ $value | humanize }}°C). Check fans/airflow; throttling starts ~95–100°C."
     - alert: NodeCpuOverheatingCritical
-      expr: max by (instance, node) (node_hwmon_temp_celsius{chip=~".*coretemp.*|.*k10temp.*"}) > 95
+      expr: max by (instance, node) (node_hwmon_temp_celsius * on (instance, chip) group_left node_hwmon_chip_names{chip_name=~"coretemp|k10temp"}) > 95
       for: 2m
       labels:
         severity: critical

@@ -73,8 +73,9 @@ for ip in 10.20.4.18 10.20.4.20 10.20.4.34 10.20.4.35 10.30.0.6; do
 #   node_hwmon_temp_celsius{instance="office-pve-amd"} -> confirm the CPU sensor labels
 ```
 
-**AMD caveat:** Intel `coretemp` appears in the `chip` label (`*coretemp*`); AMD `k10temp`'s `chip`
-is a PCI address, so after node-exporter is live on `office-pve-amd` confirm the labels and, if the
-`NodeCpuOverheating` regex doesn't match, widen it (e.g. `sensor=~"Tctl|Tccd.*|Package.*"` or a
-`node_hwmon_chip_names` join). Dry-run rule changes server-side before pushing:
-`kubectl apply --dry-run=server -f prometheusrule-node-temp.yaml`.
+**CPU-temp selector (resolved):** `NodeCpuOverheating` matches CPU chips via a `node_hwmon_chip_names`
+join (`chip_name=~"coretemp|k10temp"`), not the `chip` label — Intel exposes `platform_coretemp_0`,
+but AMD k10temp shows up under a PCI-address chip (`pci0000:00_0000:00:18_3`), so a chip-label regex
+silently misses the AMD host. The join also keeps NVMe sensors out (they read 80°C+ and are covered
+by `SmartNvmeOverheating`). Verified live on office-pve-amd + office-pve-i9. Dry-run rule changes
+server-side before pushing: `kubectl apply --dry-run=server -f prometheusrule-node-temp.yaml`.
