@@ -1,5 +1,10 @@
-# Edge SDR Raspberry Pi SoC temperature. node-exporter (edge-sdr) already exports node_thermal_zone_temp;
-# the Pis throttle around 80–85°C, so warn before that. Dashboard: edge-node-temps.json.
+# Temperature alerting from two sources:
+#  - Edge SDR Raspberry Pi SoC: node-exporter (edge-sdr) exports node_thermal_zone_temp; Pis throttle
+#    around 80–85°C, so warn before that. Dashboard: edge-node-temps.json.
+#  - PVE host drives: smartctl_exporter (:9633) exports smartctl_device_temperature — the clean
+#    per-drive temp. (The raw SMART attribute-194 value is vendor-packed and unreliable, so use this.)
+#    Spinning/SATA disks lose longevity sharply above ~50°C (Backblaze/Seagate data) even though
+#    IronWolf is rated to 70°C; NVMe tolerates more but throttles ~70–80°C. Dashboard: disk-health.json.
 # release=obs-kps so the operator ruleSelector picks it up.
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
@@ -19,3 +24,31 @@ spec:
       annotations:
         summary: "Raspberry Pi {{ $labels.instance }} running hot ({{ $value | humanize }}°C)"
         description: "{{ $labels.instance }} SoC temperature has been >75°C for 10m (currently {{ $value | humanize }}°C). The Pi throttles around 80–85°C — check airflow/fan."
+    # PVE host spinning/SATA disks (sd*). 50°C warn / 58°C crit: healthy hosts here sit ≤46°C, so this
+    # cleanly flags an airflow/placement problem rather than normal load (e.g. shuttle02's IronWolfs ran
+    # 60–65°C and started reallocating sectors while no temperature alert existed to catch it).
+    - alert: SmartDriveOverheating
+      expr: smartctl_device_temperature{device=~"sd.*"} > 50
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Disk {{ $labels.node }} {{ $labels.device }} running hot ({{ $value | humanize }}°C)"
+        description: "{{ $labels.device }} on {{ $labels.node }} has been >50°C for 15m (currently {{ $value | humanize }}°C). Spinning disks degrade faster when hot — check airflow/fan/placement."
+    - alert: SmartDriveOverheatingCritical
+      expr: smartctl_device_temperature{device=~"sd.*"} > 58
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Disk {{ $labels.node }} {{ $labels.device }} critically hot ({{ $value | humanize }}°C)"
+        description: "{{ $labels.device }} on {{ $labels.node }} is >58°C (currently {{ $value | humanize }}°C) — heading for the 70°C limit and actively shortening drive life. Improve cooling now."
+    # NVMe tolerates more heat but throttles ~70–80°C.
+    - alert: SmartNvmeOverheating
+      expr: smartctl_device_temperature{device=~"nvme.*"} > 70
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: "NVMe {{ $labels.node }} {{ $labels.device }} running hot ({{ $value | humanize }}°C)"
+        description: "NVMe {{ $labels.device }} on {{ $labels.node }} has been >70°C for 15m (currently {{ $value | humanize }}°C) — at/above its throttle point. Check heatsink/airflow."
