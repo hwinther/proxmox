@@ -129,6 +129,15 @@ configMapGenerator:
     disableNameSuffixHash: true
     labels:
       grafana_dashboard: "1"
+# Proxmox per-guest (VM/CT) CPU/mem/disk/net from the native OTLP export (proxmox_vm_* metrics,
+# labels name/node/type/vmid). Answers "which guest is busy" — incl. LXC CTs node-exporter can't see.
+- name: grafana-dashboard-proxmox-guests
+  files:
+  - dashboards/proxmox-guests.json
+  options:
+    disableNameSuffixHash: true
+    labels:
+      grafana_dashboard: "1"
 # Edge attack history: CrowdSec (Prometheus + Loki) and OPNsense NAXSI (Loki via syslog).
 - name: grafana-dashboard-edge-security
   files:

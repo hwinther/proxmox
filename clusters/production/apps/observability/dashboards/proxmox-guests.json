@@ -1,0 +1,139 @@
+{
+  "uid": "proxmox-guests",
+  "title": "Proxmox Guests — per VM/CT",
+  "tags": ["proxmox", "guests", "vm", "lxc"],
+  "timezone": "",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-6h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "node",
+        "label": "Proxmox host",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "definition": "label_values(proxmox_vm_cpu_percent, node)",
+        "query": {
+          "qryType": 1,
+          "query": "label_values(proxmox_vm_cpu_percent, node)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 2,
+        "sort": 1,
+        "includeAll": true,
+        "multi": true,
+        "current": { "selected": true, "text": ["All"], "value": ["$__all"] },
+        "options": []
+      }
+    ]
+  },
+  "annotations": { "list": [] },
+  "panels": [
+    {
+      "id": 1,
+      "type": "bargauge",
+      "title": "CPU cores by guest (now)  —  cpu_fraction × vCPUs",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 0 },
+      "targets": [
+        { "expr": "topk(20, proxmox_vm_cpu_percent{node=~\"$node\"} * on(vmid,node) group_left(name,type) proxmox_vm_cpus_ratio{node=~\"$node\"})", "legendFormat": "{{name}} ({{type}}/{{vmid}} @ {{node}})", "refId": "A", "instant": true }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "minVizWidth": 0,
+        "showUnfilled": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 2,
+          "min": 0,
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "yellow", "value": 1 }, { "color": "orange", "value": 2 }, { "color": "red", "value": 4 } ] }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "CPU cores over time (top 15)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 9 },
+      "targets": [
+        { "expr": "topk(15, proxmox_vm_cpu_percent{node=~\"$node\"} * on(vmid,node) group_left(name,type) proxmox_vm_cpus_ratio{node=~\"$node\"})", "legendFormat": "{{name}} ({{node}})", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2, "fillOpacity": 10, "showPoints": "never", "stacking": { "mode": "none" } }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "right", "calcs": ["lastNotNull", "max"] }, "tooltip": { "mode": "multi", "sort": "desc" } }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Memory used by guest (top 15)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 9 },
+      "targets": [
+        { "expr": "topk(15, proxmox_vm_mem_bytes{node=~\"$node\"})", "legendFormat": "{{name}} ({{node}})", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "min": 0,
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2, "fillOpacity": 10, "showPoints": "never" }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "right", "calcs": ["lastNotNull", "max"] }, "tooltip": { "mode": "multi", "sort": "desc" } }
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Disk I/O by guest (top 10 read / write)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 18 },
+      "targets": [
+        { "expr": "topk(10, rate(proxmox_vm_diskread_bytes_total{node=~\"$node\"}[5m]))", "legendFormat": "{{name}} read", "refId": "A" },
+        { "expr": "topk(10, rate(proxmox_vm_diskwrite_bytes_total{node=~\"$node\"}[5m]))", "legendFormat": "{{name}} write", "refId": "B" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "min": 0,
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 1, "fillOpacity": 5, "showPoints": "never" }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "right", "calcs": ["lastNotNull", "max"] }, "tooltip": { "mode": "multi", "sort": "desc" } }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Network by guest (top 10 in / out)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 18 },
+      "targets": [
+        { "expr": "topk(10, rate(proxmox_vm_netin_bytes_total{node=~\"$node\"}[5m]) * 8)", "legendFormat": "{{name}} in", "refId": "A" },
+        { "expr": "topk(10, rate(proxmox_vm_netout_bytes_total{node=~\"$node\"}[5m]) * 8)", "legendFormat": "{{name}} out", "refId": "B" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bps",
+          "min": 0,
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 1, "fillOpacity": 5, "showPoints": "never" }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "right", "calcs": ["lastNotNull", "max"] }, "tooltip": { "mode": "multi", "sort": "desc" } }
+    }
+  ]
+}
