@@ -318,7 +318,7 @@ spec:
         # node-exporter on each PVE host + PBS (systemd, :9100). Relabeled to job=node-exporter so the
         # stock kube-prometheus-stack Node* rules + Grafana dashboards cover the bare metal too (without
         # it they only match the k0s VMs / edge Pis). CPU temp alert: prometheusrule-node-temp.yaml.
-        # Install runbook: host-exporters.md. Hosts must allow 10.20.13.0/24 -> :9100 (same as :9633).
+        # Install runbook: host-exporters.md. Add a firewall rule 10.20.13.0/24 -> :9100 on each host.
         - job_name: node-exporter-pve
           static_configs:
           - targets: [ '10.20.4.18:9100' ]

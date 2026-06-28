@@ -50,13 +50,15 @@ The Debian package enables a sensible default collector set (incl. `hwmon`, `sys
 
 ## Firewall (per host)
 
-Allow the cluster subnet to reach `:9100`, exactly like the existing `:9633` / `:9283` rules. On PVE:
+Each host must allow the cluster subnet to **both** exporter ports — `:9633` (smartctl) and `:9100` (node-exporter). Add an IN ACCEPT rule per port:
 
 ```bash
-# /etc/pve/firewall/<node>.fw  (or the host firewall GUI) — IN ACCEPT from 10.20.13.0/24 to tcp/9100
+# /etc/pve/firewall/<node>.fw  (or the host firewall GUI):
+#   IN ACCEPT  from 10.20.13.0/24  to tcp/9633   # smartctl_exporter
+#   IN ACCEPT  from 10.20.13.0/24  to tcp/9100   # node-exporter
 ```
 
-`pbs-ks` is reached over the site link on the same path as its `:9633`; open `:9100` the same way.
+`pbs-ks` is reached over the site link; open both ports there the same way.
 
 ## Verify end-to-end
 
