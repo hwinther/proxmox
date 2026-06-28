@@ -8,7 +8,7 @@ hosts are outside the cluster). Prometheus scrapes them via static jobs in
 | Exporter           | Port  | Scrape job          | Alerts / dashboard                                         |
 | ------------------ | ----- | ------------------- | ---------------------------------------------------------- |
 | smartctl_exporter  | 9633  | `smartctl`          | `prometheusrule-smartctl.yaml`, `dashboards/disk-health.json` |
-| node-exporter      | 9100  | `node-exporter-pve` | stock `Node*` rules + `prometheusrule-node-temp.yaml` (CPU temp) |
+| node-exporter      | 9100  | `node-exporter-pve` | stock `Node*` rules + `prometheusrule-node-temp.yaml` (CPU temp); dashboards `proxmox-hosts.json` + stock "Node Exporter / Nodes" |
 
 Hosts and their `node` label (the scrape job sets `instance` = this name):
 

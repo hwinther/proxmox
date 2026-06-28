@@ -120,6 +120,15 @@ configMapGenerator:
     disableNameSuffixHash: true
     labels:
       grafana_dashboard: "1"
+# Proxmox host overview: node-exporter (CPU/mem/fs/net) + hwmon CPU temp + smartctl disk health, per
+# host ($node var). Complements proxmox-ve.json — the native OTLP export carries no temp/SMART metrics.
+- name: grafana-dashboard-proxmox-hosts
+  files:
+  - dashboards/proxmox-hosts.json
+  options:
+    disableNameSuffixHash: true
+    labels:
+      grafana_dashboard: "1"
 # Edge attack history: CrowdSec (Prometheus + Loki) and OPNsense NAXSI (Loki via syslog).
 - name: grafana-dashboard-edge-security
   files:
