@@ -26,6 +26,24 @@
         "multi": true,
         "current": { "selected": true, "text": ["All"], "value": ["$__all"] },
         "options": []
+      },
+      {
+        "name": "k8s_node",
+        "label": "k8s node (pods section)",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "definition": "label_values(container_cpu_usage_seconds_total, node)",
+        "query": {
+          "qryType": 1,
+          "query": "label_values(container_cpu_usage_seconds_total, node)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 2,
+        "sort": 1,
+        "includeAll": true,
+        "multi": true,
+        "current": { "selected": true, "text": ["All"], "value": ["$__all"] },
+        "options": []
       }
     ]
   },
@@ -130,6 +148,117 @@
           "unit": "bps",
           "min": 0,
           "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 1, "fillOpacity": 5, "showPoints": "never" }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "right", "calcs": ["lastNotNull", "max"] }, "tooltip": { "mode": "multi", "sort": "desc" } }
+    },
+    {
+      "id": 6,
+      "type": "row",
+      "title": "Kubernetes pods (inside the k0s VMs) — filter with $k8s_node",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 27 },
+      "panels": []
+    },
+    {
+      "id": 7,
+      "type": "bargauge",
+      "title": "Top k0s pods — CPU cores (now)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 28 },
+      "targets": [
+        { "expr": "topk(20, sum by (namespace,pod) (rate(container_cpu_usage_seconds_total{node=~\"$k8s_node\",container!=\"\",pod!=\"\"}[5m])))", "legendFormat": "{{namespace}}/{{pod}}", "refId": "A", "instant": true }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "minVizWidth": 0,
+        "showUnfilled": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 2,
+          "min": 0,
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "yellow", "value": 0.5 }, { "color": "orange", "value": 1 }, { "color": "red", "value": 2 } ] }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Pod CPU cores over time (top 15)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 37 },
+      "targets": [
+        { "expr": "topk(15, sum by (namespace,pod) (rate(container_cpu_usage_seconds_total{node=~\"$k8s_node\",container!=\"\",pod!=\"\"}[5m])))", "legendFormat": "{{namespace}}/{{pod}}", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2, "fillOpacity": 10, "showPoints": "never" }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "right", "calcs": ["lastNotNull", "max"] }, "tooltip": { "mode": "multi", "sort": "desc" } }
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Pod memory — working set (top 15)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 37 },
+      "targets": [
+        { "expr": "topk(15, sum by (namespace,pod) (container_memory_working_set_bytes{node=~\"$k8s_node\",container!=\"\",pod!=\"\"}))", "legendFormat": "{{namespace}}/{{pod}}", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "min": 0,
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2, "fillOpacity": 10, "showPoints": "never" }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "right", "calcs": ["lastNotNull", "max"] }, "tooltip": { "mode": "multi", "sort": "desc" } }
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Pod network in/out (top 10)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 46 },
+      "targets": [
+        { "expr": "topk(10, sum by (namespace,pod) (rate(container_network_receive_bytes_total{node=~\"$k8s_node\",pod!=\"\"}[5m]) * 8))", "legendFormat": "{{namespace}}/{{pod}} in", "refId": "A" },
+        { "expr": "topk(10, sum by (namespace,pod) (rate(container_network_transmit_bytes_total{node=~\"$k8s_node\",pod!=\"\"}[5m]) * 8))", "legendFormat": "{{namespace}}/{{pod}} out", "refId": "B" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bps",
+          "min": 0,
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 1, "fillOpacity": 5, "showPoints": "never" }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "right", "calcs": ["lastNotNull", "max"] }, "tooltip": { "mode": "multi", "sort": "desc" } }
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "CPU cores by namespace (top 10)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 46 },
+      "targets": [
+        { "expr": "topk(10, sum by (namespace) (rate(container_cpu_usage_seconds_total{node=~\"$k8s_node\",container!=\"\"}[5m])))", "legendFormat": "{{namespace}}", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2, "fillOpacity": 10, "showPoints": "never" }
         },
         "overrides": []
       },
