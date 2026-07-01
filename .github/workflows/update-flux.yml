@@ -48,6 +48,11 @@ jobs:
                   if [ -z "$RELEASE_NOTES" ]; then
                     RELEASE_NOTES="*No release notes available for ${VERSION}.*"
                   fi
+                  # Neutralize @mentions so contributors credited in the upstream release notes are
+                  # not tagged/notified on our Flux-bump PR. An empty HTML comment breaks the mention
+                  # token but renders invisibly (readers still see @username) — the same technique
+                  # Dependabot uses for its changelogs.
+                  RELEASE_NOTES=$(printf '%s' "$RELEASE_NOTES" | sed -E 's/@([A-Za-z0-9])/@<!---->\1/g')
                   DELIM="FLUX_RELEASE_NOTES_$(openssl rand -hex 16)"
                   echo "flux_version=$VERSION" >> $GITHUB_OUTPUT
                   echo "flux_changelog<<EOF" >> $GITHUB_OUTPUT
@@ -124,6 +129,11 @@ jobs:
                   if [ -z "$RELEASE_NOTES" ]; then
                     RELEASE_NOTES="*No release notes available for ${VERSION}.*"
                   fi
+                  # Neutralize @mentions so contributors credited in the upstream release notes are
+                  # not tagged/notified on our Flux-bump PR. An empty HTML comment breaks the mention
+                  # token but renders invisibly (readers still see @username) — the same technique
+                  # Dependabot uses for its changelogs.
+                  RELEASE_NOTES=$(printf '%s' "$RELEASE_NOTES" | sed -E 's/@([A-Za-z0-9])/@<!---->\1/g')
                   DELIM="FLUX_RELEASE_NOTES_$(openssl rand -hex 16)"
                   echo "flux_version=$VERSION" >> $GITHUB_OUTPUT
                   echo "flux_changelog<<EOF" >> $GITHUB_OUTPUT
