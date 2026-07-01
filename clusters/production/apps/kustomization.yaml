@@ -30,6 +30,7 @@ resources:
 - mosquitto-production
 - node-red-production
 - esp-poller-production
+- pbs-browser-production
 - wshno
 # Chaos toy: cluster-wide pod-killer (DOOM), dormant by default (replicas: 0). See kubedoom/README.md.
 - kubedoom

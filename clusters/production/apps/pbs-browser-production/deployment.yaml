@@ -1,0 +1,101 @@
+# pbs-browser: web UI to browse & restore files from client-side-encrypted PBS snapshots.
+# Prereqs (out-of-band, see pbs-browser-secrets.md):
+#   - Secret `pbs-browser-pbs` (PBS_REPOSITORY / PBS_PASSWORD / PBS_ENCRYPTION_PASSWORD / ...).
+#   - `pbs-encryption-keyfile` is cloned in automatically via the namespace label.
+#   - GHCR package ghcr.io/hwinther/pbs-browser/app must be public (like clutterstock) OR add a
+#     ghcr-pull clone policy + imagePullSecrets (see ../ddnsadmin/kyverno-clusterpolicies.yaml).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pbs-browser
+  namespace: pbs-browser-production
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: pbs-browser
+  template:
+    metadata:
+      labels:
+        app: pbs-browser
+        app.kubernetes.io/name: pbs-browser
+    spec:
+      automountServiceAccountToken: false
+      # proxmox-backup-client-static is amd64-only.
+      nodeSelector:
+        kubernetes.io/arch: amd64
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1654          # matches the dotnet aspnet image's `app` user ($APP_UID)
+        fsGroup: 1654            # so the cloned keyfile Secret is group-readable
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+      - name: pbs-browser
+        image: ghcr.io/hwinther/pbs-browser/app:0.0.1@sha256:b19e6cdc4cbb59071ab17c20baf37fdf35507e2cd57af73e748500bf1f46e969
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            cpu: "1"
+            memory: 512Mi
+        envFrom:
+        # PBS_REPOSITORY / PBS_PASSWORD / PBS_ENCRYPTION_PASSWORD / PBS_FINGERPRINT / PBS_NAMESPACE
+        - secretRef:
+            name: pbs-browser-pbs
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 6
+        volumeMounts:
+        - name: pbs-keyfile
+          mountPath: /etc/pbs
+          readOnly: true
+      volumes:
+      # Cluster-wide PBS encryption keyfile, cloned by Kyverno from platform-production. When the
+      # source Secret is absent the mount stays empty and the app simply runs without --keyfile.
+      - name: pbs-keyfile
+        secret:
+          secretName: pbs-encryption-keyfile
+          optional: true
+          items:
+          - key: keyfile
+            path: keyfile
+            mode: 0400
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pbs-browser
+  namespace: pbs-browser-production
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8080
+    targetPort: http
+    protocol: TCP
+    name: http
+  selector:
+    app: pbs-browser

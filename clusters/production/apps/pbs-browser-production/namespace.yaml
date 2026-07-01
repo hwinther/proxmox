@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: pbs-browser-production
+  labels:
+    app.kubernetes.io/part-of: pbs-browser-production
+    # Kyverno clones the cluster-wide PBS client-side encryption keyfile into this namespace
+    # (clone-pbs-encryption-keyfile ClusterPolicy in platform-production).
+    pbs.wsh.no/encryption-keyfile: "true"

@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pbs-browser
+  namespace: pbs-browser-production
+  annotations:
+    # Internal admin tool — gated by Authelia forward-auth (no auth code in the app). The app reads
+    # the injected Remote-User/Remote-Email headers only for its restore audit log.
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.middlewares: authelia-production-authelia-forwardauth@kubernetescrd
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Platform
+    gethomepage.dev/name: PBS Browser
+    gethomepage.dev/href: "https://pbs-browser.mgmt.wsh.no/"
+    gethomepage.dev/siteMonitor: https://pbs-browser.mgmt.wsh.no
+    gethomepage.dev/icon: mdi-folder-search
+    gethomepage.dev/description: Browse & restore files from encrypted PBS backups
+spec:
+  rules:
+  - host: pbs-browser.mgmt.wsh.no
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: pbs-browser
+            port:
+              number: 8080
