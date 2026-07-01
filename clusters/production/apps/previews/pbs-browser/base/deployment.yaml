@@ -1,0 +1,100 @@
+# Ephemeral preview-env Deployment for pbs-browser. Namespace + image tag/digest are set per-PR by
+# the overlay. Unlike a fake-mode preview, this runs the REAL proxmox-backup-client against PBS so a
+# PR can validate the live integration (browse/restore) end-to-end. It therefore needs the same
+# creds + keyfile as production, cloned per-PR into the preview namespace by Kyverno (the
+# `pbs-browser-pbs` Secret via the `pbs-browser.wsh.no/preview` label, and `pbs-encryption-keyfile`
+# via the `pbs.wsh.no/encryption-keyfile` label). Because it exposes real backup contents, the
+# preview Ingress is Authelia-gated (see ingress.yaml).
+# imagePullPolicy: Always so a rebuilt PR image is always pulled; no metadata.namespace (the overlay
+# sets it). amd64-only: proxmox-backup-client-static has no arm64 build.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pbs-browser
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pbs-browser
+  template:
+    metadata:
+      labels:
+        app: pbs-browser
+        app.kubernetes.io/name: pbs-browser
+    spec:
+      automountServiceAccountToken: false
+      nodeSelector:
+        kubernetes.io/arch: amd64
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1654
+        fsGroup: 1654           # so the cloned keyfile Secret is group-readable
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+      - name: pbs-browser
+        # Tag + digest are replaced per-PR by the overlay's `images:` transform (matched by name).
+        image: ghcr.io/hwinther/pbs-browser/app:placeholder
+        imagePullPolicy: Always
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        envFrom:
+        # Real PBS creds cloned per-PR by Kyverno (clone-pbs-browser-preview-secrets).
+        - secretRef:
+            name: pbs-browser-pbs
+        resources:
+          requests:
+            cpu: 25m
+            memory: 96Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 3
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 20
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 6
+        volumeMounts:
+        - name: pbs-keyfile
+          mountPath: /etc/pbs
+          readOnly: true
+      volumes:
+      # Cluster-wide PBS encryption keyfile, cloned by the existing clone-pbs-encryption-keyfile
+      # ClusterPolicy into namespaces carrying the pbs.wsh.no/encryption-keyfile label.
+      - name: pbs-keyfile
+        secret:
+          secretName: pbs-encryption-keyfile
+          optional: true
+          items:
+          - key: keyfile
+            path: keyfile
+            mode: 0400
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pbs-browser
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8080
+    targetPort: http
+    protocol: TCP
+    name: http
+  selector:
+    app: pbs-browser

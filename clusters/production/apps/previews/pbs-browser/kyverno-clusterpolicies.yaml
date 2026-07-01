@@ -1,0 +1,52 @@
+# Clones the PBS credentials a real-client pbs-browser preview needs into every namespace labeled
+# `pbs-browser.wsh.no/preview=true`. Same label-driven generate pattern as
+# `clone-clutterstock-preview-secrets` / `clone-ddnsadmin-preview-secrets` and
+# `clone-pbs-encryption-keyfile` (platform-production) — see the pbs-encryption-keyfile-label-clone
+# memory for the rationale.
+#
+# The encryption keyfile itself is NOT cloned here — the existing `clone-pbs-encryption-keyfile`
+# ClusterPolicy already stamps it into any namespace carrying the `pbs.wsh.no/encryption-keyfile`
+# label, which the preview namespace template sets. This policy only clones the per-app PBS creds
+# Secret `pbs-browser-pbs` (PBS_REPOSITORY / PBS_PASSWORD / PBS_ENCRYPTION_PASSWORD / …).
+#
+# Source Secret `pbs-browser-pbs` lives in `pbs-browser-production` (created out-of-band, see
+# ../../pbs-browser-production/pbs-browser-secrets.md). Prefer a read-only / restore-scoped PBS API
+# token there so ephemeral previews cannot mutate the datastore. When the source is missing the
+# clone rule no-ops and preview pods CrashLoop/So-fail until the operator creates it.
+#
+# RBAC: the cluster-wide Secret access Kyverno's admission+background controllers need was already
+# added by the PBS work (`kyverno-clusterrole-clone-pbs-encryption-keyfile` in platform-production);
+# the same cluster-wide read that lets it clone from postgres-test / clutterstock-test for the
+# clutterstock preview covers reading from pbs-browser-production here.
+#
+# `generateExisting: true` re-applies on policy install so any preview namespace already on the
+# cluster gets the Secret immediately rather than only on the next namespace create.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: clone-pbs-browser-preview-secrets
+  annotations:
+    policies.kyverno.io/title: Clone pbs-browser preview-env PBS creds Secret
+    policies.kyverno.io/category: PBS
+    policies.kyverno.io/severity: low
+spec:
+  generateExisting: true
+  rules:
+  - name: clone-pbs-browser-pbs
+    match:
+      any:
+      - resources:
+          kinds:
+          - Namespace
+          selector:
+            matchLabels:
+              pbs-browser.wsh.no/preview: "true"
+    generate:
+      apiVersion: v1
+      kind: Secret
+      name: pbs-browser-pbs
+      namespace: "{{request.object.metadata.name}}"
+      synchronize: true
+      clone:
+        namespace: pbs-browser-production
+        name: pbs-browser-pbs

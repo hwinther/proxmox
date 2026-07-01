@@ -99,6 +99,24 @@ spec:
     kind: GitRepository
     name: flux-system
 ---
+# Per-PR ephemeral preview envs for pbs-browser. Runs the REAL client against PBS, so it clones the
+# PBS creds Secret + encryption keyfile per-PR via Kyverno — dependsOn kyverno so the ClusterPolicy
+# CRD is installed before this tree applies on first bootstrap.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: previews-pbs-browser
+  namespace: flux-system
+spec:
+  interval: 1m0s
+  path: ./clusters/production/apps/previews/pbs-browser
+  prune: true
+  dependsOn:
+  - name: kyverno
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+---
 # Kyverno CRDs come from the Helm chart; policies must apply in a separate Kustomization after this is Ready.
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization

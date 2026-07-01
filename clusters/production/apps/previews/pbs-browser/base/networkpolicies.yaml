@@ -1,0 +1,46 @@
+# The real-client preview reaches PBS, so egress to the PBS API (8007) + HTTPS (443) is required on
+# top of the netpol-baseline default-deny (DNS is already allowed by the baseline). Ingress under
+# Cilium is handled by cilium-cluster-nodes-to-http.yaml (Traefik is host-network); this k8s
+# NetworkPolicy's ingress rule is kept for parity/portability.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: pbs-browser
+spec:
+  podSelector:
+    matchLabels:
+      app: pbs-browser
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: traefik
+    ports:
+    - port: 8080
+      protocol: TCP
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+        except:
+        - 169.254.169.254/32
+    ports:
+    - port: 8007
+      protocol: TCP
+    - port: 443
+      protocol: TCP

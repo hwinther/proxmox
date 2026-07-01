@@ -1,0 +1,25 @@
+# Host is patched per-PR by the overlay (pbs-browser-<N>.preview.wsh.no). The LAN nginx fronting the
+# cluster terminates TLS with the *.preview.wsh.no wildcard cert (web,websecure).
+#
+# Authelia forward-auth IS applied here (unlike the fake-data wshno preview): this preview runs the
+# real client against PBS and can browse/restore real backup contents, so it must be gated the same
+# way the production app is on *.mgmt.wsh.no.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pbs-browser
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.middlewares: authelia-production-authelia-forwardauth@kubernetescrd
+spec:
+  rules:
+  - host: pbs-browser-preview.preview.wsh.no
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: pbs-browser
+            port:
+              number: 8080

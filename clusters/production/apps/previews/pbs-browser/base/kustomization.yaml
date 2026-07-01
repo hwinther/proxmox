@@ -1,0 +1,14 @@
+# Shared kustomize base for pbs-browser PR preview environments. Every per-PR overlay under ../pr-<N>/
+# references this base. Resources here intentionally have no metadata.namespace so the overlay's
+# namespace: directive populates it. The preview runs the REAL client against PBS, so on top of
+# netpol-baseline (default-deny + DNS) it needs the PBS egress allow in networkpolicies.yaml and the
+# Traefik->:8080 ingress allow in cilium-cluster-nodes-to-http.yaml.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+components:
+- ../../../../../../bases/netpol-baseline
+resources:
+- deployment.yaml
+- ingress.yaml
+- networkpolicies.yaml
+- cilium-cluster-nodes-to-http.yaml

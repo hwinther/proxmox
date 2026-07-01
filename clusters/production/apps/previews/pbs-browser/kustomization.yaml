@@ -1,0 +1,14 @@
+# Parent kustomization for pbs-browser preview environments. Maintained by the gitops-preview-upsert /
+# gitops-preview-teardown reusable workflows in hwinther/reusable-workflows — they add/remove pr-<N>
+# entries below as PRs labelled `deploy-feature` are opened/closed in hwinther/pbs-browser.
+#
+# The preview runs the REAL client against PBS (to validate the integration), so it needs the PBS
+# creds Secret cloned per-PR — kyverno-clusterpolicies.yaml (static, always applied) does that. The
+# encryption keyfile is cloned by the existing platform-production clone-pbs-encryption-keyfile
+# policy via the namespace label. No per-PR database. If the GHCR package
+# ghcr.io/hwinther/pbs-browser/app is PRIVATE, also add a ghcr-pull clone rule here + imagePullSecrets
+# in base/deployment.yaml. The workflow's yq creates/extends the pr-<N> entries below.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- kyverno-clusterpolicies.yaml
