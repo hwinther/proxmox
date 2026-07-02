@@ -15,7 +15,8 @@ metadata:
     gethomepage.dev/href: "https://skylens.wsh.no/"
     gethomepage.dev/group: Apps
     gethomepage.dev/name: Skylens
-    gethomepage.dev/siteMonitor: https://skylens.wsh.no
+    # Monitor /healthz (anonymous by design) — the API requires a JWT on everything else.
+    gethomepage.dev/siteMonitor: https://skylens.wsh.no/healthz
     gethomepage.dev/icon: mdi-airplane
     gethomepage.dev/description: ADS-B plane-spotter gateway — Android AR app backend (API under /api/, SignalR under /hubs/)
     gethomepage.dev/pod-selector: app=skylens-api
