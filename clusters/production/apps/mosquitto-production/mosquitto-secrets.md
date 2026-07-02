@@ -22,6 +22,9 @@ AIS_PW="$(openssl rand -hex 18)"
 # adsb-mqtt (edge-sdr) publishes dump1090-fa's aircraft.json snapshots here.
 ADSB_USER=adsb
 ADSB_PW="$(openssl rand -hex 18)"
+# skylens-api (skylens-production) subscribes to adsb/aircraft for the plane-spotter gateway.
+SKYLENS_USER=skylens
+SKYLENS_PW="$(openssl rand -base64 24 | tr -d '\n')"
 # mosquitto-exporter sidecar subscribes to $SYS/# to expose Prometheus metrics. No ACL file is in use,
 # so any authenticated user can read $SYS — a dedicated read-only user keeps it auditable/rotatable.
 MON_USER=monitor
@@ -35,6 +38,7 @@ docker run --rm --entrypoint sh eclipse-mosquitto:2.0.20 -c '
   mosquitto_passwd -b /tmp/passwd '"$MQTTUI_USER"' '"$MQTTUI_PW"'
   mosquitto_passwd -b /tmp/passwd '"$AIS_USER"' '"$AIS_PW"'
   mosquitto_passwd -b /tmp/passwd '"$ADSB_USER"' '"$ADSB_PW"'
+  mosquitto_passwd -b /tmp/passwd '"$SKYLENS_USER"' '"$SKYLENS_PW"'
   mosquitto_passwd -b /tmp/passwd '"$MON_USER"' '"$MON_PW"'
   cat /tmp/passwd' > passwd
 
@@ -60,6 +64,8 @@ Record `HA_USER`/`HA_PW` — they go into Home Assistant's MQTT config entry
 [ais-catcher README](../../../edge-sdr/apps/ais-catcher-edge-sdr/README.md#mqtt-publishing).
 `ADSB_USER`/`ADSB_PW` go into the `adsb-mqtt-secret` (`MQTT_PASSWORD`) in `adsb-edge-sdr` — see
 [adsb README](../../../edge-sdr/apps/adsb-edge-sdr/README.md#mqtt-publishing).
+`SKYLENS_USER`/`SKYLENS_PW` go into the `skylens-secrets` Secret (`MQTT__PASSWORD`) in
+`skylens-production` — see [skylens-secrets.md](../skylens-production/skylens-secrets.md).
 `MON_USER`/`MON_PW` are consumed only by the `mosquitto-exporter-auth` Secret above (the
 mosquitto-exporter sidecar) — no other system needs them.
 

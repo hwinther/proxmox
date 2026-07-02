@@ -40,6 +40,15 @@ spec:
     - ports:
       - port: "1883"
         protocol: TCP
+  # skylens-api subscribes to adsb/aircraft (dump1090-fa snapshots) for the plane-spotter gateway.
+  - fromEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: skylens-production
+        app: skylens-api
+    toPorts:
+    - ports:
+      - port: "1883"
+        protocol: TCP
   # Prometheus (obs-kps) scrapes the mosquitto-exporter sidecar on 9234. Without this the default-deny
   # drops the scrape and the PodMonitor target is down (context deadline exceeded).
   - fromEndpoints:

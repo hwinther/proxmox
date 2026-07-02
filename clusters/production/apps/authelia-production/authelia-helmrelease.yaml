@@ -328,6 +328,19 @@ spec:
               - name
               - email
               - email_verified
+            skylens:
+              id_token:
+              - groups
+              - preferred_username
+              - name
+              - email
+              - email_verified
+              access_token:
+              - groups
+              - preferred_username
+              - name
+              - email
+              - email_verified
             clutterstock:
               id_token:
               - groups
@@ -510,6 +523,38 @@ spec:
             pre_configured_consent_duration: 1 year
             redirect_uris:
             - https://grafana.mgmt.wsh.no/login/generic_oauth
+            scopes:
+            - openid
+            - profile
+            - email
+            - groups
+            - offline_access
+          # Skylens — native Android app (no.wsh.skylens); public client + PKCE with a custom-scheme
+          # redirect (no HTTPS loopback — the app is not a browser SPA). access_token is a signed RFC
+          # 9068 JWT (aud=skylens-api) so the ASP.NET Core gateway validates it directly against
+          # /api/oidc/jwks.json without introspection.
+          - client_id: skylens
+            client_name: Skylens (Android)
+            public: true
+            require_pkce: true
+            pkce_challenge_method: S256
+            claims_policy: skylens
+            authorization_policy: two_factor
+            consent_mode: pre-configured
+            pre_configured_consent_duration: 1 year
+            audience:
+            - skylens-api
+            requested_audience_mode: implicit
+            access_token_signed_response_alg: RS256
+            access_token_signed_response_key_id: authelia-headlamp
+            grant_types:
+            - authorization_code
+            - refresh_token
+            response_types:
+            - code
+            redirect_uris:
+            - no.wsh.skylens://oauth
+            - skylens://oauth
             scopes:
             - openid
             - profile
