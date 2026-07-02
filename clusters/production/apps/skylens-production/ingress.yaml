@@ -1,0 +1,55 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: skylens
+  namespace: skylens-production
+  annotations:
+    # No Authelia forward-auth middleware here: the API validates the OIDC JWT (aud=skylens-api)
+    # in-app via JwtBearer (the clutterstock/test-api pattern), so the ingress stays public and the
+    # SignalR ?access_token= handshake is not blocked by a forward-auth 401. Registration is enforced
+    # by requiring a valid Authelia token, not by the ingress.
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    gethomepage.dev/enabled: "true"
+    # Without an explicit href, homepage builds the tile URL from the first ingress path (/api).
+    # Point it at the root landing/health instead.
+    gethomepage.dev/href: "https://skylens.wsh.no/"
+    gethomepage.dev/group: Apps
+    gethomepage.dev/name: Skylens
+    gethomepage.dev/siteMonitor: https://skylens.wsh.no
+    gethomepage.dev/icon: mdi-airplane
+    gethomepage.dev/description: ADS-B plane-spotter gateway — Android AR app backend (API under /api/, SignalR under /hubs/)
+    gethomepage.dev/pod-selector: app=skylens-api
+spec:
+  rules:
+  - host: skylens.wsh.no
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: skylens-api
+            port:
+              number: 8080
+      - path: /hubs
+        pathType: Prefix
+        backend:
+          service:
+            name: skylens-api
+            port:
+              number: 8080
+      - path: /swagger
+        pathType: Prefix
+        backend:
+          service:
+            name: skylens-api
+            port:
+              number: 8080
+      # Root serves a minimal landing/health page from the same API.
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: skylens-api
+            port:
+              number: 8080

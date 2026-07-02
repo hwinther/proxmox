@@ -1,0 +1,72 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: skylens-api
+  namespace: skylens-production
+spec:
+  podSelector:
+    matchLabels:
+      app: skylens-api
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Traefik (host-network) is the only allowed source. Because Traefik runs host-network, the
+  # effective allow under Cilium comes from cilium-cluster-nodes-to-skylens-http.yaml (host/remote-node);
+  # this k8s rule is kept for parity/portability.
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: traefik
+    ports:
+    - port: 8080
+      protocol: TCP
+  egress:
+  # DNS (also covered by the netpol-baseline component; duplicated here to be self-contained).
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+  # Mosquitto in-cluster (MQTT ingest of adsb/aircraft). Port is the broker POD's targetPort (1883),
+  # which happens to equal the Service port here — Cilium socket-LB rewrites the ClusterIP:svcPort to
+  # podIP:targetPort *before* policy is evaluated, so an egress rule must allow the pod port, not the
+  # svc port. The matching ingress allow on the broker side is in
+  # ../mosquitto-production/cilium-mqtt-ingress.yaml.
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: mosquitto-production
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: mosquitto
+    ports:
+    - port: 1883
+      protocol: TCP
+  # OTEL collector (traces) in observability-production, gRPC OTLP on 4317 (matches the clutterstock
+  # egress convention: namespaceSelector only).
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: observability-production
+    ports:
+    - port: 4317
+      protocol: TCP
+  # External HTTPS enrichment/JWKS: auth.wsh.no JWKS, OpenSky, ADSBx (RapidAPI), FlightAware AeroAPI.
+  # Endpoints live in the Secret / are third-party, not in git, so this allows the external CIDR on
+  # 443 only (repo convention uses ipBlock, not toFQDNs). The link-local metadata IP is excluded.
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+        except:
+        - 169.254.169.254/32
+    ports:
+    - port: 443
+      protocol: TCP

@@ -1,0 +1,141 @@
+# skylens gateway: ASP.NET Core 10 Minimal API + SignalR. Ingests dump1090-fa aircraft.json from
+# mosquitto (topic adsb/aircraft), keeps a slim in-memory aircraft state, and fans it out to the
+# Android app over the /hubs/aircraft SignalR hub. JWTs (aud=skylens-api) are validated in-app, so
+# there is no Authelia forward-auth middleware on the ingress.
+# Prereqs (out-of-band, see skylens-secrets.md):
+#   - Secret `skylens-secrets` (MQTT__PASSWORD, OPENSKY__*, ADSBX__*, AEROAPI__*, FEED__*).
+#   - mosquitto `skylens` user in the passwd file (see ../mosquitto-production/mosquitto-secrets.md).
+#   - GHCR package ghcr.io/hwinther/skylens/api must be public (like clutterstock) OR add a
+#     ghcr-pull clone policy + imagePullSecrets (see ../ddnsadmin/kyverno-clusterpolicies.yaml).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: skylens-api
+  namespace: skylens-production
+spec:
+  # Single replica by design: aircraft state lives in-process (no SignalR backplane) and there must be
+  # exactly one MQTT consumer of adsb/aircraft — a second replica would double-consume and split state.
+  # Recreate (not RollingUpdate) so the old pod fully terminates before the new one starts, keeping the
+  # single-consumer invariant across rollouts. Brief availability blip on rollout is accepted.
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: skylens-api
+  template:
+    metadata:
+      labels:
+        app: skylens-api
+        app.kubernetes.io/name: skylens-api
+    spec:
+      automountServiceAccountToken: false
+      # Grace period must exceed preStop sleep (20s) + longest expected SignalR reconnect window.
+      terminationGracePeriodSeconds: 60
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1654          # matches the dotnet aspnet image's `app` user ($APP_UID)
+        runAsGroup: 1654
+        fsGroup: 1654
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+      - name: skylens-api
+        image: ghcr.io/hwinther/skylens/api:0.0.1@sha256:effc94602b34a23776528647d1e41fb6c5f92e2c3c9e334d838b9cebe841039c
+        imagePullPolicy: Always
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            # Higher ceiling: the bundled offline aircraft registration DB (~600k rows) is loaded into
+            # a FrozenDictionary in RAM (see plan Enrichment/registration).
+            memory: 768Mi
+        env:
+        - name: ASPNETCORE_URLS
+          value: "http://+:8080"
+        # OIDC bearer validation: Authelia issues RFC 9068 JWTs with aud=skylens-api for the skylens
+        # client (see ../authelia-production/authelia-helmrelease.yaml `requested_audience_mode: implicit`).
+        - name: Oidc__Authority
+          value: "https://auth.wsh.no"
+        - name: Oidc__Audience
+          value: "skylens-api"
+        # In-cluster mosquitto broker; MQTT__USERNAME/PASSWORD come from the skylens-secrets Secret.
+        - name: MQTT__HOST
+          value: "mosquitto.mosquitto-production.svc.cluster.local"
+        - name: MQTT__PORT
+          value: "1883"
+        - name: MQTT__TOPIC
+          value: "adsb/aircraft"
+        # ADSBx via RapidAPI (away-mode point-radius enrichment); key is secret.
+        - name: ADSBX__RAPIDAPIHOST
+          value: "adsbexchange-com1.p.rapidapi.com"
+        # Enrichment budgets fail closed when exceeded (see plan). Defaults; tune via env if needed.
+        - name: AEROAPI__DAILYBUDGET
+          value: "100"
+        - name: ADSBX__MONTHLYBUDGET
+          value: "10000"
+        - name: OTEL_SERVICE_NAME
+          value: "skylens-api"
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://obs-otel-collector.observability-production.svc.cluster.local:4317"
+        - name: OTEL_EXPORTER_OTLP_PROTOCOL
+          value: "grpc"
+        - name: OTEL_TRACES_EXPORTER
+          value: "otlp"
+        - name: OTEL_RESOURCE_ATTRIBUTES
+          value: "service.namespace=skylens-production,deployment.environment=production"
+        envFrom:
+        # MQTT__USERNAME / MQTT__PASSWORD / OPENSKY__CLIENTID / OPENSKY__CLIENTSECRET /
+        # ADSBX__RAPIDAPIKEY / AEROAPI__APIKEY / FEED__LAT / FEED__LON / FEED__RADIUSKM
+        - secretRef:
+            name: skylens-secrets
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        # SignalR hubs keep long-lived WebSockets; drain connections on rollout instead of flipping
+        # pods mid-flight. preStop sleep keeps the pod in Terminating long enough for Traefik to stop
+        # routing new traffic here. /healthz always returns 200 (with a degraded flag when MQTT is
+        # stale) so a broker outage never fails these probes into a restart loop.
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 3
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 6
+        lifecycle:
+          preStop:
+            exec:
+              command: [ "sh", "-c", "sleep 20" ]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: skylens-api
+  namespace: skylens-production
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8080
+    targetPort: http
+    protocol: TCP
+    name: http
+  selector:
+    app: skylens-api

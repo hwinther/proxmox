@@ -1,0 +1,21 @@
+# Traefik runs host-network, so ingress to the pod arrives with the `host`/`remote-node` Cilium
+# identity rather than the traefik namespace identity — the k8s NetworkPolicy namespaceSelector
+# can't match it. This CiliumNetworkPolicy is what actually admits the ingress (without it the
+# ingress 504s).
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-cluster-nodes-to-skylens-http
+  namespace: skylens-production
+spec:
+  endpointSelector:
+    matchLabels:
+      app: skylens-api
+  ingress:
+  - fromEntities:
+    - host
+    - remote-node
+    toPorts:
+    - ports:
+      - port: "8080"
+        protocol: TCP
