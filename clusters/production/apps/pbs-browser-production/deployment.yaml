@@ -28,12 +28,12 @@ spec:
         kubernetes.io/arch: amd64
       securityContext:
         runAsNonRoot: true
-        runAsUser: 1654          # matches the dotnet aspnet image's `app` user ($APP_UID)
-        fsGroup: 1654            # so the cloned keyfile Secret is group-readable
+        runAsUser: 1654 # matches the dotnet aspnet image's `app` user ($APP_UID)
+        fsGroup: 1654 # so the cloned keyfile Secret is group-readable
         fsGroupChangePolicy: OnRootMismatch
       containers:
       - name: pbs-browser
-        image: ghcr.io/hwinther/pbs-browser/app:0.0.1@sha256:b19e6cdc4cbb59071ab17c20baf37fdf35507e2cd57af73e748500bf1f46e969
+        image: ghcr.io/hwinther/pbs-browser/app:0.0.1@sha256:28762b9641885362ada29012381fd7c841f7b796250c718a9229511a9c0c727f
         imagePullPolicy: IfNotPresent
         securityContext:
           allowPrivilegeEscalation: false
@@ -83,7 +83,7 @@ spec:
           items:
           - key: keyfile
             path: keyfile
-            mode: 0400
+            mode: 400
 ---
 apiVersion: v1
 kind: Service
