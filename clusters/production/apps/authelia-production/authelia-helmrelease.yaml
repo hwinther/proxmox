@@ -529,12 +529,12 @@ spec:
             - email
             - groups
             - offline_access
-          # Skylens — native Android app (no.wsh.skylens); public client + PKCE with a custom-scheme
-          # redirect (no HTTPS loopback — the app is not a browser SPA). access_token is a signed RFC
+          # Skylens — native Android app (no.wsh.skylens, custom-scheme redirects) plus the Expo web
+          # build served from the API's wwwroot (https redirect). access_token is a signed RFC
           # 9068 JWT (aud=skylens-api) so the ASP.NET Core gateway validates it directly against
           # /api/oidc/jwks.json without introspection.
           - client_id: skylens
-            client_name: Skylens (Android)
+            client_name: Skylens
             public: true
             require_pkce: true
             pkce_challenge_method: S256
@@ -555,6 +555,11 @@ spec:
             redirect_uris:
             - no.wsh.skylens://oauth
             - skylens://oauth
+            # Web (PC) variants — expo-auth-session's makeRedirectUri resolves to <origin>/oauth on
+            # web (no trailing slash); localhost:8081 is the Expo web dev server. Preview hosts get
+            # no entries on purpose: previews run DevAuth, in-app sign-in is nonfunctional by design.
+            - https://skylens.wsh.no/oauth
+            - http://localhost:8081/oauth
             scopes:
             - openid
             - profile
