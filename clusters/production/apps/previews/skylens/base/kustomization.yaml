@@ -1,0 +1,14 @@
+# Shared kustomize base for skylens PR preview environments. Every per-PR overlay under ../pr-<N>/
+# references this base. Resources here intentionally have no metadata.namespace so the overlay's
+# namespace: directive populates it. The preview runs in Development replay mode with no broker, no
+# external enrichment, and no database, so it needs NO egress beyond DNS — netpol-baseline
+# (default-deny + DNS) plus the Traefik->:8080 allow in cilium-cluster-nodes-to-http.yaml is the whole
+# policy surface (same minimal posture as the wshno static-site preview; no networkpolicies.yaml).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+components:
+- ../../../../../../bases/netpol-baseline
+resources:
+- deployment.yaml
+- ingress.yaml
+- cilium-cluster-nodes-to-http.yaml

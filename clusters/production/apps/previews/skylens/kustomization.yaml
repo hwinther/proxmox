@@ -1,0 +1,12 @@
+# Parent kustomization for skylens preview environments. Maintained by the gitops-preview-upsert.yml /
+# gitops-preview-teardown.yml reusable workflows in hwinther/reusable-workflows — they add/remove
+# pr-<N> entries below as PRs labelled `deploy-feature` are opened/closed in hwinther/skylens.
+#
+# No `databases` entry and no kyverno-clusterpolicies: the skylens preview runs in Development mode
+# with the built-in DevAuth (Auth__Disabled=true) + MQTT replay (Mqtt__Replay=true) affordances, so it
+# needs NO secret, NO mosquitto, NO database, and NO per-PR pull credential (the GHCR package
+# ghcr.io/hwinther/skylens/api is public, like clutterstock/wshno). Starts empty; the workflow's `yq`
+# creates/extends the resources list as previews are deployed.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources: []

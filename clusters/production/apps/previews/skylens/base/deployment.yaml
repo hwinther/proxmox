@@ -1,0 +1,137 @@
+# Ephemeral preview-env Deployment for skylens. Namespace + image tag/digest are set per-PR by the
+# overlay. Unlike production, this runs in Development mode so it needs NO secrets, NO mosquitto, NO
+# external 443 egress, and NO database — the backend's built-in preview affordances (both gated on
+# ASPNETCORE_ENVIRONMENT=Development) stand in:
+#   - Auth__Disabled=true  -> DevAuthHandler stamps a fixed principal, so no OIDC / Authelia redirect
+#     URIs are needed (the Ingress forward-auth is the actual gate — see ingress.yaml).
+#   - Mqtt__Replay=true     -> ReplayMqttTransport replays the baked-in fixture through the real
+#     ingest -> SignalR pipeline, so no broker and no MQTT creds.
+# imagePullPolicy: Always so a rebuilt PR image is always pulled; no metadata.namespace (the overlay
+# sets it).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: skylens-api
+spec:
+  # replicas: 1 — in replay mode there is no single-MQTT-consumer invariant (production forces
+  # Recreate + 1 replica for that reason), so no Recreate strategy is needed here. Keep it at one
+  # simply because a preview needs no more.
+  replicas: 1
+  selector:
+    matchLabels:
+      app: skylens-api
+  template:
+    metadata:
+      labels:
+        app: skylens-api
+        app.kubernetes.io/name: skylens-api
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1654          # matches the dotnet aspnet image's `app` user ($APP_UID)
+        runAsGroup: 1654
+        fsGroup: 1654
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+      - name: skylens-api
+        # Tag + digest are replaced per-PR by the overlay's `images:` transform (matched by name).
+        image: ghcr.io/hwinther/skylens/api:placeholder
+        imagePullPolicy: Always
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            # Higher ceiling: the bundled offline aircraft registration DB (~600k rows) is loaded into
+            # a FrozenDictionary in RAM even in replay mode.
+            memory: 768Mi
+        env:
+        # REQUIRED: DevAuth (Auth__Disabled) and MQTT replay (Mqtt__Replay) are both IsDevelopment()-
+        # gated in Program.cs — without Development they are ignored and the app would demand OIDC +
+        # a live broker, breaking the preview.
+        - name: ASPNETCORE_ENVIRONMENT
+          value: "Development"
+        - name: ASPNETCORE_URLS
+          value: "http://+:8080"
+        # Dev-only escape hatch: swap JwtBearer for the fixed-principal DevAuthHandler.
+        - name: Auth__Disabled
+          value: "true"
+        # Replay the fixture baked into the image (/app/fixtures/aircraft.json) through the real
+        # ingest -> SignalR pipeline at 1 Hz instead of connecting to a broker.
+        - name: Mqtt__Replay
+          value: "true"
+        - name: Mqtt__ReplayFile
+          value: "/app/fixtures/aircraft.json"
+        # MqttIngestService bails out before the replay transport when Mqtt:Host is empty
+        # (MqttIngestService.cs) — any non-empty placeholder keeps the ingest loop alive; no broker
+        # named "replay" exists or is contacted.
+        - name: Mqtt__Host
+          value: "replay"
+        # Deliberately COARSE feed origin: the centroid of the replay fixture's aircraft positions,
+        # rounded to ONE decimal (~11 km). Precise home coordinates must never appear in this PUBLIC
+        # repo; 1-decimal fixture-area coords are enough for the preview's map/range maths.
+        - name: FEED__LAT
+          value: "59.9"
+        - name: FEED__LON
+          value: "11.1"
+        - name: FEED__RADIUSKM
+          value: "500"
+        # OTEL mirrors production but deployment.environment=preview. In Development the app only
+        # exports when OTEL_EXPORTER_OTLP_ENDPOINT is set (Program.cs), so it WILL attempt export to
+        # the collector — but netpol-baseline default-deny blocks egress to :4317 and we intentionally
+        # open no hole for an ephemeral preview, so export fails closed (non-fatal, just logged). Drop
+        # OTEL_EXPORTER_OTLP_ENDPOINT if the retry noise is undesirable.
+        - name: OTEL_SERVICE_NAME
+          value: "skylens-api"
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://obs-otel-collector.observability-production.svc.cluster.local:4317"
+        - name: OTEL_EXPORTER_OTLP_PROTOCOL
+          value: "grpc"
+        - name: OTEL_TRACES_EXPORTER
+          value: "otlp"
+        - name: OTEL_RESOURCE_ATTRIBUTES
+          value: "service.namespace=skylens-preview,deployment.environment=preview"
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        # /healthz always returns 200 (degraded flag when replay is stale), so a probe never restarts
+        # the pod. Relaxed initial delays are fine for a preview.
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 3
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 6
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: skylens-api
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8080
+    targetPort: http
+    protocol: TCP
+    name: http
+  selector:
+    app: skylens-api

@@ -117,6 +117,22 @@ spec:
     kind: GitRepository
     name: flux-system
 ---
+# Per-PR ephemeral preview envs for skylens. Single PUBLIC image run in Development replay mode (no
+# secret, no broker, no database, no per-PR pull credential), so no cnpg or kyverno dependency — just
+# static manifests, same shape as the wshno preview.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: previews-skylens
+  namespace: flux-system
+spec:
+  interval: 1m0s
+  path: ./clusters/production/apps/previews/skylens
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+---
 # Kyverno CRDs come from the Helm chart; policies must apply in a separate Kustomization after this is Ready.
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
