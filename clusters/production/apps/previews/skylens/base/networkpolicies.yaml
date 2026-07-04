@@ -22,3 +22,15 @@ spec:
     ports:
     - port: 443
       protocol: TCP
+  # OTLP export (traces + metrics + logs — Program.cs wires all three when the endpoint is set) to
+  # the shared collector, so preview backend errors are visible in Grafana/Tempo/Loki
+  # (service.namespace=skylens-preview) instead of only in a browser console. The collector side
+  # already admits OTLP from pods in any namespace
+  # (../../../observability/cilium-host-to-otel-otlp-http.yaml).
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: observability-production
+    ports:
+    - port: 4317
+      protocol: TCP

@@ -72,6 +72,13 @@ spec:
         # overrides JSON, forcing real JwtBearer (see header).
         - name: Auth__Disabled
           value: "false"
+        # Same appsettings.Development.json trap as Auth__Disabled: it overrides AircraftDb:Path with
+        # the local-dev relative path ../../data/aircraft.csv.gz (= /data/... from /app), missing the
+        # DB baked into the image — enrichment would silently fall back to OpenSky, which has no creds
+        # here. Point back at the baked-in copy (this is also why the 768Mi limit above is sized for
+        # the ~600k-row FrozenDictionary).
+        - name: AircraftDb__Path
+          value: "/app/data/aircraft.csv.gz"
         - name: ASPNETCORE_URLS
           value: "http://+:8080"
         # Real OIDC bearer validation, identical to production: Authelia issues RFC 9068 JWTs with
@@ -100,11 +107,11 @@ spec:
           value: "11.1"
         - name: FEED__RADIUSKM
           value: "500"
-        # OTEL mirrors production but deployment.environment=preview. In Development the app only
-        # exports when OTEL_EXPORTER_OTLP_ENDPOINT is set (Program.cs), so it WILL attempt export to
-        # the collector — but netpol-baseline default-deny blocks egress to :4317 and we intentionally
-        # open no hole for an ephemeral preview, so export fails closed (non-fatal, just logged). Drop
-        # OTEL_EXPORTER_OTLP_ENDPOINT if the retry noise is undesirable.
+        # OTEL mirrors production but deployment.environment=preview. Export IS enabled for previews:
+        # networkpolicies.yaml opens egress to the collector on :4317, so backend traces + metrics +
+        # logs (Program.cs wires all three when the endpoint is set) land in Tempo/Prometheus/Loki
+        # under service.namespace=skylens-preview — preview errors are observable in Grafana without
+        # copy-pasting from a browser console.
         - name: OTEL_SERVICE_NAME
           value: "skylens-api"
         - name: OTEL_EXPORTER_OTLP_ENDPOINT
