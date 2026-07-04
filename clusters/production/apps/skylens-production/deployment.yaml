@@ -40,7 +40,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       containers:
       - name: skylens-api
-        image: ghcr.io/hwinther/skylens/api:0.3.0@sha256:1b15e254c2e69a52b5e64771aa1a7b023695e3b382d33fe4afdec7b159ecdb56
+        image: ghcr.io/hwinther/skylens/api:0.4.0@sha256:50318cc94a0fcd143e32946a64be35bf8913ed3cf4f92e8d239106a836027e55
         imagePullPolicy: Always
         securityContext:
           allowPrivilegeEscalation: false

@@ -1,0 +1,42 @@
+# Two-tier replacement for the upstream kube-prometheus-stack NodeMemoryHighUtilization rule
+# (disabled in kube-prometheus-stack-helmrelease.yaml defaultRules.disabled):
+#  - 95% for the bare-metal PVE/PBS hosts (node-exporter-pve scrape job): office-pve-amd sits at a
+#    deliberate steady ~91% (VM allocation, not ZFS ARC — ARC is only ~4Gi there), so the upstream
+#    90% default fired permanently without signal.
+#  - 90% (upstream default) for k8s nodes, where climbing past 90% IS interesting (eviction risk).
+# Tier selector: bare-metal series carry a static `node` label and no `cluster` label; the
+# production-k8s DaemonSet targets have no `node` label, and the edge-sdr Pis have cluster=edge-sdr
+# (both land in the 90% tier). Verified against live series 2026-07-04.
+# release=obs-kps so the operator ruleSelector picks it up.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: node-memory
+  labels:
+    release: obs-kps
+spec:
+  groups:
+  - name: node-memory
+    rules:
+    - alert: NodeMemoryHighUtilization
+      expr: 100 - (node_memory_MemAvailable_bytes{job="node-exporter", node!="", cluster=""} / node_memory_MemTotal_bytes{job="node-exporter", node!="", cluster=""} * 100) > 95
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Bare-metal host {{ $labels.node }} is running out of memory"
+        description: "Memory on {{ $labels.node }} has been above 95% for the last 15 minutes, is currently at {{ printf \"%.1f\" $value }}%. Bare-metal tier alerts at 95% — the hypervisors are deliberately packed."
+        runbook_url: https://runbooks.prometheus-operator.dev/runbooks/node/nodememoryhighutilization
+    # `unless on (instance)` subtracts the bare-metal hosts matched by the 95% tier above.
+    - alert: NodeMemoryHighUtilization
+      expr: |-
+        (100 - (node_memory_MemAvailable_bytes{job="node-exporter"} / node_memory_MemTotal_bytes{job="node-exporter"} * 100) > 90)
+        unless on (instance)
+        node_memory_MemTotal_bytes{job="node-exporter", node!="", cluster=""}
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Node {{ $labels.instance }} is running out of memory"
+        description: "Memory on {{ $labels.instance }} has been above 90% for the last 15 minutes, is currently at {{ printf \"%.1f\" $value }}%."
+        runbook_url: https://runbooks.prometheus-operator.dev/runbooks/node/nodememoryhighutilization

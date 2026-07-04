@@ -43,6 +43,9 @@ resources:
 - prometheusrule-blackbox.yaml
 # Edge Pi SoC temperature alert (metric already shipped by edge node-exporter). Dashboard below.
 - prometheusrule-node-temp.yaml
+# Two-tier NodeMemoryHighUtilization replacement (upstream rule disabled in the kps helmrelease):
+# 95% for bare-metal PVE/PBS hosts, upstream 90% for k8s nodes.
+- prometheusrule-node-memory.yaml
 # Disk SMART health/wear from smartctl_exporter on the PVE hosts (scrape job in the helmrelease).
 - prometheusrule-smartctl.yaml
 # Edge security: CrowdSec (scrape jobs in the helmrelease, logs via fluent-bit -> Loki;

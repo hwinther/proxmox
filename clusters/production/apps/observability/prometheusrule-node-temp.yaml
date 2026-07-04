@@ -27,25 +27,29 @@ spec:
     # PVE host spinning/SATA disks (sd*). 50°C warn / 58°C crit: healthy hosts here sit ≤46°C, so this
     # cleanly flags an airflow/placement problem rather than normal load (e.g. shuttle02's IronWolfs ran
     # 60–65°C and started reallocating sectors while no temperature alert existed to catch it).
+    # Grouped per NODE (max over the host's spinners): a hot chassis heats every drive at once, so
+    # per-drive alerts multiply the same signal (shuttle02 fired ×4 for one airflow problem). Per-drive
+    # temps live on the disk-health dashboard. temperature_type="current" everywhere: only `current`
+    # exists today, but a future drive exporting trip/threshold series would latch max() permanently.
     - alert: SmartDriveOverheating
-      expr: smartctl_device_temperature{device=~"sd.*"} > 50
+      expr: max by (node) (smartctl_device_temperature{device=~"sd.*", temperature_type="current"}) > 50
       for: 15m
       labels:
         severity: warning
       annotations:
-        summary: "Disk {{ $labels.node }} {{ $labels.device }} running hot ({{ $value | humanize }}°C)"
-        description: "{{ $labels.device }} on {{ $labels.node }} has been >50°C for 15m (currently {{ $value | humanize }}°C). Spinning disks degrade faster when hot — check airflow/fan/placement."
+        summary: "Disks on {{ $labels.node }} running hot (hottest {{ $value | humanize }}°C)"
+        description: "Hottest spinning disk on {{ $labels.node }} has been >50°C for 15m (currently {{ $value | humanize }}°C). Spinning disks degrade faster when hot — check airflow/fan/placement; per-drive temps on the disk-health dashboard."
     - alert: SmartDriveOverheatingCritical
-      expr: smartctl_device_temperature{device=~"sd.*"} > 58
+      expr: max by (node) (smartctl_device_temperature{device=~"sd.*", temperature_type="current"}) > 58
       for: 5m
       labels:
         severity: critical
       annotations:
-        summary: "Disk {{ $labels.node }} {{ $labels.device }} critically hot ({{ $value | humanize }}°C)"
-        description: "{{ $labels.device }} on {{ $labels.node }} is >58°C (currently {{ $value | humanize }}°C) — heading for the 70°C limit and actively shortening drive life. Improve cooling now."
+        summary: "Disks on {{ $labels.node }} critically hot (hottest {{ $value | humanize }}°C)"
+        description: "Hottest spinning disk on {{ $labels.node }} is >58°C (currently {{ $value | humanize }}°C) — heading for the 70°C limit and actively shortening drive life. Improve cooling now."
     # NVMe tolerates more heat but throttles ~70–80°C.
     - alert: SmartNvmeOverheating
-      expr: smartctl_device_temperature{device=~"nvme.*"} > 70
+      expr: smartctl_device_temperature{device=~"nvme.*", temperature_type="current"} > 70
       for: 15m
       labels:
         severity: warning

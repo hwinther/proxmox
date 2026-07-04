@@ -37,6 +37,10 @@ spec:
         KubeProxyDown: true
         KubeControllerManagerDown: true
         KubeSchedulerDown: true
+        # Replaced by the two-tier rule in prometheusrule-node-memory.yaml: 95% for the deliberately
+        # packed bare-metal PVE/PBS hosts (office-pve-amd sits at a steady ~91% by design, so the
+        # upstream 90% default fired permanently), upstream 90% kept for k8s nodes.
+        NodeMemoryHighUtilization: true
 
     alertmanager:
       enabled: true
