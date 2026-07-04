@@ -16,31 +16,38 @@ Placeholders the workflow replaces:
 - `__HOST__` — preview hostname (e.g. `skylens-42.preview.wsh.no`)
 - `__IMAGE_TAG__` / `__IMAGE_DIGEST__` — the `ghcr.io/hwinther/skylens/api` tag + digest the PR build pushed
 
-## Replay + DevAuth model (no secrets, no broker)
+## Replay + real-auth model (no secrets, no broker)
 
-skylens previews run the backend in **Development** mode, which unlocks two built-in affordances that
-let a PR run end-to-end with **no secrets, no mosquitto, no external egress, and no database**:
+skylens previews run the backend in **Development** mode for the MQTT replay affordance, but with
+**REAL OIDC JWT auth** — so auth regressions (anonymous /hubs 401, in-app sign-in, browser PKCE token
+exchange) surface in the preview BEFORE a release tag. Still **no secrets, no mosquitto, no database**:
 
-- **`Auth__Disabled=true`** — swaps JwtBearer for `DevAuthHandler`, which stamps a fixed principal, so
-  no OIDC round-trip and no Authelia client/redirect URIs are needed.
 - **`Mqtt__Replay=true` + `Mqtt__ReplayFile=/app/fixtures/aircraft.json`** — `ReplayMqttTransport`
   replays the fixture baked into the image through the **real** ingest -> SignalR pipeline at 1 Hz, so
-  there is no broker and no MQTT credentials.
-
-Both are gated on `Environment.IsDevelopment()` in `Program.cs`, which is why
-**`ASPNETCORE_ENVIRONMENT=Development` is REQUIRED** in `base/deployment.yaml` — without it the app
-ignores these flags and reverts to demanding real OIDC + a live broker, breaking the preview.
+  there is no broker and no MQTT credentials. Gated on `Environment.IsDevelopment()`, which is why
+  **`ASPNETCORE_ENVIRONMENT=Development` is REQUIRED** in `base/deployment.yaml`.
+- **`Auth__Disabled` is deliberately NOT set** — even in Development the app then wires real JwtBearer
+  against `auth.wsh.no` (`Program.cs`: DevAuth needs Development AND `Auth:Disabled`). This needs 443
+  egress for OIDC discovery/JWKS (`base/networkpolicies.yaml`) and per-PR redirect URIs on the
+  Authelia `skylens` client (see below). The CI e2e compose stack in the skylens repo intentionally
+  KEEPS `Auth__Disabled=true` — its Playwright specs assert on anonymous live data.
 
 `FEED__LAT` / `FEED__LON` are the centroid of the replay fixture's aircraft positions rounded to **one
 decimal** (~11 km). Precise home coordinates must never appear in this **PUBLIC** repo.
 
 ## Auth on preview hosts
 
-The app runs auth-less (DevAuth auto-authenticates every request), so the **Ingress Authelia
-forward-auth middleware is the only access gate** for preview hosts (`base/ingress.yaml`) — the
-opposite of production, which stays public and validates real OIDC JWTs in-app. **In-app OIDC sign-in
-is intentionally nonfunctional on preview hosts**: there are no Authelia redirect URIs registered for
-`*.preview.wsh.no`, and none are needed because the forward-auth middleware gates access instead.
+Two layers, both real:
+
+- The **Ingress Authelia forward-auth middleware** (`base/ingress.yaml`) gates access to the preview
+  host itself.
+- **In-app OIDC sign-in works** like production: Authelia can't wildcard redirect URIs, so the
+  `skylens` client in `../../authelia-production/authelia-helmrelease.yaml` pre-registers a window of
+  `https://skylens-<N>.preview.wsh.no/oauth` entries for upcoming PR numbers — **extend the window
+  when the repo's PR/issue counter approaches its end** (or teach the upsert workflow to patch it). A
+  PR outside the window still deploys; only in-app sign-in fails (`redirect_uri` rejected). Browser
+  PKCE token exchange is covered by `cors.allowed_origins_from_client_redirect_uris` in the Authelia
+  OIDC config.
 
 ## Host / namespace naming
 
