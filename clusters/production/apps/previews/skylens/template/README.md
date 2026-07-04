@@ -26,8 +26,10 @@ exchange) surface in the preview BEFORE a release tag. Still **no secrets, no mo
   replays the fixture baked into the image through the **real** ingest -> SignalR pipeline at 1 Hz, so
   there is no broker and no MQTT credentials. Gated on `Environment.IsDevelopment()`, which is why
   **`ASPNETCORE_ENVIRONMENT=Development` is REQUIRED** in `base/deployment.yaml`.
-- **`Auth__Disabled` is deliberately NOT set** — even in Development the app then wires real JwtBearer
-  against `auth.wsh.no` (`Program.cs`: DevAuth needs Development AND `Auth:Disabled`). This needs 443
+- **`Auth__Disabled=false` is set EXPLICITLY** — the image's `appsettings.Development.json` bakes
+  `Auth:Disabled=true`, so in Development merely omitting the variable silently re-enables DevAuth
+  (anonymous `/api/me` returns 200). The explicit env-var false overrides the JSON and wires real
+  JwtBearer against `auth.wsh.no` (`Program.cs`: DevAuth needs Development AND `Auth:Disabled`). This needs 443
   egress for OIDC discovery/JWKS (`base/networkpolicies.yaml`) and per-PR redirect URIs on the
   Authelia `skylens` client (see below). The CI e2e compose stack in the skylens repo intentionally
   KEEPS `Auth__Disabled=true` — its Playwright specs assert on anonymous live data.

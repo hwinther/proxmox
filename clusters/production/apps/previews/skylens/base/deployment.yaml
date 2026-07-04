@@ -4,8 +4,10 @@
 # BEFORE a release tag. Still needs NO secrets, NO mosquitto, and NO database:
 #   - Mqtt__Replay=true (Development-gated) -> ReplayMqttTransport replays the baked-in fixture
 #     through the real ingest -> SignalR pipeline, so no broker and no MQTT creds.
-#   - Auth__Disabled is deliberately NOT set: even in Development the app then wires real JwtBearer
-#     against auth.wsh.no (Program.cs: useDevAuth = IsDevelopment() && Auth:Disabled). In-app OIDC
+#   - Auth__Disabled=false is set EXPLICITLY: the image's appsettings.Development.json bakes
+#     Auth:Disabled=true, so in Development merely omitting the env var still enables DevAuth. The
+#     explicit false overrides it and wires real JwtBearer against auth.wsh.no (Program.cs:
+#     useDevAuth = IsDevelopment() && Auth:Disabled). In-app OIDC
 #     sign-in additionally needs the per-PR redirect URI registered on the Authelia `skylens` client
 #     (see the preview window in ../../../authelia-production/authelia-helmrelease.yaml), and JWKS/
 #     discovery egress on 443 (networkpolicies.yaml). The Ingress forward-auth (ingress.yaml) stays
@@ -63,9 +65,13 @@ spec:
         env:
         # REQUIRED for MQTT replay (Mqtt__Replay is IsDevelopment()-gated in Program.cs) — without
         # Development it is ignored and the app would demand a live broker, breaking the preview.
-        # Auth__Disabled is NOT set, so real JwtBearer is wired despite Development (see header).
         - name: ASPNETCORE_ENVIRONMENT
           value: "Development"
+        # MUST be an explicit false: appsettings.Development.json in the image sets Auth:Disabled=true,
+        # so omitting this would silently re-enable DevAuth (anonymous /api/me would 200). Env config
+        # overrides JSON, forcing real JwtBearer (see header).
+        - name: Auth__Disabled
+          value: "false"
         - name: ASPNETCORE_URLS
           value: "http://+:8080"
         # Real OIDC bearer validation, identical to production: Authelia issues RFC 9068 JWTs with
