@@ -18,8 +18,8 @@ labels:
 # (newTag) is kept alongside so `kubectl get deploy -o yaml | grep image:` stays readable.
 images:
 - name: ghcr.io/hwinther/skylens/api
-  newTag: "0.3.1-PullRequest14.3"
-  digest: "sha256:9952208aa17cb5f77f16d5f1578f930c8957ffbb4784ecacc444fb5822ce2a7e"
+  newTag: "0.3.1-PullRequest14.4"
+  digest: "sha256:29d9959837568bcb7bc60a61a7705e14edbb2bbbd26c5f877a47675c452aa5d4"
 
 patches:
 - target:
