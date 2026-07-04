@@ -1,11 +1,17 @@
 # Ephemeral preview-env Deployment for skylens. Namespace + image tag/digest are set per-PR by the
-# overlay. Unlike production, this runs in Development mode so it needs NO secrets, NO mosquitto, NO
-# external 443 egress, and NO database — the backend's built-in preview affordances (both gated on
-# ASPNETCORE_ENVIRONMENT=Development) stand in:
-#   - Auth__Disabled=true  -> DevAuthHandler stamps a fixed principal, so no OIDC / Authelia redirect
-#     URIs are needed (the Ingress forward-auth is the actual gate — see ingress.yaml).
-#   - Mqtt__Replay=true     -> ReplayMqttTransport replays the baked-in fixture through the real
-#     ingest -> SignalR pipeline, so no broker and no MQTT creds.
+# overlay. Runs in Development mode for the MQTT replay affordance, but with REAL OIDC JWT auth — so
+# auth regressions (anonymous /hubs 401, in-app sign-in, token exchange) surface in the preview
+# BEFORE a release tag. Still needs NO secrets, NO mosquitto, and NO database:
+#   - Mqtt__Replay=true (Development-gated) -> ReplayMqttTransport replays the baked-in fixture
+#     through the real ingest -> SignalR pipeline, so no broker and no MQTT creds.
+#   - Auth__Disabled is deliberately NOT set: even in Development the app then wires real JwtBearer
+#     against auth.wsh.no (Program.cs: useDevAuth = IsDevelopment() && Auth:Disabled). In-app OIDC
+#     sign-in additionally needs the per-PR redirect URI registered on the Authelia `skylens` client
+#     (see the preview window in ../../../authelia-production/authelia-helmrelease.yaml), and JWKS/
+#     discovery egress on 443 (networkpolicies.yaml). The Ingress forward-auth (ingress.yaml) stays
+#     as the outer access gate for the preview host itself.
+#   - The CI e2e compose stack (skylens repo docker-compose.e2e.yml) intentionally KEEPS
+#     Auth__Disabled=true — its Playwright specs assert on anonymous live data.
 # imagePullPolicy: Always so a rebuilt PR image is always pulled; no metadata.namespace (the overlay
 # sets it).
 apiVersion: apps/v1
@@ -55,16 +61,19 @@ spec:
             # a FrozenDictionary in RAM even in replay mode.
             memory: 768Mi
         env:
-        # REQUIRED: DevAuth (Auth__Disabled) and MQTT replay (Mqtt__Replay) are both IsDevelopment()-
-        # gated in Program.cs — without Development they are ignored and the app would demand OIDC +
-        # a live broker, breaking the preview.
+        # REQUIRED for MQTT replay (Mqtt__Replay is IsDevelopment()-gated in Program.cs) — without
+        # Development it is ignored and the app would demand a live broker, breaking the preview.
+        # Auth__Disabled is NOT set, so real JwtBearer is wired despite Development (see header).
         - name: ASPNETCORE_ENVIRONMENT
           value: "Development"
         - name: ASPNETCORE_URLS
           value: "http://+:8080"
-        # Dev-only escape hatch: swap JwtBearer for the fixed-principal DevAuthHandler.
-        - name: Auth__Disabled
-          value: "true"
+        # Real OIDC bearer validation, identical to production: Authelia issues RFC 9068 JWTs with
+        # aud=skylens-api for the `skylens` public client.
+        - name: Oidc__Authority
+          value: "https://auth.wsh.no"
+        - name: Oidc__Audience
+          value: "skylens-api"
         # Replay the fixture baked into the image (/app/fixtures/aircraft.json) through the real
         # ingest -> SignalR pipeline at 1 Hz instead of connecting to a broker.
         - name: Mqtt__Replay

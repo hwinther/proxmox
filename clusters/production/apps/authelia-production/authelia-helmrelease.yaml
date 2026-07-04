@@ -266,6 +266,11 @@ spec:
             - authorization
             - token
             - userinfo
+            # Also allow the origin of every registered client redirect URI (all first-party apps).
+            # This is what lets browser-side PKCE token exchange work from skylens.wsh.no, the
+            # skylens-<N>.preview.wsh.no preview hosts, and localhost dev servers without hand-
+            # maintaining a matching origin entry for each redirect URI below.
+            allowed_origins_from_client_redirect_uris: true
             allowed_origins:
             - https://rabbitmq.mgmt.wsh.no
             - https://headlamp.mgmt.wsh.no
@@ -287,6 +292,10 @@ spec:
             # RabbitMQ management HTTPS listener (default TLS port); Origin uses https when UI is opened on 15671.
             - https://localhost:15671
             - https://127.0.0.1:15671
+            # Expo web dev server (skylens `npm run web`) — allowed_origins_from_client_redirect_uris
+            # deliberately skips localhost origins, so the dev origin needs an explicit entry.
+            - http://localhost:8081
+            - http://127.0.0.1:8081
             # ASP.NET Swashbuckle local dev (OAuth2 + PKCE from /swagger).
             - http://localhost:5155
             - http://127.0.0.1:5155
@@ -556,10 +565,31 @@ spec:
             - no.wsh.skylens://oauth
             - skylens://oauth
             # Web (PC) variants — expo-auth-session's makeRedirectUri resolves to <origin>/oauth on
-            # web (no trailing slash); localhost:8081 is the Expo web dev server. Preview hosts get
-            # no entries on purpose: previews run DevAuth, in-app sign-in is nonfunctional by design.
+            # web (no trailing slash); localhost:8081 is the Expo web dev server.
             - https://skylens.wsh.no/oauth
             - http://localhost:8081/oauth
+            # Preview window: skylens previews run REAL JwtBearer (previews/skylens/base), so in-app
+            # OIDC sign-in needs the per-PR host registered here. Authelia requires exact-match
+            # redirect URIs (no wildcards, deliberate security stance), so pre-register a window of
+            # upcoming PR numbers; extend it (or teach the preview upsert workflow to patch this
+            # list) when the repo's PR/issue counter approaches the end of the window.
+            - https://skylens-14.preview.wsh.no/oauth
+            - https://skylens-15.preview.wsh.no/oauth
+            - https://skylens-16.preview.wsh.no/oauth
+            - https://skylens-17.preview.wsh.no/oauth
+            - https://skylens-18.preview.wsh.no/oauth
+            - https://skylens-19.preview.wsh.no/oauth
+            - https://skylens-20.preview.wsh.no/oauth
+            - https://skylens-21.preview.wsh.no/oauth
+            - https://skylens-22.preview.wsh.no/oauth
+            - https://skylens-23.preview.wsh.no/oauth
+            - https://skylens-24.preview.wsh.no/oauth
+            - https://skylens-25.preview.wsh.no/oauth
+            - https://skylens-26.preview.wsh.no/oauth
+            - https://skylens-27.preview.wsh.no/oauth
+            - https://skylens-28.preview.wsh.no/oauth
+            - https://skylens-29.preview.wsh.no/oauth
+            - https://skylens-30.preview.wsh.no/oauth
             scopes:
             - openid
             - profile

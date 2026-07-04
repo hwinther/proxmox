@@ -1,11 +1,13 @@
 # Host is patched per-PR by the overlay (skylens-<N>.preview.wsh.no). The LAN nginx fronting the
 # cluster terminates TLS with the *.preview.wsh.no wildcard cert (web,websecure).
 #
-# Authelia forward-auth IS applied here even though the app runs auth-less in preview: the backend's
-# DevAuth affordance means anyone reaching the app is auto-authenticated, so the Ingress forward-auth
-# middleware is the ONLY access gate for preview hosts. (Production does the opposite — no forward-auth
-# there because the API validates real OIDC JWTs in-app.) There are deliberately no Authelia redirect
-# URIs for preview hosts, so in-app OIDC sign-in is nonfunctional on previews by design.
+# Authelia forward-auth IS applied here as the outer access gate for preview hosts (production has
+# no forward-auth because its host is public). Since the preview backend now ALSO validates real
+# OIDC JWTs in-app (see deployment.yaml), previews exercise the production auth path end to end:
+# pass forward-auth (Authelia session cookie, wsh.no domain) to reach the SPA, then in-app OIDC
+# sign-in issues the bearer for /api + /hubs. The per-PR redirect URI must be registered on the
+# Authelia `skylens` client — see the preview window in
+# ../../../authelia-production/authelia-helmrelease.yaml.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:

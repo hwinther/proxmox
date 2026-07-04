@@ -1,0 +1,24 @@
+# Preview egress: real JwtBearer (see deployment.yaml) fetches the OIDC discovery document and JWKS
+# from https://auth.wsh.no on first challenge, so the preview pod needs external 443 — same ipBlock
+# convention as production (../../../skylens-production/networkpolicies.yaml), link-local metadata IP
+# excluded. DNS + default-deny come from the netpol-baseline component; policies are additive, so
+# this file stays minimal. No metadata.namespace — the per-PR overlay sets it.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: skylens-api-egress-https
+spec:
+  podSelector:
+    matchLabels:
+      app: skylens-api
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+        except:
+        - 169.254.169.254/32
+    ports:
+    - port: 443
+      protocol: TCP
