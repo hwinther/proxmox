@@ -138,6 +138,11 @@ spec:
       values:
       - policy-reporter
       - policy-reporter-kyverno-plugin
+      # The v2 UI resolves its clusters[].secretRef (policy-reporter-ui-default-cluster) via the
+      # API server at startup, before binding :8080 — blocked here it hangs with no log output
+      # until the liveness probe kills it (found crash-looping after the 2026-07-05 eviction; the
+      # pre-floor UI pod had simply never restarted since the default-deny baseline landed).
+      - policy-reporter-ui
   egress:
   - toEntities:
     - kube-apiserver
