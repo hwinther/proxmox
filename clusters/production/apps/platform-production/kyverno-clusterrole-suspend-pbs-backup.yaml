@@ -1,0 +1,33 @@
+# Cluster-wide RBAC for Kyverno to flip `spec.suspend` on `<app>-pbs-backup` CronJobs in
+# namespaces labeled `pbs.wsh.no/suspend-backup-when-hibernated=true` (see the sibling
+# suspend-pbs-backup-when-hibernated ClusterPolicy).
+#
+# ClusterRole (not per-namespace RoleBindings) for the same reason as
+# kyverno-clusterrole-clone-pbs-encryption-keyfile.yaml: the validate-policy webhook SARs the
+# templated target namespace literally, so only cluster-wide RBAC satisfies it. Actual mutation
+# is still gated by the namespace-label match. Aggregated to the background controller via the
+# `app.kubernetes.io/component: background-controller` aggregation label Kyverno ships.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kyverno-suspend-pbs-backup
+rules:
+- apiGroups: ["batch"]
+  resources: ["cronjobs"]
+  verbs: ["get", "list", "watch", "update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kyverno-suspend-pbs-backup
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kyverno-suspend-pbs-backup
+subjects:
+- kind: ServiceAccount
+  name: kyverno-admission-controller
+  namespace: kyverno
+- kind: ServiceAccount
+  name: kyverno-background-controller
+  namespace: kyverno

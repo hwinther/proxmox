@@ -1,0 +1,86 @@
+# Auto-suspend an app's PBS backup CronJob while its StatefulSet is hibernated (scaled to 0),
+# and auto-resume it on scale-up. Opt-in per namespace via the label
+# `pbs.wsh.no/suspend-backup-when-hibernated=true` — no edit to this policy when onboarding
+# (including apps in the sibling private-apps repo, whose names intentionally stay out of this
+# public repo).
+#
+# Why: game servers hibernate; a backup pod that requires co-location with the (absent) server
+# pod pends forever, and `concurrencyPolicy: Forbid` then silently skips every later run (bit
+# all four hibernated games 2026-07-07..09). Nothing writes the PVC while the server is down,
+# so skipping backups during hibernation loses nothing — the CronJob just needs to be OFF.
+#
+# Naming contract: the target CronJob is `<app>-pbs-backup`, where `<app>` is the StatefulSet's
+# `spec.selector.matchLabels.app` (all game backup CronJobs follow this; e.g. STS selector
+# app=valheim -> CronJob valheim-pbs-backup, in every valheim-* namespace).
+#
+# `spec.suspend` is intentionally ABSENT from the CronJob manifests in git: Flux's server-side
+# apply only owns fields present in the manifest, so this policy's writes to suspend survive
+# Flux reconciles instead of being reverted.
+#
+# RBAC: the background controller mutates existing CronJobs cluster-wide — see
+# kyverno-clusterrole-suspend-pbs-backup.yaml (same literal-namespace SAR reasoning as the
+# clone-pbs-encryption-keyfile ClusterRole).
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: suspend-pbs-backup-when-hibernated
+  annotations:
+    policies.kyverno.io/title: Suspend PBS backup CronJobs while the app StatefulSet is scaled to 0
+    policies.kyverno.io/category: PBS
+    policies.kyverno.io/severity: low
+spec:
+  rules:
+  - name: suspend-on-scale-to-zero
+    match:
+      any:
+      - resources:
+          kinds:
+          - StatefulSet
+          operations:
+          - CREATE
+          - UPDATE
+          namespaceSelector:
+            matchLabels:
+              pbs.wsh.no/suspend-backup-when-hibernated: "true"
+    preconditions:
+      all:
+      - key: "{{ request.object.spec.replicas }}"
+        operator: Equals
+        value: 0
+    mutate:
+      mutateExistingOnPolicyUpdate: true
+      targets:
+      - apiVersion: batch/v1
+        kind: CronJob
+        namespace: "{{ request.object.metadata.namespace }}"
+        name: "{{ request.object.spec.selector.matchLabels.app }}-pbs-backup"
+      patchStrategicMerge:
+        spec:
+          suspend: true
+  - name: resume-on-scale-up
+    match:
+      any:
+      - resources:
+          kinds:
+          - StatefulSet
+          operations:
+          - CREATE
+          - UPDATE
+          namespaceSelector:
+            matchLabels:
+              pbs.wsh.no/suspend-backup-when-hibernated: "true"
+    preconditions:
+      all:
+      - key: "{{ request.object.spec.replicas }}"
+        operator: GreaterThan
+        value: 0
+    mutate:
+      mutateExistingOnPolicyUpdate: true
+      targets:
+      - apiVersion: batch/v1
+        kind: CronJob
+        namespace: "{{ request.object.metadata.namespace }}"
+        name: "{{ request.object.spec.selector.matchLabels.app }}-pbs-backup"
+      patchStrategicMerge:
+        spec:
+          suspend: false
