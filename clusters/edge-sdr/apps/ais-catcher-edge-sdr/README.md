@@ -48,6 +48,24 @@ To rotate, replace the Secret (e.g. delete and recreate, or `kubectl create secr
 
 Do **not** commit files that contain real credentials. Use the commands above, Sealed Secrets, SOPS, or External Secrets instead.
 
+## Reciprocal feed sharing (AISHub, AIS-catcher community)
+
+Share your decodes back to public aggregators the same way as ShipXplorer — extra AIS-catcher CLI flags in **`EXTRA_ARGS`** on the `ais-catcher-secret`. These are **user-side secret edits**, never committed: recreate the Secret with the pattern above (combine multiple outputs in one `EXTRA_ARGS` string).
+
+| Service | Flag | Notes |
+| --- | --- | --- |
+| **ShipXplorer** | `-u <host> <port> <key>` | Three-part UDP feed: host, port, **and** the station key (as in the Secret examples above). |
+| **AISHub** | `-u <assigned-host> <assigned-port>` | AISHub assigns you a **personal UDP host + port** after you register the station at [aishub.net](https://www.aishub.net/); there is **no key** in the `-u` line (unlike ShipXplorer). |
+| **AIS-catcher community** | `-X <sharing-key>` | Community sharing to [aiscatcher.org](https://aiscatcher.org/); the sharing key comes from registering the station there. Use a bare `-X` to share **anonymously** (no key). |
+
+Example — AISHub UDP output plus AIS-catcher community sharing, alongside the MQTT password (recreate to change these, then restart the Deployment so the new args are picked up):
+
+```bash
+kubectl create secret generic ais-catcher-secret -n ais-catcher-edge-sdr \
+  --from-literal=EXTRA_ARGS='-u AISHUB_HOST AISHUB_PORT -X YOUR_SHARING_KEY' \
+  --from-literal=MQTT_PASSWORD='YourAlphanumericPassword'
+```
+
 ## MQTT publishing
 
 AIS-catcher publishes each decoded message to the production **Mosquitto** broker so other apps can

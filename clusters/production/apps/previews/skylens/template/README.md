@@ -26,6 +26,11 @@ exchange) surface in the preview BEFORE a release tag. Still **no secrets, no mo
   replays the fixture baked into the image through the **real** ingest -> SignalR pipeline at 1 Hz, so
   there is no broker and no MQTT credentials. Gated on `Environment.IsDevelopment()`, which is why
   **`ASPNETCORE_ENVIRONMENT=Development` is REQUIRED** in `base/deployment.yaml`.
+- **`Mqtt__AisReplay=true` + `Mqtt__AisReplayFile=/app/fixtures/ais.jsonl`** — the same
+  `ReplayMqttTransport` also fans a captured AIS stream onto `ais/data` (~5 records/second), so the
+  **vessel** pipeline runs against canned data alongside the aircraft feed. Same `Development` gate and
+  still no broker. NOTE: the `ais.jsonl` fixture is baked by the skylens `Dockerfile`, so the **image
+  must be rebuilt** before a preview can replay AIS — an older image simply ignores these vars.
 - **`Auth__Disabled=false` is set EXPLICITLY** — the image's `appsettings.Development.json` bakes
   `Auth:Disabled=true`, so in Development merely omitting the variable silently re-enables DevAuth
   (anonymous `/api/me` returns 200). The explicit env-var false overrides the JSON and wires real

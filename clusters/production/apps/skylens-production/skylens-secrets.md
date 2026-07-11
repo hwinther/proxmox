@@ -14,6 +14,8 @@ kubectl -n skylens-production create secret generic skylens-secrets \
   --from-literal=OPENSKY__CLIENTSECRET='<opensky-oauth2-client-secret>' \
   --from-literal=ADSBX__RAPIDAPIKEY='<rapidapi-key>' \
   --from-literal=AEROAPI__APIKEY='<flightaware-aeroapi-key>' \
+  --from-literal=BarentsWatch__ClientId='<barentswatch-oauth2-client-id>' \
+  --from-literal=BarentsWatch__ClientSecret='<barentswatch-oauth2-client-secret>' \
   --from-literal=FEED__LAT='<home-latitude>' \
   --from-literal=FEED__LON='<home-longitude>' \
   --from-literal=FEED__RADIUSKM='300'
@@ -31,6 +33,8 @@ in `deployment.yaml`, not here.
 | `OPENSKY__CLIENTSECRET` | yes | The matching OAuth2 client secret from the OpenSky API portal. |
 | `ADSBX__RAPIDAPIKEY` | yes | RapidAPI account subscribed to the **ADSBExchange** API (host `adsbexchange-com1.p.rapidapi.com`); the `X-RapidAPI-Key`. |
 | `AEROAPI__APIKEY` | yes | FlightAware **AeroAPI** portal → API key (used for on-tap route lookups only). |
+| `BarentsWatch__ClientId` | no | BarentsWatch developer portal → OAuth2 client-credentials client (scope `ais`). Powers vessel away-mode + `/api/vessels/{mmsi}` enrichment (NLOD-licensed official Norwegian AIS). Unset = away-mode returns empty and detail falls back to the local feed — safe to deploy without. |
+| `BarentsWatch__ClientSecret` | no | The matching BarentsWatch client secret. |
 | `FEED__LAT` | yes | Home feed latitude. **Intentionally secret** (repo convention: precise home coordinates never go in git). |
 | `FEED__LON` | yes | Home feed longitude. **Intentionally secret** — same reason. |
 | `FEED__RADIUSKM` | yes | Home coverage radius in km (default `300`); beyond this the gateway falls back to ADSBx away-mode. |

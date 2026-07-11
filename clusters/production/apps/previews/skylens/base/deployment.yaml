@@ -93,6 +93,13 @@ spec:
           value: "true"
         - name: Mqtt__ReplayFile
           value: "/app/fixtures/aircraft.json"
+        # Replay a canned AIS stream (/app/fixtures/ais.jsonl, baked into the image) onto ais/data
+        # alongside the aircraft feed at ~5 records/second, so the vessel pipeline runs too — still no
+        # broker. Requires an image rebuilt with the baked ais.jsonl (Dockerfile) to have any effect.
+        - name: Mqtt__AisReplay
+          value: "true"
+        - name: Mqtt__AisReplayFile
+          value: "/app/fixtures/ais.jsonl"
         # MqttIngestService bails out before the replay transport when Mqtt:Host is empty
         # (MqttIngestService.cs) — any non-empty placeholder keeps the ingest loop alive; no broker
         # named "replay" exists or is contacted.

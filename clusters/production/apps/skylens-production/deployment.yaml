@@ -74,6 +74,10 @@ spec:
           value: "1883"
         - name: MQTT__TOPIC
           value: "adsb/aircraft"
+        # AIS vessel/AtoN stream from ais-catcher on the edge cluster; same broker + credentials as the
+        # aircraft feed above (MqttIngestService subscribes both topics on the one connection).
+        - name: MQTT__AISTOPIC
+          value: "ais/data"
         # ADSBx via RapidAPI (away-mode point-radius enrichment); key is secret.
         - name: ADSBX__RAPIDAPIHOST
           value: "adsbexchange-com1.p.rapidapi.com"
