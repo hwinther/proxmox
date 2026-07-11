@@ -9,4 +9,5 @@
 # creates/extends the resources list as previews are deployed.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-resources: []
+resources:
+  - pr-21
