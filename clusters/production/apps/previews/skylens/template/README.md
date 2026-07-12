@@ -31,6 +31,11 @@ exchange) surface in the preview BEFORE a release tag. Still **no secrets, no mo
   **vessel** pipeline runs against canned data alongside the aircraft feed. Same `Development` gate and
   still no broker. NOTE: the `ais.jsonl` fixture is baked by the skylens `Dockerfile`, so the **image
   must be rebuilt** before a preview can replay AIS — an older image simply ignores these vars.
+- **`Satellites__TleFile=/app/fixtures/tle.json` + `Satellites__TransmittersFile=/app/fixtures/transmitters.json`**
+  — the satellite domain loads these baked public-data fixtures instead of fetching live. Previews
+  **must never fetch from CelesTrak** — ephemeral, parallel previews would hammer it and risk a
+  usage-policy/IP-firewall block. Development loads the fixtures, so — like the `ais.jsonl` above —
+  the **image must be rebuilt** to bake `tle.json` + `transmitters.json` or these vars have no effect.
 - **`Auth__Disabled=false` is set EXPLICITLY** — the image's `appsettings.Development.json` bakes
   `Auth:Disabled=true`, so in Development merely omitting the variable silently re-enables DevAuth
   (anonymous `/api/me` returns 200). The explicit env-var false overrides the JSON and wires real

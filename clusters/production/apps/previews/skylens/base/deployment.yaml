@@ -100,6 +100,15 @@ spec:
           value: "true"
         - name: Mqtt__AisReplayFile
           value: "/app/fixtures/ais.jsonl"
+        # Satellites domain: load the baked public-data fixtures (/app/fixtures/tle.json +
+        # transmitters.json) instead of fetching live. Previews MUST NEVER fetch from CelesTrak —
+        # ephemeral, parallel previews would hammer it and risk a usage-policy/IP-firewall block.
+        # Development-gated like the replay vars above; requires an image rebuilt to bake these
+        # fixtures (Dockerfile) — an older image ignores these vars.
+        - name: Satellites__TleFile
+          value: "/app/fixtures/tle.json"
+        - name: Satellites__TransmittersFile
+          value: "/app/fixtures/transmitters.json"
         # MqttIngestService bails out before the replay transport when Mqtt:Host is empty
         # (MqttIngestService.cs) — any non-empty placeholder keeps the ingest loop alive; no broker
         # named "replay" exists or is contacted.

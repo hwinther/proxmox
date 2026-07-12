@@ -86,6 +86,14 @@ spec:
           value: "100"
         - name: ADSBX__MONTHLYBUDGET
           value: "10000"
+        # Satellites domain (no env needed — appsettings.json ships the production defaults): the
+        # backend lazily fetches CelesTrak GP JSON (7 groups, 2h snapshot cache) and SatNOGS
+        # transmitters (24h cache) to drive the satellite overlay. Both are KEYLESS — no secret. A
+        # strict abort-on-error + backoff honours CelesTrak's usage policy (its firewall blocks abusive
+        # IPs), which is also why previews use baked fixtures instead of fetching (base/deployment.yaml).
+        # Optional tuning knobs: SATELLITES__CELESTRAKDAILYBUDGET / SATELLITES__SATNOGSDAILYBUDGET.
+        # Outbound fetches leave via the existing external-HTTPS 443 egress (networkpolicies.yaml,
+        # ipBlock 0.0.0.0/0) — no new netpol rule required.
         - name: OTEL_SERVICE_NAME
           value: "skylens-api"
         - name: OTEL_EXPORTER_OTLP_ENDPOINT

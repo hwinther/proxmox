@@ -39,6 +39,15 @@ in `deployment.yaml`, not here.
 | `FEED__LON` | yes | Home feed longitude. **Intentionally secret** — same reason. |
 | `FEED__RADIUSKM` | yes | Home coverage radius in km (default `300`); beyond this the gateway falls back to ADSBx away-mode. |
 
+## Satellites domain (no secrets)
+
+The satellite overlay's data sources are **keyless** — there is nothing to add to `skylens-secrets`.
+The backend fetches TLE/GP orbital data from **CelesTrak** and radio-transmitter metadata from
+**SatNOGS** over anonymous HTTPS; neither has or needs an API key. In Development/previews these are
+replaced by baked fixtures (`Satellites__TleFile` / `Satellites__TransmittersFile`, see the preview
+`base/deployment.yaml`); Production fetches live with the `appsettings.json` defaults. SatNOGS data
+is licensed **CC BY-SA**, and the required attribution is shown in the app UI / README.
+
 ## mosquitto `skylens` user
 
 The broker runs `allow_anonymous false` + `password_file`. Add a `skylens` user to that passwd file
