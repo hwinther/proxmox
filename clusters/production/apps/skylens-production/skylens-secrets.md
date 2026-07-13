@@ -1,8 +1,9 @@
 # skylens secrets & prerequisites
 
-`skylens-api` needs an MQTT login for the in-cluster broker, three third-party enrichment API
-credentials, and the home feed coordinates. None of these are committed to git — they all live in
-the `skylens-secrets` Secret, consumed via `envFrom` in `deployment.yaml`.
+`skylens-api` needs an MQTT login for the in-cluster broker, several third-party enrichment API
+credentials (aircraft: OpenSky, ADSBExchange, AeroAPI; maritime: BarentsWatch AIS + the separate
+FiskInfo "extended" client), and the home feed coordinates. None of these are committed to git — they
+all live in the `skylens-secrets` Secret, consumed via `envFrom` in `deployment.yaml`.
 
 ## `skylens-secrets` Secret (create out-of-band)
 
@@ -16,6 +17,8 @@ kubectl -n skylens-production create secret generic skylens-secrets \
   --from-literal=AEROAPI__APIKEY='<flightaware-aeroapi-key>' \
   --from-literal=BarentsWatch__ClientId='<barentswatch-oauth2-client-id>' \
   --from-literal=BarentsWatch__ClientSecret='<barentswatch-oauth2-client-secret>' \
+  --from-literal=FiskInfo__ClientId='<barentswatch-extended-oauth2-client-id>' \
+  --from-literal=FiskInfo__ClientSecret='<barentswatch-extended-oauth2-client-secret>' \
   --from-literal=FEED__LAT='<home-latitude>' \
   --from-literal=FEED__LON='<home-longitude>' \
   --from-literal=FEED__RADIUSKM='300'
@@ -35,9 +38,36 @@ in `deployment.yaml`, not here.
 | `AEROAPI__APIKEY` | yes | FlightAware **AeroAPI** portal → API key (used for on-tap route lookups only). |
 | `BarentsWatch__ClientId` | no | BarentsWatch developer portal → OAuth2 client-credentials client (scope `ais`). Powers vessel away-mode + `/api/vessels/{mmsi}` enrichment (NLOD-licensed official Norwegian AIS). Unset = away-mode returns empty and detail falls back to the local feed — safe to deploy without. |
 | `BarentsWatch__ClientSecret` | no | The matching BarentsWatch client secret. |
+| `FiskInfo__ClientId` | no | A **second, separate** BarentsWatch OAuth2 client-credentials client — the "extended" API (scope `api`, not `ais`). Powers the fishing layers: `/api/fishing/zones` (cod boundaries / forbidden / zero areas), `/api/fishing/lost-gear`, and NOR/NIS ship-register enrichment folded into `/api/vessels/{mmsi}`. Unset = those endpoints return `200` with an empty list + a `fiskinfo-unconfigured` note (the map layers degrade to "nothing to show") — safe to deploy without. |
+| `FiskInfo__ClientSecret` | no | The matching client secret for the extended (FiskInfo) client. |
 | `FEED__LAT` | yes | Home feed latitude. **Intentionally secret** (repo convention: precise home coordinates never go in git). |
 | `FEED__LON` | yes | Home feed longitude. **Intentionally secret** — same reason. |
 | `FEED__RADIUSKM` | yes | Home coverage radius in km (default `300`); beyond this the gateway falls back to ADSBx away-mode. |
+
+The non-secret FiskInfo config (`Scope: api`, `BaseUrl: https://www.barentswatch.no/bwapi`,
+`DailyBudget: 500`) ships as defaults in `appsettings.json` — only the two credential keys go in the
+Secret. The client fails **closed**: over budget / token failure / upstream error yields an empty
+result with a reason, never a throw.
+
+### Activating FiskInfo on an already-running deployment
+
+The Secret already exists, so add just the two keys without disturbing the rest (a strategic-merge
+patch on `stringData` is base64-encoded and merged server-side, leaving every other key intact):
+
+```bash
+kubectl -n skylens-production patch secret skylens-secrets --type merge -p '{"stringData":{
+  "FiskInfo__ClientId":"<extended-client-id>",
+  "FiskInfo__ClientSecret":"<extended-client-secret>"}}'
+```
+
+`envFrom` only reads the Secret at pod start, so roll the deployment to pick the new keys up:
+
+```bash
+kubectl -n skylens-production rollout restart deployment/skylens-api
+```
+
+Then confirm from the app (the `/api/fishing/*` endpoints are JWT-gated, so verify signed-in): the
+fishing-zone / lost-gear layers populate and the `fiskinfo-unconfigured` note disappears.
 
 ## Satellites domain (no secrets)
 
