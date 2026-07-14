@@ -316,6 +316,18 @@ spec:
             key:
               path: /secrets/authelia-oidc-jwks/oidc-jwk-rsa.pem
           # kube-apiserver reads group membership from the ID token JWT (--oidc-groups-claim), not UserInfo.
+          # Custom token lifespans, referenced per-client via `lifespan:`. The `offline-app` profile
+          # exists because offline_access clients (skylens) hit the OIDC-spec rule that a refresh-token
+          # grant ALWAYS requires explicit consent — pre-configured/implicit consent modes cannot skip
+          # it. The consent screen therefore appears on every full sign-in, and with Authelia's default
+          # 90-MINUTE refresh-token lifespan that meant a fresh sign-in (+ consent) after any idle gap.
+          # A 90-day rotating refresh token makes full sign-ins (and thus consent) a ~quarterly event.
+          lifespans:
+            custom:
+              offline-app:
+                access_token: 1 hour
+                id_token: 1 hour
+                refresh_token: 90 days
           claims_policies:
             headlamp-kube-apiserver:
               id_token:
@@ -549,6 +561,9 @@ spec:
             pkce_challenge_method: S256
             claims_policy: skylens
             authorization_policy: two_factor
+            # NOTE: offline_access forces explicit consent per spec — pre-configured never matches for
+            # this client. The `offline-app` lifespan (90-day refresh token) is what makes sign-ins rare.
+            lifespan: offline-app
             consent_mode: pre-configured
             pre_configured_consent_duration: 1 year
             audience:
