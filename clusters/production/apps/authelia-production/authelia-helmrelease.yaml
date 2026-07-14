@@ -267,11 +267,17 @@ spec:
             - token
             - userinfo
             # Also allow the origin of every registered client redirect URI (all first-party apps).
-            # This is what lets browser-side PKCE token exchange work from skylens.wsh.no, the
-            # skylens-<N>.preview.wsh.no preview hosts, and localhost dev servers without hand-
-            # maintaining a matching origin entry for each redirect URI below.
+            # This is what lets browser-side PKCE token exchange work from skylens.wsh.no and the
+            # skylens-<N>.preview.wsh.no preview hosts. NOTE: the derivation EXCLUDES localhost
+            # hostnames by design (Authelia docs), so localhost dev servers each need an explicit
+            # allowed_origins entry below — a redirect_uri alone is not enough for the token fetch.
             allowed_origins_from_client_redirect_uris: true
             allowed_origins:
+            # Localhost dev servers (excluded from the redirect-URI derivation above):
+            # skylens swagger (dotnet :5000 / docker :8080) and expo web (:8081).
+            - http://localhost:5000
+            - http://localhost:8080
+            - http://localhost:8081
             - https://rabbitmq.mgmt.wsh.no
             - https://headlamp.mgmt.wsh.no
             - https://headlamp.mgmt-edge-sdr.wsh.no
