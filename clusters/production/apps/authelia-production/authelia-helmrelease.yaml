@@ -631,6 +631,39 @@ spec:
             - email
             - groups
             - offline_access
+          # Skylens API Swagger UI — the docs page's Authorize button (authorization-code + PKCE from
+          # the swagger-ui oauth2-redirect page). Deliberately NO offline_access: swagger never
+          # refreshes, and without a refresh-token grant `consent_mode: implicit` is actually honored
+          # (offline_access would force an explicit consent screen per OIDC spec — see the skylens
+          # client note). Same RS256/aud=skylens-api token shape as the app client so the backend's
+          # JwtBearer accepts swagger-issued tokens unchanged.
+          - client_id: skylens-swagger
+            client_name: Skylens API docs (Swagger UI)
+            public: true
+            require_pkce: true
+            pkce_challenge_method: S256
+            claims_policy: skylens
+            authorization_policy: two_factor
+            consent_mode: implicit
+            audience:
+            - skylens-api
+            requested_audience_mode: implicit
+            access_token_signed_response_alg: RS256
+            access_token_signed_response_key_id: authelia-headlamp
+            grant_types:
+            - authorization_code
+            response_types:
+            - code
+            redirect_uris:
+            # Local dev: launchSettings binds :5000 (dotnet run); :8080 is the docker/README port.
+            - http://localhost:5000/swagger/oauth2-redirect.html
+            - http://localhost:8080/swagger/oauth2-redirect.html
+            - https://skylens.wsh.no/swagger/oauth2-redirect.html
+            scopes:
+            - openid
+            - profile
+            - email
+            - groups
           # ClutterStock — SPA + API + Swashbuckle; public client + PKCE, refresh via offline_access.
           # access_token is a signed RFC 9068 JWT (aud=clutterstock-api) so .NET JwtBearer validates it
           # directly against /api/oidc/jwks.json without introspection.
