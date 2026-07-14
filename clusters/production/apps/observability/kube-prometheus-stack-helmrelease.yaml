@@ -179,7 +179,11 @@ spec:
           client_id: grafana
           use_pkce: true
           use_id_token: true
-          scopes: openid profile email groups offline_access
+          # No offline_access: grafana never set use_refresh_token, so the refresh token went unused —
+          # while requesting it forced an explicit Authelia consent screen on every sign-in (OIDC spec:
+          # refresh-token grants can never use pre-configured consent). Without it the stored consent
+          # matches again and OAuth sign-ins are silent.
+          scopes: openid profile email groups
           auth_url: https://auth.wsh.no/api/oidc/authorization
           token_url: https://auth.wsh.no/api/oidc/token
           api_url: https://auth.wsh.no/api/oidc/userinfo
