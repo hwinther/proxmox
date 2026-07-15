@@ -594,43 +594,59 @@ spec:
             # redirect URIs (no wildcards, deliberate security stance), so pre-register a window of
             # upcoming PR numbers; extend it (or teach the preview upsert workflow to patch this
             # list) when the repo's PR/issue counter approaches the end of the window.
-            - https://skylens-14.preview.wsh.no/oauth
-            - https://skylens-15.preview.wsh.no/oauth
-            - https://skylens-16.preview.wsh.no/oauth
-            - https://skylens-17.preview.wsh.no/oauth
-            - https://skylens-18.preview.wsh.no/oauth
-            - https://skylens-19.preview.wsh.no/oauth
-            - https://skylens-20.preview.wsh.no/oauth
-            - https://skylens-21.preview.wsh.no/oauth
-            - https://skylens-22.preview.wsh.no/oauth
-            - https://skylens-23.preview.wsh.no/oauth
-            - https://skylens-24.preview.wsh.no/oauth
-            - https://skylens-25.preview.wsh.no/oauth
-            - https://skylens-26.preview.wsh.no/oauth
-            - https://skylens-27.preview.wsh.no/oauth
-            - https://skylens-28.preview.wsh.no/oauth
-            - https://skylens-29.preview.wsh.no/oauth
-            - https://skylens-30.preview.wsh.no/oauth
-            - https://skylens-31.preview.wsh.no/oauth
-            - https://skylens-32.preview.wsh.no/oauth
-            - https://skylens-33.preview.wsh.no/oauth
-            - https://skylens-34.preview.wsh.no/oauth
-            - https://skylens-35.preview.wsh.no/oauth
-            - https://skylens-36.preview.wsh.no/oauth
-            - https://skylens-37.preview.wsh.no/oauth
-            - https://skylens-38.preview.wsh.no/oauth
-            - https://skylens-39.preview.wsh.no/oauth
-            - https://skylens-40.preview.wsh.no/oauth
-            - https://skylens-41.preview.wsh.no/oauth
-            - https://skylens-42.preview.wsh.no/oauth
-            - https://skylens-43.preview.wsh.no/oauth
-            - https://skylens-44.preview.wsh.no/oauth
-            - https://skylens-45.preview.wsh.no/oauth
-            - https://skylens-46.preview.wsh.no/oauth
-            - https://skylens-47.preview.wsh.no/oauth
-            - https://skylens-48.preview.wsh.no/oauth
-            - https://skylens-49.preview.wsh.no/oauth
-            - https://skylens-50.preview.wsh.no/oauth
+            # Window currently 51..100 — PR #51 outran the original 14..50 end on 2026-07-15
+            # (sign-in on the preview failed with an unregistered-redirect_uri error);
+            # closed-PR entries below the current counter are pruned when extending.
+            - https://skylens-51.preview.wsh.no/oauth
+            - https://skylens-52.preview.wsh.no/oauth
+            - https://skylens-53.preview.wsh.no/oauth
+            - https://skylens-54.preview.wsh.no/oauth
+            - https://skylens-55.preview.wsh.no/oauth
+            - https://skylens-56.preview.wsh.no/oauth
+            - https://skylens-57.preview.wsh.no/oauth
+            - https://skylens-58.preview.wsh.no/oauth
+            - https://skylens-59.preview.wsh.no/oauth
+            - https://skylens-60.preview.wsh.no/oauth
+            - https://skylens-61.preview.wsh.no/oauth
+            - https://skylens-62.preview.wsh.no/oauth
+            - https://skylens-63.preview.wsh.no/oauth
+            - https://skylens-64.preview.wsh.no/oauth
+            - https://skylens-65.preview.wsh.no/oauth
+            - https://skylens-66.preview.wsh.no/oauth
+            - https://skylens-67.preview.wsh.no/oauth
+            - https://skylens-68.preview.wsh.no/oauth
+            - https://skylens-69.preview.wsh.no/oauth
+            - https://skylens-70.preview.wsh.no/oauth
+            - https://skylens-71.preview.wsh.no/oauth
+            - https://skylens-72.preview.wsh.no/oauth
+            - https://skylens-73.preview.wsh.no/oauth
+            - https://skylens-74.preview.wsh.no/oauth
+            - https://skylens-75.preview.wsh.no/oauth
+            - https://skylens-76.preview.wsh.no/oauth
+            - https://skylens-77.preview.wsh.no/oauth
+            - https://skylens-78.preview.wsh.no/oauth
+            - https://skylens-79.preview.wsh.no/oauth
+            - https://skylens-80.preview.wsh.no/oauth
+            - https://skylens-81.preview.wsh.no/oauth
+            - https://skylens-82.preview.wsh.no/oauth
+            - https://skylens-83.preview.wsh.no/oauth
+            - https://skylens-84.preview.wsh.no/oauth
+            - https://skylens-85.preview.wsh.no/oauth
+            - https://skylens-86.preview.wsh.no/oauth
+            - https://skylens-87.preview.wsh.no/oauth
+            - https://skylens-88.preview.wsh.no/oauth
+            - https://skylens-89.preview.wsh.no/oauth
+            - https://skylens-90.preview.wsh.no/oauth
+            - https://skylens-91.preview.wsh.no/oauth
+            - https://skylens-92.preview.wsh.no/oauth
+            - https://skylens-93.preview.wsh.no/oauth
+            - https://skylens-94.preview.wsh.no/oauth
+            - https://skylens-95.preview.wsh.no/oauth
+            - https://skylens-96.preview.wsh.no/oauth
+            - https://skylens-97.preview.wsh.no/oauth
+            - https://skylens-98.preview.wsh.no/oauth
+            - https://skylens-99.preview.wsh.no/oauth
+            - https://skylens-100.preview.wsh.no/oauth
             scopes:
             - openid
             - profile
