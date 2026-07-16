@@ -115,6 +115,15 @@ configMapGenerator:
     disableNameSuffixHash: true
     labels:
       grafana_dashboard: "1"
+# SDR reception stats (ADS-B via dump1090-exporter sidecar, AIS via AIS-catcher PROME) —
+# remote-written from prometheus-agent-edge-sdr, so history survives receiver pod restarts.
+- name: grafana-dashboard-sdr-reception
+  files:
+  - dashboards/sdr-reception.json
+  options:
+    disableNameSuffixHash: true
+    labels:
+      grafana_dashboard: "1"
 # Disk SMART health/wear (smartctl_exporter on the PVE hosts).
 - name: grafana-dashboard-disk-health
   files:

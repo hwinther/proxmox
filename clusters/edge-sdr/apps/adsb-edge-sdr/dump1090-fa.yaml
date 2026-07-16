@@ -82,6 +82,49 @@ spec:
           limits:
             cpu: "1"
             memory: 384Mi
+      # Prometheus exporter sidecar: reads stats.json/aircraft.json from the shared
+      # dump1090-run volume and serves reception metrics (message rate, aircraft counts,
+      # max range, signal levels) on :9105 — scraped by prometheus-agent-edge-sdr and
+      # remote-written to production Prometheus, so history survives pod restarts.
+      # TODO: digest-pin after the first wsh-rtl-sdr 0.6.0 image build publishes.
+      - name: dump1090-exporter
+        image: ghcr.io/hwinther/wsh-rtl-sdr/dump1090-exporter:0.6.0
+        imagePullPolicy: IfNotPresent
+        # LAT/LON for max-range calculation (Secret overrides ConfigMap with precise coords).
+        envFrom:
+        - configMapRef:
+            name: adsb-env
+        - secretRef:
+            name: adsb-secret
+            optional: true
+        ports:
+        - name: metrics
+          containerPort: 9105
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: metrics
+          initialDelaySeconds: 10
+          periodSeconds: 15
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 65534
+          runAsGroup: 65534
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: dump1090-run
+          mountPath: /run/dump1090-fa
+          readOnly: true
+        resources:
+          requests:
+            cpu: 20m
+            memory: 48Mi
+          limits:
+            memory: 128Mi
       volumes:
       - name: dev-bus-usb
         hostPath:
@@ -119,3 +162,6 @@ spec:
   - name: beast-in-b
     port: 30104
     targetPort: 30104
+  - name: metrics
+    port: 9105
+    targetPort: metrics

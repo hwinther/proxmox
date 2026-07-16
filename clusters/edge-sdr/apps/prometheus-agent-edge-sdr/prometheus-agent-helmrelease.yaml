@@ -140,3 +140,52 @@ spec:
           - source_labels: [ __meta_kubernetes_service_name ]
             action: replace
             target_label: kubernetes_name
+        # SDR reception metrics for the Grafana "SDR Reception" dashboard (sdr-reception.json in
+        # observability). Same instance→node-hostname rewrite as node-exporter above so series
+        # survive pod rescheduling. AIS-catcher serves /metrics natively (`-N PROME on`, image
+        # ≥0.6.0); dump1090 metrics come from the dump1090-exporter sidecar on :9105.
+        - job_name: ais-catcher
+          kubernetes_sd_configs:
+          - role: endpoints
+            namespaces:
+              names:
+              - ais-catcher-edge-sdr
+          relabel_configs:
+          - source_labels: [ __meta_kubernetes_service_name ]
+            action: keep
+            regex: ais-catcher
+          - source_labels: [ __meta_kubernetes_endpoint_port_name ]
+            action: keep
+            regex: http
+          - source_labels: [ __meta_kubernetes_pod_node_name ]
+            action: replace
+            target_label: node
+          - source_labels: [ __meta_kubernetes_pod_node_name ]
+            action: replace
+            target_label: instance
+          metric_relabel_configs:
+          # ais_msg_level / ais_msg_ppm carry per-message labels incl. mmsi — unbounded series
+          # cardinality (one per ship seen). Drop before remote_write; the aggregate ais_stat_*
+          # metrics (count, per-type, per-channel, max distance) cover the dashboard.
+          - source_labels: [ __name__ ]
+            action: drop
+            regex: ais_msg_(level|ppm)
+        - job_name: dump1090
+          kubernetes_sd_configs:
+          - role: endpoints
+            namespaces:
+              names:
+              - adsb-edge-sdr
+          relabel_configs:
+          - source_labels: [ __meta_kubernetes_service_name ]
+            action: keep
+            regex: dump1090-fa
+          - source_labels: [ __meta_kubernetes_endpoint_port_name ]
+            action: keep
+            regex: metrics
+          - source_labels: [ __meta_kubernetes_pod_node_name ]
+            action: replace
+            target_label: node
+          - source_labels: [ __meta_kubernetes_pod_node_name ]
+            action: replace
+            target_label: instance
