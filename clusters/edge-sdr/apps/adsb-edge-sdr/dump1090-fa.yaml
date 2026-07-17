@@ -86,9 +86,8 @@ spec:
       # dump1090-run volume and serves reception metrics (message rate, aircraft counts,
       # max range, signal levels) on :9105 — scraped by prometheus-agent-edge-sdr and
       # remote-written to production Prometheus, so history survives pod restarts.
-      # TODO: digest-pin after the first wsh-rtl-sdr 0.6.0 image build publishes.
       - name: dump1090-exporter
-        image: ghcr.io/hwinther/wsh-rtl-sdr/dump1090-exporter:0.6.0
+        image: ghcr.io/hwinther/wsh-rtl-sdr/dump1090-exporter:0.6.0@sha256:d3b24a89d73bfc143762d40cd254d1dc20a5edda9bf042ee9e69b41f46deebbe
         imagePullPolicy: IfNotPresent
         # LAT/LON for max-range calculation (Secret overrides ConfigMap with precise coords).
         envFrom:

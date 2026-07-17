@@ -44,8 +44,7 @@ spec:
       - name: ais-catcher
         # 0.6.0 adds `-N PROME on`: Prometheus metrics at :8080/metrics (message counts by
         # type/channel, signal level, max distance), scraped by prometheus-agent-edge-sdr.
-        # TODO: digest-pin after the first wsh-rtl-sdr 0.6.0 image build publishes.
-        image: ghcr.io/hwinther/wsh-rtl-sdr/ais-catcher:0.6.0
+        image: ghcr.io/hwinther/wsh-rtl-sdr/ais-catcher:0.6.0@sha256:e47c294d406503885560099faba80e4d1eb3e96b96bbd9156e1728d8fd10a168
         imagePullPolicy: IfNotPresent
         # ConfigMap first, then Secret: same key in both → Secret wins (good for API keys / EXTRA_ARGS).
         # Create Secret manually (or ExternalSecrets / SOPS); optional so the pod runs without it.
