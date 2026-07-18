@@ -665,7 +665,8 @@
           "color": {
             "mode": "palette-classic"
           },
-          "decimals": 1
+          "decimals": 1,
+          "unit": "suffix: nmi"
         },
         "overrides": []
       },
@@ -692,7 +693,7 @@
           "instant": false
         }
       ],
-      "description": "High-water mark since AIS-catcher started (unit as reported by AIS-catcher \u2014 verify nm vs km against the web UI on first data)."
+      "description": "High-water mark since AIS-catcher started. Nautical miles \u2014 AIS-catcher's DB::getDistanceAndBearing converts km to nmi (\u00d70.5399568) before reporting."
     },
     {
       "id": 22,
@@ -952,7 +953,8 @@
               "group": "A"
             }
           },
-          "min": 0
+          "min": 0,
+          "unit": "suffix: nmi"
         },
         "overrides": []
       },
@@ -974,11 +976,11 @@
             "uid": "prometheus"
           },
           "expr": "ais_stat_distance{job=\"ais-catcher\"}",
-          "legendFormat": "{{instance}}",
+          "legendFormat": "{{node}}",
           "refId": "A"
         }
       ],
-      "description": "Resets to 0 when the pod restarts; use the panel max or a max_over_time query for all-time range."
+      "description": "Nautical miles (AIS-catcher converts km to nmi internally). Resets to 0 when the pod restarts; use the panel max or a max_over_time query for all-time range."
     }
   ],
   "templating": {
