@@ -23,7 +23,7 @@
   },
   "homepage": "https://github.com/hwinther/proxmox#readme",
   "devDependencies": {
-    "prettier": "^3.9.1"
+    "prettier": "^3.9.5"
   },
   "dependencies": {
   }
