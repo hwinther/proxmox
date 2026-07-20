@@ -42,7 +42,7 @@ spec:
                 - "true"
       containers:
       - name: piaware
-        image: ghcr.io/hwinther/wsh-rtl-sdr/piaware:0.5.0@sha256:33a93f97ebf9abd4a3dbac66f92deb76d5f12e6b335c3ad2a2b38d02bb8f85a2
+        image: ghcr.io/hwinther/wsh-rtl-sdr/piaware:0.6.0@sha256:043daf57cc011e7ff6b6542db2d8c863b5c0dd57bf2a25173a8bf7b9ff2d2b36
         imagePullPolicy: IfNotPresent
         # env after envFrom so RECEIVER_* / MLAT_* override any accidental ConfigMap keys.
         envFrom:
