@@ -112,7 +112,7 @@ spec:
                 - "true"
       containers:
       - name: fr24
-        image: ghcr.io/hwinther/wsh-rtl-sdr/fr24:0.5.0@sha256:3c570d01d91c8c9292e734caffd50c1460b6bf9b63aabc0d574c29b91d1351db
+        image: ghcr.io/hwinther/wsh-rtl-sdr/fr24:0.6.0@sha256:67ed426f312cf832c30a838276f0f7af8d0a95fa3b2347cd13790d33786049f6
         imagePullPolicy: IfNotPresent
         # env after envFrom so RECEIVER_* overrides if those keys ever appear in the Secret.
         envFrom:
