@@ -42,7 +42,7 @@ spec:
                 - "true"
       containers:
       - name: piaware
-        image: ghcr.io/hwinther/wsh-rtl-sdr/piaware:0.5.0@sha256:33a93f97ebf9abd4a3dbac66f92deb76d5f12e6b335c3ad2a2b38d02bb8f85a2
+        image: ghcr.io/hwinther/wsh-rtl-sdr/piaware:0.6.0@sha256:043daf57cc011e7ff6b6542db2d8c863b5c0dd57bf2a25173a8bf7b9ff2d2b36
         imagePullPolicy: IfNotPresent
         # env after envFrom so RECEIVER_* / MLAT_* override any accidental ConfigMap keys.
         envFrom:
@@ -112,7 +112,7 @@ spec:
                 - "true"
       containers:
       - name: fr24
-        image: ghcr.io/hwinther/wsh-rtl-sdr/fr24:0.5.0@sha256:3c570d01d91c8c9292e734caffd50c1460b6bf9b63aabc0d574c29b91d1351db
+        image: ghcr.io/hwinther/wsh-rtl-sdr/fr24:0.6.0@sha256:67ed426f312cf832c30a838276f0f7af8d0a95fa3b2347cd13790d33786049f6
         imagePullPolicy: IfNotPresent
         # env after envFrom so RECEIVER_* overrides if those keys ever appear in the Secret.
         envFrom:
@@ -176,7 +176,7 @@ spec:
                 - "true"
       containers:
       - name: adsbexchange
-        image: ghcr.io/hwinther/wsh-rtl-sdr/adsbexchange:0.5.0@sha256:1e3c50b03195326d17c033bed72217d0da06387e716bbfd97cb5f16a671b9038
+        image: ghcr.io/hwinther/wsh-rtl-sdr/adsbexchange:0.6.0@sha256:d80ce8784fa7055c11c85c6ffdeb912e13170891186afa916c71426895412662
         imagePullPolicy: IfNotPresent
         envFrom:
         - configMapRef:
@@ -234,7 +234,7 @@ spec:
                 - "true"
       containers:
       - name: opensky
-        image: ghcr.io/hwinther/wsh-rtl-sdr/opensky:0.5.0@sha256:9509a4755512c511543cd45eef285b0c4023cbbf75a9e30a8704c3afe93d2ddb
+        image: ghcr.io/hwinther/wsh-rtl-sdr/opensky:0.6.0@sha256:d021c1150b1e012e1d18120d0ff0c1bdbe3ee959e841139e0db940622be8e82c
         imagePullPolicy: IfNotPresent
         envFrom:
         - configMapRef:
