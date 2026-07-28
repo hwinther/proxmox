@@ -85,7 +85,9 @@ spec:
       # Pinned to the `latest` digest (post-v0.11.2 code) to test a fix for the CVE drill-down crash
       # "Cannot read properties of undefined (reading 'imageScan')" against operator chart 1.40.2.
       # v0.11.2 is the newest *released* tag and still crashes; revert to :v0.11.2 if latest misbehaves.
-      image: quay.io/kubescape/headlamp-plugin@sha256:f1c0aab3313a465771fe195c407b24624ec53d76a4e7b09d8d9634d615f8db9e
+      # NOTE: quay garbage-collects superseded `latest` digests (the 2026-07 pin went 404 after ~33h
+      # of ImagePullBackOff), so this pin rots whenever upstream pushes — re-resolve or pin a tag.
+      image: quay.io/kubescape/headlamp-plugin@sha256:6ee96816f9ac2bc81f9b56d8fc74b89fe9f81578610edecfd1b30cba69757273
       imagePullPolicy: IfNotPresent
       command:
       - /bin/sh
