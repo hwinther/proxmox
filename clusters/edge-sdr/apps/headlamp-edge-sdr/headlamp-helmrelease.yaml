@@ -66,7 +66,7 @@ spec:
         usePKCE: true
     initContainers:
     - name: headlamp-plugins
-      image: ghcr.io/headlamp-k8s/headlamp-plugin-flux:v0.6.0
+      image: ghcr.io/headlamp-k8s/headlamp-plugin-flux:v0.7.0
       imagePullPolicy: IfNotPresent
       command:
       - /bin/sh
