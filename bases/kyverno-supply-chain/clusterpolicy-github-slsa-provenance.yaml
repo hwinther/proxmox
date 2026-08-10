@@ -17,6 +17,26 @@
 #                                                     attest_build_provenance_enabled defaults to true,
 #                                                     so the SLSA predicate is produced under this SAN.
 #
+# Why verifyDigest is false
+# ---------------------------
+# Kyverno skips image verification — and therefore the mutateDigest patch — whenever the image
+# field is unchanged between the old and new resource: pkg/engine/internal/imageverifier.go does
+# `HasChanged(pointer)` and, when false, marks the image ImageVerificationPass without emitting a
+# patch. Flux re-applies the same tag-only image to long-lived Deployments/StatefulSets on every
+# reconcile, so those objects never acquire a digest, and `verifyDigest: true` then rejects them
+# with `missing digest for <image>`.
+#
+# That was latent until Kyverno v1.18.2 (chart 3.8.2, cherry-pick kyverno/kyverno#16208), which
+# changed validate_image.go from `return` to `continue` when an image does not match an entry's
+# imageReferences. Previously the first block below (wsh-rtl-sdr/*) not matching e.g.
+# ghcr.io/hwinther/clutterstock/* aborted the whole validate handler, so the digest check never
+# ran; now evaluation continues to the matching block and the check fires. The result was every
+# Flux Kustomization failing its dry-run with `missing digest`.
+#
+# Turning it off does not weaken enforcement: `required` (default true) still gates admission on
+# IsImageVerified, and mutateDigest still pins the digest on every Pod/Job at CREATE (where the
+# image genuinely changes). Revisit if kyverno/kyverno#16400 lands.
+#
 # Scoped to ghcr.io/hwinther/* — other registries/images are not evaluated (no exception needed).
 # Legacy images without attestations: add skipImageReferences on each verifyImages entry, or create
 # ClusterPolicyException (kyverno.io/v2) with spec.verifyImages.imageReferences for those patterns.
@@ -68,7 +88,7 @@ spec:
       - ghcr.io/hwinther/wsh-rtl-sdr/sdr-build*
       failureAction: Enforce # Note: Enforce is required for mutateDigest: true
       mutateDigest: true
-      verifyDigest: true
+      verifyDigest: false # must stay false — see "Why verifyDigest is false" above
       useCache: true
       type: SigstoreBundle
       attestations:
@@ -96,7 +116,7 @@ spec:
       - ghcr.io/wshno/*
       failureAction: Enforce # Note: Enforce is required for mutateDigest: true
       mutateDigest: true
-      verifyDigest: true
+      verifyDigest: false # must stay false — see "Why verifyDigest is false" above
       useCache: true
       type: SigstoreBundle
       attestations:
@@ -131,7 +151,7 @@ spec:
       - ghcr.io/hwinther/ddnsadmin/*
       failureAction: Enforce # Note: Enforce is required for mutateDigest: true
       mutateDigest: true
-      verifyDigest: true
+      verifyDigest: false # must stay false — see "Why verifyDigest is false" above
       useCache: true
       type: SigstoreBundle
       attestations:
