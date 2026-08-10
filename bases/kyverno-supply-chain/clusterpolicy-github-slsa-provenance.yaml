@@ -92,7 +92,9 @@ spec:
       useCache: true
       type: SigstoreBundle
       attestations:
-      - predicateType: https://slsa.dev/provenance/v1
+      # `type` (not the deprecated `predicateType`) — this is the in-toto predicate type of the
+      # attestation. Distinct from `type: SigstoreBundle` above, which is the signature format.
+      - type: https://slsa.dev/provenance/v1
         attestors:
         - entries:
           - keyless:
@@ -120,7 +122,9 @@ spec:
       useCache: true
       type: SigstoreBundle
       attestations:
-      - predicateType: https://slsa.dev/provenance/v1
+      # `type` (not the deprecated `predicateType`) — this is the in-toto predicate type of the
+      # attestation. Distinct from `type: SigstoreBundle` above, which is the signature format.
+      - type: https://slsa.dev/provenance/v1
         attestors:
         - entries:
           - keyless:
@@ -155,7 +159,9 @@ spec:
       useCache: true
       type: SigstoreBundle
       attestations:
-      - predicateType: https://slsa.dev/provenance/v1
+      # `type` (not the deprecated `predicateType`) — this is the in-toto predicate type of the
+      # attestation. Distinct from `type: SigstoreBundle` above, which is the signature format.
+      - type: https://slsa.dev/provenance/v1
         attestors:
         - entries:
           - keyless:

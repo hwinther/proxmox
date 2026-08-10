@@ -60,7 +60,8 @@ spec:
       verifyDigest: false
       useCache: true
       attestations:
-      - predicateType: https://cyclonedx.org/bom
+      # `type` (not the deprecated `predicateType`) — the in-toto predicate type.
+      - type: https://cyclonedx.org/bom
         attestors:
         - entries:
           - keyless:
