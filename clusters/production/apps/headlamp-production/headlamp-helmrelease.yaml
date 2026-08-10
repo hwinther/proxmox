@@ -87,7 +87,7 @@ spec:
       # v0.11.2 is the newest *released* tag and still crashes; revert to :v0.11.2 if latest misbehaves.
       # NOTE: quay garbage-collects superseded `latest` digests (the 2026-07 pin went 404 after ~33h
       # of ImagePullBackOff), so this pin rots whenever upstream pushes — re-resolve or pin a tag.
-      image: quay.io/kubescape/headlamp-plugin@sha256:6ee96816f9ac2bc81f9b56d8fc74b89fe9f81578610edecfd1b30cba69757273
+      image: quay.io/kubescape/headlamp-plugin@sha256:bbfdc030b89a29cbb8480c754c9655055e34c13f2b9ff21f0bacb0ec39246985
       imagePullPolicy: IfNotPresent
       command:
       - /bin/sh
