@@ -59,7 +59,8 @@ spec:
       verifyDigest: false
       useCache: true
       attestations:
-      - predicateType: https://cosign.sigstore.dev/attestation/vuln/v1
+      # `type` (not the deprecated `predicateType`) — the in-toto predicate type.
+      - type: https://cosign.sigstore.dev/attestation/vuln/v1
         attestors:
         - entries:
           - keyless:
