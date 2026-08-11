@@ -1,0 +1,60 @@
+# Two-tier replacement for the upstream kube-prometheus-stack NodeDiskIOSaturation rule
+# (disabled in kube-prometheus-stack-helmrelease.yaml defaultRules.disabled):
+#  - PSI-based for the bare-metal PVE/PBS hosts, whose kernel mis-accounts the aqu-sq metric.
+#  - upstream aqu-sq > 10 kept for k8s nodes, whose guest kernels are unaffected.
+#
+# Why the bare-metal tier cannot use aqu-sq: the Proxmox kernel (seen on 7.0.14-6-pve and still
+# present on 7.0.14-11-pve) charges roughly one request every 4-5 minutes a latency of (now - boot),
+# so node_disk_io_time_weighted_seconds_total grows as a function of *uptime*, not of I/O, and the
+# upstream `> 10` threshold fires permanently. Proof, measured 2026-08-11 at ~2.6 d uptime:
+#   rate(node_disk_io_time_weighted_seconds_total[5m]) * 300 / (node_time_seconds - node_boot_time_seconds)
+# was 1.1104 on office-pve-amd nvme0n1 (NVMe) and 1.1110 on shuttle01 sdb (SATA) — identical to 4 s.f.
+# across unrelated hosts and disk technologies. At the same moment those disks were doing 2.85 MB/s at
+# 185 IOPS with node_disk_io_now = 0 and PSI io full at 0.8%, i.e. idle. The affected device is not
+# stable across reboots (nvme0n1 alone on 2026-08-06; both NVMes plus shuttle01 sdb on 2026-08-11), so
+# this cannot be narrowed with a device= exclusion. Because the magnitude scales with uptime, a freshly
+# rebooted host always looks clean — do not "verify a fix" shortly after a reboot; use the ratio above.
+#
+# PSI is derived from real task stall time and is immune to that accounting bug, so it is what the
+# bare-metal tier alerts on. Note PSI is per-host, not per-device: this tier has no `device` label.
+#
+# Tier selector: same discriminator as prometheusrule-node-memory.yaml — bare-metal series carry a
+# static `node` label and no `cluster` label; k8s DaemonSet targets have no `node` label and the
+# edge-sdr Pis carry cluster=edge-sdr (both land in the aqu-sq tier).
+# release=obs-kps so the operator ruleSelector picks it up.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: node-disk
+  labels:
+    release: obs-kps
+spec:
+  groups:
+  - name: node-disk
+    rules:
+    - alert: NodeDiskIOSaturation
+      # PSI "full" = fraction of wall time every non-idle task was stalled waiting on I/O. 0.30 means
+      # 30% of the last 15 minutes. Fleet baseline is well under 0.01 (nothing exceeded 0.05 across all
+      # five hosts on 2026-08-11), while a genuinely saturated disk pushes this toward 1.0.
+      expr: rate(node_pressure_io_stalled_seconds_total{job="node-exporter", node!="", cluster=""}[15m]) > 0.30
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Disk IO is stalling bare-metal host {{ $labels.node }}"
+        description: "Every non-idle task on {{ $labels.node }} has been stalled waiting on disk IO for {{ $value | humanizePercentage }} of the last 15 minutes. Bare-metal tier alerts on PSI, not aqu-sq, because the Proxmox kernel mis-accounts io_time_weighted — see the header of prometheusrule-node-disk.yaml. For per-guest attribution use the proxmox-guests Grafana dashboard (proxmox_vm_* from the native OTLP export), which also covers LXC CTs that node-exporter cannot see."
+        runbook_url: https://runbooks.prometheus-operator.dev/runbooks/node/nodediskiosaturation
+    # `unless on (instance)` subtracts the bare-metal hosts matched by the PSI tier above, using the
+    # same marker series as prometheusrule-node-memory.yaml.
+    - alert: NodeDiskIOSaturation
+      expr: |-
+        (rate(node_disk_io_time_weighted_seconds_total{device=~"(/dev/)?(mmcblk.p.+|nvme.+|rbd.+|sd.+|vd.+|xvd.+|dm-.+|md.+|dasd.+)",job="node-exporter"}[5m]) > 10)
+        unless on (instance)
+        node_memory_MemTotal_bytes{job="node-exporter", node!="", cluster=""}
+      for: 30m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Disk IO queue is high."
+        description: "Disk IO queue (aqu-sq) is high on {{ $labels.device }} at {{ $labels.instance }}, has been above 10 for the last 30 minutes, is currently at {{ printf \"%.2f\" $value }}.\nThis symptom might indicate disk saturation.\n"
+        runbook_url: https://runbooks.prometheus-operator.dev/runbooks/node/nodediskiosaturation

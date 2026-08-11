@@ -46,6 +46,10 @@ resources:
 # Two-tier NodeMemoryHighUtilization replacement (upstream rule disabled in the kps helmrelease):
 # 95% for bare-metal PVE/PBS hosts, upstream 90% for k8s nodes.
 - prometheusrule-node-memory.yaml
+# Two-tier NodeDiskIOSaturation replacement (upstream rule disabled in the kps helmrelease): PSI for
+# the bare-metal PVE/PBS hosts, whose kernel mis-accounts aqu-sq as a function of uptime; upstream
+# aqu-sq for k8s nodes.
+- prometheusrule-node-disk.yaml
 # Disk SMART health/wear from smartctl_exporter on the PVE hosts (scrape job in the helmrelease).
 - prometheusrule-smartctl.yaml
 # Edge security: CrowdSec (scrape jobs in the helmrelease, logs via fluent-bit -> Loki;
