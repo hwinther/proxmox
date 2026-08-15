@@ -174,6 +174,13 @@ spec:
             - 'set(attributes["naxsi.target"], "other") where attributes["naxsi.target"] == nil'
             - 'set(attributes["naxsi.client"], "self") where attributes["source.address"] == "83.108.60.20"'
             - 'set(attributes["naxsi.client"], "other") where attributes["naxsi.client"] == nil'
+        # The count connector emits a DELTA sum. Prometheus' OTLP receiver rejects delta outright —
+        # "invalid temporality and type combination for metric naxsi_blocks", HTTP 500, data dropped —
+        # unless started with --enable-feature=otlp-deltatocumulative. Converting here keeps the fix
+        # local to this pipeline instead of changing a Prometheus-wide feature flag. Deliberately NOT
+        # added to the shared metrics pipeline: it holds per-series state in memory, and the app OTLP
+        # metrics are already cumulative and need no conversion.
+        deltatocumulative: {}
         # Adds geo.* attributes (country ISO code, city, lat/lon) from source.address via the
         # GeoLite2 DB the init container fetched. Attributes become Loki structured metadata
         # (geo_country_iso_code etc.) — the edge-security attack map aggregates on them.
@@ -228,8 +235,13 @@ spec:
             processors: [ memory_limiter, batch ]
             exporters: [ otlp ]
           metrics:
-            receivers: [ otlp, count ]
+            receivers: [ otlp ]
             processors: [ memory_limiter, batch ]
+            exporters: [ otlphttp/prometheus ]
+          # Separate pipeline so deltatocumulative only sees the NAXSI counter.
+          metrics/naxsi:
+            receivers: [ count ]
+            processors: [ memory_limiter, deltatocumulative, batch ]
             exporters: [ otlphttp/prometheus ]
           logs:
             receivers: [ otlp ]
