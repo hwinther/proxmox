@@ -143,6 +143,37 @@ spec:
             - 'set(attributes["source.address"], cache["ip"]) where cache["ip"] != nil'
             - 'merge_maps(cache, ExtractPatterns(body, "nginx: (?P<ip>\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}) - "), "upsert") where attributes["source.address"] == nil'
             - 'set(attributes["source.address"], cache["ip"]) where attributes["source.address"] == nil and cache["ip"] != nil'
+        # Classifies NAXSI blocks into two BOUNDED labels so the count connector below can emit a
+        # metric without unbounded cardinality. Deliberately not labelling with the raw client IP or
+        # raw Host: both are attacker-controlled and would create a new series per scanner.
+        #
+        #   naxsi.client = self  when the request came from our own WAN address (LAN traffic
+        #                        hairpins out and back via NAT reflection, so OPNsense logs the
+        #                        public IP, not 10.20.1.x). UPDATE naxsi_self_ip BELOW IF THE ISP
+        #                        ADDRESS CHANGES — a stale value silently mutes the "self" alert,
+        #                        which is exactly why the second alert (own services) also exists.
+        #   naxsi.target = the matched hostname for our own auth/mgmt vhosts, else "other".
+        #                  Bounded by the number of our own names + the single "other" bucket.
+        #
+        # naxsi.blocked gates the counter on the request actually being denied. NAXSI reports the
+        # action in config=, and there are TWO denial values, not one: a custom policy whose action
+        # is "Block Request" logs config=block (this is what the 2026-08-14 auth.wsh.no lockout
+        # produced), while the default deny path logs config=drop (what the internet scanners hitting
+        # *.r2.wsh.no etc. produce). Matching only "block" silently misses the majority of real
+        # blocks. config=learning is deliberately excluded — it records without denying.
+        transform/naxsi-classify:
+          error_mode: ignore
+          log_statements:
+          - context: log
+            conditions:
+            - 'attributes["message"] != nil and IsMatch(attributes["message"], "NAXSI_FMT")'
+            statements:
+            - 'set(attributes["naxsi.blocked"], "true") where IsMatch(attributes["message"], "config=(block|drop)")'
+            - 'merge_maps(cache, ExtractPatterns(attributes["message"], "server=(?P<server>[^&]+)"), "upsert")'
+            - 'set(attributes["naxsi.target"], cache["server"]) where cache["server"] != nil and IsMatch(cache["server"], "^(auth\\.wsh\\.no|[A-Za-z0-9-]+\\.mgmt\\.wsh\\.no)$")'
+            - 'set(attributes["naxsi.target"], "other") where attributes["naxsi.target"] == nil'
+            - 'set(attributes["naxsi.client"], "self") where attributes["source.address"] == "83.108.60.20"'
+            - 'set(attributes["naxsi.client"], "other") where attributes["naxsi.client"] == nil'
         # Adds geo.* attributes (country ISO code, city, lat/lon) from source.address via the
         # GeoLite2 DB the init container fetched. Attributes become Loki structured metadata
         # (geo_country_iso_code etc.) — the edge-security attack map aggregates on them.
@@ -151,6 +182,20 @@ spec:
           providers:
             maxmind:
               database_path: /etc/geoip/GeoLite2-City.mmdb
+      # Turns NAXSI block log records into a counter so alerting stays in Prometheus/Alertmanager
+      # alongside every other prometheusrule-*.yaml, instead of standing up the Loki ruler and a
+      # second alert delivery path. Acts as an exporter on logs/syslog and a receiver on metrics.
+      # Emitted as naxsi_blocks; the Prometheus OTLP receiver appends _total (counter).
+      connectors:
+        count:
+          logs:
+            naxsi_blocks:
+              description: NAXSI requests blocked, by target class and client class
+              conditions:
+              - 'attributes["naxsi.blocked"] == "true"'
+              attributes:
+              - key: naxsi.target
+              - key: naxsi.client
       exporters:
         otlp:
           endpoint: obs-tempo.observability-production.svc.cluster.local:4317
@@ -183,7 +228,7 @@ spec:
             processors: [ memory_limiter, batch ]
             exporters: [ otlp ]
           metrics:
-            receivers: [ otlp ]
+            receivers: [ otlp, count ]
             processors: [ memory_limiter, batch ]
             exporters: [ otlphttp/prometheus ]
           logs:
@@ -192,5 +237,5 @@ spec:
             exporters: [ otlphttp/loki ]
           logs/syslog:
             receivers: [ syslog ]
-            processors: [ memory_limiter, transform/source-ip, geoip, resource/syslog, batch ]
-            exporters: [ otlphttp/loki ]
+            processors: [ memory_limiter, transform/source-ip, transform/naxsi-classify, geoip, resource/syslog, batch ]
+            exporters: [ otlphttp/loki, count ]

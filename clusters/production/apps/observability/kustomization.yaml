@@ -57,6 +57,9 @@ resources:
 # the OTel collector (NodePort 30514/udp). Dashboard below (edge-security.json).
 - otel-syslog-nodeport.yaml
 - prometheusrule-crowdsec.yaml
+# NAXSI (OPNsense WAF) false-positive alerting off naxsi_blocks_total, emitted by the `count`
+# connector in otel-collector-helmrelease.yaml. Catches WAF rules blocking our own access.
+- prometheusrule-naxsi.yaml
 - minio-deployment.yaml
 - minio-buckets-job.yaml
 

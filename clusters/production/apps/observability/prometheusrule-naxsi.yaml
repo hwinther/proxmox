@@ -1,0 +1,49 @@
+# NAXSI (OPNsense WAF) block alerting.
+#
+# Backing metric: naxsi_blocks_total, produced by the `count` connector in
+# otel-collector-helmrelease.yaml from the OPNsense syslog stream and pushed to Prometheus over
+# OTLP. Labels are deliberately coarse — see that file for why the raw client IP and Host are
+# NOT labels (both are attacker-controlled and would create a series per scanner):
+#
+#   naxsi_client = self | other      self = our own WAN address
+#   naxsi_target = <our hostname> | other
+#
+# Motivation: on 2026-08-14 NAXSI rule 1101 blocked POST /api/firstfactor (a URL in the
+# targetURL body var) and locked us out of every *.mgmt.wsh.no app. Nothing alerted, and the
+# server side looked perfectly healthy from every angle — Authelia simply never received the
+# request. These two rules turn that silent failure into a page.
+#
+# release=obs-kps so the operator ruleSelector picks it up.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: naxsi
+  labels:
+    release: obs-kps
+spec:
+  groups:
+  - name: naxsi
+    rules:
+    # Our own traffic is being blocked — almost always a false positive we need to whitelist,
+    # since legitimate browsing should never trip the WAF. Fires immediately: this is the alert
+    # that would have replaced three days of debugging.
+    - alert: NaxsiBlockedOwnRequest
+      expr: sum by (naxsi_target) (increase(naxsi_blocks_total{naxsi_client="self"}[15m])) > 0
+      for: 0m
+      labels:
+        severity: warning
+      annotations:
+        summary: "NAXSI blocked our own request to {{ $labels.naxsi_target }}"
+        description: "{{ printf \"%.0f\" $value }} request(s) from our own WAN address were blocked by the OPNsense WAF against {{ $labels.naxsi_target }} in the last 15 minutes. This is almost certainly a false positive. Find the rule with: {service_name=\"opnsense\"} |= \"NAXSI_FMT\" |= \"config=block\" — read zone0/id0/var_name0, then add a scoped Basic Rule whitelist (Services > Nginx > Configuration > Naxsi rules) and attach it to the matching custom policy before reconfiguring."
+    # Blocks against our own auth/mgmt hostnames from anything other than our WAN address.
+    # This is the safety net for naxsi_client going stale: if the ISP address changes, the alert
+    # above goes quiet and this one still catches the same lockout. Expect some genuine
+    # internet-scanner noise here — raise the threshold rather than deleting the rule.
+    - alert: NaxsiBlockedOwnService
+      expr: sum by (naxsi_target) (increase(naxsi_blocks_total{naxsi_target!="other", naxsi_client!="self"}[15m])) > 0
+      for: 5m
+      labels:
+        severity: info
+      annotations:
+        summary: "NAXSI blocking requests to {{ $labels.naxsi_target }}"
+        description: "{{ printf \"%.0f\" $value }} request(s) to {{ $labels.naxsi_target }} were blocked by the OPNsense WAF in the last 15 minutes, from a source other than our own WAN address. If this coincides with being locked out, the naxsi_self_ip value in otel-collector-helmrelease.yaml is stale — our ISP address has changed and NaxsiBlockedOwnRequest can no longer fire."
