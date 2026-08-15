@@ -155,8 +155,12 @@ spec:
         #   naxsi.target = the matched hostname for our own auth/mgmt vhosts, else "other".
         #                  Bounded by the number of our own names + the single "other" bucket.
         #
-        # naxsi.blocked gates the counter on config=block; NAXSI also logs non-blocking learning
-        # lines, which must not alert.
+        # naxsi.blocked gates the counter on the request actually being denied. NAXSI reports the
+        # action in config=, and there are TWO denial values, not one: a custom policy whose action
+        # is "Block Request" logs config=block (this is what the 2026-08-14 auth.wsh.no lockout
+        # produced), while the default deny path logs config=drop (what the internet scanners hitting
+        # *.r2.wsh.no etc. produce). Matching only "block" silently misses the majority of real
+        # blocks. config=learning is deliberately excluded — it records without denying.
         transform/naxsi-classify:
           error_mode: ignore
           log_statements:
@@ -164,7 +168,7 @@ spec:
             conditions:
             - 'attributes["message"] != nil and IsMatch(attributes["message"], "NAXSI_FMT")'
             statements:
-            - 'set(attributes["naxsi.blocked"], "true") where IsMatch(attributes["message"], "config=block")'
+            - 'set(attributes["naxsi.blocked"], "true") where IsMatch(attributes["message"], "config=(block|drop)")'
             - 'merge_maps(cache, ExtractPatterns(attributes["message"], "server=(?P<server>[^&]+)"), "upsert")'
             - 'set(attributes["naxsi.target"], cache["server"]) where cache["server"] != nil and IsMatch(cache["server"], "^(auth\\.wsh\\.no|[A-Za-z0-9-]+\\.mgmt\\.wsh\\.no)$")'
             - 'set(attributes["naxsi.target"], "other") where attributes["naxsi.target"] == nil'
