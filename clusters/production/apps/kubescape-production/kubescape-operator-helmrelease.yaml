@@ -44,3 +44,14 @@ spec:
     # k0s: node-agent /readyz was HTTP 500 with privileged: false (eBPF/debugfs); required for runtime/network features.
     nodeAgent:
       privileged: true
+    # storage is a single cluster-wide aggregated apiserver ingesting behavioral-profile writes
+    # from every node-agent DaemonSet pod; chart default request (100m) undersells real usage —
+    # observed steady-state ~625m (see kubescape-storage-cpu-request-undersized memory).
+    storage:
+      resources:
+        requests:
+          cpu: 600m
+          memory: 400Mi
+        limits:
+          cpu: 1500m
+          memory: 1500Mi
