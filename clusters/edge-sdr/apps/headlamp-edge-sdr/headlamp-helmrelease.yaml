@@ -84,7 +84,7 @@ spec:
       # Pinned to the `latest` digest (post-v0.11.2 code) to test a fix for the CVE drill-down crash
       # "Cannot read properties of undefined (reading 'imageScan')" against operator chart 1.40.2.
       # v0.11.2 is the newest *released* tag and still crashes; revert to :v0.11.2 if latest misbehaves.
-      image: quay.io/kubescape/headlamp-plugin@sha256:bbfdc030b89a29cbb8480c754c9655055e34c13f2b9ff21f0bacb0ec39246985
+      image: quay.io/kubescape/headlamp-plugin@sha256:e9f28ccfe969cf0d4f4cffc0ced7f088cabee21d4ad2b5291288708314628dba
       imagePullPolicy: IfNotPresent
       command:
       - /bin/sh
