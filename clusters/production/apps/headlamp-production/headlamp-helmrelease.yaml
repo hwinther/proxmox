@@ -82,12 +82,14 @@ spec:
       - name: headlamp-plugins
         mountPath: /build/plugins
     - name: kubescape-plugin
-      # Pinned to the `latest` digest (post-v0.11.2 code) to test a fix for the CVE drill-down crash
-      # "Cannot read properties of undefined (reading 'imageScan')" against operator chart 1.40.2.
-      # v0.11.2 is the newest *released* tag and still crashes; revert to :v0.11.2 if latest misbehaves.
-      # NOTE: quay garbage-collects superseded `latest` digests (the 2026-07 pin went 404 after ~33h
-      # of ImagePullBackOff), so this pin rots whenever upstream pushes — re-resolve or pin a tag.
-      image: quay.io/kubescape/headlamp-plugin@sha256:bbfdc030b89a29cbb8480c754c9655055e34c13f2b9ff21f0bacb0ec39246985
+      # Pinned to the released tag on purpose. A `latest` digest pin rotted TWICE (2026-07, and again
+      # 2026-08-25 when upstream re-pushed `latest` and quay garbage-collected the old digest, leaving
+      # headlamp in Init:ImagePullBackOff). Released tags are not GC'd, so this cannot 404. Upstream has
+      # not cut a release since v0.11.2 (2026-05-17) despite still pushing `latest`.
+      # KNOWN ISSUE: v0.11.2 still has the CVE drill-down crash "Cannot read properties of undefined
+      # (reading 'imageScan')". Accepted deliberately — a durable pin beats a working one that vanishes.
+      # Do NOT re-pin a `latest` digest to chase that fix; wait for a tagged release.
+      image: quay.io/kubescape/headlamp-plugin:v0.11.2
       imagePullPolicy: IfNotPresent
       command:
       - /bin/sh
