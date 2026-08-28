@@ -38,9 +38,15 @@ spec:
     clusterName: production
     ksNamespace: kubescape-production
     excludeNamespaces: "kubescape,kubescape-production,kube-system,kube-public,kube-node-lease,kubeconfig,gmp-system,gmp-public"
+    # networkPolicyService disabled 2026-08-28: node-agents continuously build network
+    # neighborhoods and stream them into the single `storage` aggregated apiserver, which sat at a
+    # flat 627m CPU floor (7d min == median) — 76% of the namespace's 826m and 38% of all CPU
+    # consumed cluster-wide, while the actual image scanner (kubevuln) floored at 6m. We already
+    # maintain a hand-written netpol baseline, so the generated policy suggestions are redundant.
+    # Re-enable if we ever want generated CiliumNetworkPolicy suggestions back.
     capabilities:
       continuousScan: enable
-      networkPolicyService: enable
+      networkPolicyService: disable
     # k0s: node-agent /readyz was HTTP 500 with privileged: false (eBPF/debugfs); required for runtime/network features.
     nodeAgent:
       privileged: true
