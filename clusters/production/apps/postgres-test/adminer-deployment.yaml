@@ -21,7 +21,7 @@ spec:
         fsGroup: 65534
       containers:
       - name: adminer
-        image: adminer:5.4.2
+        image: adminer:6.0.1
         imagePullPolicy: IfNotPresent
         securityContext:
           allowPrivilegeEscalation: false
