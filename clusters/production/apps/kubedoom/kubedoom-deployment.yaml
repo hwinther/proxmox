@@ -54,7 +54,7 @@ spec:
         # noVNC + websockify bridge: browser <-> localhost:5900 (same pod netns). Upstream ships
         # latest-only (no semver tags), so pinned by digest per the compliance SKILL (latest-only
         # upstream -> pin @sha256). Resolved from ghcr.io/wavyland/novnc:latest.
-        image: ghcr.io/wavyland/novnc@sha256:45b5c4700c166819668d0b13c894560559c8f7867cb147228634572f2cc1e765
+        image: ghcr.io/wavyland/novnc@sha256:4fa7b95e7d2b6efda6ccf0b009297f347f81b5693059f5d39e8539c9f5337bcd
         args:
         - "6080"
         - "localhost:5900"
