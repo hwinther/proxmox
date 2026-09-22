@@ -8,6 +8,8 @@ The broker Service is **`rabbitmq.rabbitmq-production.svc.cluster.local`** (port
 
 ## 1. Bootstrap: topology import secret + app env secret
 
+> **Messaging Topology Operator >= 1.20.0 requires the label `rabbitmq.com/topology-operator: "true"` on every Secret a topology CR references** (`importCredentialsSecret`, `connectionSecret`, `uriSecret`, `upstreamSecret`). The operator's Secret cache is label-gated, so an unlabelled Secret is invisible to it: the admission webhooks reject `User` / `Federation` / `Shovel` resources that reference one, and existing resources stop reconciling. The label belongs on the `*-rabbitmq-credentials` Secrets in `rabbitmq-production` only -- the app-side Secrets in the consuming namespaces are read by the app, not the operator, and need nothing. The operator-generated `<user>-user-credentials` Secrets are labelled automatically on the next reconcile. See [Secret label requirement](https://www.rabbitmq.com/kubernetes/operator/using-topology-operator#secret-label-requirement).
+
 Create the **import** secret in `rabbitmq-production` first (Messaging Topology Operator reads it for `User` `test-api`). Use the same username/password values for the app Secret in `test-test`.
 
 Example (pick a strong password; `test-api` is the RabbitMQ username):
@@ -19,6 +21,8 @@ kubectl create secret generic test-api-rabbitmq-credentials \
   --namespace rabbitmq-production \
   --from-literal=username=test-api \
   --from-literal=password="$PW"
+
+kubectl label secret test-api-rabbitmq-credentials -n rabbitmq-production rabbitmq.com/topology-operator=true
 
 kubectl create secret generic test-api-rabbitmq \
   --namespace test-test \
@@ -52,6 +56,8 @@ kubectl create secret generic clutterstock-prod-rabbitmq-credentials \
   --namespace rabbitmq-production \
   --from-literal=username=clutterstock-prod \
   --from-literal=password="$PW_PROD"
+
+kubectl label secret clutterstock-test-rabbitmq-credentials clutterstock-prod-rabbitmq-credentials -n rabbitmq-production rabbitmq.com/topology-operator=true
 
 kubectl create secret generic clutterstock-production-rabbitmq \
   --namespace clutterstock-production \
@@ -89,6 +95,15 @@ Management plugin listens on **15672** (HTTP) inside the cluster. Traefik + Home
 ## 4. Upgrading the messaging topology operator manifest
 
 `messaging-topology-operator-no-namespace.yaml` is the upstream **`messaging-topology-operator.yaml`** release asset with the **first `Namespace/rabbitmq-system` document removed**, so it can live in the same Kustomize build as **`cluster-operator.yml`** (which already defines that namespace). When bumping the topology operator version, re-download the release YAML, strip that first document, and replace the file.
+
+**Dependabot cannot do this bump on its own.** It only rewrites the `image:` tag inside the vendored file, which leaves the CRDs, RBAC and webhook configuration at the old release. Close the tag-only PR and re-vendor instead. What 1.19.2 -> 1.20.3 carried besides the tag, as a worked example of why:
+
+- ClusterRole `messaging-topology-manager-role` gains **`update`** on `secrets` -- without it the operator cannot self-label the `<user>-user-credentials` Secrets it generates.
+- A new **`MutatingWebhookConfiguration`** (`mqueue.kb.io`, `queues` on CREATE) with `failurePolicy: Fail`.
+- The manager container gains `--metrics-secure` + `--metrics-cert-path` and mounts the (already present) `metrics-server-cert` Certificate with `optional: false`. Nothing in this repo scrapes those metrics, but the Pod will not start if that Secret is missing.
+- CRDs regenerated with controller-gen v0.22.0.
+
+[`patch-topology-operator-ca-mount.yaml`](patch-topology-operator-ca-mount.yaml) is a strategic-merge patch keyed on container and volume **names**, so it survives upstream adding volumes. Re-run `kubectl kustomize` plus `kubectl apply --server-side --dry-run=server` after re-vendoring.
 
 ## 5. TLS (AMQPS / management)
 
