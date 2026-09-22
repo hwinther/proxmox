@@ -62,7 +62,7 @@ spec:
           mountPath: /auth
       containers:
       - name: mosquitto
-        image: docker.io/library/eclipse-mosquitto:2.0.20
+        image: docker.io/library/eclipse-mosquitto:2.0.22
         imagePullPolicy: IfNotPresent
         securityContext:
           allowPrivilegeEscalation: false
