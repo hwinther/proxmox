@@ -298,7 +298,7 @@ spec:
       automountServiceAccountToken: true
       containers:
       - name: homepage
-        image: ghcr.io/gethomepage/homepage:v1.13.1
+        image: ghcr.io/gethomepage/homepage:v2.4.0
         imagePullPolicy: Always
         securityContext:
           allowPrivilegeEscalation: false
