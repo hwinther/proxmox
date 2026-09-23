@@ -180,7 +180,10 @@ spec:
         # local to this pipeline instead of changing a Prometheus-wide feature flag. Deliberately NOT
         # added to the shared metrics pipeline: it holds per-series state in memory, and the app OTLP
         # metrics are already cumulative and need no conversion.
-        deltatocumulative: {}
+        # Renamed from the `deltatocumulative` alias, deprecated as of collector 0.160.0
+        # ("use delta_to_cumulative instead"). The alias still resolves today; this keeps the
+        # metrics/naxsi pipeline from failing to build when upstream drops it.
+        delta_to_cumulative: {}
         # Adds geo.* attributes (country ISO code, city, lat/lon) from source.address via the
         # GeoLite2 DB the init container fetched. Attributes become Loki structured metadata
         # (geo_country_iso_code etc.) — the edge-security attack map aggregates on them.
@@ -238,10 +241,10 @@ spec:
             receivers: [ otlp ]
             processors: [ memory_limiter, batch ]
             exporters: [ otlphttp/prometheus ]
-          # Separate pipeline so deltatocumulative only sees the NAXSI counter.
+          # Separate pipeline so delta_to_cumulative only sees the NAXSI counter.
           metrics/naxsi:
             receivers: [ count ]
-            processors: [ memory_limiter, deltatocumulative, batch ]
+            processors: [ memory_limiter, delta_to_cumulative, batch ]
             exporters: [ otlphttp/prometheus ]
           logs:
             receivers: [ otlp ]
