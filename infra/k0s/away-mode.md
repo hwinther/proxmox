@@ -67,7 +67,12 @@ back**. Hence the shutdown list below — it is not optional tidiness.
    > rolling-update strategy the old pod keeps running while the unschedulable replacement sits
    > Pending, so the workload is not actually parked until you evict it.
    >
-   > Nothing here is in git, so Flux restores it all on return.
+   > **That cuts both ways: Flux will not remove these keys either.** The same field-ownership
+   > rule that makes the parking stick makes it permanent — `nodeSelector` is absent from git, so
+   > kustomize-controller never touches it and the `away` key survives indefinitely. You must
+   > unpark by hand on return; see [return-from-shutdown.md](return-from-shutdown.md) step 9.
+   > (Verified the hard way on 2026-09-22: all three DaemonSets were still parked three weeks
+   > after the return.)
 
 Leaves exactly: `dump1090-fa`, `piaware`, `fr24`, `opensky`, `adsbexchange`, `ais-catcher`.
 
@@ -295,15 +300,9 @@ re-derives InternalIP from the default-route interface and would register the no
 1. **Restore the default gateway**: `/root/away-mode-gw.sh off` on radio-pi01. No ordering
    constraint against OPNsense any more — the VLANs are separate.
 2. Power on Proxmox hosts, wait for Ceph to reach health, then OPNsense, then edge01.
-3. Flux (on edge01) reconciles and **restores the scaled-down workloads by itself** — the
-   `replicas: 0` and `nodeSelector` edits above are runtime-only and are not in git. Verify:
-
-   ```bash
-   kubectl --context EdgeSDR get pods -A -o wide | grep radio-pi01   # expect 14 pods
-   ```
-
-   If anything is still parked, Flux is suspended or failing to reconcile — check it rather than
-   re-patching by hand.
+3. **Unpark the workloads by hand.** Flux does _not_ do this for you: `nodeSelector` is not in
+   git, so nothing ever removes the `away` key. See
+   [return-from-shutdown.md](return-from-shutdown.md) step 9 for the sweep and the patches.
 
 4. **Uncordon both nodes** — they were cordoned to pin CoreDNS, and nothing reschedules until
    this is undone:

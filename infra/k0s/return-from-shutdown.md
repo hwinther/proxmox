@@ -85,15 +85,43 @@ before it.
    ssh root@10.20.13.21 /root/away-mode-gw.sh off
    ```
 
-9. Flux restores the parked workloads by itself (`adsb-mqtt`, `tar1090`, `fluent-bit`,
-   `node-exporter`, `ceph-csi-rbd-nodeplugin`), and k0s restores the stock CoreDNS deployment with
-   two replicas. None of the parking edits are in git, so there is nothing to revert manually.
+9. **Unpark the workloads by hand — Flux will not do it.** This is the inverse of the trap in
+   [Before the next shutdown](#before-the-next-shutdown), and it bites the other way: `nodeSelector`
+   is absent from git, so kustomize-controller never owns the field and the `away: "true"` key added
+   by away-mode.md survives reconciliation forever. Sweep for it rather than counting pods:
 
    ```bash
-   kubectl --context EdgeSDR get pods -A -o wide | grep radio-pi01   # expect ~14 pods
+   K="kubectl --context EdgeSDR"
+   for k in deploy ds sts; do $K get $k -A      -o custom-columns=KIND:.kind,NS:.metadata.namespace,NAME:.metadata.name,SEL:.spec.template.spec.nodeSelector      | grep -i away; done
    ```
 
-   If anything stays parked, Flux is suspended or failing — investigate rather than re-patching.
+   Remove only the `away` key, so selectors the chart legitimately sets survive:
+
+   ```bash
+   P='[{"op":"remove","path":"/spec/template/spec/nodeSelector/away"}]'
+   $K -n ceph-csi-edge-sdr      patch ds ceph-csi-rbd-nodeplugin                --type=json -p "$P"
+   $K -n fluent-bit-edge-sdr    patch ds fluent-bit                             --type=json -p "$P"
+   $K -n node-exporter-edge-sdr patch ds node-exporter-prometheus-node-exporter --type=json -p "$P"
+   ```
+
+   `node-exporter` also carries `kubernetes.io/os: linux` from its HelmRelease — that one stays.
+   Removing the whole `nodeSelector` map would strip it too.
+
+   **Do not verify this with `get pods | grep radio-pi01`.** A DaemonSet parked this way sits at
+   `DESIRED 0`, so it contributes no Pending pod and no error anywhere — it is simply absent, and a
+   pod count looks normal without it. On 2026-09-22 that is exactly what happened: `adsb-mqtt` and
+   `tar1090` came back, the pod count looked right, and all three DaemonSets stayed parked for the
+   rest of the day. The damage is quiet and cumulative: no ceph-rbd mounts anywhere on the cluster
+   (the kubescape `storage` Pod cannot start, its aggregated API goes `MissingEndpoints`, and
+   **every namespace deletion on the cluster then hangs in `Terminating`**), no host metrics, no log
+   shipping. Use the sweep above, then confirm:
+
+   ```bash
+   $K get ds -A                                   # every DESIRED should be non-zero
+   $K get csinode -o custom-columns=NAME:.metadata.name,DRIVERS:'.spec.drivers[*].name'
+   ```
+
+   k0s restores the stock CoreDNS deployment with two replicas on its own.
 
 10. Re-check the SDR feeder stats pages. If ShipXplorer is still offline, it is the source-IP
     lock described in away-mode.md, not a feed fault.
