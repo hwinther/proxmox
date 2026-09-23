@@ -4,6 +4,12 @@ on:
     pull_request:
         branches:
             - main
+    # Required for the merge queue: the queue builds a temporary
+    # gh-readonly-queue/main/... branch and fires merge_group instead of
+    # pull_request. Without this the required `pr-build / pr-build` check never
+    # reports, and the queue evicts the PR when it times out.
+    merge_group:
+        types: [checks_requested]
     workflow_dispatch:
 
 concurrency:
