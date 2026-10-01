@@ -20,10 +20,13 @@ spec:
     # netpol-regression indicator — a service that can no longer reach another service. The benign
     # residual drops (cloud-metadata probes, kubescape host sensors) all target non-pod destinations
     # (destination_namespace="") and are excluded by construction, so the baseline here is 0.
+    # source_namespace!="" is required too: without it, world->pod denials matched (e.g. ICMP
+    # port-unreachable replies from dead torrent peers to an internet-facing seeder), with an
+    # empty source label, and paged as a "pod-to-pod" regression.
     - alert: NetworkPolicyPodToPodDrops
       expr: |
         sum by (source_namespace, destination_namespace) (
-          rate(hubble_drop_total{reason="POLICY_DENIED", destination_namespace!=""}[10m])
+          rate(hubble_drop_total{reason="POLICY_DENIED", source_namespace!="", destination_namespace!=""}[10m])
         ) > 0.1
       for: 15m
       labels:
