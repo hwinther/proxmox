@@ -11,7 +11,9 @@ flux reconcile kustomization clutterstock-migrate -n flux-system --with-source
 kubectl -n clutterstock-production wait job/clutterstock-migrate-v107 --for=condition=complete --timeout=300s
 ```
 
-Delete old completed Jobs if names clash with TTL.
+The Job deliberately has no `ttlSecondsAfterFinished`. With a TTL, Kubernetes deletes the completed Job
+and Flux (`prune` + `force`) recreates it on the next reconcile, so the migration re-runs every day.
+The previous Job is pruned automatically when its name disappears from `job.yaml`.
 
 ## Troubleshooting
 

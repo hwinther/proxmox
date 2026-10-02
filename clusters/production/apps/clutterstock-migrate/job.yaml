@@ -6,7 +6,10 @@ metadata:
   namespace: clutterstock-production
 spec:
   backoffLimit: 3
-  ttlSecondsAfterFinished: 86400
+  # No ttlSecondsAfterFinished: Flux (prune + force) recreates a TTL-deleted Job on its next
+  # reconcile, which turned this one-time migration into a nightly re-run (2026-09-22..10-01,
+  # one of which collided with a CNPG operator restart). The completed Job stays put; bumping
+  # metadata.name for a new migrator lets Flux prune the old one.
   template:
     metadata:
       labels:
