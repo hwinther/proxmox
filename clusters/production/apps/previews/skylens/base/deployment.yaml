@@ -109,6 +109,11 @@ spec:
           value: "/app/fixtures/tle.json"
         - name: Satellites__TransmittersFile
           value: "/app/fixtures/transmitters.json"
+        # Away-mode aircraft: previews MUST NOT fetch live traffic either. adsb.lol is enabled by
+        # default and away mode also triggers whenever the replay has no aircraft in a viewer's radius,
+        # so parallel previews would each poll it. Older images without the AdsbLol section ignore this.
+        - name: AdsbLol__Enabled
+          value: "false"
         # MqttIngestService bails out before the replay transport when Mqtt:Host is empty
         # (MqttIngestService.cs) — any non-empty placeholder keeps the ingest loop alive; no broker
         # named "replay" exists or is contacted.
