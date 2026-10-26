@@ -1,0 +1,38 @@
+# k0s Autopilot upgrade plan — production cluster, v1.35.2 -> v1.35.8+k0s.1.
+#
+# Applied by hand, NOT reconciled by Flux (see ./README.md). Same release and checksums as the
+# edge-sdr trial (completed 2026-10-27). Before applying, read the "Production" section of the
+# runbook: CNPG primary PDBs block drains, so primaries must be switched over as nodes are cordoned.
+apiVersion: autopilot.k0sproject.io/v1beta2
+kind: Plan
+metadata:
+  name: autopilot
+spec:
+  id: production-k0s-v1.35.8
+  timestamp: now
+  commands:
+  - k0supdate:
+      version: v1.35.8+k0s.1
+      platforms:
+        linux-amd64:
+          url: https://github.com/k0sproject/k0s/releases/download/v1.35.8%2Bk0s.1/k0s-v1.35.8%2Bk0s.1-amd64
+          sha256: 09e5c5b9ba0a6218fe46dafde799ccd62270f83fe5c3ea695beb1b4098baed67
+      targets:
+        # Controller+worker nodes (etcd members: exactly these three). Autopilot upgrades
+        # controllers one at a time, so etcd keeps quorum (2 of 3) throughout.
+        controllers:
+          discovery:
+            static:
+              nodes:
+              - k0s-prod01.k0s.wsh.no
+              - k0s-prod02.k0s.wsh.no
+              - k0s-prod03
+        # Worker-only nodes, one at a time.
+        workers:
+          discovery:
+            static:
+              nodes:
+              - k0s-prod04
+              - k0s-prod05
+          limits:
+            concurrent: 1

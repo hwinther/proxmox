@@ -6,6 +6,7 @@ resources:
 - namespace.yaml
 - certificate-rabbitmq-tls.yaml
 - rabbitmq-cluster.yaml
+- pdb-rabbitmq.yaml
 - topology-vhost-prod.yaml
 - topology-vhost-test.yaml
 - topology-user-test-api.yaml

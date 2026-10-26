@@ -1,0 +1,14 @@
+# The RabbitMQ cluster operator does not create a PodDisruptionBudget, so a node drain (k0s Autopilot
+# upgrades cordon + drain every node) could evict a member while another is still restarting from the
+# previous node, dropping the 3-node cluster below quorum. Allow one voluntary disruption at a time.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: rabbitmq-server
+  namespace: rabbitmq-production
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: rabbitmq
+      app.kubernetes.io/component: rabbitmq
