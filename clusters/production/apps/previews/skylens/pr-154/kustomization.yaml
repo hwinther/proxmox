@@ -1,0 +1,31 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: skylens-preview-pr-154
+
+resources:
+- ../base
+- namespace.yaml
+
+# `labels` (vs deprecated `commonLabels`) with includeSelectors: false — identification only; keeps
+# the PR label out of selectors so it can't break the netpol-baseline same-namespace matching.
+labels:
+- pairs:
+    skylens.wsh.no/pr: "154"
+  includeSelectors: false
+  includeTemplates: true
+
+# Single PUBLIC image: digest pins the deploy to exactly the artifact the PR build pushed; the tag
+# (newTag) is kept alongside so `kubectl get deploy -o yaml | grep image:` stays readable.
+images:
+- name: ghcr.io/hwinther/skylens/api
+  newTag: "0.15.1-PullRequest154.3"
+  digest: "sha256:cbb4da14f9d6de9c26a6fdd53ceab442e2934b93cdddfcaacf1f90db4b1e97f4"
+
+patches:
+- target:
+    kind: Ingress
+    name: skylens
+  patch: |-
+    - op: replace
+      path: /spec/rules/0/host
+      value: skylens-154.preview.wsh.no
