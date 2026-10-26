@@ -1,0 +1,38 @@
+# k0s Autopilot upgrade plan — edge-sdr cluster, v1.35.2 -> v1.35.8+k0s.1 (trial run before production).
+#
+# Applied by hand, NOT reconciled by Flux: a Plan is a one-shot singleton (it must be named "autopilot",
+# and a completed Plan is never re-executed), so a Flux-managed copy would just fight its status.
+# Runbook: ./README.md. Checksums verified against the release's sha256sums.txt on 2026-10-27.
+apiVersion: autopilot.k0sproject.io/v1beta2
+kind: Plan
+metadata:
+  name: autopilot
+spec:
+  id: edge-sdr-k0s-v1.35.8
+  timestamp: now
+  commands:
+  - k0supdate:
+      version: v1.35.8+k0s.1
+      platforms:
+        linux-amd64:
+          url: https://github.com/k0sproject/k0s/releases/download/v1.35.8%2Bk0s.1/k0s-v1.35.8%2Bk0s.1-amd64
+          sha256: 09e5c5b9ba0a6218fe46dafde799ccd62270f83fe5c3ea695beb1b4098baed67
+        linux-arm64:
+          url: https://github.com/k0sproject/k0s/releases/download/v1.35.8%2Bk0s.1/k0s-v1.35.8%2Bk0s.1-arm64
+          sha256: 76a91efef3af3a0cd4214c54d04db2e0be3da0d2136e2c5f434bf3146031d22d
+      targets:
+        # edge01 is controller+worker; upgrading it as a controller covers its worker role.
+        controllers:
+          discovery:
+            static:
+              nodes:
+              - k0s-prod-edge01.k0s.wsh.no
+        # The two Raspberry Pis (arm64), one at a time so one SDR feeder stays up.
+        workers:
+          discovery:
+            static:
+              nodes:
+              - radio-pi01
+              - radio-pi02
+          limits:
+            concurrent: 1
