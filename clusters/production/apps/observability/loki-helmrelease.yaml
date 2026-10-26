@@ -40,12 +40,9 @@ spec:
       replicas: 1
       allocatedMemory: 256
       allocatedCPU: 100m
-    # Built-in MinIO is removed by default in chart 17.x — we point at the standalone
-    # `obs-minio` Deployment instead. ignoreMinioDeprecation silences the chart's
-    # deprecation warning that fires even when minio.enabled=false.
-    minio:
-      enabled: false
-    ignoreMinioDeprecation: true
+    # Object storage is the standalone `obs-minio` Deployment (loki.storage below). Chart 20
+    # removed the bundled MinIO entirely, so the old `minio.enabled: false` /
+    # `ignoreMinioDeprecation` switches are gone (the schema now rejects them).
     loki:
       commonConfig:
         replication_factor: 1
@@ -142,7 +139,6 @@ spec:
       replicas: 0
     indexGateway:
       replicas: 0
-    bloomCompactor:
-      replicas: 0
+    # (bloomCompactor was removed in chart 20; its replicas: 0 override went with it.)
     bloomGateway:
       replicas: 0
