@@ -50,12 +50,39 @@ Expected transient states (seen in the edge-sdr run, 2026-10-27, ~14 min end to 
 
 ## Production
 
-Same flow, plus three things the edge cluster doesn't have.
+Same flow, plus four things the edge cluster doesn't have.
 
-**1. CNPG primaries block drains.** Each CNPG cluster has a `<cluster>-primary` PDB with
-`minAvailable: 1` over a single pod, so evicting a primary is refused and the plan hangs on that
-node. When the plan cordons a node that hosts a primary, switch that cluster over to its replica on
-a node that is schedulable (there's no `kubectl cnpg` plugin; this is what `cnpg promote` does):
+**1. CNPG primaries and their replicas.** Each CNPG cluster has a `<cluster>-primary` PDB with
+`minAvailable: 1` over a single pod, so a primary can't be evicted. CNPG handles this itself: when
+the primary's node is cordoned, it switches over to a ready replica, and the drain continues. In
+the 2026-10-27 production run, every cluster switched without help.
+
+What goes wrong is **where the replicas land**:
+
+- An evicted replica can only reschedule onto a schedulable node. Early in the run, that is
+  often the node Autopilot does next.
+- When that node is cordoned, the primary and its replica sit on it together, so CNPG has
+  nothing to switch to and the drain hangs.
+- In 2026-10-27, after prod01 was drained, all three replicas landed on prod02 (next in line),
+  and one was still stuck mounting its ceph-rbd volume.
+
+So after each node completes, check where the CNPG pods are. If a replica sits on a node that
+hasn't been upgraded yet, cordon that node early (Autopilot uncordons it when it's done with it)
+and delete the replica pod. It comes back on an upgraded node, as long as one is schedulable:
+
+```bash
+kubectl --context Production get pods -A -l cnpg.io/cluster \
+  -o custom-columns=POD:.metadata.name,ROLE:.metadata.labels.role,READY:.status.containerStatuses[0].ready,NODE:.spec.nodeName
+kubectl --context Production cordon <next-node>
+kubectl --context Production -n <ns> delete pod <replica-pod>
+```
+
+ceph-rbd volumes can take 3+ minutes to mount on the new node: you may see a Multi-Attach error,
+then `MountDevice ... DeadlineExceeded` or `operation ... already exists`. If a pod stays Pending
+on a node about to be drained, delete it again rather than wait.
+
+If a cluster doesn't switch over by itself, do it by hand. There's no `kubectl cnpg` plugin; this
+is what `cnpg promote` does:
 
 ```bash
 # Which primaries are on the cordoned node?
@@ -80,8 +107,21 @@ completes, rebalance (rollout restart of movable workloads, never the CNPG or Ra
 can't take two of the three members down at once. Check it exists before applying:
 `kubectl --context Production -n rabbitmq-production get pdb`.
 
+**4. The kubeconfig points at prod01.** Its API server goes away while prod01 restarts, so watch
+loops should use another controller: `--server https://10.20.13.13:6443` (or `.12`).
+
 Expect alert noise while it runs (node cordoned, pods restarting, the aggregated-API alerts during
 controller restarts).
+
+Seen in the 2026-10-27 production run (22:12–22:25, ~13 min):
+
+- Order: prod03, prod01, prod02 (controllers), then prod04, prod05.
+- prod01 went `Ready=Unknown` for about a minute after its upgrade and came back by itself.
+- Afterwards:
+  - `kyverno-policies` failed its dry-run until the Kyverno admission controller was back; a
+    reconcile fixed it.
+  - A few pods were left in `Error` from the evictions.
+  - Requests were unbalanced: prod02 at 95% CPU, prod05 at 10%.
 
 ## If it stalls
 
