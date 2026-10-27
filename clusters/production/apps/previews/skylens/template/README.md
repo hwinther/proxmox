@@ -14,18 +14,29 @@ Placeholders the workflow replaces:
 
 - `__PR__` — PR number (e.g. `42`)
 - `__HOST__` — preview hostname (e.g. `skylens-42.preview.wsh.no`)
-- `__IMAGE_TAG__` / `__IMAGE_DIGEST__` — the `ghcr.io/hwinther/skylens/api` tag + digest the PR build pushed
+- `__IMAGE_TAG__` / `__IMAGE_DIGEST__` — despite the names, the **manifest artifact's** tag
+  (`pr-<N>`) and digest, `ghcr.io/hwinther/skylens/manifests`, as pushed by skylens'
+  `pr-preview.yml`. The artifact pins the API image itself.
+
+## Where the preview workload comes from
+
+`base/skylens-manifests.yaml` holds an `OCIRepository` and a Flux `Kustomization` per preview
+namespace. The artifact is the PR's own `deploy/` rendered with `deploy/components/preview`, so a
+PR that changes the manifests runs them in its preview before any release. Only artifacts signed by
+skylens' `pr-preview.yml` on a pull-request ref are accepted; production accepts release-tag
+signatures only. Preview-only cluster concerns (forward-auth, no homepage tile) are patches on that
+Kustomization, and the namespace, netpols and per-PR values stay in this tree.
 
 ## Replay + real-auth model (no secrets, no broker)
 
-skylens previews run the backend in **Development** mode for the MQTT replay affordance, but with
-**REAL OIDC JWT auth** — so auth regressions (anonymous /hubs 401, in-app sign-in, browser PKCE token
+The env below is set by `deploy/components/preview` in the skylens repo. skylens previews run the
+backend in **Development** mode for the MQTT replay affordance, but with **REAL OIDC JWT auth** — so auth regressions (anonymous /hubs 401, in-app sign-in, browser PKCE token
 exchange) surface in the preview BEFORE a release tag. Still **no secrets, no mosquitto, no database**:
 
 - **`Mqtt__Replay=true` + `Mqtt__ReplayFile=/app/fixtures/aircraft.json`** — `ReplayMqttTransport`
   replays the fixture baked into the image through the **real** ingest -> SignalR pipeline at 1 Hz, so
   there is no broker and no MQTT credentials. Gated on `Environment.IsDevelopment()`, which is why
-  **`ASPNETCORE_ENVIRONMENT=Development` is REQUIRED** in `base/deployment.yaml`.
+  **`ASPNETCORE_ENVIRONMENT=Development` is REQUIRED** in the preview component.
 - **`Mqtt__AisReplay=true` + `Mqtt__AisReplayFile=/app/fixtures/ais.jsonl`** — the same
   `ReplayMqttTransport` also fans a captured AIS stream onto `ais/data` (~5 records/second), so the
   **vessel** pipeline runs against canned data alongside the aircraft feed. Same `Development` gate and
@@ -51,7 +62,7 @@ decimal** (~11 km). Precise home coordinates must never appear in this **PUBLIC*
 
 Two layers, both real:
 
-- The **Ingress Authelia forward-auth middleware** (`base/ingress.yaml`) gates access to the preview
+- The **Ingress Authelia forward-auth middleware** (a patch in `base/skylens-manifests.yaml`) gates access to the preview
   host itself.
 - **In-app OIDC sign-in works** like production: Authelia can't wildcard redirect URIs, so the
   `skylens` client in `../../authelia-production/authelia-helmrelease.yaml` pre-registers a window of

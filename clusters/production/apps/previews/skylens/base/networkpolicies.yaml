@@ -1,4 +1,4 @@
-# Preview egress: real JwtBearer (see deployment.yaml) fetches the OIDC discovery document and JWKS
+# Preview egress: real JwtBearer (see skylens deploy/components/preview) fetches the OIDC discovery document and JWKS
 # from https://auth.wsh.no on first challenge, so the preview pod needs external 443 — same ipBlock
 # convention as production (../../../skylens-production/networkpolicies.yaml), link-local metadata IP
 # excluded. DNS + default-deny come from the netpol-baseline component; policies are additive, so
@@ -24,7 +24,7 @@ spec:
       protocol: TCP
   # OTLP export (traces + metrics + logs — Program.cs wires all three when the endpoint is set) to
   # the shared collector, so preview backend errors are visible in Grafana/Tempo/Loki
-  # (service.namespace=skylens-preview) instead of only in a browser console. The collector side
+  # (service.namespace=skylens-preview-pr-<N>) instead of only in a browser console. The collector side
   # already admits OTLP from pods in any namespace
   # (../../../observability/cilium-host-to-otel-otlp-http.yaml).
   - to:

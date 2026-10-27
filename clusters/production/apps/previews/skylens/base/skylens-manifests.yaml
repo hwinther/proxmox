@@ -1,0 +1,63 @@
+# The preview workload (Deployment, Service, Ingress) comes from the PR's manifest artifact,
+# ghcr.io/hwinther/skylens/manifests:pr-<N>, which skylens' pr-preview.yml renders from the PR's
+# deploy/ plus deploy/components/preview (Development mode, replayed fixtures, no Secret) and signs.
+# The per-PR overlay pins the artifact by digest and sets targetNamespace and APP_HOST.
+#
+# Cluster-side differences from production live here, as patches:
+#   - Authelia forward-auth on the ingress is the outer gate for preview hosts (production has none
+#     because its host is public), and websecure is added because the LAN nginx terminates TLS with
+#     the *.preview.wsh.no wildcard;
+#   - previews don't get a homepage tile.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: skylens
+spec:
+  interval: 10m
+  url: oci://ghcr.io/hwinther/skylens/manifests
+  ref:
+    tag: placeholder # patched per PR (tag + digest)
+  # Only artifacts signed by skylens' PR preview workflow. Production's OCIRepository accepts
+  # release-tag signatures only, so a PR artifact can't be promoted there.
+  verify:
+    provider: cosign
+    matchOIDCIdentity:
+    - issuer: ^https://token\.actions\.githubusercontent\.com$
+      subject: ^https://github\.com/hwinther/skylens/\.github/workflows/pr-preview\.yml@refs/pull/[0-9]+/merge$
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: skylens
+spec:
+  interval: 10m
+  retryInterval: 1m
+  sourceRef:
+    kind: OCIRepository
+    name: skylens
+  path: ./
+  prune: true
+  wait: true
+  timeout: 5m
+  targetNamespace: placeholder # patched per PR
+  postBuild:
+    substitute:
+      APP_HOST: placeholder # patched per PR
+      APP_ENVIRONMENT: preview
+      OIDC_AUTHORITY: https://auth.wsh.no
+      # Replay ignores the broker, but the ingest service skips replay when the host is empty.
+      MQTT_HOST: replay
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://obs-otel-collector.observability-production.svc.cluster.local:4317
+  patches:
+  - target:
+      kind: Ingress
+      name: skylens
+    patch: |-
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        name: skylens
+        annotations:
+          traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+          traefik.ingress.kubernetes.io/router.middlewares: authelia-production-authelia-forwardauth@kubernetescrd
+          gethomepage.dev/enabled: "false"
