@@ -44,6 +44,15 @@ spec:
         memory: 256Mi
       limits:
         memory: 1Gi
+    # Our public WAN address for the NAXSI "self" classifier (transform/naxsi-classify). optional:
+    # a missing Secret expands to "" (nothing classifies as self) instead of blocking pod start.
+    extraEnvs:
+    - name: NAXSI_SELF_IP
+      valueFrom:
+        secretKeyRef:
+          name: naxsi-self-ip
+          key: ip
+          optional: true
     ports:
       jaeger-compact:
         enabled: false
@@ -149,9 +158,11 @@ spec:
         #
         #   naxsi.client = self  when the request came from our own WAN address (LAN traffic
         #                        hairpins out and back via NAT reflection, so OPNsense logs the
-        #                        public IP, not 10.20.1.x). UPDATE naxsi_self_ip BELOW IF THE ISP
-        #                        ADDRESS CHANGES — a stale value silently mutes the "self" alert,
-        #                        which is exactly why the second alert (own services) also exists.
+        #                        public IP, not 10.20.1.x). The address comes from the
+        #                        naxsi-self-ip Secret via ${env:NAXSI_SELF_IP} (kept out of git;
+        #                        see naxsi-self-ip-secrets.md). UPDATE THE SECRET IF THE ISP ADDRESS
+        #                        CHANGES — a stale value silently mutes the "self" alert, which is
+        #                        exactly why the second alert (own services) also exists.
         #   naxsi.target = the matched hostname for our own auth/mgmt vhosts, else "other".
         #                  Bounded by the number of our own names + the single "other" bucket.
         #
@@ -172,7 +183,7 @@ spec:
             - 'merge_maps(cache, ExtractPatterns(attributes["message"], "server=(?P<server>[^&]+)"), "upsert")'
             - 'set(attributes["naxsi.target"], cache["server"]) where cache["server"] != nil and IsMatch(cache["server"], "^(auth\\.wsh\\.no|[A-Za-z0-9-]+\\.mgmt\\.wsh\\.no)$")'
             - 'set(attributes["naxsi.target"], "other") where attributes["naxsi.target"] == nil'
-            - 'set(attributes["naxsi.client"], "self") where attributes["source.address"] == "83.108.47.152"'
+            - 'set(attributes["naxsi.client"], "self") where attributes["source.address"] == "${env:NAXSI_SELF_IP}"'
             - 'set(attributes["naxsi.client"], "other") where attributes["naxsi.client"] == nil'
         # The count connector emits a DELTA sum. Prometheus' OTLP receiver rejects delta outright —
         # "invalid temporality and type combination for metric naxsi_blocks", HTTP 500, data dropped —
