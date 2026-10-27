@@ -1,0 +1,50 @@
+# skylens-api's Deployment, Service and Ingress come from the skylens repo as a rendered,
+# cosign-signed OCI artifact, built by its release workflow from deploy/ (the variable contract is
+# deploy/README.md there). This directory keeps what the cluster owns: namespace, netpols and the
+# out-of-band Secret (skylens-secrets.md). The tag below is the promotion gate; Renovate opens the
+# bump PR when a new release is pushed, and the PR's manifest-diff comment in the skylens repo is
+# where the manifest content is reviewed.
+#
+# Prereqs (out-of-band, see skylens-secrets.md):
+#   - Secret `skylens-secrets` (MQTT__PASSWORD, OPENSKY__*, ADSBX__*, AEROAPI__*, FEED__*).
+#   - mosquitto `skylens` user in the passwd file (see ../mosquitto-production/mosquitto-secrets.md).
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: skylens
+spec:
+  interval: 10m
+  url: oci://ghcr.io/hwinther/skylens/manifests
+  ref:
+    tag: 0.17.0
+  # Only artifacts signed by the skylens release workflow at a version tag are applied. The workflow
+  # is dispatched at the tag ref, so the certificate's ref is refs/tags/v*, never a branch.
+  verify:
+    provider: cosign
+    matchOIDCIdentity:
+    - issuer: ^https://token\.actions\.githubusercontent\.com$
+      subject: ^https://github\.com/hwinther/skylens/\.github/workflows/container\.yml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: skylens
+spec:
+  interval: 10m
+  retryInterval: 2m
+  sourceRef:
+    kind: OCIRepository
+    name: skylens
+  path: ./
+  prune: true
+  wait: true
+  timeout: 5m
+  targetNamespace: skylens-production
+  # Values without a default in the artifact's contract. Strings only: kustomize drops the quotes
+  # around a substituted value, so a number would become a YAML int in an env value.
+  postBuild:
+    substitute:
+      APP_HOST: skylens.wsh.no
+      OIDC_AUTHORITY: https://auth.wsh.no
+      MQTT_HOST: mosquitto.mosquitto-production.svc.cluster.local
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://obs-otel-collector.observability-production.svc.cluster.local:4317

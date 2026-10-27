@@ -3,7 +3,8 @@
 `skylens-api` needs an MQTT login for the in-cluster broker, several third-party enrichment API
 credentials (aircraft: OpenSky, ADSBExchange, AeroAPI; maritime: BarentsWatch AIS + the separate
 FiskInfo "extended" client), and the home feed coordinates. None of these are committed to git — they
-all live in the `skylens-secrets` Secret, consumed via `envFrom` in `deployment.yaml`.
+all live in the `skylens-secrets` Secret, consumed via `envFrom` in the
+Deployment that the skylens manifest artifact ships (`skylens-manifests.yaml`).
 
 ## `skylens-secrets` Secret (create out-of-band)
 
@@ -26,7 +27,8 @@ kubectl -n skylens-production create secret generic skylens-secrets \
 
 `MQTT__USERNAME` is fixed to `skylens` (matches the passwd-file user). The non-secret config
 (`MQTT__HOST/PORT/TOPIC`, `Oidc__*`, `ADSBX__RAPIDAPIHOST`, budgets, `OTEL_*`) is set as plain env
-in `deployment.yaml`, not here.
+in the skylens repo's `deploy/deployment.yaml` (hosts and endpoints via `postBuild` in
+`skylens-manifests.yaml`), not here.
 
 | Key | Required | Where it comes from |
 | --- | -------- | ------------------- |
@@ -87,7 +89,7 @@ network allow is in `../mosquitto-production/cilium-mqtt-ingress.yaml`.
 
 ## Container image visibility
 
-`deployment.yaml` references `ghcr.io/hwinther/skylens/api` with **no `imagePullSecrets`**, matching
+The Deployment references `ghcr.io/hwinther/skylens/api` with **no `imagePullSecrets`**, matching
 clutterstock's public-package convention. Make that GHCR package **public**, or — if you keep it
 private — add a `ghcr-pull` clone policy + `imagePullSecrets` (copy the pattern in
 `../ddnsadmin/kyverno-clusterpolicies.yaml` and add a `…/ghcr-pull: "true"` namespace label).
