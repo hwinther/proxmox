@@ -14,18 +14,26 @@ labels:
   includeSelectors: false
   includeTemplates: true
 
-# Single PUBLIC image: digest pins the deploy to exactly the artifact the PR build pushed; the tag
-# (newTag) is kept alongside so `kubectl get deploy -o yaml | grep image:` stays readable.
-images:
-- name: ghcr.io/hwinther/skylens/api
-  newTag: "__IMAGE_TAG__"
-  digest: "__IMAGE_DIGEST__"
-
+# __IMAGE_TAG__ / __IMAGE_DIGEST__ carry the MANIFEST ARTIFACT's tag (pr-<N>) and digest, not the
+# image's: the artifact pins the image itself. The digest pins the deploy to exactly what this PR
+# run pushed; the tag is kept alongside for readability (`flux get sources oci`).
 patches:
 - target:
-    kind: Ingress
+    kind: OCIRepository
     name: skylens
   patch: |-
     - op: replace
-      path: /spec/rules/0/host
+      path: /spec/ref
+      value:
+        tag: "__IMAGE_TAG__"
+        digest: "__IMAGE_DIGEST__"
+- target:
+    kind: Kustomization
+    name: skylens
+  patch: |-
+    - op: replace
+      path: /spec/targetNamespace
+      value: skylens-preview-pr-__PR__
+    - op: replace
+      path: /spec/postBuild/substitute/APP_HOST
       value: __HOST__

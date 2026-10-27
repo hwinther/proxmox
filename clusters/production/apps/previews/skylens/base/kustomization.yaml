@@ -1,7 +1,8 @@
 # Shared kustomize base for skylens PR preview environments. Every per-PR overlay under ../pr-<N>/
 # references this base. Resources here intentionally have no metadata.namespace so the overlay's
-# namespace: directive populates it. The preview runs in Development replay mode with no broker, no
-# external enrichment, and no database — but WITH real OIDC JWT auth (see deployment.yaml), so on
+# namespace: directive populates it. The workload itself comes from the PR's signed manifest
+# artifact (skylens-manifests.yaml). It runs in Development replay mode with no broker, no
+# external enrichment, and no database, but WITH real OIDC JWT auth, so on
 # top of netpol-baseline (default-deny + DNS) and the Traefik->:8080 allow in
 # cilium-cluster-nodes-to-http.yaml, networkpolicies.yaml opens external 443 for the auth.wsh.no
 # OIDC discovery/JWKS fetch.
@@ -10,7 +11,6 @@ kind: Kustomization
 components:
 - ../../../../../../bases/netpol-baseline
 resources:
-- deployment.yaml
-- ingress.yaml
+- skylens-manifests.yaml
 - cilium-cluster-nodes-to-http.yaml
 - networkpolicies.yaml
