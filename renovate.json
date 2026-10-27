@@ -7,5 +7,13 @@
   },
   "schedule": ["* * * * 1"],
   "prConcurrentLimit": 0,
-  "commitMessagePrefix": "chore(deps):"
+  "commitMessagePrefix": "chore(deps):",
+  "packageRules": [
+    {
+      "description": "App manifest artifacts (OCIRepository tags) are promotions: open the PR as soon as a release is pushed instead of waiting for the weekly window.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["ghcr.io/hwinther/*/manifests"],
+      "schedule": ["at any time"]
+    }
+  ]
 }
