@@ -7,6 +7,7 @@
   },
   "schedule": ["* * * * 1"],
   "prConcurrentLimit": 0,
+  "prHourlyLimit": 0,
   "commitMessagePrefix": "chore(deps):",
   "packageRules": [
     {
