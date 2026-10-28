@@ -16,7 +16,7 @@ spec:
   interval: 10m
   url: oci://ghcr.io/hwinther/skylens/manifests
   ref:
-    tag: 0.17.0
+    tag: 0.18.0
   # Only artifacts signed by the skylens release workflow at a version tag are applied. The workflow
   # is dispatched at the tag ref, so the certificate's ref is refs/tags/v*, never a branch.
   verify:
