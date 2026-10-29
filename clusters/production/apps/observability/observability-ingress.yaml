@@ -64,7 +64,7 @@ metadata:
     # 'opentelemetry' isn't in homepage's default (dashboard-icons) set; use the simple-icons variant.
     gethomepage.dev/icon: si-opentelemetry
     gethomepage.dev/description: OTLP HTTP endpoint
-    # Ingress name is not a pod label; match the OTel Helm release (same as test cluster).
+    # Ingress name is not a pod label; match the OTel Helm release.
     gethomepage.dev/pod-selector: app.kubernetes.io/instance=obs-otel-collector
 spec:
   rules:

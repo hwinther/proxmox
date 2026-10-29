@@ -17,10 +17,10 @@ def update_lxc_templates():
     alpine_newest = None
     debian_newest = None
     for line in os_exec('pveam available --section system').split('\n'):
-        if line.find('alpine-') != -1:
-            alpine_newest = line.replace('system', '').strip()
-        elif line.find('debian-') != -1:
-            debian_newest = line.replace('system', '').strip()
+        if line.find('alpine-') != -1 and line.find('amd64') != -1:  # TODO: use a configured architecture instead
+            alpine_newest = line.replace('system', '').strip().split(' ')[0].strip()
+        elif line.find('debian-') != -1 and line.find('amd64') != -1:  # TODO: use a configured architecture instead
+            debian_newest = line.replace('system', '').strip().split(' ')[0].strip()
     if config.verbose:
         print(f'Newest alpine image: {alpine_newest}')
         print(f'Newest debian image: {debian_newest}')
@@ -30,7 +30,7 @@ def update_lxc_templates():
         if config.verbose:
             print(f'Storage "{config.template_storage}" contains the alpine image already.')
     else:
-        print(f'Downloading newest alpine image to storage "{config.template_storage}"')
+        print(f'Downloading newest alpine image (%s) to storage "{config.template_storage}"' % alpine_newest)
         os_exec(f'pveam download {config.template_storage} {alpine_newest}')
 
     debian_newest_exists = os_exec(f'pveam list {config.template_storage}').find(debian_newest) != -1
@@ -38,7 +38,7 @@ def update_lxc_templates():
         if config.verbose:
             print(f'Storage "{config.template_storage}" contains the debian image already.')
     else:
-        print(f'Downloading newest debian image to storage "{config.template_storage}"')
+        print(f'Downloading newest debian image (%s) to storage "{config.template_storage}"' % debian_newest)
         os_exec(f'pveam download {config.template_storage} {debian_newest}')
 
     return alpine_newest, debian_newest
