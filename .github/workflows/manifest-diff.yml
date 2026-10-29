@@ -1,0 +1,57 @@
+name: Manifest diff
+
+# Renders every Flux Kustomization path this repo syncs (the flux-system GitRepository's, listed in
+# clusters/*/flux-system/gotk-sync.yaml) for the PR head and its base, and posts a review report to
+# the job summary and a sticky PR comment: a Mermaid map of the changed resources and their direct
+# neighbours, plus a dyff per changed resource. Same report as the app repos' deploy/ diffs.
+#
+# What it can't show: HelmRelease charts aren't templated (a chart bump is a version change on the
+# HelmRelease), and OCI-sourced app manifests live in their artifact (the app repo's PR shows them).
+
+on:
+    pull_request:
+        paths:
+            - "clusters/**"
+            - "bases/**"
+            - ".github/workflows/manifest-diff.yml"
+
+permissions:
+    contents: read
+
+concurrency:
+    group: "${{ github.workflow }} @ ${{ github.head_ref }}"
+    cancel-in-progress: true
+
+jobs:
+    diff:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            pull-requests: write
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  persist-credentials: false
+
+            - name: List the Flux paths
+              id: paths
+              run: |
+                  {
+                      echo "renders<<EOF"
+                      yq -N 'select(.kind == "Kustomization" and .spec.sourceRef.kind == "GitRepository" and .spec.sourceRef.name == "flux-system") | .spec.path' clusters/*/flux-system/gotk-sync.yaml \
+                          | sed 's|^\./||' | awk '{ print $0 ".yaml=" $0 }'
+                      echo "EOF"
+                  } >> "$GITHUB_OUTPUT"
+
+            - name: Render and report
+              uses: hwinther/reusable-workflows/.github/actions/manifests@44270a5c4a68e7f8b80bf86595629fed0d2fab5d # feat/manifests-map-changed
+              with:
+                  mode: diff
+                  renders: ${{ steps.paths.outputs.renders }}
+                  map: changed
+                  contract: "false"
+                  # verify-dependabot-clusters and Flux's own server dry-run cover validity.
+                  validate: "false"
+                  comment_key: cluster-manifest-diff
+                  note: "Rendered with kustomize; HelmRelease charts and OCI artifacts are not expanded."
