@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -14,6 +15,9 @@ CLUSTERS = REPO_ROOT / "clusters"
 DEPENDABOT = REPO_ROOT / ".github" / "dependabot.yml"
 DEPENDABOT_REL = ".github/dependabot.yml"
 YAML_SUFFIXES = (".yaml", ".yml")
+# Per-PR preview overlays (previews/<app>/pr-<N>) are written and removed by the gitops-preview
+# workflows while a preview runs. They hold only a namespace and patches, nothing for Dependabot.
+PREVIEW_OVERLAY = re.compile(r"^/clusters/[^/]+/apps/previews/[^/]+/pr-[0-9]+$")
 MISSING_LIST_FILE = Path(os.environ.get("RUNNER_TEMP", "/tmp")) / "dependabot-cluster-missing.txt"
 ORPHANED_LIST_FILE = Path(os.environ.get("RUNNER_TEMP", "/tmp")) / "dependabot-cluster-orphaned.txt"
 
@@ -28,8 +32,10 @@ def clusters_dirs_with_yaml() -> set[str]:
             continue
         if path.suffix.lower() not in YAML_SUFFIXES:
             continue
-        rel = path.parent.relative_to(REPO_ROOT).as_posix()
-        found.add(f"/{rel}")
+        rel = f"/{path.parent.relative_to(REPO_ROOT).as_posix()}"
+        if PREVIEW_OVERLAY.match(rel):
+            continue
+        found.add(rel)
     return found
 
 
