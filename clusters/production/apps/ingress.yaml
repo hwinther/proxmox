@@ -45,49 +45,6 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: clutterstock-test
-  namespace: clutterstock-test
-  annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web
-    # Homepage otherwise derives the link from the first Ingress path (/api); pin the frontend root.
-    gethomepage.dev/href: "https://clutterstock.test.wsh.no/"
-    gethomepage.dev/enabled: "true"
-    gethomepage.dev/group: Apps
-    gethomepage.dev/name: Clutterstock (test)
-    gethomepage.dev/siteMonitor: https://clutterstock.test.wsh.no
-    gethomepage.dev/icon: mdi-image-multiple-outline
-    gethomepage.dev/description: Playwright / release checks — isolated SQLite + shared-test Redis; not production data
-    gethomepage.dev/pod-selector: app in (clutterstock-frontend, clutterstock-api)
-spec:
-  rules:
-  - host: clutterstock.test.wsh.no
-    http:
-      paths:
-      - path: /api
-        pathType: Prefix
-        backend:
-          service:
-            name: clutterstock-api
-            port:
-              number: 8080
-      - path: /swagger
-        pathType: Prefix
-        backend:
-          service:
-            name: clutterstock-api
-            port:
-              number: 8080
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: clutterstock-frontend
-            port:
-              number: 8080
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
   name: wshno
   namespace: wshno-production
   annotations:

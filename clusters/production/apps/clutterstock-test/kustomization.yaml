@@ -7,8 +7,7 @@ components:
 resources:
 - namespace.yaml
 - kyverno-rbac-generate-cluttertestdb-app-secret.yaml
-- clutterstock-api-deployment.yaml
-- clutterstock-frontend-deployment.yaml
+- clutterstock-manifests.yaml
 - clutterstock-test-pbs-backup-job.yaml
 # Restore is clutterstock-test-pbs-restore-job.yaml — apply manually so Flux does not keep a failed/duplicate restore Job.
 - networkpolicies.yaml
