@@ -7,8 +7,6 @@ components:
 resources:
 - namespace.yaml
 - kyverno-rbac-generate-testdb-app-secret.yaml
-- test-api-deployment.yaml
-- test-frontend-deployment.yaml
-- test-ingress.yaml
+- test-manifests.yaml
 - networkpolicies.yaml
 - cilium-cluster-nodes-to-http.yaml

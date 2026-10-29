@@ -155,7 +155,7 @@ volumes:
           path: ca-bundle.crt
 ```
 
-Reference implementation: [`../test-test/test-api-deployment.yaml`](../test-test/test-api-deployment.yaml). If .NET's chain-build ignores `SSL_CERT_FILE` on your base image, fall back to a RabbitMQ.Client `CertificateValidationCallback` that loads the PEM with `X509Certificate2.CreateFromPem(...)` and uses `X509ChainTrustMode.CustomRootTrust`.
+Reference implementation: the test app's [`deploy/api.yaml`](https://github.com/hwinther/test/blob/main/deploy/api.yaml) (deployed to `test-test` through [`../test-test/test-manifests.yaml`](../test-test/test-manifests.yaml)). If .NET's chain-build ignores `SSL_CERT_FILE` on your base image, fall back to a RabbitMQ.Client `CertificateValidationCallback` that loads the PEM with `X509Certificate2.CreateFromPem(...)` and uses `X509ChainTrustMode.CustomRootTrust`.
 
 ## 6. Prometheus metrics and MQTT
 
