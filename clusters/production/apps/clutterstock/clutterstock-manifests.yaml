@@ -3,9 +3,10 @@
 # deploy/ (the variable contract is deploy/README.md there). This directory keeps what the cluster
 # owns: namespace, netpols, PBS backup, and the Secrets.
 #
-# Production pins an exact release tag. Renovate opens a PR for every new release (packageRule
-# ghcr.io/hwinther/*/manifests), and merging it is the promotion. Test (../clutterstock-test) follows
-# the newest release automatically, so a release has run there before its PR lands here.
+# Production pins an exact release tag. ClutterStock's promote.yml opens the bump PR (after an
+# approval on its `production` environment), and merging it is the promotion or rollback. Renovate
+# leaves this file alone (renovate.json). Test (../clutterstock-test) follows the newest release
+# automatically, so a release has run there before it can be promoted here.
 #
 # Prereqs (out-of-band): Secret `clutterstock-production-rabbitmq` (see ../rabbitmq-production/
 # rabbitmq-secrets.md); `clutterstock-pg-secret` and `clutterstock-valkey` are cloned in by Kyverno.
@@ -18,14 +19,14 @@ spec:
   url: oci://ghcr.io/hwinther/clutterstock/manifests
   ref:
     tag: 0.29.0
-  # Only artifacts signed by the clutterstock release workflow at a version tag are applied.
-  # tag-and-release dispatches container.yml at the tag ref, so the certificate's ref is
-  # refs/tags/v*, never a branch.
+  # Only artifacts co-signed by promote.yml on main are applied. promote.yml signs only after it has
+  # verified the release signature (container.yml@refs/tags/v<version>) and the environment
+  # approval, so a release that wasn't approved can't run here even if this tag is edited by hand.
   verify:
     provider: cosign
     matchOIDCIdentity:
     - issuer: ^https://token\.actions\.githubusercontent\.com$
-      subject: ^https://github\.com/hwinther/ClutterStock/\.github/workflows/container\.yml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$
+      subject: ^https://github\.com/hwinther/ClutterStock/\.github/workflows/promote\.yml@refs/heads/main$
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
