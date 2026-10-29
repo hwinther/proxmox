@@ -1,0 +1,66 @@
+# clutterstock's API (with the migrator as its initContainer), frontend and Ingress come from the
+# clutterstock repo as a rendered, cosign-signed OCI artifact, built by its release workflow from
+# deploy/ (the variable contract is deploy/README.md there). This directory keeps what the cluster
+# owns: namespace, netpols, PBS backup, and the Secrets.
+#
+# Test follows the newest release automatically: ref.semver picks the highest matching tag on every
+# interval, so a release lands here within ~10 minutes with no PR. Production pins an exact tag
+# instead (Renovate bump PR = promotion gate).
+#
+# Prereqs (out-of-band): Secret `clutterstock-test-rabbitmq` (see ../rabbitmq-production/
+# rabbitmq-secrets.md); `cluttertestdb-app` and `clutterstock-valkey` are cloned in by Kyverno.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: clutterstock
+spec:
+  interval: 10m
+  url: oci://ghcr.io/hwinther/clutterstock/manifests
+  ref:
+    semver: ">=0.29.0"
+  # Only artifacts signed by the clutterstock release workflow at a version tag are applied.
+  # tag-and-release dispatches container.yml at the tag ref, so the certificate's ref is
+  # refs/tags/v*, never a branch.
+  verify:
+    provider: cosign
+    matchOIDCIdentity:
+    - issuer: ^https://token\.actions\.githubusercontent\.com$
+      subject: ^https://github\.com/hwinther/ClutterStock/\.github/workflows/container\.yml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: clutterstock
+spec:
+  interval: 10m
+  sourceRef:
+    kind: OCIRepository
+    name: clutterstock
+  path: ./
+  prune: true
+  wait: true
+  timeout: 5m
+  targetNamespace: clutterstock-test
+  # Values without a default in the artifact's contract, plus test's overrides. Strings only:
+  # kustomize drops the quotes around a substituted value.
+  postBuild:
+    substitute:
+      APP_HOST: clutterstock.test.wsh.no
+      APP_ENVIRONMENT: testing
+      OIDC_AUTHORITY: https://auth.wsh.no
+      PG_HOST: cluttertestdb-rw.postgres-test.svc.cluster.local
+      PG_USER: app
+      PG_SECRET: cluttertestdb-app
+      RABBITMQ_HOST: rabbitmq.rabbitmq-production.svc.cluster.local
+      RABBITMQ_VHOST: test
+      RABBITMQ_SECRET: clutterstock-test-rabbitmq
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://obs-otel-collector.observability-production.svc.cluster.local:4317
+      HOMEPAGE_NAME: Clutterstock (test)
+  patches:
+  - target:
+      kind: Ingress
+      name: clutterstock
+    patch: |-
+      - op: replace
+        path: /metadata/annotations/gethomepage.dev~1description
+        value: Playwright / release checks — isolated test database + shared-test Redis; not production data
