@@ -61,7 +61,7 @@ Decide these **while authoring the initial PR**, so you do not chain fixes acros
 2. **Pod and container security**
    - Pod or container: **`runAsNonRoot: true`** where the image supports it — see **Before the first commit → `runAsNonRoot` vs image `USER`** if the pod fails with **CreateContainerConfigError** (kubelet) while PolicyReports still look green.
    - Every container: **`securityContext.allowPrivilegeEscalation: false`**; prefer **`capabilities.drop: ["ALL"]`** when compatible.
-   - Init containers that **must** run as root (e.g. `chmod` on a volume): keep them minimal; add a **PolicyException** for **`wsh-require-run-as-non-root`** (and only what is required) with **`matchLabels`** on the pod template. Example: migrate Jobs in [`clusters/production/apps/clutterstock-migrate`](../../../clusters/production/apps/clutterstock-migrate).
+   - Init containers that **must** run as root (e.g. `chmod` on a volume): keep them minimal; add a **PolicyException** for **`wsh-require-run-as-non-root`** (and only what is required) with **`matchLabels`** on the pod template. Example: [`clusters/production/apps/headlamp-production`](../../../clusters/production/apps/headlamp-production).
 
 3. **Resources and labels**
    - **`resources.limits.memory`** (and usual CPU/memory requests/limits) on every container — **`wsh-require-resource-limits`** checks memory limits.
@@ -82,12 +82,11 @@ Decide these **while authoring the initial PR**, so you do not chain fixes acros
 
 ## Reference implementations (production)
 
-| Area                                                  | Location                                                                                                  |
-| ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Tagged app images + security + probes + NetworkPolicy | [`clusters/production/apps/clutterstock`](../../../clusters/production/apps/clutterstock)                 |
-| Migrate Job + busybox tag + init exception            | [`clusters/production/apps/clutterstock-migrate`](../../../clusters/production/apps/clutterstock-migrate) |
-| Headlamp init exceptions + plugin tags                | [`clusters/production/apps/headlamp-production`](../../../clusters/production/apps/headlamp-production)   |
-| Shared Redis / RedisInsight + NP                      | [`clusters/production/apps/shared`](../../../clusters/production/apps/shared)                             |
+| Area                                                  | Location                                                                                                |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Tagged app images + security + probes + NetworkPolicy | [`clusters/production/apps/test-test`](../../../clusters/production/apps/test-test)                     |
+| Headlamp init exceptions + plugin tags                | [`clusters/production/apps/headlamp-production`](../../../clusters/production/apps/headlamp-production) |
+| Shared Redis / RedisInsight + NP                      | [`clusters/production/apps/shared`](../../../clusters/production/apps/shared)                           |
 
 ## Verification
 
