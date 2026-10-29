@@ -5,8 +5,10 @@ name: Manifest diff
 # the job summary and a sticky PR comment: a Mermaid map of the changed resources and their direct
 # neighbours, plus a dyff per changed resource. Same report as the app repos' deploy/ diffs.
 #
-# What it can't show: HelmRelease charts aren't templated (a chart bump is a version change on the
-# HelmRelease), and OCI-sourced app manifests live in their artifact (the app repo's PR shows them).
+# Each changed HelmRelease's chart is templated at both sides too (helm: "true"), so a chart bump or
+# values change shows the resources it really changes; CRDs, lookup() results and values from
+# Secrets that aren't in the repo are left out. OCI-sourced app manifests live in their artifact
+# (the app repo's PR shows them); here only the OCIRepository ref change shows.
 
 on:
     pull_request:
@@ -45,7 +47,7 @@ jobs:
                   } >> "$GITHUB_OUTPUT"
 
             - name: Render and report
-              uses: hwinther/reusable-workflows/.github/actions/manifests@44270a5c4a68e7f8b80bf86595629fed0d2fab5d # feat/manifests-map-changed
+              uses: hwinther/reusable-workflows/.github/actions/manifests@1b59aba870c65d1d727f43ab97ef61795e81a08f # feat/manifests-helm-diff
               with:
                   mode: diff
                   renders: ${{ steps.paths.outputs.renders }}
@@ -53,5 +55,8 @@ jobs:
                   contract: "false"
                   # verify-dependabot-clusters and Flux's own server dry-run cover validity.
                   validate: "false"
+                  helm: "true"
+                  # The clusters' Kubernetes version, for charts that gate on .Capabilities.
+                  helm_kube_version: "1.35.8"
                   comment_key: cluster-manifest-diff
-                  note: "Rendered with kustomize; HelmRelease charts and OCI artifacts are not expanded."
+                  note: "Rendered with kustomize, charts with helm template (no CRDs, Secret values redacted); OCI artifacts are not expanded."
