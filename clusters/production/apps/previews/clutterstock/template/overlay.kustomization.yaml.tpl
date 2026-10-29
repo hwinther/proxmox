@@ -14,65 +14,30 @@ labels:
   includeSelectors: false
   includeTemplates: true
 
-# Image digests pin the deploy to exactly the artifacts that just passed e2e + grype. The tag
-# (newTag) is kept alongside the digest so `kubectl get deploy -o yaml | grep image:` is readable.
-images:
-- name: ghcr.io/hwinther/clutterstock/api
-  newTag: "__IMAGE_API_TAG__"
-  digest: "__IMAGE_API_DIGEST__"
-- name: ghcr.io/hwinther/clutterstock/frontend
-  newTag: "__IMAGE_FRONTEND_TAG__"
-  digest: "__IMAGE_FRONTEND_DIGEST__"
-- name: ghcr.io/hwinther/clutterstock/migrator
-  newTag: "__IMAGE_MIGRATOR_TAG__"
-  digest: "__IMAGE_MIGRATOR_DIGEST__"
-
+# __IMAGE_TAG__ / __IMAGE_DIGEST__ carry the MANIFEST ARTIFACT's tag (pr-<N>) and digest, not an
+# image's: the artifact pins the api, migrator and frontend images itself. The digest pins the
+# deploy to exactly what this PR run pushed after e2e + grype; the tag is kept alongside for
+# readability (`flux get sources oci`).
 patches:
 - target:
-    kind: Deployment
-    name: clutterstock-api
-  patch: |-
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      name: clutterstock-api
-    spec:
-      template:
-        spec:
-          initContainers:
-          - name: migrator
-            env:
-            - name: PG_DB
-              value: __DB_NAME__
-          containers:
-          - name: clutterstock-api
-            env:
-            - name: PG_DB
-              value: __DB_NAME__
-            - name: OTEL_RESOURCE_ATTRIBUTES
-              value: "service.namespace=clutterstock-preview-pr-__PR__,deployment.environment=preview"
-- target:
-    kind: Deployment
-    name: clutterstock-frontend
-  patch: |-
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      name: clutterstock-frontend
-    spec:
-      template:
-        spec:
-          containers:
-          - name: clutterstock-frontend
-            env:
-            - name: PUBLIC_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
-              value: "https://__HOST__/v1/traces"
-            - name: PUBLIC_ORIGIN
-              value: "https://__HOST__"
-- target:
-    kind: Ingress
+    kind: OCIRepository
     name: clutterstock
   patch: |-
     - op: replace
-      path: /spec/rules/0/host
+      path: /spec/ref
+      value:
+        tag: "__IMAGE_TAG__"
+        digest: "__IMAGE_DIGEST__"
+- target:
+    kind: Kustomization
+    name: clutterstock
+  patch: |-
+    - op: replace
+      path: /spec/targetNamespace
+      value: clutterstock-preview-pr-__PR__
+    - op: replace
+      path: /spec/postBuild/substitute/APP_HOST
       value: __HOST__
+    - op: replace
+      path: /spec/postBuild/substitute/PG_DB
+      value: __DB_NAME__
