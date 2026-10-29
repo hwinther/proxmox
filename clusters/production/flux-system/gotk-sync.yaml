@@ -13,25 +13,6 @@ spec:
     name: flux-system
   url: https://github.com/hwinther/proxmox.git
 ---
-# force: Jobs are immutable, and Kyverno's verifyImages mutateDigest rewrites the pod template's
-# image (tag -> tag@sha256) at admission — so the stored Job never matches git, and any re-apply
-# of the Job under the same name fails with "field is immutable", wedging the whole Kustomization.
-# force recreates the Job instead; safe here because EF migrations are idempotent and the
-# versioned job name (-vNNN) controls when a migration is intended to run.
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: clutterstock-migrate
-  namespace: flux-system
-spec:
-  interval: 10m0s
-  path: ./clusters/production/apps/clutterstock-migrate
-  prune: true
-  force: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
----
 # Per-PR ephemeral preview envs for clutterstock. Faster interval than the 10m default so opening
 # / closing a PR lands in the cluster within ~1 min. Depends on cnpg-system (Database CRD) and
 # kyverno (ClusterPolicy CRD) being installed before the preview tree applies on first bootstrap.
@@ -211,9 +192,6 @@ spec:
   prune: true
   # After cert-manager Helm installs CRDs, the next flux-system reconcile passes server dry-run for Certificate / ClusterIssuer.
   retryInterval: 1m0s
-  ## Do not dependsOn clutterstock-migrate here: if the migrate PVC/Job is not Ready (e.g. Ceph secret missing),
-  ## that would block the entire production tree (observability, Traefik, Homepage). Clutterstock ordering is
-  ## best-effort: run or re-run the migrator Job before relying on the API, or apply migrate first manually.
   sourceRef:
     kind: GitRepository
     name: flux-system

@@ -1,0 +1,56 @@
+# clutterstock's API (with the migrator as its initContainer), frontend and Ingress come from the
+# clutterstock repo as a rendered, cosign-signed OCI artifact, built by its release workflow from
+# deploy/ (the variable contract is deploy/README.md there). This directory keeps what the cluster
+# owns: namespace, netpols, PBS backup, and the Secrets.
+#
+# Production pins an exact release tag. Renovate opens a PR for every new release (packageRule
+# ghcr.io/hwinther/*/manifests), and merging it is the promotion. Test (../clutterstock-test) follows
+# the newest release automatically, so a release has run there before its PR lands here.
+#
+# Prereqs (out-of-band): Secret `clutterstock-production-rabbitmq` (see ../rabbitmq-production/
+# rabbitmq-secrets.md); `clutterstock-pg-secret` and `clutterstock-valkey` are cloned in by Kyverno.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: clutterstock
+spec:
+  interval: 10m
+  url: oci://ghcr.io/hwinther/clutterstock/manifests
+  ref:
+    tag: 0.29.0
+  # Only artifacts signed by the clutterstock release workflow at a version tag are applied.
+  # tag-and-release dispatches container.yml at the tag ref, so the certificate's ref is
+  # refs/tags/v*, never a branch.
+  verify:
+    provider: cosign
+    matchOIDCIdentity:
+    - issuer: ^https://token\.actions\.githubusercontent\.com$
+      subject: ^https://github\.com/hwinther/ClutterStock/\.github/workflows/container\.yml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: clutterstock
+spec:
+  interval: 10m
+  sourceRef:
+    kind: OCIRepository
+    name: clutterstock
+  path: ./
+  prune: true
+  wait: true
+  timeout: 5m
+  targetNamespace: clutterstock-production
+  # Values without a default in the artifact's contract. Strings only: kustomize drops the quotes
+  # around a substituted value.
+  postBuild:
+    substitute:
+      APP_HOST: clutterstock.wsh.no
+      OIDC_AUTHORITY: https://auth.wsh.no
+      PG_HOST: postgres-prod-rw.postgres-production.svc.cluster.local
+      PG_USER: clutterstock
+      PG_SECRET: clutterstock-pg-secret
+      RABBITMQ_HOST: rabbitmq.rabbitmq-production.svc.cluster.local
+      RABBITMQ_VHOST: prod
+      RABBITMQ_SECRET: clutterstock-production-rabbitmq
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://obs-otel-collector.observability-production.svc.cluster.local:4317

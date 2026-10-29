@@ -13,10 +13,10 @@ description: >-
 
 Kubernetes GitOps uses **one folder per cluster** under `clusters/`. Production and edge share this repo but **never** share the same Flux `path:` on the cluster.
 
-| Path                   | Purpose                                                   |
-| ---------------------- | --------------------------------------------------------- |
-| `clusters/production/` | Production k0s cluster (also hosts test-tier namespaces)  |
-| `clusters/edge-sdr/`   | Edge k0s cluster for SDR workloads on the radio-pi nodes  |
+| Path                   | Purpose                                                  |
+| ---------------------- | -------------------------------------------------------- |
+| `clusters/production/` | Production k0s cluster (also hosts test-tier namespaces) |
+| `clusters/edge-sdr/`   | Edge k0s cluster for SDR workloads on the radio-pi nodes |
 
 See [`clusters/README.md`](../../../clusters/README.md) for when to split into a second repository (compliance, org boundaries).
 
@@ -42,13 +42,13 @@ Guidelines:
 
 **Ingress `spec.rules.host`** (and public DNS) use the domain **`wsh.no`**, separate from in-cluster DNS (`*.svc.cluster.local`). Namespaces do not allocate IPs or public names; map workloads with Ingress (e.g. Traefik) + DNS records.
 
-| Environment                         | Host pattern                                                         | Example                                                                                                                                                                                                                                                                                     |
-| ----------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Production (apps)**               | `{service}.wsh.no`                                                   | `clutterstock.wsh.no` (API at `/api/`)                                                                                                                                                                                                                                                      |
-| **Production (management)**         | Homepage: `mgmt.wsh.no`; other services: `{service}.mgmt.wsh.no`     | `mgmt.wsh.no`, `grafana.mgmt.wsh.no`, `headlamp.mgmt.wsh.no`                                                                                                                                                                                                                                |
-| **Production (SSO / OIDC issuer)**  | **Canonical:** `auth.wsh.no` only                                    | `https://auth.wsh.no` — Authelia (`iss`, session URL) + apiserver `oidc-issuer-url`; see [`authelia-helmrelease.yaml`](../../../clusters/production/apps/authelia-production/authelia-helmrelease.yaml). Keep **`*.mgmt.wsh.no`** private; public apps redirect login to **`auth.wsh.no`**. |
-| **Test tier (on prod cluster)**     | `appname.test.wsh.no`                                                | `clutterstock.test.wsh.no`, `test.test.wsh.no` — namespace **`test-test`** (app **test** + env **test**); ([`clusters/production/apps/test-test/`](../../../clusters/production/apps/test-test/README.md))                                                                                  |
-| **PR / preview**                    | `appname-<pr-number>.preview.wsh.no`                                 | `clutterstock-184.preview.wsh.no`                                                                                                                                                                                                                                                           |
+| Environment                        | Host pattern                                                     | Example                                                                                                                                                                                                                                                                                     |
+| ---------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Production (apps)**              | `{service}.wsh.no`                                               | `clutterstock.wsh.no` (API at `/api/`)                                                                                                                                                                                                                                                      |
+| **Production (management)**        | Homepage: `mgmt.wsh.no`; other services: `{service}.mgmt.wsh.no` | `mgmt.wsh.no`, `grafana.mgmt.wsh.no`, `headlamp.mgmt.wsh.no`                                                                                                                                                                                                                                |
+| **Production (SSO / OIDC issuer)** | **Canonical:** `auth.wsh.no` only                                | `https://auth.wsh.no` — Authelia (`iss`, session URL) + apiserver `oidc-issuer-url`; see [`authelia-helmrelease.yaml`](../../../clusters/production/apps/authelia-production/authelia-helmrelease.yaml). Keep **`*.mgmt.wsh.no`** private; public apps redirect login to **`auth.wsh.no`**. |
+| **Test tier (on prod cluster)**    | `appname.test.wsh.no`                                            | `clutterstock.test.wsh.no`, `test.test.wsh.no` — namespace **`test-test`** (app **test** + env **test**); ([`clusters/production/apps/test-test/`](../../../clusters/production/apps/test-test/README.md))                                                                                  |
+| **PR / preview**                   | `appname-<pr-number>.preview.wsh.no`                             | `clutterstock-184.preview.wsh.no`                                                                                                                                                                                                                                                           |
 
 **PR/preview shape:** put **`appname`** and **`pr-number`** in one DNS label left of `preview.wsh.no` (`clutterstock-184`), not `184.clutterstock.preview.wsh.no`, so **`*.preview.wsh.no`** covers all preview hosts without per-app wildcards.
 
@@ -83,10 +83,10 @@ clusters/<name>/
 
 ### Tiering on the production k0s cluster (`clusters/production/`)
 
-| Namespace / bundle | Tier | Purpose |
-| ------------------ | ---- | ------- |
-| **`postgres-test`** | **Test** | CNPG `Cluster`s for workloads on the **test line** (namespaces like **`test-test`**, **`clutterstock-test`**): e.g. `testdb`, `cluttertestdb`. |
-| **`postgres-production`** | **Production** | CNPG `Cluster`s for **production-line** apps (e.g. **`clutterstock-production`**): e.g. `clutterstockdb`. |
+| Namespace / bundle        | Tier           | Purpose                                                                                                                                        |
+| ------------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`postgres-test`**       | **Test**       | CNPG `Cluster`s for workloads on the **test line** (namespaces like **`test-test`**, **`clutterstock-test`**): e.g. `testdb`, `cluttertestdb`. |
+| **`postgres-production`** | **Production** | CNPG `Cluster`s for **production-line** apps (e.g. **`clutterstock-production`**): e.g. `clutterstockdb`.                                      |
 
 **Rule:** test-tier apps use Postgres **only** from **`postgres-test`**; production-tier apps use Postgres **only** from **`postgres-production`**. Do not cross-wire tiers (same cluster, different namespaces and PVCs).
 
@@ -113,8 +113,8 @@ For **`appname-preview`** namespaces, either provision a **dedicated small `Clus
 ### Production (`clusters/production/flux-system/gotk-sync.yaml`)
 
 - **GitRepository** `flux-system` watches `https://github.com/hwinther/proxmox.git`, branch `main`, interval 1m.
-- **Kustomization** `clutterstock-migrate` with `path: ./clusters/production/apps/clutterstock-migrate` (namespace + PVC + migrator Job).
-- Root **Kustomization** `flux-system` with `path: ./clusters/production` — **no `dependsOn` migrate**, so a stuck Clutterstock PVC/Job does not block observability, Traefik, or Homepage. Ensure migrator Job has completed before depending on Clutterstock API.
+- **Kustomization**s `previews-*` for the per-PR preview trees.
+- Root **Kustomization** `flux-system` with `path: ./clusters/production`. Clutterstock (and skylens) workloads come from signed OCI manifest artifacts via an in-namespace `OCIRepository` + `Kustomization`; clutterstock's migrator is the API's initContainer.
 
 ### Edge SDR (`clusters/edge-sdr/flux-system/gotk-sync.yaml`)
 
