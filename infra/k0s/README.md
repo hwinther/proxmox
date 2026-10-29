@@ -46,7 +46,7 @@ If **`metrics.k8s.io`** (or other **`APIService`** registrations such as Kubesca
 ## 6. Flux (production path)
 
 - On the **production** cluster only, run Flux bootstrap targeting `./clusters/production` (see [`clusters/production/README.md`](../../clusters/production/README.md)).
-- Do not reuse test-cluster `gotk-sync.yaml`; production uses its own `GitRepository` / `Kustomization` pair scoped to `./clusters/production`.
+- Production uses its own `GitRepository` / `Kustomization` pair scoped to `./clusters/production`.
 
 ## 7. Applications
 

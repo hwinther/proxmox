@@ -1,4 +1,4 @@
-name: Update Flux installation (production and test cluster)
+name: Update Flux installation (production and edge clusters)
 
 on:
     workflow_dispatch:
