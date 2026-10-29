@@ -12,8 +12,6 @@ updates:
   schedule:
     interval: "weekly"
     day: "monday"
-  cooldown:
-    default-days: 7
   groups:
     reusable-workflows:
       patterns:
@@ -24,16 +22,12 @@ updates:
   open-pull-requests-limit: 20
   schedule:
     interval: "weekly"
-  cooldown:
-    default-days: 7
 
 - package-ecosystem: "pip"
   directory: "/"
   open-pull-requests-limit: 20
   schedule:
     interval: "weekly"
-  cooldown:
-    default-days: 7
 
 # esp-poller container image — pins its own runtime deps in requirements.txt
 # (kept separate from the root pyproject so the image rebuild surface is small).
@@ -42,8 +36,6 @@ updates:
   open-pull-requests-limit: 20
   schedule:
     interval: "weekly"
-  cooldown:
-    default-days: 7
 
 # edge-sdr cluster (k0s / SDR edge).
 - package-ecosystem: "docker"
