@@ -1,0 +1,12 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: test-preview-pr-1274
+  namespace: postgres-test
+spec:
+  name: test_pr1274
+  owner: app
+  cluster:
+    name: testdb
+  databaseReclaimPolicy: delete
+  ensure: present
