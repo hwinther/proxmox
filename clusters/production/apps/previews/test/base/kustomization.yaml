@@ -1,0 +1,15 @@
+# Shared kustomize base for test-app PR preview environments. Every per-PR overlay under ../pr-<N>/
+# references this base. Resources here intentionally have no `metadata.namespace` so the overlay's
+# `namespace:` directive populates it. The CNPG Database CR per PR lives outside this base (in
+# ../databases/) so kustomize's namespace transform does not overwrite its `postgres-test` ns.
+# The workload itself comes from the PR's signed manifest artifact (test-manifests.yaml); this base
+# keeps what the cluster owns: the per-preview Valkey and the network policies.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+components:
+- ../../../../../../bases/netpol-baseline
+resources:
+- test-manifests.yaml
+- valkey.yaml
+- networkpolicies.yaml
+- cilium-cluster-nodes-to-http.yaml

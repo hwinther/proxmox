@@ -1,0 +1,159 @@
+# Same shape as test-test/networkpolicies.yaml, except Valkey: previews run their own in the namespace
+# (valkey.yaml) instead of shared-test's. Cross-namespace selectors are unchanged (kube-system /
+# observability-production / postgres-test / rabbitmq-production / traefik are all stable names).
+# Same-namespace rules omit namespaceSelector so they match the preview namespace itself and work
+# across every PR overlay without modification.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: test-api
+spec:
+  podSelector:
+    matchLabels:
+      app: test-api
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: traefik
+    ports:
+    - port: 8080
+      protocol: TCP
+  # Same-namespace SSR / in-cluster fetch: preview frontend pod -> preview API Service.
+  - from:
+    - podSelector:
+        matchLabels:
+          app: test-frontend
+    ports:
+    - port: 8080
+      protocol: TCP
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: observability-production
+    ports:
+    - port: 4317
+      protocol: TCP
+    - port: 4318
+      protocol: TCP
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: rabbitmq-production
+    ports:
+    - port: 5672
+      protocol: TCP
+    - port: 5671
+      protocol: TCP
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: postgres-test
+    ports:
+    - port: 5432
+      protocol: TCP
+  # Same-namespace egress to the per-preview Valkey (valkey.yaml): cache + SignalR backplane.
+  - to:
+    - podSelector:
+        matchLabels:
+          app: redis
+    ports:
+    - port: 6379
+      protocol: TCP
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+        except:
+        - 169.254.169.254/32
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: test-frontend
+spec:
+  podSelector:
+    matchLabels:
+      app: test-frontend
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: traefik
+    ports:
+    - port: 8080
+      protocol: TCP
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+  # Same-namespace egress to the preview API.
+  - to:
+    - podSelector:
+        matchLabels:
+          app: test-api
+  # Same-namespace egress to the per-preview Valkey (valkey.yaml): sessions.
+  - to:
+    - podSelector:
+        matchLabels:
+          app: redis
+    ports:
+    - port: 6379
+      protocol: TCP
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+        except:
+        - 169.254.169.254/32
+---
+# Per-preview Valkey: only the preview API/frontend may connect; Valkey initiates nothing
+# (no egress rules + Egress policyType = egress denied).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: redis
+spec:
+  podSelector:
+    matchLabels:
+      app: redis
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: test-api
+    - podSelector:
+        matchLabels:
+          app: test-frontend
+    ports:
+    - port: 6379
+      protocol: TCP

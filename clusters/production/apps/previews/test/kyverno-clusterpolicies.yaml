@@ -1,0 +1,85 @@
+# ClusterPolicy that clones the Secrets a test-app preview env needs into every namespace labeled
+# `test.wsh.no/preview=true`. Same label-driven generate pattern as the ClutterStock previews
+# (../clutterstock/kyverno-clusterpolicies.yaml); the cluster-wide Secret RBAC for Kyverno is already
+# in place from the PBS work, so no extra RBAC is needed here.
+#
+# Trigger: a Namespace gets created (e.g. by the upsert workflow) with the preview label, OR an
+# existing namespace is labelled. `generateExisting: true` also re-applies on policy install so any
+# preview namespace already on the cluster gets the Secrets immediately.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: clone-test-preview-secrets
+  annotations:
+    policies.kyverno.io/title: Clone test-app preview-env Secrets
+    policies.kyverno.io/category: Test
+    policies.kyverno.io/severity: low
+spec:
+  generateExisting: true
+  rules:
+  # Postgres app credential. Source `testdb-app` is the CNPG-managed application Secret in
+  # postgres-test; the preview API connects with this user to its per-PR database `test_pr<N>`,
+  # which CNPG provisions from the per-PR Database CR.
+  - name: clone-testdb-app
+    match:
+      any:
+      - resources:
+          kinds:
+          - Namespace
+          selector:
+            matchLabels:
+              test.wsh.no/preview: "true"
+    generate:
+      apiVersion: v1
+      kind: Secret
+      name: testdb-app
+      namespace: "{{request.object.metadata.name}}"
+      synchronize: true
+      clone:
+        namespace: postgres-test
+        name: testdb-app
+  # RabbitMQ creds for the shared `test` vhost. Source lives in test-test (see
+  # ../../rabbitmq-production/rabbitmq-secrets.md). Sharing the `test` vhost across all previews is
+  # acceptable for short-lived PR envs.
+  - name: clone-test-api-rabbitmq
+    match:
+      any:
+      - resources:
+          kinds:
+          - Namespace
+          selector:
+            matchLabels:
+              test.wsh.no/preview: "true"
+    generate:
+      apiVersion: v1
+      kind: Secret
+      name: test-api-rabbitmq
+      namespace: "{{request.object.metadata.name}}"
+      synchronize: true
+      clone:
+        namespace: test-test
+        name: test-api-rabbitmq
+  # Valkey/Redis URL for the frontend sessions and the API's SignalR backplane. Generated, not
+  # cloned: previews run their own Valkey in the namespace (base/valkey.yaml), since shared-test's
+  # Redis NetworkPolicy denies preview namespaces. Same Secret name and key as test-test, so the
+  # artifact's env wiring is unchanged.
+  # data is base64 of redis://redis:6379/0 (same URI shape as the shared secret, no auth).
+  - name: generate-test-frontend-valkey
+    match:
+      any:
+      - resources:
+          kinds:
+          - Namespace
+          selector:
+            matchLabels:
+              test.wsh.no/preview: "true"
+    generate:
+      apiVersion: v1
+      kind: Secret
+      name: test-frontend-valkey
+      namespace: "{{request.object.metadata.name}}"
+      synchronize: true
+      data:
+        type: Opaque
+        data:
+          redis-url: cmVkaXM6Ly9yZWRpczo2Mzc5LzA=

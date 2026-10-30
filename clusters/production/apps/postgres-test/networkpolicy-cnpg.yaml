@@ -18,6 +18,15 @@ spec:
     ports:
     - port: 5432
       protocol: TCP
+  # Test-app preview envs (per-PR namespaces labelled test.wsh.no/preview=true, the same label the
+  # Kyverno secret-clone policy keys on).
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          test.wsh.no/preview: "true"
+    ports:
+    - port: 5432
+      protocol: TCP
   - from:
     - namespaceSelector:
         matchLabels:

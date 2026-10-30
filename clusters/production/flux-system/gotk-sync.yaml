@@ -99,6 +99,24 @@ spec:
     kind: GitRepository
     name: flux-system
 ---
+# Per-PR ephemeral preview envs for the test app (hwinther/test). Same shape as clutterstock: a
+# per-PR CNPG Database on testdb and Kyverno-cloned Secrets, so it depends on cnpg-system and kyverno.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: previews-test
+  namespace: flux-system
+spec:
+  interval: 1m0s
+  path: ./clusters/production/apps/previews/test
+  prune: true
+  dependsOn:
+  - name: cnpg-system
+  - name: kyverno
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+---
 # Kyverno CRDs come from the Helm chart; policies must apply in a separate Kustomization after this is Ready.
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization

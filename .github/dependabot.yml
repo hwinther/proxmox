@@ -121,6 +121,9 @@ updates:
   - "/clusters/production/apps/previews/pbs-browser/base"
   - "/clusters/production/apps/previews/skylens"
   - "/clusters/production/apps/previews/skylens/base"
+  - "/clusters/production/apps/previews/test"
+  - "/clusters/production/apps/previews/test/base"
+  - "/clusters/production/apps/previews/test/databases"
   - "/clusters/production/apps/shared/production"
   - "/clusters/production/flux-system"
   schedule:
