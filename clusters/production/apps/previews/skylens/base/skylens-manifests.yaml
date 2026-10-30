@@ -1,5 +1,5 @@
 # The preview workload (Deployment, Service, Ingress) comes from the PR's manifest artifact,
-# ghcr.io/hwinther/skylens/manifests:pr-<N>, which skylens' pr-preview.yml renders from the PR's
+# ghcr.io/hwinther/skylens/manifests:pr-<N>, which skylens' pr-e2e.yml renders from the PR's
 # deploy/ plus deploy/components/preview (Development mode, replayed fixtures, no Secret) and signs.
 # The per-PR overlay pins the artifact by digest and sets targetNamespace and APP_HOST.
 #
@@ -17,13 +17,13 @@ spec:
   url: oci://ghcr.io/hwinther/skylens/manifests
   ref:
     tag: placeholder # patched per PR (tag + digest)
-  # Only artifacts signed by skylens' PR preview workflow. Production's OCIRepository accepts
+  # Only artifacts signed by skylens' PR workflow (pr-e2e.yml). Production's OCIRepository accepts
   # release-tag signatures only, so a PR artifact can't be promoted there.
   verify:
     provider: cosign
     matchOIDCIdentity:
     - issuer: ^https://token\.actions\.githubusercontent\.com$
-      subject: ^https://github\.com/hwinther/skylens/\.github/workflows/pr-preview\.yml@refs/pull/[0-9]+/merge$
+      subject: ^https://github\.com/hwinther/skylens/\.github/workflows/pr-e2e\.yml@refs/pull/[0-9]+/merge$
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization

@@ -16,14 +16,14 @@ Placeholders the workflow replaces:
 - `__HOST__` — preview hostname (e.g. `skylens-42.preview.wsh.no`)
 - `__IMAGE_TAG__` / `__IMAGE_DIGEST__` — despite the names, the **manifest artifact's** tag
   (`pr-<N>`) and digest, `ghcr.io/hwinther/skylens/manifests`, as pushed by skylens'
-  `pr-preview.yml`. The artifact pins the API image itself.
+  `pr-e2e.yml`. The artifact pins the API image itself.
 
 ## Where the preview workload comes from
 
 `base/skylens-manifests.yaml` holds an `OCIRepository` and a Flux `Kustomization` per preview
 namespace. The artifact is the PR's own `deploy/` rendered with `deploy/components/preview`, so a
 PR that changes the manifests runs them in its preview before any release. Only artifacts signed by
-skylens' `pr-preview.yml` on a pull-request ref are accepted; production accepts release-tag
+skylens' `pr-e2e.yml` on a pull-request ref are accepted; production accepts release-tag
 signatures only. Preview-only cluster concerns (forward-auth, no homepage tile) are patches on that
 Kustomization, and the namespace, netpols and per-PR values stay in this tree.
 
