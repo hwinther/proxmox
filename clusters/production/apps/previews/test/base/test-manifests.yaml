@@ -1,0 +1,63 @@
+# The preview workload (API, frontend, Ingress) comes from the PR's manifest artifact,
+# ghcr.io/hwinther/test/manifests:pr-<N>, which the test repo's pr-e2e.yml renders from the PR's
+# deploy/ (same render as a release, PR images pinned) and signs. The per-PR overlay pins the
+# artifact by digest and sets targetNamespace, APP_HOST and PG_DB.
+#
+# Everything else is the test tier's wiring (../../../test-test/test-manifests.yaml): the shared
+# testdb cluster (one database per PR, ../databases/), the RabbitMQ `test` vhost, and the Secrets
+# Kyverno clones in (../kyverno-clusterpolicies.yaml). Previews get no homepage tile.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: test
+spec:
+  interval: 10m
+  url: oci://ghcr.io/hwinther/test/manifests
+  ref:
+    tag: placeholder # patched per PR (tag + digest)
+  # Only artifacts signed by the test repo's PR workflow. The test environment accepts release-tag
+  # signatures only, so a PR artifact can't land there.
+  verify:
+    provider: cosign
+    matchOIDCIdentity:
+    - issuer: ^https://token\.actions\.githubusercontent\.com$
+      subject: ^https://github\.com/hwinther/test/\.github/workflows/pr-e2e\.yml@refs/pull/[0-9]+/merge$
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: test
+spec:
+  interval: 10m
+  retryInterval: 1m
+  sourceRef:
+    kind: OCIRepository
+    name: test
+  path: ./
+  prune: true
+  wait: true
+  # The API migrates at startup and goes ready once CNPG has created the per-PR database.
+  timeout: 5m
+  targetNamespace: placeholder # patched per PR
+  # Strings only: kustomize drops the quotes around a substituted value.
+  postBuild:
+    substitute:
+      APP_HOST: placeholder # patched per PR
+      APP_ENVIRONMENT: preview
+      OIDC_AUTHORITY: https://auth.wsh.no
+      PG_HOST: testdb-rw.postgres-test.svc.cluster.local
+      PG_DB: placeholder # patched per PR
+      PG_USER: app
+      PG_SECRET: testdb-app
+      RABBITMQ_HOST: rabbitmq.rabbitmq-production.svc.cluster.local
+      RABBITMQ_VHOST: test
+      RABBITMQ_SECRET: test-api-rabbitmq
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://obs-otel-collector.observability-production.svc.cluster.local:4317
+  patches:
+  - target:
+      kind: Ingress
+      name: test
+    patch: |-
+      - op: replace
+        path: /metadata/annotations/gethomepage.dev~1enabled
+        value: "false"
