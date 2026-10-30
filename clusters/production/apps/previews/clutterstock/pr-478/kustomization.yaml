@@ -1,0 +1,43 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: clutterstock-preview-pr-478
+
+resources:
+- ../base
+- namespace.yaml
+
+# `labels` (vs deprecated `commonLabels`) with includeSelectors: false avoids leaking the PR label
+# into NetworkPolicy podSelectors that target peers in other namespaces (kube-dns, redis, etc.).
+labels:
+- pairs:
+    clutterstock.wsh.no/pr: "478"
+  includeSelectors: false
+  includeTemplates: true
+
+# pr-478 / sha256:5408cb57ae81e40a8c1f7135a1fe9f6a2f5b6595b85c4b4ec237a4571e5e221f carry the MANIFEST ARTIFACT's tag (pr-<N>) and digest, not an
+# image's: the artifact pins the api, migrator and frontend images itself. The digest pins the
+# deploy to exactly what this PR run pushed after e2e + grype; the tag is kept alongside for
+# readability (`flux get sources oci`).
+patches:
+- target:
+    kind: OCIRepository
+    name: clutterstock
+  patch: |-
+    - op: replace
+      path: /spec/ref
+      value:
+        tag: "pr-478"
+        digest: "sha256:5408cb57ae81e40a8c1f7135a1fe9f6a2f5b6595b85c4b4ec237a4571e5e221f"
+- target:
+    kind: Kustomization
+    name: clutterstock
+  patch: |-
+    - op: replace
+      path: /spec/targetNamespace
+      value: clutterstock-preview-pr-478
+    - op: replace
+      path: /spec/postBuild/substitute/APP_HOST
+      value: clutterstock-478.preview.wsh.no
+    - op: replace
+      path: /spec/postBuild/substitute/PG_DB
+      value: clutterstock_pr478
