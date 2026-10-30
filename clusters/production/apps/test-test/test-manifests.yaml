@@ -1,0 +1,56 @@
+# The test app's API, frontend and Ingress come from the hwinther/test repo as a rendered,
+# cosign-signed OCI artifact, built by its release workflow from deploy/ (the variable contract is
+# deploy/README.md there). This directory keeps what the cluster owns: namespace, netpols and the
+# Secrets.
+#
+# Test follows the newest release automatically: ref.semver picks the highest matching tag on every
+# interval, so a release lands here within ~10 minutes with no PR.
+#
+# Prereqs (out-of-band): Secrets `test-api-rabbitmq` (see ../rabbitmq-production/rabbitmq-secrets.md)
+# and `test-frontend-valkey` (see ../shared/valkey-secrets.md); `testdb-app` is cloned in by Kyverno.
+# The namespace's wsh.no/trust-bundle label brings the wsh-internal-ca ConfigMap the API mounts.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: test
+spec:
+  interval: 10m
+  url: oci://ghcr.io/hwinther/test/manifests
+  ref:
+    semver: ">=0.71.0"
+  # Only artifacts signed by the test repo's release workflow at a version tag are applied.
+  # tag-and-release dispatches container.yml at the tag ref, so the certificate's ref is
+  # refs/tags/v*, never a branch.
+  verify:
+    provider: cosign
+    matchOIDCIdentity:
+    - issuer: ^https://token\.actions\.githubusercontent\.com$
+      subject: ^https://github\.com/hwinther/test/\.github/workflows/container\.yml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: test
+spec:
+  interval: 10m
+  sourceRef:
+    kind: OCIRepository
+    name: test
+  path: ./
+  prune: true
+  wait: true
+  timeout: 5m
+  targetNamespace: test-test
+  # Values without a default in the artifact's contract. Strings only: kustomize drops the quotes
+  # around a substituted value.
+  postBuild:
+    substitute:
+      APP_HOST: test.test.wsh.no
+      OIDC_AUTHORITY: https://auth.wsh.no
+      PG_HOST: testdb-rw.postgres-test.svc.cluster.local
+      PG_USER: app
+      PG_SECRET: testdb-app
+      RABBITMQ_HOST: rabbitmq.rabbitmq-production.svc.cluster.local
+      RABBITMQ_VHOST: test
+      RABBITMQ_SECRET: test-api-rabbitmq
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://obs-otel-collector.observability-production.svc.cluster.local:4317
