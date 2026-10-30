@@ -1,0 +1,39 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: skylens-preview-pr-170
+
+resources:
+- ../base
+- namespace.yaml
+
+# `labels` (vs deprecated `commonLabels`) with includeSelectors: false — identification only; keeps
+# the PR label out of selectors so it can't break the netpol-baseline same-namespace matching.
+labels:
+- pairs:
+    skylens.wsh.no/pr: "170"
+  includeSelectors: false
+  includeTemplates: true
+
+# pr-170 / sha256:304628b6fd3a55e38520f708a3f4f6692d7b62febd92c7e981e442c6ad34727f carry the MANIFEST ARTIFACT's tag (pr-<N>) and digest, not the
+# image's: the artifact pins the image itself. The digest pins the deploy to exactly what this PR
+# run pushed; the tag is kept alongside for readability (`flux get sources oci`).
+patches:
+- target:
+    kind: OCIRepository
+    name: skylens
+  patch: |-
+    - op: replace
+      path: /spec/ref
+      value:
+        tag: "pr-170"
+        digest: "sha256:304628b6fd3a55e38520f708a3f4f6692d7b62febd92c7e981e442c6ad34727f"
+- target:
+    kind: Kustomization
+    name: skylens
+  patch: |-
+    - op: replace
+      path: /spec/targetNamespace
+      value: skylens-preview-pr-170
+    - op: replace
+      path: /spec/postBuild/substitute/APP_HOST
+      value: skylens-170.preview.wsh.no
