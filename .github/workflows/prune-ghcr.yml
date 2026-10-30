@@ -31,10 +31,12 @@ on:
 permissions:
     contents: read
     packages: write
+    # prune-ghcr v2.4.0 looks up open PRs to keep their pr-<N> / PullRequest<N> tags.
+    pull-requests: read
 
 jobs:
     prune:
-        uses: hwinther/reusable-workflows/.github/workflows/prune-ghcr.yml@00fef736b925dfc7b70ab0476276ae1f59e1683b # v2.0.1
+        uses: hwinther/reusable-workflows/.github/workflows/prune-ghcr.yml@fa4b94a22f6df1f509a2bd37d67b9596eb41e359 # v2.4.0
         with:
             # workflow_dispatch supplies inputs.dry_run; cron leaves it null and the
             # || false fallback makes scheduled runs actually prune.
