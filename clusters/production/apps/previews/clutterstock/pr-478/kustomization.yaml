@@ -14,7 +14,7 @@ labels:
   includeSelectors: false
   includeTemplates: true
 
-# pr-478 / sha256:b888c421c0d15b0f4e9ecf77f59f166caac1bc04cef54c312eea4dbc4bbf676e carry the MANIFEST ARTIFACT's tag (pr-<N>) and digest, not an
+# pr-478 / sha256:2b57c335734e78b86c49b6d82765bfb29332efea1331d0b51cad7a7ffe214b43 carry the MANIFEST ARTIFACT's tag (pr-<N>) and digest, not an
 # image's: the artifact pins the api, migrator and frontend images itself. The digest pins the
 # deploy to exactly what this PR run pushed after e2e + grype; the tag is kept alongside for
 # readability (`flux get sources oci`).
@@ -27,7 +27,7 @@ patches:
       path: /spec/ref
       value:
         tag: "pr-478"
-        digest: "sha256:b888c421c0d15b0f4e9ecf77f59f166caac1bc04cef54c312eea4dbc4bbf676e"
+        digest: "sha256:2b57c335734e78b86c49b6d82765bfb29332efea1331d0b51cad7a7ffe214b43"
 - target:
     kind: Kustomization
     name: clutterstock
