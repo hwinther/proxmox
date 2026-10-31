@@ -1,0 +1,31 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: pbs-browser-preview-pr-68
+
+resources:
+- ../base
+- namespace.yaml
+
+# `labels` (vs deprecated `commonLabels`) with includeSelectors: false — identification only; keeps
+# the PR label out of selectors so it can't break the netpol-baseline same-namespace matching.
+labels:
+- pairs:
+    pbs-browser.wsh.no/pr: "68"
+  includeSelectors: false
+  includeTemplates: true
+
+# Single image: digest pins the deploy to exactly the artifact the PR build pushed; the tag (newTag)
+# is kept alongside so `kubectl get deploy -o yaml | grep image:` stays readable.
+images:
+- name: ghcr.io/hwinther/pbs-browser/app
+  newTag: "0.1.1-ci-preview-comment-and-wshno-group.8"
+  digest: "sha256:1455bcb833be96b6e1766588a49f137564416197a70ad23153ebd7f0e797c50a"
+
+patches:
+- target:
+    kind: Ingress
+    name: pbs-browser
+  patch: |-
+    - op: replace
+      path: /spec/rules/0/host
+      value: pbs-browser-68.preview.wsh.no
