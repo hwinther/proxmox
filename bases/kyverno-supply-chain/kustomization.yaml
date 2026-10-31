@@ -4,3 +4,4 @@ resources:
 - clusterpolicy-github-slsa-provenance.yaml
 - clusterpolicy-cyclonedx-sbom.yaml
 - clusterpolicy-cosign-vuln-attestation.yaml
+- clusterpolicy-ddnsadmin-cosign-signature.yaml

@@ -1,0 +1,66 @@
+# Cosign signature check for ddnsadmin, the one first-party image without SLSA provenance.
+#
+# ddnsadmin is a user-owned PRIVATE GitHub repo, so actions/attest-build-provenance returns "Feature
+# not available for user-owned private repositories" and no SLSA bundle is ever published
+# (clusterpolicy-github-slsa-provenance.yaml skips it for that reason). The reusable push still
+# signs every image with cosign keyless (_push-image-with-signatures), on the release path
+# (docker-container.yml) and the PR path (image-push.yml). This policy verifies that signature
+# instead, bound to the caller repo through the Fulcio certificate's GitHub workflow-repository
+# extension, the same binding the SLSA policy gets from externalParameters.workflow.repository.
+#
+# The package is private: Kyverno pulls the signature with `ghcr-pull` (a read:packages
+# dockerconfigjson), which imageRegistryCredentials reads from Kyverno's OWN namespace. The
+# clone-ddnsadmin-ghcr-pull ClusterPolicy (clusters/production/apps/ddnsadmin) copies it there.
+# On the edge cluster there is no copy and no ddnsadmin pod, so the entry never fires.
+#
+# AUDIT for now. Flip failureAction to Enforce (with mutateDigest) once the PolicyReports stay
+# clean; see clusterpolicy-github-slsa-provenance.yaml for why verifyDigest stays false.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: wsh-require-ddnsadmin-cosign-signature
+  annotations:
+    policies.kyverno.io/title: Require cosign signature (ghcr.io/hwinther/ddnsadmin)
+    policies.kyverno.io/category: Supply Chain
+    policies.kyverno.io/severity: high
+spec:
+  validationFailureAction: Audit
+  background: false
+  # Kubernetes caps webhook timeout at 30s.
+  webhookTimeoutSeconds: 30
+  rules:
+  - name: ddnsadmin-cosign-signature
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    exclude:
+      any:
+      - resources:
+          namespaces:
+          - kube-system
+          - kyverno
+          - flux-system
+    verifyImages:
+    - imageReferences:
+      - ghcr.io/hwinther/ddnsadmin/*
+      imageRegistryCredentials:
+        secrets:
+        - ghcr-pull
+      # Audit mode: mutateDigest requires Enforce, so it (and verifyDigest) are off here.
+      failureAction: Audit
+      mutateDigest: false
+      verifyDigest: false
+      useCache: true
+      attestors:
+      - entries:
+        - keyless:
+            issuer: https://token.actions.githubusercontent.com
+            subjectRegExp: ^https://github.com/hwinther/reusable-workflows/\.github/workflows/(docker-container|image-push)\.yml@(refs/tags/v[0-9]+(\.[0-9]+){0,2}|[a-f0-9]{40})$
+            # The caller repo (the reusable workflow is the SAN, so the SAN alone doesn't say who
+            # called it).
+            additionalExtensions:
+              githubWorkflowRepository: hwinther/ddnsadmin
+            rekor:
+              url: https://rekor.sigstore.dev

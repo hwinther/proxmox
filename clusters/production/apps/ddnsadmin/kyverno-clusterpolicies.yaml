@@ -23,6 +23,13 @@
 #
 # `generateExisting: true` re-applies on policy install, so the already-running production/test
 # namespaces get the secret immediately rather than only on the next namespace create.
+#
+# Second rule: the same Secret in Kyverno's own namespace, where verifyImages'
+# imageRegistryCredentials looks it up to fetch ddnsadmin's signature and attestations
+# (bases/kyverno-supply-chain/clusterpolicy-ddnsadmin-cosign-signature.yaml and the ddnsadmin entries
+# of the SBOM/vuln policies). Kyverno's resourceFilters ignore objects inside `kyverno`
+# ([*/*,kyverno,*]), so the trigger is the cluster-scoped Namespace object, and changes are
+# propagated from the source Secret rather than from watching the copy.
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -48,6 +55,23 @@ spec:
       kind: Secret
       name: ghcr-pull
       namespace: "{{request.object.metadata.name}}"
+      synchronize: true
+      clone:
+        namespace: platform-production
+        name: ghcr-pull
+  - name: clone-ghcr-pull-to-kyverno
+    match:
+      any:
+      - resources:
+          kinds:
+          - Namespace
+          names:
+          - kyverno
+    generate:
+      apiVersion: v1
+      kind: Secret
+      name: ghcr-pull
+      namespace: kyverno
       synchronize: true
       clone:
         namespace: platform-production

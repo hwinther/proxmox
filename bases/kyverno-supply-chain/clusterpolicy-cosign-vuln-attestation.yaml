@@ -49,7 +49,7 @@ spec:
       skipImageReferences:
       - ghcr.io/hwinther/wsh-rtl-sdr/sdr-base*
       - ghcr.io/hwinther/wsh-rtl-sdr/sdr-build*
-      # ddnsadmin is a private package, skipped like in clusterpolicy-github-slsa-provenance.yaml.
+      # ddnsadmin (private package) is verified by its own entry below, with registry credentials.
       - ghcr.io/hwinther/ddnsadmin/*
       # Audit mode: mutateDigest requires Enforce, so it (and verifyDigest) are off here.
       # When flipping to Enforce, re-enable both.
@@ -65,5 +65,29 @@ spec:
           - keyless:
               issuer: https://token.actions.githubusercontent.com
               subjectRegExp: ^https://github.com/hwinther/reusable-workflows/\.github/workflows/(docker-container|dotnet-container|image-push)\.yml@(refs/tags/v[0-9]+(\.[0-9]+){0,2}|[a-f0-9]{40})$
+              rekor:
+                url: https://rekor.sigstore.dev
+    # ddnsadmin's package is private, so it gets its own entry: the shared one above pulls
+    # anonymously, and keeping the credential here limits a bad or missing `ghcr-pull` to this
+    # image. The Secret lives in Kyverno's namespace (cloned there by clone-ddnsadmin-ghcr-pull,
+    # clusters/production/apps/ddnsadmin); the edge cluster has none and runs no ddnsadmin pod.
+    - imageReferences:
+      - ghcr.io/hwinther/ddnsadmin/*
+      imageRegistryCredentials:
+        secrets:
+        - ghcr-pull
+      failureAction: Audit
+      mutateDigest: false
+      verifyDigest: false
+      useCache: true
+      attestations:
+      - type: https://cosign.sigstore.dev/attestation/vuln/v1
+        attestors:
+        - entries:
+          - keyless:
+              issuer: https://token.actions.githubusercontent.com
+              subjectRegExp: ^https://github.com/hwinther/reusable-workflows/\.github/workflows/(docker-container|image-push)\.yml@(refs/tags/v[0-9]+(\.[0-9]+){0,2}|[a-f0-9]{40})$
+              additionalExtensions:
+                githubWorkflowRepository: hwinther/ddnsadmin
               rekor:
                 url: https://rekor.sigstore.dev
