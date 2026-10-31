@@ -1,0 +1,40 @@
+# The test instance applies the same `server` render as production (see
+# ../production/ddnsadmin-manifests.yaml for how the artifact and the cluster side split), at its
+# own hostname, with its own DB on its own PVC. Bump the tag below to try a release here before
+# promoting it to production.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: ddnsadmin
+spec:
+  interval: 10m
+  url: oci://ghcr.io/hwinther/ddnsadmin/manifests
+  ref:
+    tag: 0.17.0
+  secretRef:
+    name: ghcr-pull
+  verify:
+    provider: cosign
+    matchOIDCIdentity:
+    - issuer: ^https://token\.actions\.githubusercontent\.com$
+      subject: ^https://github\.com/hwinther/ddnsadmin/\.github/workflows/ddnsadmin-container\.yml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: ddnsadmin
+spec:
+  interval: 10m
+  retryInterval: 2m
+  sourceRef:
+    kind: OCIRepository
+    name: ddnsadmin
+  path: ./server
+  prune: true
+  wait: true
+  timeout: 5m
+  targetNamespace: ddnsadmin-test
+  postBuild:
+    substitute:
+      APP_HOST: ddns.test.wsh.no
+      SUPERUSER_EMAIL: admin@wsh.no

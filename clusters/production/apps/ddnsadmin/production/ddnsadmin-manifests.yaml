@@ -1,0 +1,49 @@
+# ddnsadmin's Deployment, Service and Ingress come from the ddnsadmin repo as a rendered,
+# cosign-signed OCI artifact, built by its release workflow from deploy/ (the contract is
+# deploy/README.md there). This instance applies the artifact's `server` render. The cluster keeps
+# the namespace (with the ghcr-pull clone label), netpols, the PVC `ddnsadmin-data` and the
+# out-of-band `ddnsadmin-secrets` (../base/secrets-bootstrap.md). The PVC stays here on purpose: an
+# artifact change can then never prune the sqlite database.
+#
+# The tag below is the promotion gate; the manifest-diff comment on the ddnsadmin PR is where the
+# manifest content is reviewed.
+#
+# The package is private: `ghcr-pull` authenticates the artifact pull and the signature lookup,
+# and the Deployment uses the same Secret for the image.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: ddnsadmin
+spec:
+  interval: 10m
+  url: oci://ghcr.io/hwinther/ddnsadmin/manifests
+  ref:
+    tag: 0.17.0
+  secretRef:
+    name: ghcr-pull
+  # Only artifacts signed by the ddnsadmin release workflow at a version tag are applied.
+  verify:
+    provider: cosign
+    matchOIDCIdentity:
+    - issuer: ^https://token\.actions\.githubusercontent\.com$
+      subject: ^https://github\.com/hwinther/ddnsadmin/\.github/workflows/ddnsadmin-container\.yml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: ddnsadmin
+spec:
+  interval: 10m
+  retryInterval: 2m
+  sourceRef:
+    kind: OCIRepository
+    name: ddnsadmin
+  path: ./server
+  prune: true
+  wait: true
+  timeout: 5m
+  targetNamespace: ddnsadmin-production
+  postBuild:
+    substitute:
+      APP_HOST: ddns.wsh.no
+      SUPERUSER_EMAIL: admin@wsh.no

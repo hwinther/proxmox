@@ -1,7 +1,7 @@
 # Bootstrap secrets for any ddnsadmin instance
 
 Two Secrets need to exist in the instance's namespace (`<NS>` below — e.g. `ddnsadmin-production`,
-`ddnsadmin-test`, or whatever you name a new overlay) before its Deployment can start. Neither is
+`ddnsadmin-test`, or whatever you name a new overlay) before its Deployment (from ddnsadmin's manifest artifact) can start. Neither is
 committed to git — create them out-of-band per the recipes below.
 
 ## `ddnsadmin-secrets`
@@ -44,7 +44,7 @@ clone a single source Secret into any namespace carrying a label — see
 ## After first boot
 
 1. Log in as `admin` with `DJANGO_SUPERUSER_PASSWORD` at this instance's ingress host
-   (`WEB_PREFIX` env value in the overlay's Deployment patch).
+   (`APP_HOST` in the instance's `ddnsadmin-manifests.yaml`).
 2. Add the **TsigKey** that matches your external BIND server (Database admin → ddnsadmin → Tsig
    keys). Use the same `algorithm` and `secret` configured in BIND's `named.conf` (the `key "..."`
    block). Never reuse the demo key from `scripts/start.sh`.
