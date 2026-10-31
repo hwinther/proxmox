@@ -47,7 +47,7 @@ jobs:
                   } >> "$GITHUB_OUTPUT"
 
             - name: Render and report
-              uses: hwinther/reusable-workflows/.github/actions/manifests@e80ab952c6982cd557a8722fa124bf971aad6134 # v2.3.0
+              uses: hwinther/reusable-workflows/.github/actions/manifests@c1e80ad637dcdd38bb6de0f447475c40a8625141 # v2.9.0
               with:
                   mode: diff
                   renders: ${{ steps.paths.outputs.renders }}
