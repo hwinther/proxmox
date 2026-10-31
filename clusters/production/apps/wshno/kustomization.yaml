@@ -6,7 +6,8 @@ components:
 - ../../../../bases/netpol-baseline
 resources:
 - namespace.yaml
-- wshno-deployment.yaml
+# The site Deployment + Service (signed OCI artifact from the wshno repo).
+- wshno-manifests.yaml
 - cilium-cluster-nodes-to-http.yaml
 # Snapshot services for the public game-server widgets (query Prometheus, serve curated JSON only).
 # One Deployment + netpol per game; all share game-status/refresh.py (selected via the GAME env).
