@@ -1,0 +1,39 @@
+# The site's Deployment and Service come from the wshno repo as a rendered, cosign-signed OCI
+# artifact, built by its release workflow from deploy/ (the contract is deploy/README.md there).
+# This directory keeps what the cluster owns: the namespace, netpols, the game-status snapshot
+# services, and the Ingress (../ingress.yaml), which serves wsh.no + www.wsh.no and routes
+# /api/<game> to those services and / to Service/wshno. The tag below is the promotion gate;
+# Renovate opens the bump PR when a new release is pushed, and the PR's manifest-diff comment in the
+# wshno repo is where the manifest content is reviewed.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: wshno
+spec:
+  interval: 10m
+  url: oci://ghcr.io/wshno/wshno/manifests
+  ref:
+    tag: 0.11.0
+  # Only artifacts signed by the wshno release workflow at a version tag are applied. The workflow
+  # is dispatched at the tag ref, so the certificate's ref is refs/tags/v*, never a branch.
+  verify:
+    provider: cosign
+    matchOIDCIdentity:
+    - issuer: ^https://token\.actions\.githubusercontent\.com$
+      subject: ^https://github\.com/wshno/wshno/\.github/workflows/container\.yml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: wshno
+spec:
+  interval: 10m
+  retryInterval: 2m
+  sourceRef:
+    kind: OCIRepository
+    name: wshno
+  path: ./
+  prune: true
+  wait: true
+  timeout: 5m
+  targetNamespace: wshno-production
