@@ -14,36 +14,27 @@ labels:
   includeSelectors: false
   includeTemplates: true
 
-# Single image: digest pins the deploy to exactly the artifact that just passed e2e + grype; the
-# tag (newTag) is kept alongside so `kubectl get deploy -o yaml | grep image:` stays readable.
-images:
-- name: ghcr.io/hwinther/ddnsadmin/ddnsadmin
-  newTag: "__IMAGE_TAG__"
-  digest: "__IMAGE_DIGEST__"
-
+# __IMAGE_TAG__ / __IMAGE_DIGEST__ carry the MANIFEST ARTIFACT's tag (pr-<N>) and digest, not the
+# image's: the artifact pins the image itself. The digest pins the deploy to exactly what this PR
+# run pushed; the tag is kept alongside for readability (`flux get sources oci`). APP_HOST sets the
+# Ingress host and WEB_PREFIX inside the artifact.
 patches:
-# WEB_PREFIX drives the absolute URLs Django emits (django-environ reads it in dweb/settings.py),
-# so it must point at the per-PR preview host. The ingress host is rewritten to match.
 - target:
-    kind: Deployment
-    name: ddnsadmin
-  patch: |-
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      name: ddnsadmin
-    spec:
-      template:
-        spec:
-          containers:
-          - name: ddnsadmin
-            env:
-            - name: WEB_PREFIX
-              value: "https://__HOST__"
-- target:
-    kind: Ingress
+    kind: OCIRepository
     name: ddnsadmin
   patch: |-
     - op: replace
-      path: /spec/rules/0/host
+      path: /spec/ref
+      value:
+        tag: "__IMAGE_TAG__"
+        digest: "__IMAGE_DIGEST__"
+- target:
+    kind: Kustomization
+    name: ddnsadmin
+  patch: |-
+    - op: replace
+      path: /spec/targetNamespace
+      value: ddnsadmin-preview-pr-__PR__
+    - op: replace
+      path: /spec/postBuild/substitute/APP_HOST
       value: __HOST__

@@ -8,8 +8,9 @@ The credential is created **once, out-of-band**, as the Secret **`ghcr-pull`** i
 **`platform-production`** — the same source namespace the other clone policies use. From there the
 [`clone-ddnsadmin-preview-secrets`](kyverno-clusterpolicies.yaml) Kyverno ClusterPolicy clones it
 into every namespace labeled `ddnsadmin.wsh.no/preview=true`, so each ephemeral per-PR preview ns
-gets it automatically. The Deployment references it via `imagePullSecrets` (see
-[`base/deployment.yaml`](base/deployment.yaml)).
+gets it automatically. Two things use it there: the Deployment's `imagePullSecrets` (in
+ddnsadmin's `deploy/`), and the `OCIRepository` in [`base/ddnsadmin-manifests.yaml`](base/ddnsadmin-manifests.yaml),
+which pulls the private manifest artifact and its cosign signature with `secretRef: ghcr-pull`.
 
 **Never commit the token or a `*.secret.example.yaml`.** This (public) repo only records the
 secret's *name* and how it is consumed.
@@ -50,6 +51,8 @@ ClusterPolicy propagates the change to every existing preview namespace.
 
 ## Remove
 
-This whole credential goes away if the `ddnsadmin` GHCR **package** is made public (the GitHub
-*repo* can stay private — package visibility is independent). At that point delete the
-`clone-ddnsadmin-preview-secrets` policy, the `imagePullSecrets` block, and this Secret.
+This whole credential goes away if the `ddnsadmin/ddnsadmin` and `ddnsadmin/manifests` GHCR
+**packages** are made public (the GitHub *repo* can stay private — package visibility is
+independent). At that point delete the `clone-ddnsadmin-preview-secrets` policy, the
+`imagePullSecrets` block in ddnsadmin's `deploy/`, the `secretRef` on the `OCIRepository`, and this
+Secret.

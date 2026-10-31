@@ -7,7 +7,8 @@
 # pull it anonymously (unlike the public clutterstock packages). The per-PR preview namespaces are
 # ephemeral, so a manually-created pull secret per PR would defeat the upsert/teardown automation —
 # instead this policy stamps the credential into each preview ns automatically on namespace create.
-# The Deployment references it via `imagePullSecrets` (see base/deployment.yaml).
+# The Deployment (in ddnsadmin's deploy/) references it via `imagePullSecrets`, and the OCIRepository
+# (base/ddnsadmin-manifests.yaml) pulls the private manifest artifact with it.
 #
 # Source Secret `ghcr-pull` in namespace `platform-production` is created out-of-band (see
 # ghcr-pull-secret.md) — never committed to git. When the source is missing the clone rule no-ops

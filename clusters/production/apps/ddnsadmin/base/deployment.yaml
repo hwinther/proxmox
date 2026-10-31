@@ -3,7 +3,7 @@
 # REPLACE-IN-OVERLAY below. The base alone is intentionally non-runnable; rendering it directly
 # (e.g. `kustomize build base`) is for diff inspection only.
 #
-# Shape vs. the preview / demo image (apps/previews/ddnsadmin/base/deployment.yaml):
+# Shape vs. the preview / demo render (ddnsadmin repo, deploy/components/demo):
 #   1. DDNSADMIN_DEMO=false: scripts/start.sh skips the in-pod BIND install, the hard-coded TSIG
 #      seed, the example.com zone bootstrap, and the demo `admin` superuser. The pod is a slim
 #      Django container that talks to an EXTERNAL BIND via TSIG (configure Zone + TsigKey rows in
