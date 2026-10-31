@@ -287,6 +287,7 @@ spec:
       # Skip it here rather than via PolicyException: the cluster's admission controller runs with
       # --enablePolicyException=false, so PolicyException objects are inert. Remove this skip if the
       # repo is made public (and provenance re-enabled) or moves to a plan with the private Attestations API.
+      # Its cosign signature is verified instead by clusterpolicy-ddnsadmin-cosign-signature.yaml.
       - ghcr.io/hwinther/ddnsadmin/*
       failureAction: Enforce # Note: Enforce is required for mutateDigest: true
       mutateDigest: true
