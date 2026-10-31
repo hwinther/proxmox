@@ -1,0 +1,40 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: ddnsadmin-preview-pr-1778
+
+resources:
+- ../base
+- namespace.yaml
+
+# `labels` (vs deprecated `commonLabels`) with includeSelectors: false avoids leaking the PR label
+# into NetworkPolicy podSelectors that target peers in other namespaces (kube-dns, traefik).
+labels:
+- pairs:
+    ddnsadmin.wsh.no/pr: "1778"
+  includeSelectors: false
+  includeTemplates: true
+
+# pr-1778 / sha256:7839bf8502c82cf5bde69a0fa434e0078e37019ae9ffe9f3c54e8912c6fff153 carry the MANIFEST ARTIFACT's tag (pr-<N>) and digest, not the
+# image's: the artifact pins the image itself. The digest pins the deploy to exactly what this PR
+# run pushed; the tag is kept alongside for readability (`flux get sources oci`). APP_HOST sets the
+# Ingress host and WEB_PREFIX inside the artifact.
+patches:
+- target:
+    kind: OCIRepository
+    name: ddnsadmin
+  patch: |-
+    - op: replace
+      path: /spec/ref
+      value:
+        tag: "pr-1778"
+        digest: "sha256:7839bf8502c82cf5bde69a0fa434e0078e37019ae9ffe9f3c54e8912c6fff153"
+- target:
+    kind: Kustomization
+    name: ddnsadmin
+  patch: |-
+    - op: replace
+      path: /spec/targetNamespace
+      value: ddnsadmin-preview-pr-1778
+    - op: replace
+      path: /spec/postBuild/substitute/APP_HOST
+      value: ddnsadmin-1778.preview.wsh.no
