@@ -14,7 +14,17 @@ Placeholders replaced:
 
 - `__PR__` — PR number (e.g. `42`)
 - `__HOST__` — preview hostname (e.g. `wshno-42.preview.wsh.no`)
-- `__IMAGE_TAG__` / `__IMAGE_DIGEST__` — the `ghcr.io/wshno/wshno/web` tag + digest the PR build pushed
+- `__IMAGE_TAG__` / `__IMAGE_DIGEST__` — despite the names, the **manifest artifact's** tag
+  (`pr-<N>`) and digest, `ghcr.io/wshno/wshno/manifests`, as pushed by wshno's `pr-e2e.yml`. The
+  artifact pins the site image itself.
+
+## Where the preview workload comes from
+
+`base/wshno-manifests.yaml` holds an `OCIRepository` and a Flux `Kustomization` per preview
+namespace. The artifact is the PR's own `deploy/` (the Deployment and Service), so a PR that changes
+the manifests runs them in its preview before any release. Only artifacts signed by wshno's
+`pr-e2e.yml` on a pull-request ref are accepted; production accepts release-tag signatures only. The
+Ingress (`base/ingress.yaml`, host patched per PR), the netpols and the namespace stay in this tree.
 
 wshno is a single PUBLIC static image — no per-PR database, secret, or pull credential, so there is
 **no** `database.yaml.tpl`, `databases/` subtree, or `kyverno-clusterpolicies.yaml` (unlike

@@ -1,0 +1,36 @@
+# The preview workload (Deployment, Service) comes from the PR's manifest artifact,
+# ghcr.io/wshno/wshno/manifests:pr-<N>, which wshno's pr-e2e.yml renders from the PR's deploy/ and
+# signs. The per-PR overlay pins the artifact by digest and sets targetNamespace. The Ingress stays
+# in this base (ingress.yaml), as it does in production.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: wshno
+spec:
+  interval: 10m
+  url: oci://ghcr.io/wshno/wshno/manifests
+  ref:
+    tag: placeholder # patched per PR (tag + digest)
+  # Only artifacts signed by wshno's PR workflow (pr-e2e.yml). Production's OCIRepository accepts
+  # release-tag signatures only, so a PR artifact can't be promoted there.
+  verify:
+    provider: cosign
+    matchOIDCIdentity:
+    - issuer: ^https://token\.actions\.githubusercontent\.com$
+      subject: ^https://github\.com/wshno/wshno/\.github/workflows/pr-e2e\.yml@refs/pull/[0-9]+/merge$
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: wshno
+spec:
+  interval: 10m
+  retryInterval: 1m
+  sourceRef:
+    kind: OCIRepository
+    name: wshno
+  path: ./
+  prune: true
+  wait: true
+  timeout: 5m
+  targetNamespace: placeholder # patched per PR
