@@ -1,0 +1,53 @@
+# The preview workload (Deployment, Service, Ingress) comes from the PR's manifest artifact,
+# ghcr.io/hwinther/pbs-browser/manifests:pr-<N>, which pbs-browser's pr-e2e.yml renders from the
+# PR's deploy/ and signs. There is no preview variant: the preview runs the real client against PBS
+# behind Authelia, exactly like production (the Ingress carries the forward-auth middleware itself).
+# The per-PR overlay pins the artifact by digest and sets targetNamespace and APP_HOST.
+#
+# Cluster-side difference from production, as a patch: previews don't get a homepage tile.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: pbs-browser
+spec:
+  interval: 10m
+  url: oci://ghcr.io/hwinther/pbs-browser/manifests
+  ref:
+    tag: placeholder # patched per PR (tag + digest)
+  # Only artifacts signed by pbs-browser's PR workflow (pr-e2e.yml). Production's OCIRepository
+  # accepts release-tag signatures only, so a PR artifact can't be promoted there.
+  verify:
+    provider: cosign
+    matchOIDCIdentity:
+    - issuer: ^https://token\.actions\.githubusercontent\.com$
+      subject: ^https://github\.com/hwinther/pbs-browser/\.github/workflows/pr-e2e\.yml@refs/pull/[0-9]+/merge$
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pbs-browser
+spec:
+  interval: 10m
+  retryInterval: 1m
+  sourceRef:
+    kind: OCIRepository
+    name: pbs-browser
+  path: ./
+  prune: true
+  wait: true
+  timeout: 5m
+  targetNamespace: placeholder # patched per PR
+  postBuild:
+    substitute:
+      APP_HOST: placeholder # patched per PR
+  patches:
+  - target:
+      kind: Ingress
+      name: pbs-browser
+    patch: |-
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        name: pbs-browser
+        annotations:
+          gethomepage.dev/enabled: "false"

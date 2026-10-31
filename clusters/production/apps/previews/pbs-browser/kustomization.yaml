@@ -7,7 +7,7 @@
 # encryption keyfile is cloned by the existing platform-production clone-pbs-encryption-keyfile
 # policy via the namespace label. No per-PR database. If the GHCR package
 # ghcr.io/hwinther/pbs-browser/app is PRIVATE, also add a ghcr-pull clone rule here + imagePullSecrets
-# in base/deployment.yaml. The workflow's yq creates/extends the pr-<N> entries below.
+# in pbs-browser's deploy/deployment.yaml. The workflow's yq creates/extends the pr-<N> entries below.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
