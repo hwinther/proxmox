@@ -6,7 +6,6 @@ components:
 - ../../../../bases/netpol-baseline
 resources:
 - namespace.yaml
-- deployment.yaml
-- ingress.yaml
+- pbs-browser-manifests.yaml
 - networkpolicies.yaml
 - cilium-cluster-nodes-to-http.yaml
