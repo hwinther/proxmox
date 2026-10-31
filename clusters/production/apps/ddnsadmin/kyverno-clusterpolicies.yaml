@@ -3,8 +3,9 @@
 #
 # Why this exists: ghcr.io/hwinther/ddnsadmin is a PRIVATE GitHub package, so the kubelet cannot
 # pull it anonymously — without a `ghcr-pull` dockerconfigjson in the namespace the pull fails with
-# `401 Unauthorized` (anonymous token denied). The Deployment references it via `imagePullSecrets`
-# (see base/deployment.yaml). This is the same label-driven clone the preview envs use
+# `401 Unauthorized` (anonymous token denied). The Deployment (from ddnsadmin's manifest artifact)
+# references it via `imagePullSecrets`, and each instance's OCIRepository (ddnsadmin-manifests.yaml)
+# pulls the private artifact with it. This is the same label-driven clone the preview envs use
 # (clone-ddnsadmin-preview-secrets in ../previews/ddnsadmin), just keyed off a stable label instead
 # of the ephemeral per-PR one, so long-lived instances don't need a manual `kubectl create secret`.
 #

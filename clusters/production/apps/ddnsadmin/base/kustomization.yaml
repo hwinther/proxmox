@@ -1,14 +1,12 @@
-# Shared base for production-shape ddnsadmin instances.
+# Shared cluster-side base for production-shape ddnsadmin instances: the PVC and the network
+# policies. The workload itself (Deployment, Service, Ingress) comes from ddnsadmin's signed
+# manifest artifact, applied by each instance's ddnsadmin-manifests.yaml.
 #
-# Not directly applied by Flux — see ../<instance>/kustomization.yaml for the overlays that
-# inject namespace, pin the image, and patch per-instance env + ingress host. The aggregator at
-# ../kustomization.yaml lists which overlays are live.
+# Not directly applied by Flux — see ../<instance>/kustomization.yaml for the overlays that inject
+# the namespace. The aggregator at ../kustomization.yaml lists which overlays are live.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-- deployment.yaml
-- service.yaml
 - pvc.yaml
-- ingress.yaml
 - networkpolicies.yaml
 - cilium-cluster-nodes-to-http.yaml
