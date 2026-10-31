@@ -1,0 +1,43 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: wshno-preview-pr-32
+
+resources:
+- ../base
+- namespace.yaml
+
+# `labels` (vs deprecated `commonLabels`) with includeSelectors: false — identification only; keeps
+# the PR label out of selectors so it can't break the netpol-baseline same-namespace matching.
+labels:
+- pairs:
+    wshno.wsh.no/pr: "32"
+  includeSelectors: false
+  includeTemplates: true
+
+# pr-32 / sha256:4f2a11357c1b78556436deecd8af41b851ec2fafe95ca4c50a6eb51fc43147c9 carry the MANIFEST ARTIFACT's tag (pr-<N>) and digest, not the
+# image's: the artifact pins the image itself. The digest pins the deploy to exactly what this PR
+# run pushed; the tag is kept alongside for readability (`flux get sources oci`).
+patches:
+- target:
+    kind: OCIRepository
+    name: wshno
+  patch: |-
+    - op: replace
+      path: /spec/ref
+      value:
+        tag: "pr-32"
+        digest: "sha256:4f2a11357c1b78556436deecd8af41b851ec2fafe95ca4c50a6eb51fc43147c9"
+- target:
+    kind: Kustomization
+    name: wshno
+  patch: |-
+    - op: replace
+      path: /spec/targetNamespace
+      value: wshno-preview-pr-32
+- target:
+    kind: Ingress
+    name: wshno
+  patch: |-
+    - op: replace
+      path: /spec/rules/0/host
+      value: wshno-32.preview.wsh.no
