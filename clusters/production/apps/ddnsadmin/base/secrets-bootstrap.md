@@ -37,6 +37,23 @@ kubectl -n <NS> create secret docker-registry ghcr-pull \
 
 The PAT only needs `read:packages`. Rotate by deleting and recreating the Secret.
 
+### Copy for Kyverno (once)
+
+Kyverno verifies ddnsadmin's signature and attestations
+(`bases/kyverno-supply-chain/clusterpolicy-ddnsadmin-cosign-signature.yaml` and the ddnsadmin entries
+of the SBOM/vuln policies) with `imageRegistryCredentials`, which reads Secrets from Kyverno's own
+namespace only. Kyverno can't generate into that namespace (its resourceFilters exclude it), so copy
+the source Secret by hand. The token never leaves the cluster:
+
+```bash
+kubectl get secret ghcr-pull -n platform-production -o json   | jq '{apiVersion, kind, type, data, metadata: {name: .metadata.name}}'   | kubectl create -n kyverno -f -
+```
+
+After rotating the source Secret, run the same pipeline with `kubectl replace` in place of
+`kubectl create`. (`create`/`replace` rather than `apply`: apply would store a second copy of the
+token in the `last-applied-configuration` annotation.) Without the copy the ddnsadmin entries report a fetch
+failure (they are Audit, so pods still start).
+
 If you spin up enough instances that manual creation becomes tedious, a Kyverno ClusterPolicy can
 clone a single source Secret into any namespace carrying a label — see
 `apps/previews/ddnsadmin/kyverno-clusterpolicies.yaml` for the preview-env precedent.
