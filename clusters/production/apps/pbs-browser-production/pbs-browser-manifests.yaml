@@ -1,0 +1,45 @@
+# pbs-browser's Deployment, Service and Ingress come from the pbs-browser repo as a rendered,
+# cosign-signed OCI artifact, built by its release workflow from deploy/ (the contract is
+# deploy/README.md there). This directory keeps what the cluster owns: the namespace (with the
+# keyfile-clone label), netpols and the out-of-band Secret (pbs-browser-secrets.md). The tag below
+# is the promotion gate; Renovate opens the bump PR when a new release is pushed, and the PR's
+# manifest-diff comment in the pbs-browser repo is where the manifest content is reviewed.
+#
+# Prereqs (out-of-band, see pbs-browser-secrets.md):
+#   - Secret `pbs-browser-pbs` (PBS_REPOSITORY / PBS_PASSWORD / PBS_ENCRYPTION_PASSWORD / ...).
+#   - `pbs-encryption-keyfile` is cloned in automatically via the namespace label.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: pbs-browser
+spec:
+  interval: 10m
+  url: oci://ghcr.io/hwinther/pbs-browser/manifests
+  ref:
+    tag: 0.2.0
+  # Only artifacts signed by the pbs-browser release workflow at a version tag are applied. The
+  # workflow is dispatched at the tag ref, so the certificate's ref is refs/tags/v*, never a branch.
+  verify:
+    provider: cosign
+    matchOIDCIdentity:
+    - issuer: ^https://token\.actions\.githubusercontent\.com$
+      subject: ^https://github\.com/hwinther/pbs-browser/\.github/workflows/container\.yml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pbs-browser
+spec:
+  interval: 10m
+  retryInterval: 2m
+  sourceRef:
+    kind: OCIRepository
+    name: pbs-browser
+  path: ./
+  prune: true
+  wait: true
+  timeout: 5m
+  targetNamespace: pbs-browser-production
+  postBuild:
+    substitute:
+      APP_HOST: pbs-browser.mgmt.wsh.no

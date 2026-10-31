@@ -5,7 +5,7 @@ credentials, the keyfile passphrase, and the encryption keyfile. None of these a
 
 ## 1. `pbs-browser-pbs` Secret (create out-of-band)
 
-Holds the PBS connection + decryption config, consumed via `envFrom` in `deployment.yaml`. Use a
+Holds the PBS connection + decryption config, consumed via `envFrom` in the Deployment (pbs-browser repo, `deploy/deployment.yaml`). Use a
 **read-only / restore-scoped PBS API token** (a `DatastoreReader`-style role on the relevant
 datastore) — this app never writes to PBS.
 
@@ -43,7 +43,7 @@ kubectl -n pbs-browser-production get secret pbs-encryption-keyfile
 
 ## 3. Container image visibility
 
-`deployment.yaml` references `ghcr.io/hwinther/pbs-browser/app` with **no `imagePullSecrets`**,
+The Deployment (pbs-browser `deploy/deployment.yaml`) references `ghcr.io/hwinther/pbs-browser/app` with **no `imagePullSecrets`**,
 matching clutterstock's public-package convention. Make that GHCR package **public**, or — if you
 keep it private — add a `ghcr-pull` clone policy + `imagePullSecrets` (copy the pattern in
 `../ddnsadmin/kyverno-clusterpolicies.yaml` and add a `…/ghcr-pull: "true"` namespace label).
@@ -51,5 +51,5 @@ keep it private — add a `ghcr-pull` clone policy + `imagePullSecrets` (copy th
 ## 4. Access
 
 The app is internal-only on `https://pbs-browser.mgmt.wsh.no`, gated by Authelia forward-auth
-(`ingress.yaml`). It reads the `Remote-User` / `Remote-Email` headers Authelia injects purely to log
+(the Ingress in pbs-browser's `deploy/ingress.yaml`). It reads the `Remote-User` / `Remote-Email` headers Authelia injects purely to log
 who restored which file. Keep it off the public internet.
