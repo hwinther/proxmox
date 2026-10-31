@@ -1,12 +1,13 @@
 # Shared kustomize base for ddnsadmin PR preview environments. Every per-PR overlay under
 # ../pr-<N>/ references this base. Resources here intentionally have no `metadata.namespace` so the
-# overlay's `namespace:` directive populates it.
+# overlay's `namespace:` directive populates it. The workload itself comes from the PR's signed
+# manifest artifact (ddnsadmin-manifests.yaml), demo render; this tree keeps the namespace, the
+# network policies and the ghcr-pull clone.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 components:
 - ../../../../../../bases/netpol-baseline
 resources:
-- deployment.yaml
-- ingress.yaml
+- ddnsadmin-manifests.yaml
 - networkpolicies.yaml
 - cilium-cluster-nodes-to-http.yaml

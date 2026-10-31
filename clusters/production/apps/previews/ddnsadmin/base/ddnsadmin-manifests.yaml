@@ -1,0 +1,47 @@
+# The preview workload (Deployment, Service, Ingress) comes from the PR's manifest artifact,
+# ghcr.io/hwinther/ddnsadmin/manifests:pr-<N>, which ddnsadmin's pr-e2e.yml renders from the PR's
+# deploy/ and signs. Previews apply its `demo` render: the self-contained shape (BIND + sqlite +
+# seeded example.com zone in the pod, ephemeral, runs as root). The per-PR overlay pins the artifact
+# by digest and sets targetNamespace and APP_HOST.
+#
+# The package is private: `ghcr-pull` (cloned into every preview namespace by
+# ../kyverno-clusterpolicies.yaml) authenticates both the artifact pull and its signature lookup,
+# and the Deployment uses the same Secret for the image.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: ddnsadmin
+spec:
+  interval: 10m
+  url: oci://ghcr.io/hwinther/ddnsadmin/manifests
+  ref:
+    tag: placeholder # patched per PR (tag + digest)
+  secretRef:
+    name: ghcr-pull
+  # Only artifacts signed by ddnsadmin's PR workflow (pr-e2e.yml). Production's OCIRepository
+  # accepts release-tag signatures only, so a PR artifact can't be promoted there.
+  verify:
+    provider: cosign
+    matchOIDCIdentity:
+    - issuer: ^https://token\.actions\.githubusercontent\.com$
+      subject: ^https://github\.com/hwinther/ddnsadmin/\.github/workflows/pr-e2e\.yml@refs/pull/[0-9]+/merge$
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: ddnsadmin
+spec:
+  interval: 10m
+  retryInterval: 1m
+  sourceRef:
+    kind: OCIRepository
+    name: ddnsadmin
+  path: ./demo
+  prune: true
+  wait: true
+  # Startup does apk add + migrate + axfr + collectstatic before the pod is Ready.
+  timeout: 10m
+  targetNamespace: placeholder # patched per PR
+  postBuild:
+    substitute:
+      APP_HOST: placeholder # patched per PR

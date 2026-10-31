@@ -20,10 +20,20 @@ Placeholders the workflow replaces:
 
 - `__PR__` — PR number (e.g. `42`)
 - `__HOST__` — preview hostname (e.g. `ddnsadmin-42.preview.wsh.no`)
-- `__IMAGE_TAG__` — single-image tag (e.g. `0.10.1-pr.42`)
-- `__IMAGE_DIGEST__` — single-image digest (e.g. `sha256:abc...`)
+- `__IMAGE_TAG__` / `__IMAGE_DIGEST__` — despite the names, the **manifest artifact's** tag
+  (`pr-<N>`) and digest, `ghcr.io/hwinther/ddnsadmin/manifests`, as pushed by ddnsadmin's
+  `pr-e2e.yml`. The artifact pins the app image itself.
 
 The multi-image placeholders (`__IMAGE_API_*__`, etc.) and `__DB_NAME__` are unused here.
+
+## Where the preview workload comes from
+
+`base/ddnsadmin-manifests.yaml` holds an `OCIRepository` and a Flux `Kustomization` per preview
+namespace. The artifact is the PR's own `deploy/`, so a PR that changes the manifests runs them in
+its preview before any release. Previews apply its `./demo` render; production and test apply
+`./server`. Only artifacts signed by ddnsadmin's `pr-e2e.yml` on a pull-request ref are accepted;
+production accepts release-tag signatures only. The package is private, so the `OCIRepository`
+authenticates with the cloned `ghcr-pull` Secret (see `../ghcr-pull-secret.md`).
 
 Editing a template here does not retroactively update existing previews — re-run the workflow on
 each open PR (push a commit or re-apply the `deploy-feature` label) to roll templates forward.
@@ -31,4 +41,4 @@ each open PR (push a commit or re-apply the `deploy-feature` label) to roll temp
 > **Draft — needs review before first deploy.** The QA/demo image runs as root and binds `:53` for
 > BIND. A restricted PodSecurity / Kyverno admission policy will likely reject it. Either relax PSS
 > for `ddnsadmin.wsh.no/preview=true` namespaces or rework the image to run rootless. See the
-> hardening note in `base/deployment.yaml`.
+> security note in ddnsadmin's `deploy/components/demo/deployment-patch.yaml`.
