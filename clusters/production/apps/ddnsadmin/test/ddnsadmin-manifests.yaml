@@ -10,7 +10,7 @@ spec:
   interval: 10m
   url: oci://ghcr.io/hwinther/ddnsadmin/manifests
   ref:
-    tag: 0.17.0
+    tag: 0.18.1
   secretRef:
     name: ghcr-pull
   verify:
