@@ -11,9 +11,9 @@
 # Accepted reusable workflows (SAN):
 #   - docker-container.yml / dotnet-container.yml — build + push + sign in one go (release path)
 #   - image-push.yml                                — push + sign artifacts built earlier
-#                                                     (PR path: build-and-scan-*.yml builds locally,
-#                                                     image-push.yml then pushes if the PR is labelled
-#                                                     `deploy-feature`). image-push.yml's
+#                                                     (PR path: build-image-*.yml or build-and-scan-*.yml
+#                                                     builds, image-push.yml then pushes if the PR is
+#                                                     labelled `deploy-feature`). image-push.yml's
 #                                                     attest_build_provenance_enabled defaults to true,
 #                                                     so the SLSA predicate is produced under this SAN.
 #
@@ -140,12 +140,147 @@ spec:
           - key: "{{ buildDefinition.externalParameters.workflow.repository }}"
             operator: Equals
             value: https://github.com/wshno/wshno
-    # General fallback for any other ghcr.io/hwinther/* image (clutterstock, headlamp plugins
-    # we publish ourselves, etc). Same reusable SAN, no caller-repo restriction.
+    # App repos: each image path only verifies when the build was started by the repo that owns
+    # it (externalParameters.workflow.repository), the same binding as the wsh-rtl-sdr and wshno
+    # blocks above. Release images are signed by docker-/dotnet-container.yml, PR previews by
+    # image-push.yml. The value is the repo URL as GitHub spells it (ClutterStock is capitalised).
+    # clutterstock api / frontend / migrator
+    - imageReferences:
+      - ghcr.io/hwinther/clutterstock/*
+      failureAction: Enforce # Note: Enforce is required for mutateDigest: true
+      mutateDigest: true
+      verifyDigest: false # must stay false — see "Why verifyDigest is false" above
+      useCache: true
+      type: SigstoreBundle
+      attestations:
+      - type: https://slsa.dev/provenance/v1
+        attestors:
+        - entries:
+          - keyless:
+              issuer: https://token.actions.githubusercontent.com
+              subjectRegExp: ^https://github.com/hwinther/reusable-workflows/\.github/workflows/(docker-container|dotnet-container|image-push)\.yml@(refs/tags/v[0-9]+(\.[0-9]+){0,2}|[a-f0-9]{40})$
+              rekor:
+                url: https://rekor.sigstore.dev
+        conditions:
+        - all:
+          - key: "{{ buildDefinition.buildType }}"
+            operator: Equals
+            value: https://actions.github.io/buildtypes/workflow/v1
+          - key: "{{ buildDefinition.externalParameters.workflow.repository }}"
+            operator: Equals
+            value: https://github.com/hwinther/ClutterStock
+    # skylens api
+    - imageReferences:
+      - ghcr.io/hwinther/skylens/*
+      failureAction: Enforce # Note: Enforce is required for mutateDigest: true
+      mutateDigest: true
+      verifyDigest: false # must stay false — see "Why verifyDigest is false" above
+      useCache: true
+      type: SigstoreBundle
+      attestations:
+      - type: https://slsa.dev/provenance/v1
+        attestors:
+        - entries:
+          - keyless:
+              issuer: https://token.actions.githubusercontent.com
+              subjectRegExp: ^https://github.com/hwinther/reusable-workflows/\.github/workflows/(docker-container|dotnet-container|image-push)\.yml@(refs/tags/v[0-9]+(\.[0-9]+){0,2}|[a-f0-9]{40})$
+              rekor:
+                url: https://rekor.sigstore.dev
+        conditions:
+        - all:
+          - key: "{{ buildDefinition.buildType }}"
+            operator: Equals
+            value: https://actions.github.io/buildtypes/workflow/v1
+          - key: "{{ buildDefinition.externalParameters.workflow.repository }}"
+            operator: Equals
+            value: https://github.com/hwinther/skylens
+    # pbs-browser app
+    - imageReferences:
+      - ghcr.io/hwinther/pbs-browser/*
+      failureAction: Enforce # Note: Enforce is required for mutateDigest: true
+      mutateDigest: true
+      verifyDigest: false # must stay false — see "Why verifyDigest is false" above
+      useCache: true
+      type: SigstoreBundle
+      attestations:
+      - type: https://slsa.dev/provenance/v1
+        attestors:
+        - entries:
+          - keyless:
+              issuer: https://token.actions.githubusercontent.com
+              subjectRegExp: ^https://github.com/hwinther/reusable-workflows/\.github/workflows/(docker-container|dotnet-container|image-push)\.yml@(refs/tags/v[0-9]+(\.[0-9]+){0,2}|[a-f0-9]{40})$
+              rekor:
+                url: https://rekor.sigstore.dev
+        conditions:
+        - all:
+          - key: "{{ buildDefinition.buildType }}"
+            operator: Equals
+            value: https://actions.github.io/buildtypes/workflow/v1
+          - key: "{{ buildDefinition.externalParameters.workflow.repository }}"
+            operator: Equals
+            value: https://github.com/hwinther/pbs-browser
+    # test api / frontend
+    - imageReferences:
+      - ghcr.io/hwinther/test/*
+      failureAction: Enforce # Note: Enforce is required for mutateDigest: true
+      mutateDigest: true
+      verifyDigest: false # must stay false — see "Why verifyDigest is false" above
+      useCache: true
+      type: SigstoreBundle
+      attestations:
+      - type: https://slsa.dev/provenance/v1
+        attestors:
+        - entries:
+          - keyless:
+              issuer: https://token.actions.githubusercontent.com
+              subjectRegExp: ^https://github.com/hwinther/reusable-workflows/\.github/workflows/(docker-container|dotnet-container|image-push)\.yml@(refs/tags/v[0-9]+(\.[0-9]+){0,2}|[a-f0-9]{40})$
+              rekor:
+                url: https://rekor.sigstore.dev
+        conditions:
+        - all:
+          - key: "{{ buildDefinition.buildType }}"
+            operator: Equals
+            value: https://actions.github.io/buildtypes/workflow/v1
+          - key: "{{ buildDefinition.externalParameters.workflow.repository }}"
+            operator: Equals
+            value: https://github.com/hwinther/test
+    # this repo's images: esp-poller, the PBS backup client
+    - imageReferences:
+      - ghcr.io/hwinther/proxmox/*
+      failureAction: Enforce # Note: Enforce is required for mutateDigest: true
+      mutateDigest: true
+      verifyDigest: false # must stay false — see "Why verifyDigest is false" above
+      useCache: true
+      type: SigstoreBundle
+      attestations:
+      - type: https://slsa.dev/provenance/v1
+        attestors:
+        - entries:
+          - keyless:
+              issuer: https://token.actions.githubusercontent.com
+              subjectRegExp: ^https://github.com/hwinther/reusable-workflows/\.github/workflows/(docker-container|dotnet-container|image-push)\.yml@(refs/tags/v[0-9]+(\.[0-9]+){0,2}|[a-f0-9]{40})$
+              rekor:
+                url: https://rekor.sigstore.dev
+        conditions:
+        - all:
+          - key: "{{ buildDefinition.buildType }}"
+            operator: Equals
+            value: https://actions.github.io/buildtypes/workflow/v1
+          - key: "{{ buildDefinition.externalParameters.workflow.repository }}"
+            operator: Equals
+            value: https://github.com/hwinther/proxmox
+    # General fallback for any other ghcr.io/hwinther/* image (new apps, headlamp plugins we
+    # publish ourselves, etc). Same reusable SAN, no caller-repo restriction. The repos bound
+    # above are skipped here so each image is verified once.
     - imageReferences:
       - ghcr.io/hwinther/*
       skipImageReferences:
       - ghcr.io/hwinther/wsh-rtl-sdr/*
+      - ghcr.io/hwinther/clutterstock/*
+      - ghcr.io/hwinther/skylens/*
+      - ghcr.io/hwinther/pbs-browser/*
+      - ghcr.io/hwinther/test/*
+      - ghcr.io/hwinther/proxmox/*
       # ddnsadmin is a user-owned PRIVATE GitHub repo, so actions/attest-build-provenance returns
       # "Feature not available for user-owned private repositories" — no SLSA SigstoreBundle is ever
       # published (attest_build_provenance_enabled=false in its CI). Cosign keyless signing still runs.

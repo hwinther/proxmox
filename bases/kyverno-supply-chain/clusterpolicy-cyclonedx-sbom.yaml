@@ -1,15 +1,16 @@
 # Requires a CycloneDX SBOM attestation in the registry (cosign attest --type cyclonedx from the build).
 # Predicate type must match cosign v2.x / in-toto: https://cyclonedx.org/bom (not …/schema — see cosign #2596).
 #
-# AUDIT-ONLY: the reusable hwinther/reusable-workflows docker-container.yml pipeline currently
-# publishes ONLY the SLSA provenance sigstore bundle. It does NOT push a standalone
-# `cosign attest --type cyclonedx` predicate to the registry (Syft SBOM goes to workflow artifacts,
-# not an image attestation). No image satisfies this policy today. Kept as Audit so PolicyReports
-# surface the gap; flip failureAction back to Enforce (and restore mutateDigest/verifyDigest) once
-# the pipeline emits it. Real supply-chain gating is clusterpolicy-github-slsa-provenance.yaml.
+# AUDIT for now. The reusable push (_push-image-with-signatures) attaches this attestation to
+# every image it pushes (`cosign attest --type cyclonedx`, cosign v2.4.3, legacy `sha256-….att` tag),
+# on the release path (docker-/dotnet-container.yml) and the PR path (image-push.yml) alike.
+# Verified on every first-party image running on 2026-10-31. Flip failureAction to Enforce (with
+# mutateDigest) once the PolicyReports stay clean. Real supply-chain gating is
+# clusterpolicy-github-slsa-provenance.yaml.
 #
-# Identity (SAN): the reusable-workflows docker/dotnet-container workflow, pinned either by floating tag
-# (@refs/tags/vN[.N[.N]]) or by 40-hex commit SHA. The caller repo isn't in this predicate type, so scope
+# Identity (SAN): the reusable-workflows docker-/dotnet-container or image-push workflow, pinned
+# either by floating tag (@refs/tags/vN[.N[.N]]) or by 40-hex commit SHA.
+# The caller repo isn't in this predicate type, so scope
 # is enforced via `imageReferences` (registry paths). See clusterpolicy-github-slsa-provenance.yaml for
 # the SLSA policy where caller-repo IS asserted via externalParameters.workflow.repository.
 apiVersion: kyverno.io/v1
@@ -40,12 +41,9 @@ spec:
           - kyverno
           - flux-system
     verifyImages:
-    # Scoped to the docker-container.yml-built images that actually carry a CycloneDX SBOM
-    # attestation. .NET images (hwinther/clutterstock*, built via dotnet-container.yml)
-    # publish only SLSA provenance — they are covered by clusterpolicy-github-slsa-provenance
-    # and intentionally NOT matched here (would otherwise hard-fail with "missing digest").
+    # Every first-party image. .NET images (dotnet-container.yml) carry the attestation too.
     - imageReferences:
-      - ghcr.io/hwinther/wsh-rtl-sdr/*
+      - ghcr.io/hwinther/*
       - ghcr.io/wshno/*
       # sdr-base / sdr-build debug-dev base images are built by build-sdr-images.yml (not the
       # reusable workflow) and carry no SBOM attestation; skip them to keep PolicyReports clean.
@@ -53,8 +51,10 @@ spec:
       skipImageReferences:
       - ghcr.io/hwinther/wsh-rtl-sdr/sdr-base*
       - ghcr.io/hwinther/wsh-rtl-sdr/sdr-build*
+      # ddnsadmin is a private package, skipped like in clusterpolicy-github-slsa-provenance.yaml.
+      - ghcr.io/hwinther/ddnsadmin/*
       # Audit mode: mutateDigest requires Enforce, so it (and verifyDigest) are off here.
-      # When the pipeline starts emitting this attestation, flip to Enforce + re-enable both.
+      # When flipping to Enforce, re-enable both.
       failureAction: Audit
       mutateDigest: false
       verifyDigest: false
@@ -66,7 +66,7 @@ spec:
         - entries:
           - keyless:
               issuer: https://token.actions.githubusercontent.com
-              subjectRegExp: ^https://github.com/hwinther/reusable-workflows/\.github/workflows/(docker|dotnet)-container\.yml@(refs/tags/v[0-9]+(\.[0-9]+){0,2}|[a-f0-9]{40})$
+              subjectRegExp: ^https://github.com/hwinther/reusable-workflows/\.github/workflows/(docker-container|dotnet-container|image-push)\.yml@(refs/tags/v[0-9]+(\.[0-9]+){0,2}|[a-f0-9]{40})$
               rekor:
                 url: https://rekor.sigstore.dev
         conditions:
