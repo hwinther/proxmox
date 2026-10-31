@@ -69,8 +69,9 @@ spec:
                 url: https://rekor.sigstore.dev
     # ddnsadmin's package is private, so it gets its own entry: the shared one above pulls
     # anonymously, and keeping the credential here limits a bad or missing `ghcr-pull` to this
-    # image. The Secret lives in Kyverno's namespace (cloned there by clone-ddnsadmin-ghcr-pull,
-    # clusters/production/apps/ddnsadmin); the edge cluster has none and runs no ddnsadmin pod.
+    # image. The Secret lives in Kyverno's namespace (copied there by hand, see
+    # clusters/production/apps/ddnsadmin/base/secrets-bootstrap.md); the edge cluster has none and
+    # runs no ddnsadmin pod.
     - imageReferences:
       - ghcr.io/hwinther/ddnsadmin/*
       imageRegistryCredentials:

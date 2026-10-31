@@ -9,8 +9,9 @@
 # extension, the same binding the SLSA policy gets from externalParameters.workflow.repository.
 #
 # The package is private: Kyverno pulls the signature with `ghcr-pull` (a read:packages
-# dockerconfigjson), which imageRegistryCredentials reads from Kyverno's OWN namespace. The
-# clone-ddnsadmin-ghcr-pull ClusterPolicy (clusters/production/apps/ddnsadmin) copies it there.
+# dockerconfigjson), which imageRegistryCredentials reads from Kyverno's OWN namespace. Kyverno
+# can't generate into that namespace, so it is copied there by hand once; see
+# clusters/production/apps/ddnsadmin/base/secrets-bootstrap.md.
 # On the edge cluster there is no copy and no ddnsadmin pod, so the entry never fires.
 #
 # AUDIT for now. Flip failureAction to Enforce (with mutateDigest) once the PolicyReports stay
