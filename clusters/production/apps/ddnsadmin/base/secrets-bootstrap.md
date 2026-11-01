@@ -51,8 +51,10 @@ kubectl get secret ghcr-pull -n platform-production -o json   | jq '{apiVersion,
 
 After rotating the source Secret, run the same pipeline with `kubectl replace` in place of
 `kubectl create`. (`create`/`replace` rather than `apply`: apply would store a second copy of the
-token in the `last-applied-configuration` annotation.) Without the copy the ddnsadmin entries report a fetch
-failure (they are Audit, so pods still start).
+token in the `last-applied-configuration` annotation.) Without the copy (or with a stale token) the
+signature check can't fetch the signature, and because that policy is Enforce, **ddnsadmin pods are
+rejected at admission** (production, test and previews). The SBOM/vuln entries are still Audit, so
+they only report the failure.
 
 If you spin up enough instances that manual creation becomes tedious, a Kyverno ClusterPolicy can
 clone a single source Secret into any namespace carrying a label — see
