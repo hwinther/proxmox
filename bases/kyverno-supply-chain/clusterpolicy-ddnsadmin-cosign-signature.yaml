@@ -14,8 +14,11 @@
 # clusters/production/apps/ddnsadmin/base/secrets-bootstrap.md.
 # On the edge cluster there is no copy and no ddnsadmin pod, so the entry never fires.
 #
-# AUDIT for now. Flip failureAction to Enforce (with mutateDigest) once the PolicyReports stay
-# clean; see clusterpolicy-github-slsa-provenance.yaml for why verifyDigest stays false.
+# ENFORCED (with mutateDigest) since 2026-11-01, after the PolicyReports for production and test
+# stayed clean on 0.18.1; see clusterpolicy-github-slsa-provenance.yaml for why verifyDigest stays
+# false. Enforce means a missing or stale `ghcr-pull` copy in the kyverno namespace now BLOCKS
+# ddnsadmin pods (signature fetch 401s) instead of only reporting; re-copy it after reinstalling
+# Kyverno or rotating the token.
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -49,10 +52,9 @@ spec:
       imageRegistryCredentials:
         secrets:
         - ghcr-pull
-      # Audit mode: mutateDigest requires Enforce, so it (and verifyDigest) are off here.
-      failureAction: Audit
-      mutateDigest: false
-      verifyDigest: false
+      failureAction: Enforce # Note: Enforce is required for mutateDigest: true
+      mutateDigest: true
+      verifyDigest: false # must stay false — see "Why verifyDigest is false" in the SLSA policy
       useCache: true
       attestors:
       - entries:
