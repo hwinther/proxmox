@@ -23,7 +23,7 @@
         "name": "service",
         "label": "Service",
         "type": "custom",
-        "query": "clutterstock-frontend-ssr,test-frontend-ssr,ddnsadmin",
+        "query": "clutterstock-frontend-ssr,test-frontend-ssr,ddnsadmin,pbs-browser,Skylens.Api",
         "options": [
           {
             "text": "clutterstock-frontend-ssr",
@@ -39,18 +39,32 @@
             "text": "ddnsadmin",
             "value": "ddnsadmin",
             "selected": true
+          },
+          {
+            "text": "pbs-browser",
+            "value": "pbs-browser",
+            "selected": true
+          },
+          {
+            "text": "Skylens.Api",
+            "value": "Skylens.Api",
+            "selected": true
           }
         ],
         "current": {
           "text": [
             "clutterstock-frontend-ssr",
             "test-frontend-ssr",
-            "ddnsadmin"
+            "ddnsadmin",
+            "pbs-browser",
+            "Skylens.Api"
           ],
           "value": [
             "clutterstock-frontend-ssr",
             "test-frontend-ssr",
-            "ddnsadmin"
+            "ddnsadmin",
+            "pbs-browser",
+            "Skylens.Api"
           ]
         },
         "multi": true,
