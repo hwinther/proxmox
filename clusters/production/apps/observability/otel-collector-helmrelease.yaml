@@ -185,6 +185,25 @@ spec:
             - 'set(attributes["naxsi.target"], "other") where attributes["naxsi.target"] == nil'
             - 'set(attributes["naxsi.client"], "self") where attributes["source.address"] == "${env:NAXSI_SELF_IP}"'
             - 'set(attributes["naxsi.client"], "other") where attributes["naxsi.client"] == nil'
+        # Classifies CSP violation reports (from app SSR servers over OTLP, e.g. ClutterStock's
+        # /csp-report) into two BOUNDED labels for the csp_violations counter below. The report
+        # endpoint is public, so every field in a report is attacker-controlled; the raw values stay
+        # on the Loki record (csp_* structured metadata, where the dashboard reads them) and only
+        # these mapped values become metric labels:
+        #
+        #   csp.disposition_class = enforce | report | other   (enforce = the browser blocked it)
+        #   csp.directive_class   = a known fetch/navigation directive, else "other"
+        transform/csp-classify:
+          error_mode: ignore
+          log_statements:
+          - context: log
+            conditions:
+            - 'attributes["event.name"] == "csp.violation"'
+            statements:
+            - 'set(attributes["csp.disposition_class"], attributes["csp.disposition"]) where attributes["csp.disposition"] == "enforce" or attributes["csp.disposition"] == "report"'
+            - 'set(attributes["csp.disposition_class"], "other") where attributes["csp.disposition_class"] == nil'
+            - 'set(attributes["csp.directive_class"], attributes["csp.effective_directive"]) where IsMatch(attributes["csp.effective_directive"], "^(default-src|script-src|script-src-elem|script-src-attr|style-src|style-src-elem|style-src-attr|img-src|font-src|connect-src|media-src|object-src|frame-src|child-src|worker-src|manifest-src|frame-ancestors|form-action|base-uri)$")'
+            - 'set(attributes["csp.directive_class"], "other") where attributes["csp.directive_class"] == nil'
         # The count connector emits a DELTA sum. Prometheus' OTLP receiver rejects delta outright —
         # "invalid temporality and type combination for metric naxsi_blocks", HTTP 500, data dropped —
         # unless started with --enable-feature=otlp-deltatocumulative. Converting here keeps the fix
@@ -217,6 +236,16 @@ spec:
               attributes:
               - key: naxsi.target
               - key: naxsi.client
+            # CSP violation reports, alerted on by prometheusrule-csp.yaml (blocked only). The
+            # resource attributes come along, so Prometheus' job label is
+            # <service.namespace>/<service.name>, e.g. clutterstock-production/clutterstock-frontend-ssr.
+            csp_violations:
+              description: CSP violation reports from app SSR servers, by disposition and directive class
+              conditions:
+              - 'attributes["event.name"] == "csp.violation"'
+              attributes:
+              - key: csp.disposition_class
+              - key: csp.directive_class
       exporters:
         otlp:
           endpoint: obs-tempo.observability-production.svc.cluster.local:4317
@@ -252,15 +281,16 @@ spec:
             receivers: [ otlp ]
             processors: [ memory_limiter, batch ]
             exporters: [ otlphttp/prometheus ]
-          # Separate pipeline so delta_to_cumulative only sees the NAXSI counter.
+          # Separate pipeline so delta_to_cumulative only sees the count connector's counters
+          # (naxsi_blocks, csp_violations). Name kept to avoid churning the running pipeline.
           metrics/naxsi:
             receivers: [ count ]
             processors: [ memory_limiter, delta_to_cumulative, batch ]
             exporters: [ otlphttp/prometheus ]
           logs:
             receivers: [ otlp ]
-            processors: [ memory_limiter, batch ]
-            exporters: [ otlphttp/loki ]
+            processors: [ memory_limiter, transform/csp-classify, batch ]
+            exporters: [ otlphttp/loki, count ]
           logs/syslog:
             receivers: [ syslog ]
             processors: [ memory_limiter, transform/source-ip, transform/naxsi-classify, geoip, resource/syslog, batch ]

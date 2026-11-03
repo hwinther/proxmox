@@ -60,6 +60,9 @@ resources:
 # NAXSI (OPNsense WAF) false-positive alerting off naxsi_blocks_total, emitted by the `count`
 # connector in otel-collector-helmrelease.yaml. Catches WAF rules blocking our own access.
 - prometheusrule-naxsi.yaml
+# CSP blocks in our own apps (enforce only) off csp_violations_total, from the same `count` connector;
+# report-only violations are on the csp-violations dashboard below.
+- prometheusrule-csp.yaml
 - minio-deployment.yaml
 - minio-buckets-job.yaml
 
@@ -161,6 +164,14 @@ configMapGenerator:
 - name: grafana-dashboard-edge-security
   files:
   - dashboards/edge-security.json
+  options:
+    disableNameSuffixHash: true
+    labels:
+      grafana_dashboard: "1"
+# Content-Security-Policy reports from app SSR servers (Loki csp.violation records): blocked vs report-only.
+- name: grafana-dashboard-csp-violations
+  files:
+  - dashboards/csp-violations.json
   options:
     disableNameSuffixHash: true
     labels:

@@ -1,0 +1,42 @@
+# Content-Security-Policy blocks in our own apps.
+#
+# Backing metric: csp_violations_total, produced by the `count` connector in
+# otel-collector-helmrelease.yaml from the csp.violation log records app SSR servers emit for each
+# browser CSP report (ClutterStock: POST /csp-report -> OTLP). Labels are bounded by
+# transform/csp-classify there:
+#
+#   job                         = <service.namespace>/<service.name>, e.g.
+#                                 clutterstock-production/clutterstock-frontend-ssr
+#   csp_disposition_class       = enforce | report | other
+#   csp_directive_class         = a known directive, else "other"
+#
+# Only enforce pages: that is the browser actually refusing a script/style/font/connection, i.e. a
+# page broken for a real user. Report-only violations (CSP_MODE=report-only, the default while a
+# policy is being proven) are expected noise and live on the "CSP violations" dashboard instead.
+#
+# The report endpoint is public, so a forged report can fire this. Check csp_document_uri and
+# user_agent_original on the Loki record before treating it as a real breakage.
+#
+# count_over_time, not increase/rate: the counter is pushed only when a report arrives, so a single
+# block can be a single sample — see prometheusrule-naxsi.yaml for the full reasoning. The alert
+# resolves once the sample ages out of the 15m window.
+#
+# release=obs-kps so the operator ruleSelector picks it up.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: csp
+  labels:
+    release: obs-kps
+spec:
+  groups:
+  - name: csp
+    rules:
+    - alert: CspBlockedResource
+      expr: sum by (job, csp_directive_class) (count_over_time(csp_violations_total{csp_disposition_class="enforce"}[15m])) > 0
+      for: 0m
+      labels:
+        severity: warning
+      annotations:
+        summary: "CSP blocked {{ $labels.csp_directive_class }} in {{ $labels.job }}"
+        description: "A browser refused a resource under the enforced Content-Security-Policy of {{ $labels.job }} ({{ $labels.csp_directive_class }}) within the last 15 minutes, so a page is likely broken for that user. See the CSP violations dashboard, or Loki: {service_name=\"clutterstock-frontend-ssr\"} | event_name=\"csp.violation\" | csp_disposition=\"enforce\" — csp_blocked_uri and csp_document_uri name what was blocked and where. Fix the app or widen the policy; setting CSP_MODE=report-only in the proxmox substitutions stops the blocking without a release."
