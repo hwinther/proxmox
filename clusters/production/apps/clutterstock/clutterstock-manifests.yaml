@@ -18,15 +18,15 @@ spec:
   interval: 10m
   url: oci://ghcr.io/hwinther/clutterstock/manifests
   ref:
-    tag: 0.29.0
+    tag: 0.31.0
   # Only artifacts co-signed by promote.yml on main are applied. promote.yml signs only after it has
   # verified the release signature (container.yml@refs/tags/v<version>) and the environment
   # approval, so a release that wasn't approved can't run here even if this tag is edited by hand.
   verify:
     provider: cosign
     matchOIDCIdentity:
-    - issuer: ^https://token\.actions\.githubusercontent\.com$
-      subject: ^https://github\.com/hwinther/ClutterStock/\.github/workflows/promote\.yml@refs/heads/main$
+      - issuer: ^https://token\.actions\.githubusercontent\.com$
+        subject: ^https://github\.com/hwinther/ClutterStock/\.github/workflows/promote\.yml@refs/heads/main$
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
