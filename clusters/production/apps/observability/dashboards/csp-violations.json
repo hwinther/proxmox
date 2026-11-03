@@ -23,27 +23,20 @@
         "name": "service",
         "label": "Service",
         "type": "custom",
-        "query": "clutterstock-frontend-ssr,test-frontend-ssr",
+        "query": "clutterstock-frontend-ssr",
         "options": [
           {
             "text": "clutterstock-frontend-ssr",
             "value": "clutterstock-frontend-ssr",
             "selected": true
-          },
-          {
-            "text": "test-frontend-ssr",
-            "value": "test-frontend-ssr",
-            "selected": true
           }
         ],
         "current": {
           "text": [
-            "clutterstock-frontend-ssr",
-            "test-frontend-ssr"
+            "clutterstock-frontend-ssr"
           ],
           "value": [
-            "clutterstock-frontend-ssr",
-            "test-frontend-ssr"
+            "clutterstock-frontend-ssr"
           ]
         },
         "multi": true,
