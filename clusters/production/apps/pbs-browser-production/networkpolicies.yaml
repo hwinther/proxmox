@@ -35,6 +35,15 @@ spec:
       protocol: UDP
     - port: 53
       protocol: TCP
+  # OTLP/HTTP to the collector: CSP violation reports (Security/CspReports.cs in pbs-browser).
+  # The world ipBlock does not cover in-cluster pods in Cilium.
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: observability-production
+    ports:
+    - port: 4318
+      protocol: TCP
   # PBS API (8007) + HTTPS (443) to the PBS host(s). PBS endpoints live in the Secret, not in git,
   # so this allows the external CIDR on those ports only (mirrors the *-pbs-backup egress pattern).
   - to:
