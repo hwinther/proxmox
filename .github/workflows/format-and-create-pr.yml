@@ -22,7 +22,7 @@ concurrency:
 
 jobs:
     format:
-        uses: hwinther/reusable-workflows/.github/workflows/format-and-create-pr.yml@c1e80ad637dcdd38bb6de0f447475c40a8625141 # v2.9.0
+        uses: hwinther/reusable-workflows/.github/workflows/format-and-create-pr.yml@81be91d960f8965dbfa1906866943533d38614a9 # v2.9.3
         with:
             mode: ${{ inputs.mode }}
             commit_subject: "chore: ruff format"
