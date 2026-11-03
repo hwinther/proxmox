@@ -37,5 +37,6 @@ spec:
   postBuild:
     substitute:
       APP_HOST: ddns.test.wsh.no
+      APP_ENVIRONMENT: test
       OTEL_EXPORTER_OTLP_HTTP_ENDPOINT: http://obs-otel-collector.observability-production.svc.cluster.local:4318
       SUPERUSER_EMAIL: admin@wsh.no
