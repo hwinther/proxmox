@@ -23,25 +23,53 @@
         "name": "service",
         "label": "Service",
         "type": "custom",
-        "query": "clutterstock-frontend-ssr",
+        "query": "clutterstock-frontend-ssr,test-frontend-ssr,ddnsadmin,pbs-browser,Skylens.Api",
         "options": [
           {
             "text": "clutterstock-frontend-ssr",
             "value": "clutterstock-frontend-ssr",
             "selected": true
+          },
+          {
+            "text": "test-frontend-ssr",
+            "value": "test-frontend-ssr",
+            "selected": true
+          },
+          {
+            "text": "ddnsadmin",
+            "value": "ddnsadmin",
+            "selected": true
+          },
+          {
+            "text": "pbs-browser",
+            "value": "pbs-browser",
+            "selected": true
+          },
+          {
+            "text": "Skylens.Api",
+            "value": "Skylens.Api",
+            "selected": true
           }
         ],
         "current": {
           "text": [
-            "clutterstock-frontend-ssr"
+            "clutterstock-frontend-ssr",
+            "test-frontend-ssr",
+            "ddnsadmin",
+            "pbs-browser",
+            "Skylens.Api"
           ],
           "value": [
-            "clutterstock-frontend-ssr"
+            "clutterstock-frontend-ssr",
+            "test-frontend-ssr",
+            "ddnsadmin",
+            "pbs-browser",
+            "Skylens.Api"
           ]
         },
         "multi": true,
         "includeAll": false,
-        "description": "SSR services that emit csp.violation records. Add more, comma-separated, as apps get a report endpoint."
+        "description": "Services that emit csp.violation records (SSR servers, Django). Add more, comma-separated, as apps get a report endpoint."
       },
       {
         "name": "namespace",
