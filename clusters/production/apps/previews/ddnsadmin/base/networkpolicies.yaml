@@ -33,6 +33,15 @@ spec:
       protocol: UDP
     - port: 53
       protocol: TCP
+  # OTLP/HTTP to the collector: CSP violation reports (dweb/otel.py in ddnsadmin).
+  # The world ipBlock does not cover in-cluster pods in Cilium.
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: observability-production
+    ports:
+    - port: 4318
+      protocol: TCP
   # Startup pulls the `bind` apk package from the public alpine CDN; block link-local metadata.
   - to:
     - ipBlock:
