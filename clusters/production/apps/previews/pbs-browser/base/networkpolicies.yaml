@@ -34,6 +34,15 @@ spec:
       protocol: UDP
     - port: 53
       protocol: TCP
+  # OTLP/HTTP to the collector: CSP violation reports (Security/CspReports.cs in pbs-browser).
+  # The world ipBlock does not cover in-cluster pods in Cilium.
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: observability-production
+    ports:
+    - port: 4318
+      protocol: TCP
   - to:
     - ipBlock:
         cidr: 0.0.0.0/0
