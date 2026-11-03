@@ -140,6 +140,20 @@ spec:
             name: obs-otel-collector
             port:
               number: 4318
+  # Every preview env (PR previews and ClutterStock's nightly): their frontends send browser traces
+  # to https://<host>/v1/traces like test and production. Traefik ranks routers by rule length, so
+  # this HostRegexp + /v1/traces router wins over the preview app's Host + / router for that path
+  # only.
+  - host: "*.preview.wsh.no"
+    http:
+      paths:
+      - path: /v1/traces
+        pathType: Prefix
+        backend:
+          service:
+            name: obs-otel-collector
+            port:
+              number: 4318
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
