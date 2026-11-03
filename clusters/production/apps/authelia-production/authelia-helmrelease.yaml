@@ -829,6 +829,10 @@ spec:
             - http://localhost:5155/swagger/oauth2-redirect.html
             - https://localhost:8081/swagger/oauth2-redirect.html
             - https://127.0.0.1:8081/swagger/oauth2-redirect.html
+            # Nightly preview env: main deployed to an ephemeral preview namespace and e2e-tested
+            # every night (ClutterStock nightly-preview.yml).
+            - https://clutterstock-nightly.preview.wsh.no/auth/callback
+            - https://clutterstock-nightly.preview.wsh.no/swagger/oauth2-redirect.html
             # Per-PR preview env pool (clusters/production/apps/previews/clutterstock/). Authelia
             # requires exact-match redirect_uris (no wildcards), so previews use a fixed pool of
             # PR numbers. Current pool: 450-499. Move it forward when PRs approach 499.
