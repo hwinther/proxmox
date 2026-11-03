@@ -108,6 +108,11 @@ metadata:
   namespace: observability-production
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
+    # Each app's own Ingress has a `/` catch-all on the same host. Traefik's default priority is
+    # the rule length, which let the app win against the *.preview.wsh.no HostRegexp rule (the
+    # nightly preview still got 404 on /v1/traces). An explicit priority above any rule length
+    # makes /v1/traces reach the collector on every host listed here, and only that path.
+    traefik.ingress.kubernetes.io/router.priority: "1000"
 spec:
   rules:
   - host: test.test.wsh.no
@@ -141,9 +146,7 @@ spec:
             port:
               number: 4318
   # Every preview env (PR previews and ClutterStock's nightly): their frontends send browser traces
-  # to https://<host>/v1/traces like test and production. Traefik ranks routers by rule length, so
-  # this HostRegexp + /v1/traces router wins over the preview app's Host + / router for that path
-  # only.
+  # to https://<host>/v1/traces like test and production.
   - host: "*.preview.wsh.no"
     http:
       paths:
