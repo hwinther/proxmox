@@ -132,6 +132,15 @@ spec:
       podSelector:
         matchLabels:
           app: redis
+  # OTLP/HTTP to the collector: the SSR server's traces and logs, CSP violation reports among them.
+  # The world ipBlock below does not cover in-cluster pods in Cilium.
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: observability-production
+    ports:
+    - port: 4318
+      protocol: TCP
   - to:
     - ipBlock:
         cidr: 0.0.0.0/0

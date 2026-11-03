@@ -53,6 +53,7 @@ spec:
       RABBITMQ_VHOST: test
       RABBITMQ_SECRET: test-api-rabbitmq
       OTEL_EXPORTER_OTLP_ENDPOINT: http://obs-otel-collector.observability-production.svc.cluster.local:4317
+      OTEL_EXPORTER_OTLP_HTTP_ENDPOINT: http://obs-otel-collector.observability-production.svc.cluster.local:4318
   patches:
   - target:
       kind: Ingress
