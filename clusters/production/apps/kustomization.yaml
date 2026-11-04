@@ -31,6 +31,8 @@ resources:
 - node-red-production
 - esp-poller-production
 - pbs-browser-production
+# Daily repository report from wshno/devops (signed OCI artifact, served behind Authelia).
+- devops-report
 - skylens-production
 - wshno
 - ingress.yaml

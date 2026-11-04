@@ -1,0 +1,105 @@
+# Static nginx serving the report ConfigMap from devops-report-source.yaml. The ConfigMap volume is
+# optional, so the pod runs (and answers 404) before the first artifact lands. Mounted without
+# subPath, so updates to the ConfigMap reach the files within a minute.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devops-report
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: devops-report
+  template:
+    metadata:
+      labels:
+        app: devops-report
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+        runAsGroup: 101
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: web
+        image: nginxinc/nginx-unprivileged:1.30.6-alpine
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        readinessProbe:
+          tcpSocket:
+            port: http
+          periodSeconds: 10
+        livenessProbe:
+          tcpSocket:
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        resources:
+          requests:
+            cpu: 5m
+            memory: 16Mi
+          limits:
+            cpu: 100m
+            memory: 32Mi
+        volumeMounts:
+        - name: report
+          mountPath: /usr/share/nginx/html
+          readOnly: true
+        - name: tmp
+          mountPath: /tmp
+      volumes:
+      - name: report
+        configMap:
+          name: devops-report
+          optional: true
+      - name: tmp
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: devops-report
+spec:
+  selector:
+    app: devops-report
+  ports:
+  - name: http
+    port: 8080
+    targetPort: http
+---
+# Behind Authelia forward-auth (default policy two_factor): the report lists private repos too.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: devops-report
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.middlewares: authelia-production-authelia-forwardauth@kubernetescrd
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Platform
+    gethomepage.dev/name: Repository report
+    gethomepage.dev/href: "https://devops.mgmt.wsh.no/"
+    gethomepage.dev/icon: mdi-source-repository-multiple
+    gethomepage.dev/description: Releases, PRs, frameworks and quality per repo
+spec:
+  rules:
+  - host: devops.mgmt.wsh.no
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: devops-report
+            port:
+              number: 8080
