@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# namespace: is required by the netpol-baseline component (its policies carry no namespace).
+namespace: devops-report-production
+components:
+- ../../../../bases/netpol-baseline
+resources:
+- namespace.yaml
+- devops-report-source.yaml
+- devops-report.yaml
+- networkpolicies.yaml
+- cilium-cluster-nodes-to-http.yaml

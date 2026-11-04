@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: devops-report
+  namespace: devops-report-production
+spec:
+  podSelector:
+    matchLabels:
+      app: devops-report
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Traefik (host-network) is the only allowed source. Because Traefik runs host-network, the
+  # effective allow under Cilium comes from cilium-cluster-nodes-to-http.yaml (host/remote-node);
+  # this k8s rule is kept for parity/portability.
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: traefik
+    ports:
+    - port: 8080
+      protocol: TCP
+  # Static files only: no egress.
+  egress: []
