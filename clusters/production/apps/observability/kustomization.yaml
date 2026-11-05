@@ -37,6 +37,8 @@ resources:
 - prometheusrule-flux.yaml
 - prometheusrule-cert-manager.yaml
 - prometheusrule-mosquitto.yaml
+# AIS-catcher feed outputs (aiscatcher.org hub, MQTT), from the edge Pi's /metrics.
+- prometheusrule-ais-catcher.yaml
 # External endpoint probing via the off-cluster VPS blackbox-exporter (infra/blackbox-vps/), scraped
 # over the tunnel. Set the prober.url tunnel IP in blackbox-probes.yaml before pushing.
 - blackbox-probes.yaml

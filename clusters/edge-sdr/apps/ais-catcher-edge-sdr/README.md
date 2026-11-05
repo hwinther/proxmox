@@ -56,7 +56,7 @@ Do **not** commit files that contain real credentials.
 | **AIS-catcher community** | `-X <sharing-key>` | Plain TCP to aiscatcher.org; the key comes from registering the station there. A bare `-X` shares anonymously. |
 | **MQTT** | `-Q mqtt://user:pass@host:port topic … msgformat …` | Each decoded message to the production **Mosquitto** broker (LB VIP `10.20.13.100`, plain 1883). `topic` supports templates (`ais/%mmsi%`); `msgformat` is one of NMEA, NMEA_TAG, FULL, JSON_NMEA, JSON_SPARSE, JSON_FULL. |
 
-`/metrics` has `ais_output_connected` per output (from the AIS-catcher commit of 2026-11-03 on).
+`/metrics` has `ais_output_connected` per connection-oriented output (Hub, MQTT; image 0.8.0 and later), behind the `AisCatcherFeedDown` alert (production observability).
 
 Inspect the live MQTT stream with the `mqttui` web UI in `mosquitto-production`, or
 `mosquitto_sub -h 10.20.13.100 -u ais-catcher -P '…' -t 'ais/#' -v`.
