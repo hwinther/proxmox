@@ -1,0 +1,97 @@
+name: Bump proxmox-backup-client
+
+# images/proxmox-pbs-backup-client pins proxmox-backup-client-static (Proxmox's pbs-client trixie apt
+# repo) in an ARG, which Dependabot cannot track. The client links OpenSSL statically, so its CVE
+# fixes only reach the image with a new package. Once a week this moves the pin to the newest
+# version whose .deb is at least 7 days old (the same cooldown as Dependabot) and opens or updates
+# a PR. The merge touches the image directory, so build-proxmox-pbs-backup-client.yml rebuilds it;
+# a release (tag-and-release) then gives the CronJobs a new tag through Dependabot.
+
+on:
+  schedule:
+    - cron: "37 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Bump proxmox-backup-client-static
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          DOCKERFILE: images/proxmox-pbs-backup-client/Dockerfile
+          APT_BASE: http://download.proxmox.com/debian/pbs-client
+          PACKAGE: proxmox-backup-client-static
+        run: |
+          set -euo pipefail
+
+          current=$(sed -nE 's/^ARG PBS_CLIENT_VERSION=([0-9A-Za-z.+~:-]+)$/\1/p' "$DOCKERFILE")
+          [[ -n "$current" ]] || { echo "::error::No 'ARG PBS_CLIENT_VERSION=' in $DOCKERFILE"; exit 1; }
+
+          # Every published version of the package with its pool path, newest first.
+          curl -fsSL "$APT_BASE/dists/trixie/main/binary-amd64/Packages" \
+            | awk -v pkg="$PACKAGE" '
+                /^Package: / { p = $2 } /^Version: / { v = $2 }
+                /^Filename: / { if (p == pkg) print v, $2 }' \
+            | sort -V -r -k1,1 > "$RUNNER_TEMP/versions"
+
+          cutoff=$(date -u -d '7 days ago' +%s)
+          target=""
+          while read -r version filename; do
+            modified=$(curl -fsSI "$APT_BASE/$filename" | sed -nE 's/^[Ll]ast-[Mm]odified: (.*)\r?$/\1/p')
+            [[ -n "$modified" ]] || continue
+            if (( $(date -u -d "$modified" +%s) <= cutoff )); then
+              target=$version
+              break
+            fi
+          done < "$RUNNER_TEMP/versions"
+          [[ -n "$target" ]] || { echo "::error::No $PACKAGE version older than 7 days"; exit 1; }
+
+          if ! dpkg --compare-versions "$target" gt "$current"; then
+            echo "$PACKAGE is pinned at $current; the newest version older than 7 days is $target. Nothing to do."
+            exit 0
+          fi
+
+          sed -i -E "s/^ARG PBS_CLIENT_VERSION=.*/ARG PBS_CLIENT_VERSION=${target}/" "$DOCKERFILE"
+
+          pr_branch="bump-pbs-client"
+          title="build(pbs-backup-client): proxmox-backup-client-static ${target}"
+          {
+            echo "Moves \`PBS_CLIENT_VERSION\` from \`${current}\` to \`${target}\`: the newest \`${PACKAGE}\` in Proxmox's pbs-client trixie repo whose package is at least 7 days old."
+            echo
+            echo "Release notes: https://pbs.proxmox.com/docs/ (Proxmox Backup Server roadmap) and the package changelog in the pbs-client repo."
+            echo
+            echo "The merge rebuilds \`ghcr.io/hwinther/proxmox/proxmox/pbs/backup-client\` (build-proxmox-pbs-backup-client.yml, with the Grype gate). Run tag-and-release afterwards to give the CronJobs a new tag."
+          } > "$RUNNER_TEMP/body.md"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$pr_branch"
+          git commit -q -m "$title" -- "$DOCKERFILE"
+          # The bot owns this branch, so an older unmerged bump is replaced, not stacked.
+          git push -q --force "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" "HEAD:refs/heads/${pr_branch}"
+
+          existing=$(gh pr list -R "$REPO" --head "$pr_branch" --state open --json number --jq '.[0].number // empty')
+          if [[ -n "$existing" ]]; then
+            gh pr edit "$existing" -R "$REPO" --title "$title" --body-file "$RUNNER_TEMP/body.md"
+            echo "Updated PR #$existing"
+          else
+            gh pr create -R "$REPO" --base main --head "$pr_branch" --title "$title" --body-file "$RUNNER_TEMP/body.md"
+          fi

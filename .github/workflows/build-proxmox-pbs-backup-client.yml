@@ -2,7 +2,8 @@ name: Publish Proxmox PBS backup client container to GHCR
 
 # Dispatched by tag-and-release.yml after a v* tag is created (push from
 # GITHUB_TOKEN does not fire on.push.tags, so the orchestrator dispatches
-# this workflow explicitly against the tag ref).
+# this workflow explicitly against the tag ref). Also runs on every merge that touches the image
+# (Dependabot's digest bumps, bump-pbs-client.yml's version bumps), publishing :<version>-<sha>.
 on:
     workflow_dispatch:
         inputs:
@@ -10,6 +11,10 @@ on:
                 description: "Fail the build if Grype finds vulnerabilities"
                 type: boolean
                 default: true
+    push:
+        branches: [main]
+        paths:
+            - "images/proxmox-pbs-backup-client/**"
 
 permissions:
     contents: read

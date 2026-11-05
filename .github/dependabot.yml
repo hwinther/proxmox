@@ -37,6 +37,16 @@ updates:
   schedule:
     interval: "weekly"
 
+# proxmox-pbs-backup-client image: the debian builder and distroless runtime digests. Each bump
+# touches the image directory, so build-proxmox-pbs-backup-client.yml rebuilds it on merge.
+- package-ecosystem: "docker"
+  directory: "/images/proxmox-pbs-backup-client"
+  open-pull-requests-limit: 20
+  schedule:
+    interval: "weekly"
+  cooldown:
+    default-days: 7
+
 # edge-sdr cluster (k0s / SDR edge).
 - package-ecosystem: "docker"
   directories:
