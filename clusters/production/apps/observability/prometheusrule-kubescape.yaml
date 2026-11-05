@@ -1,0 +1,88 @@
+# Kubescape image-scan results as alerts. The counts come from Kubescape's prometheus-exporter in
+# both clusters: production's via the kubescape-production PodMonitor, edge-sdr's remote-written by
+# prometheus-agent-edge-sdr (cluster label). The dashboard is dashboards/kubescape-vulnerabilities.json.
+# release=obs-kps so the operator ruleSelector picks it up.
+#
+# Only our own images alert: almost every third-party image carries critical CVEs (2026-11: 118 of
+# 164 production workloads), which we can only fix by waiting for upstream, so they stay on the
+# dashboard. Own images (ghcr.io/hwinther/*, ghcr.io/wshno/*) we rebuild ourselves, so a critical
+# finding there is actionable.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: kubescape
+  labels:
+    release: obs-kps
+spec:
+  groups:
+  - name: kubescape-own-images
+    interval: 5m
+    rules:
+    # One series (value 1) per workload container that runs one of our images, labelled the way the
+    # exporter labels its workload metrics (namespace, workload, lowercase workload_kind,
+    # workload_container_name). Kubescape has no image label, so production derives the set from
+    # kube-state-metrics: the container's image, then pod → ReplicaSet → Deployment, pod →
+    # StatefulSet/DaemonSet, or pod → Job → CronJob. CronJob pods only exist while a run's pods are
+    # kept, hence the 2d lookback there. ghcr[.]io avoids a backslash escape in the regex.
+    - record: wsh:own_image_container:info
+      expr: |
+        max by (namespace, workload, workload_kind, workload_container_name) (
+          label_replace(label_replace(label_replace(
+            label_replace(
+              max by (namespace, owner_name, container) (
+                kube_pod_container_info{image_spec=~"ghcr[.]io/(hwinther|wshno)/.+"}
+                * on (namespace, pod) group_left (owner_name) kube_pod_owner{owner_kind="ReplicaSet"}
+              ), "replicaset", "$1", "owner_name", "(.+)")
+            * on (namespace, replicaset) group_left (owner_name) kube_replicaset_owner{owner_kind="Deployment"},
+          "workload", "$1", "owner_name", "(.+)"), "workload_container_name", "$1", "container", "(.+)"),
+          "workload_kind", "deployment", "", "")
+        )
+    - record: wsh:own_image_container:info
+      expr: |
+        max by (namespace, workload, workload_kind, workload_container_name) (
+          label_replace(label_replace(label_replace(label_replace(
+            max by (namespace, owner_name, owner_kind, container) (
+              kube_pod_container_info{image_spec=~"ghcr[.]io/(hwinther|wshno)/.+"}
+              * on (namespace, pod) group_left (owner_name, owner_kind) kube_pod_owner{owner_kind=~"StatefulSet|DaemonSet"}
+            ),
+          "workload", "$1", "owner_name", "(.+)"), "workload_container_name", "$1", "container", "(.+)"),
+          "workload_kind", "statefulset", "owner_kind", "StatefulSet"), "workload_kind", "daemonset", "owner_kind", "DaemonSet")
+        )
+    - record: wsh:own_image_container:info
+      expr: |
+        max by (namespace, workload, workload_kind, workload_container_name) (
+          label_replace(label_replace(label_replace(
+            label_replace(
+              max by (namespace, owner_name, container) (
+                last_over_time(kube_pod_container_info{image_spec=~"ghcr[.]io/(hwinther|wshno)/.+"}[2d])
+                * on (namespace, pod) group_left (owner_name) last_over_time(kube_pod_owner{owner_kind="Job"}[2d])
+              ), "job_name", "$1", "owner_name", "(.+)")
+            * on (namespace, job_name) group_left (owner_name) last_over_time(kube_job_owner{owner_kind="CronJob"}[2d]),
+          "workload", "$1", "owner_name", "(.+)"), "workload_container_name", "$1", "container", "(.+)"),
+          "workload_kind", "cronjob", "", "")
+        )
+    # edge-sdr has no kube-state-metrics. Every image in its SDR namespaces is ours
+    # (ghcr.io/hwinther/wsh-rtl-sdr/*), so those namespaces stand in for the image match.
+    - record: wsh:own_image_container:info
+      expr: |
+        max by (namespace, workload, workload_kind, workload_container_name) (
+          kubescape_vulnerabilities_total_workload_critical{cluster="edge-sdr", namespace=~"adsb-edge-sdr|ais-catcher-edge-sdr"}
+        ) * 0 + 1
+
+  - name: kubescape
+    rules:
+    # Critical CVEs in an image we build. Fix: rebuild it (base image or dependency bump). The count
+    # only changes when Kubescape rescans (new image, or its daily rescan against fresh CVE data), so
+    # 1h only rides out a rescan in progress.
+    - alert: KubescapeOwnImageCriticalVulnerabilities
+      expr: |
+        max by (cluster, namespace, workload, workload_kind, workload_container_name) (kubescape_vulnerabilities_total_workload_critical)
+        * on (namespace, workload, workload_kind, workload_container_name) group_left ()
+          wsh:own_image_container:info
+        > 0
+      for: 1h
+      labels:
+        severity: warning
+      annotations:
+        summary: "{{ $value }} critical vulnerabilities in {{ $labels.namespace }}/{{ $labels.workload }} ({{ $labels.workload_container_name }})"
+        description: "Kubescape finds {{ $value }} critical CVEs in the {{ $labels.workload_container_name }} container of {{ $labels.workload_kind }} {{ $labels.namespace }}/{{ $labels.workload }}{{ with $labels.cluster }} on {{ . }}{{ end }}, which runs one of our own images. Rebuild it with updated base images and dependencies. Details: Headlamp → Kubescape → Vulnerabilities, or the Kubescape Vulnerabilities dashboard."

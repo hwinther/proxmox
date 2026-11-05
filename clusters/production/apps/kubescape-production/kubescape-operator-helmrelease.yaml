@@ -47,6 +47,12 @@ spec:
     capabilities:
       continuousScan: enable
       networkPolicyService: disable
+      prometheusExporter: enable
+    # Vulnerability counts per severity as Prometheus metrics (kubescape_vulnerabilities_total_*):
+    # the "Kubescape Vulnerabilities" dashboard and the KubescapeOwnImageCriticalVulnerabilities
+    # alert (observability). Workload metrics add one series per workload container.
+    prometheusExporter:
+      enableWorkloadMetrics: true
     # k0s: node-agent /readyz was HTTP 500 with privileged: false (eBPF/debugfs); required for runtime/network features.
     nodeAgent:
       privileged: true

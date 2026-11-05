@@ -5,3 +5,4 @@ resources:
 - helmrepository.yaml
 - kubescape-operator-helmrelease.yaml
 - networkpolicies.yaml
+- prometheus-exporter-podmonitor.yaml

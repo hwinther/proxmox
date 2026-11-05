@@ -1,0 +1,27 @@
+# Scrapes Kubescape's prometheus-exporter (capabilities.prometheusExporter in the HelmRelease):
+# vulnerability counts per severity for the cluster, each namespace and each workload container.
+# release=obs-kps so the obs-kps Prometheus podMonitorSelector picks it up. cluster=production
+# matches the label the edge-sdr agent adds to its remote-written series, so the dashboard and
+# alert can tell the clusters apart. The namespace NetworkPolicy already admits
+# observability-production.
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: kubescape-prometheus-exporter
+  namespace: kubescape-production
+  labels:
+    release: obs-kps
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: prometheus-exporter
+  podMetricsEndpoints:
+  - port: metrics
+    interval: 60s
+    scrapeTimeout: 30s
+    # The workload and namespace series carry the scanned workload's `namespace`; without this the
+    # target's own namespace label (kubescape-production) would win and rename it exported_namespace.
+    honorLabels: true
+    relabelings:
+    - targetLabel: cluster
+      replacement: production
