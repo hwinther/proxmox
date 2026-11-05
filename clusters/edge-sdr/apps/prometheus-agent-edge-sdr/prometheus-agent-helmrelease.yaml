@@ -170,6 +170,28 @@ spec:
           - source_labels: [ __name__ ]
             action: drop
             regex: ais_msg_(level|ppm)
+        # Kubescape's prometheus-exporter (capabilities.prometheusExporter): vulnerability counts per
+        # severity for the cluster, each namespace and each workload container, for the "Kubescape
+        # Vulnerabilities" dashboard and the own-image critical alert in production observability.
+        # Only the vulnerability series are kept; the configuration-scan (controls) ones are not
+        # used. The exporter runs on the x86 node (customScheduling keeps Kubescape off the Pis).
+        - job_name: kubescape-prometheus-exporter
+          kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+              - kubescape-edge-sdr
+          relabel_configs:
+          - source_labels: [ __meta_kubernetes_pod_label_app_kubernetes_io_component ]
+            action: keep
+            regex: prometheus-exporter
+          - source_labels: [ __meta_kubernetes_pod_container_port_name ]
+            action: keep
+            regex: metrics
+          metric_relabel_configs:
+          - source_labels: [ __name__ ]
+            action: keep
+            regex: kubescape_vulnerabilities_.+
         - job_name: dump1090
           kubernetes_sd_configs:
           - role: endpoints
