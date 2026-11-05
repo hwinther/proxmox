@@ -87,6 +87,13 @@ spec:
         port: 8000
         expose:
           default: true
+        # TLS ends at the nginx front-ends (mgmt nginx 10.20.1.63, OPNsense), which send
+        # X-Forwarded-Proto: https. Trust them, as production Traefik does, so the scheme survives:
+        # Authelia's ForwardAuth refuses an http target URL (400 "insecure scheme"). It used to work
+        # only because the check went out through abyss, whose nginx rewrote the header.
+        forwardedHeaders:
+          trustedIPs:
+          - 10.20.0.0/16
       websecure:
         port: 8444
         expose:
