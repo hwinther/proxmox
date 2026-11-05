@@ -42,10 +42,10 @@ spec:
                 - "true"
       containers:
       - name: ais-catcher
-        # 0.8.0: one static AIS-catcher binary on distroless, with no shell and no start script,
+        # 0.9.0: one static AIS-catcher binary on distroless, with no shell and no start script,
         # so the command line is below. `-N PROME on` serves Prometheus metrics at :8080/metrics,
         # scraped by prometheus-agent-edge-sdr.
-        image: ghcr.io/hwinther/wsh-rtl-sdr/ais-catcher:0.8.0@sha256:07a0f806b5c78b0e227954a4a8e48738d3442963a021e85ea5e56f7b67975a2a
+        image: ghcr.io/hwinther/wsh-rtl-sdr/ais-catcher:0.9.0@sha256:f4deca4244a47ec2ab946d3820c7a581d2f129b58138d44e71f883e61e852e89
         imagePullPolicy: IfNotPresent
         # $(VAR) comes from the env below: ConfigMap first, then Secret, so the Secret's exact LAT/LON
         # win. Kubernetes passes each $(VAR) as ONE argument, so multi-word values cannot go here:

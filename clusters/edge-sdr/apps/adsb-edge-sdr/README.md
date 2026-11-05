@@ -1,6 +1,6 @@
 # ADSB stack (edge-sdr)
 
-GitOps manifests for **dump1090-fa**, **tar1090**, and feeders (**piaware**, **fr24**, **adsbexchange**, **opensky**) on Raspberry Pi workers. Baseline values are in ConfigMap **`adsb-env`**. Sensitive values and optional **position overrides** go in **`adsb-secret`**, which you create in the cluster (not from this repo).
+GitOps manifests for the ADS-B decoder (**readsb**, still deployed under the **dump1090-fa** Deployment/Service name until the rename refactor), **tar1090**, and feeders (**piaware**, **fr24**, **adsbexchange**, **opensky**) on Raspberry Pi workers. Baseline values are in ConfigMap **`adsb-env`**. Sensitive values and optional **position overrides** go in **`adsb-secret`**, which you create in the cluster (not from this repo).
 
 Each workload that needs config uses **`envFrom`**: ConfigMap **`adsb-env`** first, then Secret **`adsb-secret`** (`optional: true`). If the same variable exists in both, the **Secret** value wins.
 
@@ -29,7 +29,7 @@ Namespace: **`adsb-edge-sdr`**. **Piaware** still requires **`FEEDER_ID`** at ru
 | `OPENSKY_USERNAME`      | OpenSky                                     | OpenSky account username.                                                        |
 | `OPENSKY_SERIAL`        | OpenSky                                     | Device serial (optional after first registration).                               |
 | `HEYWHATSTHAT_ID`       | tar1090                                     | HeyWhatsThat panorama id for tar1090.                                            |
-| Any other ConfigMap key | All pods that `envFrom` the ConfigMap       | Same name overrides the Git-tracked default (e.g. `EXTRA_ARGS`, `DEVICE_INDEX`). |
+| Any other ConfigMap key | All pods that `envFrom` the ConfigMap       | Same name overrides the Git-tracked default (e.g. `DEVICE_INDEX`). The decoder (readsb) takes its command line from the Deployment's `args`, with `$(VAR)` from this env. |
 
 **tar1090** `envFrom` loads the full ConfigMap; extra keys there are harmless. **FR24** only `envFrom` the Secret (for `FR24_KEY` and any future keys you add).
 
