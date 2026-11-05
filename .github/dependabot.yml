@@ -80,6 +80,10 @@ updates:
     fluxcd:
       patterns:
       - "fluxcd/*"
+    # The wsh-rtl-sdr feeders are released together (one v* tag), so their bumps come as one PR.
+    wsh-rtl-sdr:
+      patterns:
+      - "hwinther/wsh-rtl-sdr/*"
   open-pull-requests-limit: 20
 
 # Production cluster — prod workloads only (excludes in-cluster test apps).
@@ -152,6 +156,14 @@ updates:
     fluxcd:
       patterns:
       - "fluxcd/*"
+    # Our own infrastructure images (pbs backup-client, esp-poller) and the pgdump postgres image
+    # appear in many app directories; one release is one PR across all of them, not one per app.
+    proxmox-images:
+      patterns:
+      - "hwinther/proxmox/*"
+    postgres:
+      patterns:
+      - "postgres"
   open-pull-requests-limit: 20
 
 # Production cluster — test-tier apps (separate PRs from prod workloads above).
@@ -169,4 +181,12 @@ updates:
     test:
       patterns:
       - "hwinther/test/*"
+    # Our own infrastructure images (pbs backup-client, esp-poller) and the pgdump postgres image
+    # appear in many app directories; one release is one PR across all of them, not one per app.
+    proxmox-images:
+      patterns:
+      - "hwinther/proxmox/*"
+    postgres:
+      patterns:
+      - "postgres"
   open-pull-requests-limit: 20
