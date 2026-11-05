@@ -39,6 +39,8 @@ resources:
 - prometheusrule-mosquitto.yaml
 # AIS-catcher feed outputs (aiscatcher.org hub, MQTT), from the edge Pi's /metrics.
 - prometheusrule-ais-catcher.yaml
+# Kubescape image-scan counts (both clusters): own-image critical alert + dashboard below.
+- prometheusrule-kubescape.yaml
 # External endpoint probing via the off-cluster VPS blackbox-exporter (infra/blackbox-vps/), scraped
 # over the tunnel. Set the prober.url tunnel IP in blackbox-probes.yaml before pushing.
 - blackbox-probes.yaml
@@ -132,6 +134,14 @@ configMapGenerator:
 - name: grafana-dashboard-sdr-reception
   files:
   - dashboards/sdr-reception.json
+  options:
+    disableNameSuffixHash: true
+    labels:
+      grafana_dashboard: "1"
+# Image CVEs per severity from Kubescape's prometheus-exporter, production and edge-sdr.
+- name: grafana-dashboard-kubescape-vulnerabilities
+  files:
+  - dashboards/kubescape-vulnerabilities.json
   options:
     disableNameSuffixHash: true
     labels:
