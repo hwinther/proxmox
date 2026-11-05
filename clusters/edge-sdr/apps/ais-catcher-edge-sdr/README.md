@@ -12,84 +12,59 @@ kubectl label node <pi-hostname> edge-sdr/ais-antenna=true --overwrite
 
 ## Secret: `ais-catcher-secret`
 
-The Deployment loads env in this order: ConfigMap **`ais-catcher-env`**, then Secret **`ais-catcher-secret`** (`secretRef.optional: true`). If the same variable exists in both, the **Secret** value wins. Keys you omit in the Secret keep their ConfigMap values.
+The image (0.8.0 and later) is one static AIS-catcher binary on distroless: no shell, no start
+script. The command line is the Deployment's `args`, with `$(VAR)` taken from the env: ConfigMap
+**`ais-catcher-env`** first, then Secret **`ais-catcher-secret`**, so a key in both takes the Secret's
+value.
 
-Use the Secret for **exact positions** (`LAT`, `LON`) so coordinates are not committed in Git, and for hub/API material such as **`EXTRA_ARGS`**.
+Kubernetes passes each `$(VAR)` as **one** argument, so a multi-word value such as the old
+`EXTRA_ARGS` cannot go through env (AIS-catcher rejects `"-u host port -X key"` as one argument).
+The feeds are a config file instead: key **`feeds.json`** in the Secret, mounted at
+`/etc/ais-catcher/feeds.json` and read with `-C`, which merges it with the command line.
 
-### Keys you can set
+| Key | Purpose |
+| --- | --- |
+| `LAT`, `LON` | Exact station position (decimal degrees), so it is not committed; overrides the ConfigMap. |
+| `feeds.json` | **Required** (the pod waits for it). The outputs that carry keys or passwords: the aiscatcher.org sharing key (`-X`), UDP hubs (`-u`, e.g. ShipXplorer's host/port/key, AISHub's assigned host/port) and MQTT (`-Q`, the broker URL holds the password). |
 
-| Key                     | Purpose                                                                                                                           |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `LAT`                   | Station latitude (decimal degrees); overrides ConfigMap.                                                                          |
-| `LON`                   | Station longitude (decimal degrees); overrides ConfigMap.                                                                         |
-| `EXTRA_ARGS`            | Extra CLI flags for AIS-catcher (e.g. `-u host port key`, `-Q mqtt://...`).                                                       |
-| `MQTT_PASSWORD`         | Password for the `ais-catcher` Mosquitto user (see [MQTT publishing](#mqtt-publishing)). Keep alphanumeric (goes in the broker URL). |
-| Any other ConfigMap key | Same names as in **`ais-catcher-env`** (`DEVICE_INDEX`, `STATION_URL`, `BIASTEE`, …) if you need to override without editing Git. |
+### Writing `feeds.json`
 
-### Example: create the Secret
-
-Position + hub flags (quote values as needed for your shell):
-
-```bash
-kubectl create secret generic ais-catcher-secret -n ais-catcher-edge-sdr \
-  --from-literal=LAT='59.900000' \
-  --from-literal=LON='10.500000' \
-  --from-literal=EXTRA_ARGS='-u hub.example.com 12345 YOUR_KEY'
-```
-
-Hub flags only (keep `LAT`/`LON` in the ConfigMap until you add them here):
+AIS-catcher writes the file from the same flags with `-J`: it prints a banner and then the JSON,
+and exits. Build it locally and add it to the Secret; nothing is committed. The
+`ais-catcher` Mosquitto user is in [mosquitto-secrets.md](../../../production/apps/mosquitto-production/mosquitto-secrets.md);
+keep its password alphanumeric (it goes in the URL).
 
 ```bash
-kubectl create secret generic ais-catcher-secret -n ais-catcher-edge-sdr \
-  --from-literal=EXTRA_ARGS='-u hub.shipxplorer.com 37615 YOUR_API_KEY'
+docker run --rm ghcr.io/hwinther/wsh-rtl-sdr/ais-catcher:0.8.0 -J \
+    -X YOUR_SHARING_KEY \
+    -u SHIPXPLORER_HOST SHIPXPLORER_PORT \
+    -u AISHUB_HOST AISHUB_PORT \
+    -Q 'mqtt://ais-catcher:PASSWORD@10.20.13.100:1883' topic ais/data msgformat JSON_FULL client_id aiscatcher qos 0 \
+  | sed -n '/^{/,$p' > feeds.json
+
+# Only patch a non-empty AIS-catcher config; a failed -J leaves feeds.json empty.
+test -s feeds.json && jq -e '.config == "aiscatcher"' feeds.json >/dev/null && \
+  kubectl -n ais-catcher-edge-sdr patch secret ais-catcher-secret --type merge \
+    -p "{\"data\":{\"feeds.json\":\"$(base64 -w0 feeds.json)\"}}"
+rm -f feeds.json
+kubectl -n ais-catcher-edge-sdr rollout restart deployment/ais-catcher
 ```
 
-To rotate, replace the Secret (e.g. delete and recreate, or `kubectl create secret ... --dry-run=client -o yaml | kubectl apply -f -` with a manifest generated locally and **never** committed).
+A bare `-X` shares anonymously. Check what the pod picked up in its log: one `Hub feed:`, `UDP:`
+and `MQTT feed:` line per output (the MQTT URL is not printed).
 
-Do **not** commit files that contain real credentials. Use the commands above, Sealed Secrets, SOPS, or External Secrets instead.
+Do **not** commit files that contain real credentials.
 
-## Reciprocal feed sharing (AISHub, AIS-catcher community)
-
-Share your decodes back to public aggregators the same way as ShipXplorer — extra AIS-catcher CLI flags in **`EXTRA_ARGS`** on the `ais-catcher-secret`. These are **user-side secret edits**, never committed: recreate the Secret with the pattern above (combine multiple outputs in one `EXTRA_ARGS` string).
+## Feeds
 
 | Service | Flag | Notes |
 | --- | --- | --- |
-| **ShipXplorer** | `-u <host> <port> <key>` | Three-part UDP feed: host, port, **and** the station key (as in the Secret examples above). |
-| **AISHub** | `-u <assigned-host> <assigned-port>` | AISHub assigns you a **personal UDP host + port** after you register the station at [aishub.net](https://www.aishub.net/); there is **no key** in the `-u` line (unlike ShipXplorer). |
-| **AIS-catcher community** | `-X <sharing-key>` | Community sharing to [aiscatcher.org](https://aiscatcher.org/); the sharing key comes from registering the station there. Use a bare `-X` to share **anonymously** (no key). |
+| **ShipXplorer** | `-u <host> <port>` | UDP feed to the host and port ShipXplorer assigns. AIS-catcher 0.8.0 rejects a bare third argument after `-u` (extra settings go as key/value pairs). |
+| **AISHub** | `-u <assigned-host> <assigned-port>` | AISHub assigns a **personal UDP host + port** after registering the station at [aishub.net](https://www.aishub.net/); no key. |
+| **AIS-catcher community** | `-X <sharing-key>` | Plain TCP to aiscatcher.org; the key comes from registering the station there. A bare `-X` shares anonymously. |
+| **MQTT** | `-Q mqtt://user:pass@host:port topic … msgformat …` | Each decoded message to the production **Mosquitto** broker (LB VIP `10.20.13.100`, plain 1883). `topic` supports templates (`ais/%mmsi%`); `msgformat` is one of NMEA, NMEA_TAG, FULL, JSON_NMEA, JSON_SPARSE, JSON_FULL. |
 
-Example — AISHub UDP output plus AIS-catcher community sharing, alongside the MQTT password (recreate to change these, then restart the Deployment so the new args are picked up):
+`/metrics` has `ais_output_connected` per connection-oriented output (Hub, MQTT; image 0.8.0 and later), behind the `AisCatcherFeedDown` alert (production observability).
 
-```bash
-kubectl create secret generic ais-catcher-secret -n ais-catcher-edge-sdr \
-  --from-literal=EXTRA_ARGS='-u AISHUB_HOST AISHUB_PORT -X YOUR_SHARING_KEY' \
-  --from-literal=MQTT_PASSWORD='YourAlphanumericPassword'
-```
-
-## MQTT publishing
-
-AIS-catcher publishes each decoded message to the production **Mosquitto** broker so other apps can
-consume the stream (not Home Assistant — generic data pipeline). The image's start script enables it
-when `MQTT_HOST` is set; non-secret settings are in [`configmap-ais-catcher-env.yaml`](configmap-ais-catcher-env.yaml):
-
-| Setting | Default | Notes |
-| --- | --- | --- |
-| `MQTT_HOST` | `10.20.13.100` | Mosquitto LoadBalancer VIP (reachable from the edge LAN). |
-| `MQTT_PORT` | `1883` | Plain MQTT (no TLS listener yet). |
-| `MQTT_USERNAME` | `ais-catcher` | Must exist in the mosquitto passwd file — see [mosquitto-secrets.md](../../../production/apps/mosquitto-production/mosquitto-secrets.md). |
-| `MQTT_PASSWORD` | — | **Secret only** (`ais-catcher-secret`). Keep alphanumeric (embedded in the broker URL). |
-| `MQTT_TOPIC` | `ais/data` | Supports templates, e.g. `ais/%mmsi%` or `ais/%type%/%mmsi%`. |
-| `MQTT_MSGFORMAT` | `JSON_FULL` | One of NMEA, NMEA_TAG, FULL, JSON_NMEA, JSON_SPARSE, JSON_FULL. |
-
-Prerequisites: (1) a new image build with MQTT support in the start script
-(`hwinther/wsh-rtl-sdr`), then bump the tag/digest in [ais-catcher-deployment.yaml](ais-catcher-deployment.yaml);
-(2) create the `ais-catcher` mosquitto user and put its password in `ais-catcher-secret`:
-
-```bash
-kubectl create secret generic ais-catcher-secret -n ais-catcher-edge-sdr \
-  --from-literal=EXTRA_ARGS='-u hub.shipxplorer.com 37615 YOUR_API_KEY' \
-  --from-literal=MQTT_PASSWORD='YourAlphanumericPassword'
-```
-
-Inspect the live stream with the `mqttui` web UI in `mosquitto-production`, or
+Inspect the live MQTT stream with the `mqttui` web UI in `mosquitto-production`, or
 `mosquitto_sub -h 10.20.13.100 -u ais-catcher -P '…' -t 'ais/#' -v`.

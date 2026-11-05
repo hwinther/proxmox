@@ -1,0 +1,25 @@
+# AIS-catcher feeds on the edge Pi (clusters/edge-sdr/apps/ais-catcher-edge-sdr). AIS-catcher serves
+# /metrics itself (-N PROME on, image 0.8.0 and later for the ais_output_* series); the edge
+# prometheus-agent scrapes it (job ais-catcher) and remote-writes here. release=obs-kps so the
+# operator ruleSelector picks it up.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: ais-catcher
+  labels:
+    release: obs-kps
+spec:
+  groups:
+  - name: ais-catcher
+    rules:
+    # One series per connection-oriented output: the aiscatcher.org community feed (type Hub) and
+    # MQTT (type MQTT), 1 while connected. UDP feeds (-u) have no connection and no series. 30m rides
+    # out broker restarts and hub reconnects; a feed down that long is losing data.
+    - alert: AisCatcherFeedDown
+      expr: ais_output_connected{job="ais-catcher"} == 0
+      for: 30m
+      labels:
+        severity: warning
+      annotations:
+        summary: "AIS-catcher feed {{ $labels.description }} is disconnected"
+        description: "AIS-catcher on {{ $labels.instance }} has had its {{ $labels.type }} output ({{ $labels.description }}) disconnected for >30m. For MQTT check the mosquitto broker (10.20.13.100) and the ais-catcher user's password in feeds.json; for Hub check aiscatcher.org and the sharing key. The pod log has the output's connect errors."
