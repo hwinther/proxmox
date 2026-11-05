@@ -41,18 +41,58 @@ spec:
                 values:
                 - "true"
       containers:
-      - name: dump1090-fa
-        image: ghcr.io/hwinther/wsh-rtl-sdr/dump1090-fa:0.6.0@sha256:85882cfd2c49031f8487b2ab1e7d631f6da11fcc7055f9db7db5f052577c37fa
+      # readsb (wiedehopf) replaces dump1090-fa as the decoder: one static binary on distroless, no
+      # shell, so the command line is here. The Deployment, Service, pod label and the
+      # /run/dump1090-fa JSON directory keep the dump1090-fa name for now, so tar1090, adsb-mqtt,
+      # the feeders (RECEIVER_HOST) and the exporter sidecar need no change; the rename to readsb is
+      # a later refactor. Same ports: raw 30002, SBS 30003, Beast in 30004/30104, Beast out 30005.
+      - name: readsb
+        image: ghcr.io/hwinther/wsh-rtl-sdr/readsb:0.9.0@sha256:bfd33a2773b4088c1cf751ffb4f68485ab69745ce60883c39f97b7dc0a1f68be
         imagePullPolicy: IfNotPresent
-        # ConfigMap then Secret: shared keys (e.g. LAT/LON) in Secret override ConfigMap.
+        # $(VAR) from the env below: ConfigMap then Secret, so the Secret's exact LAT/LON win.
+        # Gain: readsb's autogain (dump1090-fa ran at max gain with --adaptive-range). No
+        # --forward-mlat: piaware's MLAT results come back on 30104 for tar1090/aircraft.json, but
+        # are not re-sent on 30005 to the feeders.
+        args:
+        - --device-type
+        - rtlsdr
+        - --device
+        - $(DEVICE_INDEX)
+        - --gain
+        - auto
+        - --lat
+        - $(LAT)
+        - --lon
+        - $(LON)
+        - --max-range
+        - "360"
+        - --net
+        - --net-ro-port
+        - "30002"
+        - --net-sbs-port
+        - "30003"
+        - --net-bi-port
+        - "30004,30104"
+        - --net-bo-port
+        - "30005"
+        - --write-json
+        - /run/dump1090-fa
+        - --json-location-accuracy
+        - "1"
+        - --quiet
         envFrom:
         - configMapRef:
             name: adsb-env
         - secretRef:
             name: adsb-secret
             optional: true
+        # Still privileged and root (the image's default user is 65532): opening the dongle under
+        # /dev/bus/usb needs both until a device plugin hands it out, and the JSON hostPath is
+        # root-owned.
         securityContext:
           privileged: true
+          runAsUser: 0
+          runAsGroup: 0
         volumeMounts:
         - name: dev-bus-usb
           mountPath: /dev/bus/usb
@@ -143,9 +183,6 @@ spec:
   selector:
     app: dump1090-fa
   ports:
-  - name: http
-    port: 80
-    targetPort: 80
   - name: raw-out
     port: 30002
     targetPort: 30002
