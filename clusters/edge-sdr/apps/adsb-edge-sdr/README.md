@@ -20,8 +20,9 @@ Namespace: **`adsb-edge-sdr`**. **Piaware** still requires **`FEEDER_ID`** at ru
 
 | Key                     | Used by                                     | Notes                                                                            |
 | ----------------------- | ------------------------------------------- | -------------------------------------------------------------------------------- |
-| `LAT`                   | dump1090-fa, piaware, adsbexchange, opensky | Overrides ConfigMap; use to avoid committing exact coordinates in Git.           |
-| `LON`                   | dump1090-fa, piaware, adsbexchange, opensky | Same as `LAT`.                                                                   |
+| `LAT`                   | piaware, adsbexchange, opensky | Overrides ConfigMap; use to avoid committing exact coordinates in Git.           |
+| `LON`                   | piaware, adsbexchange, opensky | Same as `LAT`.                                                                   |
+| `READSB_LAT`, `READSB_LON` | readsb (dump1090-fa Deployment) | The position **rounded to 2 decimals**. readsb prints its command line at startup, so it never gets the exact `LAT`/`LON`; 2 decimals is what `receiver.json` publishes anyway. Overrides the ConfigMap's placeholders. |
 | `ALT`                   | opensky                                     | Antenna altitude; overrides ConfigMap if set.                                    |
 | `FEEDER_ID`             | Piaware                                     | FlightAware feeder ID (required for Piaware to run).                             |
 | `FR24_KEY`              | FR24                                        | Flightradar24 sharing key.                                                       |
