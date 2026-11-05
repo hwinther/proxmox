@@ -33,7 +33,9 @@ jobs:
     # Compute a short SHA that the build job appends to gitversion-derived tags as a suffix
     # (e.g. :0.6.1-86a584a). Without this every workflow_dispatch on main publishes the same
     # gitversion tag (GitHubFlow/v1 keeps MajorMinorPatch constant between v* tags) and
-    # silently overwrites the previous image.
+    # silently overwrites the previous image. A release build (tag-and-release dispatches this
+    # against the v* tag) gets no suffix, so it publishes the plain :0.7.0 that Dependabot moves the
+    # CronJobs to.
     setup:
         runs-on: ubuntu-latest
         permissions:
@@ -45,7 +47,13 @@ jobs:
           id: sha
           env:
               GITHUB_SHA: ${{ github.sha }}
-          run: echo "short_sha=${GITHUB_SHA:0:7}" >> "$GITHUB_OUTPUT"
+              GITHUB_REF: ${{ github.ref }}
+          run: |
+              if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+                  echo "short_sha=" >> "$GITHUB_OUTPUT"
+              else
+                  echo "short_sha=${GITHUB_SHA:0:7}" >> "$GITHUB_OUTPUT"
+              fi
 
     proxmox_pbs_backup_client:
         needs: setup
@@ -59,6 +67,7 @@ jobs:
             container_image_name_postfix: proxmox/pbs/backup-client
             build_context: images/proxmox-pbs-backup-client
             dockerfile: images/proxmox-pbs-backup-client/Dockerfile
-            # Makes gitversion-derived tags unique per commit: :0.6.1 → :0.6.1-86a584a.
+            # Makes gitversion-derived tags unique per commit on branch builds: :0.6.1 → :0.6.1-86a584a.
+            # Empty on a release build (see setup).
             tag_suffix: ${{ needs.setup.outputs.short_sha }}
             grype_fail_build: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.grype_fail_build == 'false' && 'never' || 'auto' }}
