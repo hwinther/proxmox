@@ -111,6 +111,14 @@ spec:
             Name                grep
             Match               kube.*
             Regex               kubernetes_namespace_name ^(ais-catcher-edge-sdr|adsb-edge-sdr)$
+
+        # The receiver's position never leaves the node. readsb ("invoked by: … --lat …", also inside
+        # the adsbexchange feeder), piaware's faup1090 ("--lat …") and the old ais-catcher start script
+        # ("Executing: … LAT …") print it at startup, from the Secret's exact LAT/LON.
+        [FILTER]
+            Name                grep
+            Match               kube.*
+            Exclude             log (--lat[ =]| LAT -?[0-9])
       outputs: |
         [OUTPUT]
             Name                loki

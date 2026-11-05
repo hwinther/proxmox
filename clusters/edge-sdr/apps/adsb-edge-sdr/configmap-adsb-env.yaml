@@ -8,6 +8,9 @@ metadata:
 data:
   LAT: "59.0"
   LON: "10.0"
+  # readsb's position (rounded); the real 2-decimal values come from adsb-secret, see README.md.
+  READSB_LAT: "59.0"
+  READSB_LON: "10.0"
   ALT: "100"
   DEVICE_INDEX: "00001090"
   AISCATCHER_SERVER: "https://ais.edge-sdr.wsh.no"

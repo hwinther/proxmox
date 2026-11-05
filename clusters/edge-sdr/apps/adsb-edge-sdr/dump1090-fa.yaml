@@ -49,7 +49,9 @@ spec:
       - name: readsb
         image: ghcr.io/hwinther/wsh-rtl-sdr/readsb:0.9.0@sha256:bfd33a2773b4088c1cf751ffb4f68485ab69745ce60883c39f97b7dc0a1f68be
         imagePullPolicy: IfNotPresent
-        # $(VAR) from the env below: ConfigMap then Secret, so the Secret's exact LAT/LON win.
+        # $(VAR) from the env below: ConfigMap then Secret. readsb prints its whole command line at
+        # startup, so it gets the position rounded to 2 decimals (READSB_LAT/READSB_LON in
+        # adsb-secret, the same precision receiver.json publishes), never the exact LAT/LON.
         # Gain: readsb's autogain (dump1090-fa ran at max gain with --adaptive-range). No
         # --forward-mlat: piaware's MLAT results come back on 30104 for tar1090/aircraft.json, but
         # are not re-sent on 30005 to the feeders.
@@ -61,9 +63,9 @@ spec:
         - --gain
         - auto
         - --lat
-        - $(LAT)
+        - $(READSB_LAT)
         - --lon
-        - $(LON)
+        - $(READSB_LON)
         - --max-range
         - "360"
         - --net
