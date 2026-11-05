@@ -1,5 +1,9 @@
-# Cross-cluster ForwardAuth: edge-sdr's Traefik calls production-hosted Authelia via the public
-# hostname. DNS resolves auth.wsh.no → 10.20.13.201 (LAN nginx) → production Traefik :8000 → Authelia.
+# Cross-cluster ForwardAuth: edge-sdr's Traefik calls production-hosted Authelia over the LAN, at
+# production Traefik's plain-HTTP entrypoint (:8000 on every production node). The edge Traefik pods
+# pin auth.wsh.no to those nodes (hostAliases in ../traefik/traefik-helmrelease.yaml); the Host
+# header auth.wsh.no:8000 matches Authelia's ingress there, and production Traefik trusts
+# X-Forwarded-* from 10.20.0.0/16, so Authelia sees the original host and URI. Logins still go
+# to https://auth.wsh.no in the browser; only the edge→Authelia check stays internal.
 # Ingress must reference headlamp-edge-sdr-authelia-forwardauth@kubernetescrd (namespace-name@kubernetescrd).
 # Production's equivalent (clusters/production/apps/headlamp-production/traefik-middleware-authelia-forwardauth.yaml)
 # uses the in-cluster Service URL because Authelia is local there.
@@ -10,7 +14,7 @@ metadata:
   namespace: headlamp-edge-sdr
 spec:
   forwardAuth:
-    address: https://auth.wsh.no/api/authz/forward-auth
+    address: http://auth.wsh.no:8000/api/authz/forward-auth
     maxResponseBodySize: 1048576
     trustForwardHeader: true
     authResponseHeaders:

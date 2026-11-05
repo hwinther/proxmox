@@ -40,6 +40,24 @@ spec:
   values:
     deployment:
       kind: DaemonSet
+      # ForwardAuth to production's Authelia stays on the LAN: auth.wsh.no is pinned here to the
+      # production nodes, where production Traefik listens on :8000 (hostNetwork, plain HTTP, as the
+      # OPNsense nginx reaches it). Public DNS points auth.wsh.no at the abyss VPS, so without this
+      # every Headlamp API call went out and back through abyss: edge logins broke whenever abyss was
+      # unreachable, and the volume got the home IP banned by CrowdSec there (2026-11-05). Go tries
+      # the addresses in turn, so one node down is fine. Only this pod's /etc/hosts changes.
+      # Keep in sync with the production node IPs.
+      hostAliases:
+      - ip: 10.20.13.11
+        hostnames: [auth.wsh.no]
+      - ip: 10.20.13.12
+        hostnames: [auth.wsh.no]
+      - ip: 10.20.13.13
+        hostnames: [auth.wsh.no]
+      - ip: 10.20.13.14
+        hostnames: [auth.wsh.no]
+      - ip: 10.20.13.15
+        hostnames: [auth.wsh.no]
     updateStrategy:
       type: RollingUpdate
       rollingUpdate:
