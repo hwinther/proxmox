@@ -56,7 +56,9 @@
         {
           "expr": "sum by (cluster) (kubescape_vulnerabilities_total_cluster_critical{cluster=~\"$cluster\"})",
           "legendFormat": "{{cluster}}",
-          "refId": "A"
+          "refId": "A",
+          "instant": true,
+          "range": false
         }
       ],
       "options": {
@@ -68,7 +70,7 @@
           "values": false
         },
         "colorMode": "background",
-        "graphMode": "area",
+        "graphMode": "none",
         "textMode": "value_and_name",
         "orientation": "horizontal"
       },
@@ -82,7 +84,7 @@
         },
         "overrides": []
       },
-      "description": "Critical CVEs across every scanned image in the cluster (Kubescape counts each workload container's image).",
+      "description": "Critical CVEs across every scanned image in the cluster (Kubescape counts each workload container's image). The current count (an instant query): a range query over the dashboard's 30 days uses a step of hours, which can land before the first sample of a series that is younger than one step.",
       "id": 1,
       "datasource": {
         "type": "prometheus",
@@ -102,7 +104,9 @@
         {
           "expr": "sum by (cluster) (kubescape_vulnerabilities_total_cluster_high{cluster=~\"$cluster\"})",
           "legendFormat": "{{cluster}}",
-          "refId": "A"
+          "refId": "A",
+          "instant": true,
+          "range": false
         }
       ],
       "options": {
@@ -114,7 +118,7 @@
           "values": false
         },
         "colorMode": "background",
-        "graphMode": "area",
+        "graphMode": "none",
         "textMode": "value_and_name",
         "orientation": "horizontal"
       },
@@ -128,7 +132,7 @@
         },
         "overrides": []
       },
-      "description": "High CVEs across every scanned image in the cluster (Kubescape counts each workload container's image).",
+      "description": "High CVEs across every scanned image in the cluster (Kubescape counts each workload container's image). The current count (an instant query): a range query over the dashboard's 30 days uses a step of hours, which can land before the first sample of a series that is younger than one step.",
       "id": 2,
       "datasource": {
         "type": "prometheus",
@@ -148,7 +152,9 @@
         {
           "expr": "sum by (cluster) (kubescape_vulnerabilities_total_cluster_medium{cluster=~\"$cluster\"})",
           "legendFormat": "{{cluster}}",
-          "refId": "A"
+          "refId": "A",
+          "instant": true,
+          "range": false
         }
       ],
       "options": {
@@ -160,7 +166,7 @@
           "values": false
         },
         "colorMode": "background",
-        "graphMode": "area",
+        "graphMode": "none",
         "textMode": "value_and_name",
         "orientation": "horizontal"
       },
@@ -174,7 +180,7 @@
         },
         "overrides": []
       },
-      "description": "Medium CVEs across every scanned image in the cluster (Kubescape counts each workload container's image).",
+      "description": "Medium CVEs across every scanned image in the cluster (Kubescape counts each workload container's image). The current count (an instant query): a range query over the dashboard's 30 days uses a step of hours, which can land before the first sample of a series that is younger than one step.",
       "id": 3,
       "datasource": {
         "type": "prometheus",
@@ -194,7 +200,9 @@
         {
           "expr": "sum by (cluster) (kubescape_vulnerabilities_total_cluster_low{cluster=~\"$cluster\"})",
           "legendFormat": "{{cluster}}",
-          "refId": "A"
+          "refId": "A",
+          "instant": true,
+          "range": false
         }
       ],
       "options": {
@@ -206,7 +214,7 @@
           "values": false
         },
         "colorMode": "background",
-        "graphMode": "area",
+        "graphMode": "none",
         "textMode": "value_and_name",
         "orientation": "horizontal"
       },
@@ -220,7 +228,7 @@
         },
         "overrides": []
       },
-      "description": "Low CVEs across every scanned image in the cluster (Kubescape counts each workload container's image).",
+      "description": "Low CVEs across every scanned image in the cluster (Kubescape counts each workload container's image). The current count (an instant query): a range query over the dashboard's 30 days uses a step of hours, which can land before the first sample of a series that is younger than one step.",
       "id": 4,
       "datasource": {
         "type": "prometheus",
