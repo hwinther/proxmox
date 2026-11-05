@@ -12,7 +12,7 @@ kubectl label node <pi-hostname> edge-sdr/ais-antenna=true --overwrite
 
 ## Secret: `ais-catcher-secret`
 
-The image (0.7.0 and later) is one static AIS-catcher binary on distroless: no shell, no start
+The image (0.8.0 and later) is one static AIS-catcher binary on distroless: no shell, no start
 script. The command line is the Deployment's `args`, with `$(VAR)` taken from the env: ConfigMap
 **`ais-catcher-env`** first, then Secret **`ais-catcher-secret`**, so a key in both takes the Secret's
 value.
@@ -35,10 +35,18 @@ and exits. Build it locally and add it to the Secret; nothing is committed. The
 keep its password alphanumeric (it goes in the URL).
 
 ```bash
-docker run --rm ghcr.io/hwinther/wsh-rtl-sdr/ais-catcher:0.7.0 -J     -X YOUR_SHARING_KEY     -u hub.shipxplorer.com 37615 YOUR_API_KEY     -u AISHUB_HOST AISHUB_PORT     -Q 'mqtt://ais-catcher:PASSWORD@10.20.13.100:1883' topic ais/data msgformat JSON_FULL client_id aiscatcher qos 0   | sed -n '/^{/,$p' > feeds.json
+docker run --rm ghcr.io/hwinther/wsh-rtl-sdr/ais-catcher:0.8.0 -J \
+    -X YOUR_SHARING_KEY \
+    -u SHIPXPLORER_HOST SHIPXPLORER_PORT \
+    -u AISHUB_HOST AISHUB_PORT \
+    -Q 'mqtt://ais-catcher:PASSWORD@10.20.13.100:1883' topic ais/data msgformat JSON_FULL client_id aiscatcher qos 0 \
+  | sed -n '/^{/,$p' > feeds.json
 
-kubectl -n ais-catcher-edge-sdr patch secret ais-catcher-secret --type merge   -p "{\"data\":{\"feeds.json\":\"$(base64 -w0 feeds.json)\"}}"
-rm feeds.json
+# Only patch a non-empty AIS-catcher config; a failed -J leaves feeds.json empty.
+test -s feeds.json && jq -e '.config == "aiscatcher"' feeds.json >/dev/null && \
+  kubectl -n ais-catcher-edge-sdr patch secret ais-catcher-secret --type merge \
+    -p "{\"data\":{\"feeds.json\":\"$(base64 -w0 feeds.json)\"}}"
+rm -f feeds.json
 kubectl -n ais-catcher-edge-sdr rollout restart deployment/ais-catcher
 ```
 
@@ -51,7 +59,7 @@ Do **not** commit files that contain real credentials.
 
 | Service | Flag | Notes |
 | --- | --- | --- |
-| **ShipXplorer** | `-u <host> <port> <key>` | Three-part UDP feed: host, port **and** the station key. |
+| **ShipXplorer** | `-u <host> <port>` | UDP feed to the host and port ShipXplorer assigns. AIS-catcher 0.8.0 rejects a bare third argument after `-u` (extra settings go as key/value pairs). |
 | **AISHub** | `-u <assigned-host> <assigned-port>` | AISHub assigns a **personal UDP host + port** after registering the station at [aishub.net](https://www.aishub.net/); no key. |
 | **AIS-catcher community** | `-X <sharing-key>` | Plain TCP to aiscatcher.org; the key comes from registering the station there. A bare `-X` shares anonymously. |
 | **MQTT** | `-Q mqtt://user:pass@host:port topic … msgformat …` | Each decoded message to the production **Mosquitto** broker (LB VIP `10.20.13.100`, plain 1883). `topic` supports templates (`ais/%mmsi%`); `msgformat` is one of NMEA, NMEA_TAG, FULL, JSON_NMEA, JSON_SPARSE, JSON_FULL. |
