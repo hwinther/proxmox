@@ -55,7 +55,7 @@ spec:
       # receiver-host dump1090-fa:30005, MLAT results back to dump1090-fa:30104. piaware writes to
       # /var/cache/piaware and /run/piaware (emptyDirs).
       - name: piaware
-        image: ghcr.io/hwinther/wsh-rtl-sdr/piaware:0.13.0@sha256:a8132a98a3337119ca399119b799dd3ff2ffae45fb37310c8345b0472f55caa2
+        image: ghcr.io/hwinther/wsh-rtl-sdr/piaware:0.14.1@sha256:a81fa152ae42770ae5e79bb573778f704364d9924bed9c2e65237466fe9fb784
         imagePullPolicy: IfNotPresent
         securityContext:
           allowPrivilegeEscalation: false
@@ -152,7 +152,7 @@ spec:
       # settings are fr24feed's own flags. FR24_KEY comes from adsb-secret (fr24feed does not log
       # its command line). Status on :8754/monitor.json (no key in it) is the health check.
       - name: fr24
-        image: ghcr.io/hwinther/wsh-rtl-sdr/fr24:0.11.0@sha256:be80096ee22e97f454d30835462cfc4584e00a9c3422681b23de63ecc278873c
+        image: ghcr.io/hwinther/wsh-rtl-sdr/fr24:0.14.1@sha256:79b83fec88f9f6f4154e4d5329a0ce73644ac5609475561530b58ce483cab6b5
         imagePullPolicy: IfNotPresent
         args:
         - --fr24key=$(FR24_KEY)
@@ -374,7 +374,7 @@ spec:
       # type and serial, [IDENT] username, [INPUT] dump1090-fa:30005) and /var/lib/openskyd/conf.d,
       # where it would save a serial OpenSky assigns (an emptyDir: the serial is in the Secret).
       - name: opensky
-        image: ghcr.io/hwinther/wsh-rtl-sdr/opensky:0.12.0@sha256:77c5e115d307a6d10f743dcb5ae452529c986b23447e06261345f18e68b802af
+        image: ghcr.io/hwinther/wsh-rtl-sdr/opensky:0.14.1@sha256:b4ebfcaf73dc03fe8a405c0663a8982e2ba7a9800b554b55e71168be235c5175
         imagePullPolicy: IfNotPresent
         securityContext:
           allowPrivilegeEscalation: false

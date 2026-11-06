@@ -170,7 +170,7 @@ spec:
       # remote-written to production Prometheus, so history survives pod restarts.
       - name: dump1090-exporter
         # 0.10.0: distroless python (no shell).
-        image: ghcr.io/hwinther/wsh-rtl-sdr/dump1090-exporter:0.10.0@sha256:6196a5125cea5bec62d4d334dcbe2dcd74d3fc1890fdaef49b139b373b727e54
+        image: ghcr.io/hwinther/wsh-rtl-sdr/dump1090-exporter:0.14.1@sha256:20bd70fe19b177e83c629f9ff528bdbc7451c14c4c40c1ecf7920af214556a95
         imagePullPolicy: IfNotPresent
         # LAT/LON for the max-range calculation. Overridden with the rounded READSB_LAT/READSB_LON
         # (2 decimals, ~1 km, as receiver.json): the exporter logs its origin, and the start script
