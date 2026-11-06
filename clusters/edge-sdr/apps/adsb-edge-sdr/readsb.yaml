@@ -4,7 +4,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: dump1090-fa
+  name: readsb
   namespace: adsb-edge-sdr
 spec:
   replicas: 1
@@ -16,12 +16,12 @@ spec:
       maxUnavailable: 1
   selector:
     matchLabels:
-      app: dump1090-fa
+      app: readsb
   template:
     metadata:
       labels:
-        app: dump1090-fa
-        app.kubernetes.io/name: dump1090-fa
+        app: readsb
+        app.kubernetes.io/name: readsb
         app.kubernetes.io/part-of: adsb-edge-sdr
     spec:
       tolerations:
@@ -52,7 +52,7 @@ spec:
         - chown
         - -R
         - 65532:65532
-        - /run/dump1090-fa
+        - /run/readsb
         securityContext:
           runAsUser: 0
           runAsGroup: 0
@@ -63,8 +63,8 @@ spec:
             add:
             - CHOWN
         volumeMounts:
-        - name: dump1090-run
-          mountPath: /run/dump1090-fa
+        - name: readsb-json
+          mountPath: /run/readsb
         resources:
           requests:
             cpu: 10m
@@ -73,11 +73,9 @@ spec:
             cpu: 100m
             memory: 32Mi
       containers:
-      # readsb (wiedehopf) replaces dump1090-fa as the decoder: one static binary on distroless, no
-      # shell, so the command line is here. The Deployment, Service, pod label and the
-      # /run/dump1090-fa JSON directory keep the dump1090-fa name for now, so tar1090, adsb-mqtt,
-      # the feeders (RECEIVER_HOST) and the exporter sidecar need no change; the rename to readsb is
-      # a later refactor. Same ports: raw 30002, SBS 30003, Beast in 30004/30104, Beast out 30005.
+      # readsb (wiedehopf), the ADS-B decoder: one static binary on distroless, no shell, so the
+      # command line is here. Ports: raw 30002, SBS 30003, Beast in 30004/30104 (MLAT results from
+      # piaware), Beast out 30005 (the feeders).
       - name: readsb
         image: ghcr.io/hwinther/wsh-rtl-sdr/readsb:0.14.1@sha256:9093f0b276290a0cdd662ce61701254473aa42dbdbf68039bfec1980f7c7ab54
         imagePullPolicy: IfNotPresent
@@ -110,7 +108,7 @@ spec:
         - --net-bo-port
         - "30005"
         - --write-json
-        - /run/dump1090-fa
+        - /run/readsb
         # tar1090 reads tracks from readsb's per-aircraft traces and globe files (no tar1090.sh).
         - --write-json-globe-index
         - --json-location-accuracy
@@ -137,8 +135,8 @@ spec:
           seccompProfile:
             type: RuntimeDefault
         volumeMounts:
-        - name: dump1090-run
-          mountPath: /run/dump1090-fa
+        - name: readsb-json
+          mountPath: /run/readsb
         readinessProbe:
           tcpSocket:
             port: 30005
@@ -165,7 +163,7 @@ spec:
             memory: 384Mi
             sdr.wsh.no/rtlsdr-adsb: 1
       # Prometheus exporter sidecar: reads stats.json/aircraft.json from the shared
-      # dump1090-run volume and serves reception metrics (message rate, aircraft counts,
+      # readsb-json volume and serves reception metrics (message rate, aircraft counts,
       # max range, signal levels) on :9105 — scraped by prometheus-agent-edge-sdr and
       # remote-written to production Prometheus, so history survives pod restarts.
       - name: dump1090-exporter
@@ -186,6 +184,8 @@ spec:
           value: $(READSB_LAT)
         - name: LON
           value: $(READSB_LON)
+        - name: RESOURCE_PATH
+          value: /run/readsb
         ports:
         - name: metrics
           containerPort: 9105
@@ -208,8 +208,8 @@ spec:
           seccompProfile:
             type: RuntimeDefault
         volumeMounts:
-        - name: dump1090-run
-          mountPath: /run/dump1090-fa
+        - name: readsb-json
+          mountPath: /run/readsb
           readOnly: true
         resources:
           requests:
@@ -221,7 +221,7 @@ spec:
       # readsb's JSON directory, shared with tar1090 and adsb-mqtt on the same node. Under /run
       # (tmpfs, ~90 MB on the Pi) so the per-second JSON, globe and trace writes stay off the SD card;
       # a few MB, recreated after a reboot.
-      - name: dump1090-run
+      - name: readsb-json
         hostPath:
           path: /run/k8s-edge-sdr/readsb
           type: DirectoryOrCreate
@@ -229,11 +229,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: dump1090-fa
+  name: readsb
   namespace: adsb-edge-sdr
 spec:
   selector:
-    app: dump1090-fa
+    app: readsb
   ports:
   - name: raw-out
     port: 30002
@@ -253,3 +253,31 @@ spec:
   - name: metrics
     port: 9105
     targetPort: metrics
+---
+# TRANSITIONAL alias for the old name: piaware.conf and opensky.conf in adsb-secret still say
+# dump1090-fa. Remove once both are regenerated with readsb (README). No metrics port, so
+# Prometheus scrapes the readsb Service only.
+apiVersion: v1
+kind: Service
+metadata:
+  name: dump1090-fa
+  namespace: adsb-edge-sdr
+spec:
+  selector:
+    app: readsb
+  ports:
+  - name: raw-out
+    port: 30002
+    targetPort: 30002
+  - name: sbs
+    port: 30003
+    targetPort: 30003
+  - name: beast-in-a
+    port: 30004
+    targetPort: 30004
+  - name: beast-out
+    port: 30005
+    targetPort: 30005
+  - name: beast-in-b
+    port: 30104
+    targetPort: 30104

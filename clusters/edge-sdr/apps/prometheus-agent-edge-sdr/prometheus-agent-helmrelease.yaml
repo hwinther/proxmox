@@ -201,7 +201,7 @@ spec:
           relabel_configs:
           - source_labels: [ __meta_kubernetes_service_name ]
             action: keep
-            regex: dump1090-fa
+            regex: readsb
           - source_labels: [ __meta_kubernetes_endpoint_port_name ]
             action: keep
             regex: metrics

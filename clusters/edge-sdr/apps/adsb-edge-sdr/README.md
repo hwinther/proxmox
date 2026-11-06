@@ -1,6 +1,6 @@
 # ADSB stack (edge-sdr)
 
-GitOps manifests for the ADS-B decoder (**readsb**, still deployed under the **dump1090-fa** Deployment/Service name until the rename refactor), **tar1090**, and feeders (**piaware**, **fr24**, **adsbexchange**, **opensky**) on Raspberry Pi workers. Baseline values are in ConfigMap **`adsb-env`**. Sensitive values and optional **position overrides** go in **`adsb-secret`**, which you create in the cluster (not from this repo).
+GitOps manifests for the ADS-B decoder (**readsb**, Deployment and Service `readsb`), **tar1090**, and feeders (**piaware**, **fr24**, **adsbexchange**, **opensky**) on Raspberry Pi workers. Baseline values are in ConfigMap **`adsb-env`**. Sensitive values and optional **position overrides** go in **`adsb-secret`**, which you create in the cluster (not from this repo).
 
 Each workload that needs config uses **`envFrom`**: ConfigMap **`adsb-env`** first, then Secret **`adsb-secret`** (`optional: true`). If the same variable exists in both, the **Secret** value wins.
 
@@ -29,7 +29,7 @@ Namespace: **`adsb-edge-sdr`**. piaware, opensky, fr24 and adsbexchange wait for
 | ----------------------- | ------------------------------------------- | -------------------------------------------------------------------------------- |
 | `LAT`                   | (source for `opensky.conf`)                 | Exact position, kept out of Git.                                                 |
 | `LON`                   | (source for `opensky.conf`)                 | Same as `LAT`.                                                                   |
-| `READSB_LAT`, `READSB_LON` | readsb (dump1090-fa Deployment), adsbexchange, dump1090-exporter | The position **rounded to 2 decimals**. readsb prints its command line at startup, so it never gets the exact `LAT`/`LON`; 2 decimals is what `receiver.json` publishes anyway. Overrides the ConfigMap's placeholders. |
+| `READSB_LAT`, `READSB_LON` | readsb, adsbexchange, dump1090-exporter | The position **rounded to 2 decimals**. readsb prints its command line at startup, so it never gets the exact `LAT`/`LON`; 2 decimals is what `receiver.json` publishes anyway. Overrides the ConfigMap's placeholders. |
 | `ALT`                   | (source for `opensky.conf`)                 | Antenna altitude.                                                                |
 | `FEEDER_ID`             | (source for `piaware.conf`)                 | FlightAware feeder ID.                                                           |
 | `piaware.conf`          | piaware                                     | **Required.** piaware's `/etc/piaware.conf` (`key value` lines, not `key=value`), mounted from here. Generate it from `FEEDER_ID`, see below. piaware takes its position from FlightAware. |
@@ -73,7 +73,7 @@ daemon's "Sending position" log line.
 
 ```bash
 get() { kubectl --context EdgeSDR -n adsb-edge-sdr get secret adsb-secret -o "jsonpath={.data.$1}" | base64 -d; }
-conf=$(printf '[GPS]\nLatitude=%s\nLongitude=%s\nAltitude=%s\n\n[DEVICE]\nType=default\nserial=%s\n\n[IDENT]\nUsername=%s\n\n[INPUT]\nHost=dump1090-fa\nPort=30005\n' \
+conf=$(printf '[GPS]\nLatitude=%s\nLongitude=%s\nAltitude=%s\n\n[DEVICE]\nType=default\nserial=%s\n\n[IDENT]\nUsername=%s\n\n[INPUT]\nHost=readsb\nPort=30005\n' \
   "$(get LAT)" "$(get LON)" "$(get ALT)" "$(get OPENSKY_SERIAL)" "$(get OPENSKY_USERNAME)")
 kubectl --context EdgeSDR -n adsb-edge-sdr patch secret adsb-secret --type merge \
   -p "{\"data\":{\"opensky.conf\":\"$(printf '%s\n' "$conf" | base64 -w0)\"}}"
@@ -89,7 +89,7 @@ beast-splitter on localhost); MLAT results go back to readsb on 30104.
 
 ```bash
 fid=$(kubectl --context EdgeSDR -n adsb-edge-sdr get secret adsb-secret -o 'jsonpath={.data.FEEDER_ID}' | base64 -d)
-conf=$(printf 'allow-auto-updates no\nallow-manual-updates no\nallow-mlat yes\nmlat-results yes\nfeeder-id %s\nreceiver-type other\nreceiver-host dump1090-fa\nreceiver-port 30005\nmlat-results-format beast,connect,dump1090-fa:30104\nuse-gpsd no\n' "$fid")
+conf=$(printf 'allow-auto-updates no\nallow-manual-updates no\nallow-mlat yes\nmlat-results yes\nfeeder-id %s\nreceiver-type other\nreceiver-host readsb\nreceiver-port 30005\nmlat-results-format beast,connect,readsb:30104\nuse-gpsd no\n' "$fid")
 kubectl --context EdgeSDR -n adsb-edge-sdr patch secret adsb-secret --type merge \
   -p "{\"data\":{\"piaware.conf\":\"$(printf '%s' "$conf" | base64 -w0)\"}}"
 unset fid conf
@@ -112,17 +112,17 @@ kubectl --context EdgeSDR -n adsb-edge-sdr rollout restart deployment/tar1090
 
 ### Operational notes
 
-- readsb's JSON directory is the hostPath **`/run/k8s-edge-sdr/readsb`** on the node (tmpfs, so the per-second writes stay off the SD card; recreated after a reboot). readsb writes it with `--write-json-globe-index` (traces and globe files tar1090 reads its tracks from); **tar1090** and **adsb-mqtt** mount it read-only and are scheduled on the same node as **dump1090-fa** (`podAffinity`).
+- readsb's JSON directory is the hostPath **`/run/k8s-edge-sdr/readsb`** on the node (tmpfs, so the per-second writes stay off the SD card; recreated after a reboot). readsb writes it with `--write-json-globe-index` (traces and globe files tar1090 reads its tracks from); **tar1090** and **adsb-mqtt** mount it read-only and are scheduled on the same node as **readsb** (`podAffinity`).
 - tar1090's `config.js` overrides (e.g. the AIS-catcher server for the ship layer) are the `tar1090-config` ConfigMap in `tar1090.yaml`.
 - Put **API keys and precise LAT/LON/ALT** in **`adsb-secret`**; keep **non-identifying defaults** in `configmap-adsb-env.yaml` if you want the repo to apply without a Secret.
 
 ## MQTT publishing
 
 [`adsb-mqtt.yaml`](adsb-mqtt.yaml) runs a small publisher (`ghcr.io/hwinther/wsh-rtl-sdr/adsb-mqtt`,
-built from `hwinther/wsh-rtl-sdr/images/adsb-mqtt`) that polls dump1090-fa's `aircraft.json` and
+built from `hwinther/wsh-rtl-sdr/images/adsb-mqtt`) that polls readsb's `aircraft.json` and
 republishes the **full snapshot** (~1 Hz) to the production Mosquitto broker for downstream apps —
-not Home Assistant. It co-locates with dump1090-fa (`podAffinity`) and reads the same shared
-hostPath read-only; HTTP `/data/aircraft.json` isn't served by this dump1090-fa image.
+not Home Assistant. It co-locates with readsb (`podAffinity`) and reads the same shared
+hostPath read-only; HTTP `/data/aircraft.json` isn't served by readsb.
 
 Non-secret settings are env on the Deployment; the password is in `adsb-mqtt-secret`:
 

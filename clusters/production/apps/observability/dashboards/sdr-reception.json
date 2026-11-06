@@ -1,7 +1,7 @@
 {
   "uid": "sdr-reception",
   "title": "SDR Reception \u2014 ADS-B + AIS",
-  "description": "Reception statistics from the edge-sdr receivers, persisted in Prometheus (the dump1090-fa / AIS-catcher web UIs lose history on pod restart). Data flows: receiver \u2192 prometheus-agent-edge-sdr \u2192 remote_write \u2192 production Prometheus.",
+  "description": "Reception statistics from the edge-sdr receivers, persisted in Prometheus (the tar1090 / AIS-catcher web UIs lose history on pod restart). Data flows: receiver \u2192 prometheus-agent-edge-sdr \u2192 remote_write \u2192 production Prometheus.",
   "tags": [
     "sdr",
     "edge-sdr",
@@ -22,7 +22,7 @@
     {
       "id": 100,
       "type": "row",
-      "title": "ADS-B \u2014 1090 MHz (dump1090-fa via dump1090-exporter sidecar)",
+      "title": "ADS-B \u2014 1090 MHz (readsb via dump1090-exporter sidecar)",
       "collapsed": false,
       "gridPos": {
         "h": 1,

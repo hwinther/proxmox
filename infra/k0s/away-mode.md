@@ -74,13 +74,13 @@ back**. Hence the shutdown list below — it is not optional tidiness.
    > (Verified the hard way on 2026-09-22: all three DaemonSets were still parked three weeks
    > after the return.)
 
-Leaves exactly: `dump1090-fa`, `piaware`, `fr24`, `opensky`, `adsbexchange`, `ais-catcher`.
+Leaves exactly: `readsb`, `piaware`, `fr24`, `opensky`, `adsbexchange`, `ais-catcher`.
 
 3. **Move CoreDNS onto radio-pi01 — MANDATORY before powering off edge01.** Both CoreDNS replicas
    live on edge01 (one Running, one permanently Pending because the Pi nodes carry
    `node-type=edge-sdr:NoSchedule` and CoreDNS has no matching toleration). Shut edge01 down as-is
    and every feeder loses its resolver. They coast on already-resolved IPs, then fail silently at
-   the first reconnect — and fr24/piaware also need the _cluster_ name `dump1090-fa`.
+   the first reconnect — and fr24/piaware also need the _cluster_ name `readsb`.
 
    Leaving two endpoints is equally bad: with no API server, kube-proxy cannot drop the dead one,
    so roughly half of all DNS queries blackhole with 5s timeouts for the whole absence.
@@ -99,7 +99,7 @@ Leaves exactly: `dump1090-fa`, `piaware`, `fr24`, `opensky`, `adsbexchange`, `ai
    ```
 
    Verify before shutting anything down — query the CoreDNS pod IP directly for one external name
-   and one cluster name (`dump1090-fa.adsb-edge-sdr.svc.cluster.local`). Both must answer.
+   and one cluster name (`readsb.adsb-edge-sdr.svc.cluster.local`). Both must answer.
 
    CoreDNS is a k0s-managed component, so k0s may revert the toleration while edge01 is still up.
    Re-check the pod is Running on radio-pi01 immediately before shutdown; once edge01 is off,

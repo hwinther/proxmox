@@ -1,4 +1,4 @@
-# Serves readsb's JSON directory (hostPath under /run, shared with the dump1090-fa pod), so it must
+# Serves readsb's JSON directory (hostPath under /run, shared with the readsb pod), so it must
 # schedule on the same node (podAffinity).
 # Requires node label edge-sdr/adsb-antenna=true (hardware with ADS-B antenna/SDR).
 apiVersion: apps/v1
@@ -45,7 +45,7 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
           - labelSelector:
               matchLabels:
-                app: dump1090-fa
+                app: readsb
             topologyKey: kubernetes.io/hostname
       securityContext:
         runAsNonRoot: true

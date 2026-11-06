@@ -9,7 +9,7 @@ metadata:
     gethomepage.dev/group: Applications
     gethomepage.dev/name: tar1090 (edge / Pi)
     gethomepage.dev/icon: mdi-airplane
-    gethomepage.dev/description: ADS-B map; pairs with dump1090-fa on the same node (shared hostPath)
+    gethomepage.dev/description: ADS-B map; pairs with readsb on the same node (shared hostPath)
 spec:
   rules:
   - host: tar1090.edge-sdr.wsh.no

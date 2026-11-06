@@ -1,4 +1,4 @@
-# Piaware / FR24 / adsbexchange / opensky — reach dump1090-fa via in-namespace Service (beast ports).
+# Piaware / FR24 / adsbexchange / opensky — reach readsb via in-namespace Service (beast ports).
 # Requires node label edge-sdr/adsb-antenna=true (hardware with ADS-B antenna/SDR).
 apiVersion: apps/v1
 kind: Deployment
@@ -52,7 +52,7 @@ spec:
       # 0.13.0: piaware v11.1 on plain debian:trixie-slim (tcl + python at runtime), no s6, socat,
       # lighttpd or start script; piaware is the entrypoint. /etc/piaware.conf comes from adsb-secret
       # (key piaware.conf, "key value" lines incl. feeder-id): receiver-type other with
-      # receiver-host dump1090-fa:30005, MLAT results back to dump1090-fa:30104. piaware writes to
+      # receiver-host readsb:30005, MLAT results back to readsb:30104. piaware writes to
       # /var/cache/piaware and /run/piaware (emptyDirs).
       - name: piaware
         image: ghcr.io/hwinther/wsh-rtl-sdr/piaware:0.14.1@sha256:a81fa152ae42770ae5e79bb573778f704364d9924bed9c2e65237466fe9fb784
@@ -157,7 +157,7 @@ spec:
         args:
         - --fr24key=$(FR24_KEY)
         - --receiver=avr-tcp
-        - --host=dump1090-fa:30002
+        - --host=readsb:30002
         - --bs=no
         - --raw=no
         - --mlat=no
@@ -248,7 +248,7 @@ spec:
       containers:
       # The ADSBexchange feed client is readsb in network-only mode (feedclient's feed-adsbx is a
       # readsb build), so this runs our static readsb image with feedclient's feed settings: Beast in
-      # from dump1090-fa:30005, BeastReduce out to feed1/feed2.adsbexchange.com. MLAT was never on
+      # from readsb:30005, BeastReduce out to feed1/feed2.adsbexchange.com. MLAT was never on
       # (the old image wrote USER="0", which disables feedclient's mlat-client), so no mlat-client.
       # beast_reduce_plus_out carries the feeder UUID (ADSBX_UUID in adsb-secret, read from a file so
       # it stays out of readsb's "invoked by" log line); the old beast_reduce_out sent none.
@@ -259,7 +259,7 @@ spec:
         - --net-only
         - --quiet
         - --net-connector
-        - dump1090-fa,30005,beast_in,silent_fail
+        - readsb,30005,beast_in,silent_fail
         - --net-connector
         - feed1.adsbexchange.com,30004,beast_reduce_plus_out,feed2.adsbexchange.com,64004
         - --uuid-file
@@ -371,7 +371,7 @@ spec:
       containers:
       # 0.12.0: openskyd-dump1090 as one static binary on distroless, no start script. It reads every
       # *.conf in /etc/openskyd/conf.d (opensky.conf from adsb-secret: [GPS] position, [DEVICE]
-      # type and serial, [IDENT] username, [INPUT] dump1090-fa:30005) and /var/lib/openskyd/conf.d,
+      # type and serial, [IDENT] username, [INPUT] readsb:30005) and /var/lib/openskyd/conf.d,
       # where it would save a serial OpenSky assigns (an emptyDir: the serial is in the Secret).
       - name: opensky
         image: ghcr.io/hwinther/wsh-rtl-sdr/opensky:0.14.1@sha256:b4ebfcaf73dc03fe8a405c0663a8982e2ba7a9800b554b55e71168be235c5175

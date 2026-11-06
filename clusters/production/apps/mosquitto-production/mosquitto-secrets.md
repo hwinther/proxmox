@@ -19,7 +19,7 @@ MQTTUI_PW="$(openssl rand -base64 24 | tr -d '\n')"
 # broker URL (mqtt://user:pass@host) in AIS-catcher's -Q flag, which can't take @ : / in userinfo.
 AIS_USER=ais-catcher
 AIS_PW="$(openssl rand -hex 18)"
-# adsb-mqtt (edge-sdr) publishes dump1090-fa's aircraft.json snapshots here.
+# adsb-mqtt (edge-sdr) publishes readsb's aircraft.json snapshots here.
 ADSB_USER=adsb
 ADSB_PW="$(openssl rand -hex 18)"
 # skylens-api (skylens-production) subscribes to adsb/aircraft for the plane-spotter gateway.

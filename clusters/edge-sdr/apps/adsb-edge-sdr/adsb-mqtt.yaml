@@ -1,7 +1,7 @@
-# Publishes dump1090-fa's decoded aircraft.json to the production Mosquitto broker (full snapshot
-# per poll → topic adsb/aircraft). dump1090-fa has no native MQTT, and it serves the JSON only as a
+# Publishes readsb's decoded aircraft.json to the production Mosquitto broker (full snapshot
+# per poll → topic adsb/aircraft). readsb has no native MQTT, and it serves the JSON only as a
 # file on the shared hostPath (HTTP /data/aircraft.json 404s on this image), so this co-locates with
-# dump1090-fa (podAffinity) and reads the same hostPath read-only — same dir tar1090 consumes.
+# readsb (podAffinity) and reads the same hostPath read-only — same dir tar1090 consumes.
 #
 # Prerequisites: (1) build the adsb-mqtt image in hwinther/wsh-rtl-sdr and pin the tag/digest below;
 # (2) create the `adsb` mosquitto user + the `adsb-mqtt-secret` (MQTT_PASSWORD) — see README.md.
@@ -42,12 +42,12 @@ spec:
                 operator: In
                 values:
                 - "true"
-        # Must land on the same node as dump1090-fa — aircraft.json is a node-local hostPath.
+        # Must land on the same node as readsb — aircraft.json is a node-local hostPath.
         podAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
           - labelSelector:
               matchLabels:
-                app: dump1090-fa
+                app: readsb
             topologyKey: kubernetes.io/hostname
       containers:
       - name: adsb-mqtt

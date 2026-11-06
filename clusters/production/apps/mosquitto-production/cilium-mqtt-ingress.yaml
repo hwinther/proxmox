@@ -40,7 +40,7 @@ spec:
     - ports:
       - port: "1883"
         protocol: TCP
-  # skylens-api subscribes to adsb/aircraft (dump1090-fa snapshots) for the plane-spotter gateway.
+  # skylens-api subscribes to adsb/aircraft (readsb snapshots) for the plane-spotter gateway.
   - fromEndpoints:
     - matchLabels:
         k8s:io.kubernetes.pod.namespace: skylens-production
