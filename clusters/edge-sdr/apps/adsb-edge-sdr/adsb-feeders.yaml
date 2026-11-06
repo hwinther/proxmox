@@ -110,22 +110,54 @@ spec:
                 operator: In
                 values:
                 - "true"
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
       containers:
+      # 0.11.0: Flightradar24's static fr24feed 1.0.57-1 on distroless, no start script, so the
+      # settings are fr24feed's own flags. FR24_KEY comes from adsb-secret (fr24feed does not log
+      # its command line). Status on :8754/monitor.json (no key in it) is the health check.
       - name: fr24
-        image: ghcr.io/hwinther/wsh-rtl-sdr/fr24:0.6.0@sha256:67ed426f312cf832c30a838276f0f7af8d0a95fa3b2347cd13790d33786049f6
+        image: ghcr.io/hwinther/wsh-rtl-sdr/fr24:0.11.0@sha256:be80096ee22e97f454d30835462cfc4584e00a9c3422681b23de63ecc278873c
         imagePullPolicy: IfNotPresent
-        # env after envFrom so RECEIVER_* overrides if those keys ever appear in the Secret.
+        args:
+        - --fr24key=$(FR24_KEY)
+        - --receiver=avr-tcp
+        - --host=dump1090-fa:30002
+        - --bs=no
+        - --raw=no
+        - --mlat=no
+        - --mlat-without-gps=no
         envFrom:
         - secretRef:
             name: adsb-secret
-            optional: true
-        env:
-        - name: RECEIVER_TYPE
-          value: avr-tcp
-        - name: RECEIVER_HOST
-          value: dump1090-fa
-        - name: RECEIVER_PORT
-          value: "30002"
+        ports:
+        - name: status
+          containerPort: 8754
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /monitor.json
+            port: status
+          initialDelaySeconds: 10
+          periodSeconds: 15
+        livenessProbe:
+          httpGet:
+            path: /monitor.json
+            port: status
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 6
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
         resources:
           requests:
             cpu: 50m
