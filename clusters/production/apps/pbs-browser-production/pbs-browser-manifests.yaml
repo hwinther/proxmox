@@ -16,7 +16,7 @@ spec:
   interval: 10m
   url: oci://ghcr.io/hwinther/pbs-browser/manifests
   ref:
-    tag: 0.5.0
+    tag: 0.6.0
   # Only artifacts signed by the pbs-browser release workflow at a version tag are applied. The
   # workflow is dispatched at the tag ref, so the certificate's ref is refs/tags/v*, never a branch.
   verify:
