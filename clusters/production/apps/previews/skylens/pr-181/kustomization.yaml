@@ -14,7 +14,7 @@ labels:
   includeSelectors: false
   includeTemplates: true
 
-# pr-181 / sha256:fbf2849b0aa1cf5b53ecae4921d520f9b9b8ff7929b1bc96c2bb365e3a389251 carry the MANIFEST ARTIFACT's tag (pr-<N>) and digest, not the
+# pr-181 / sha256:289d7c3f7d9be1c77392b906a21420da3ce255e9163f473ba3f2d2446767f2b3 carry the MANIFEST ARTIFACT's tag (pr-<N>) and digest, not the
 # image's: the artifact pins the image itself. The digest pins the deploy to exactly what this PR
 # run pushed; the tag is kept alongside for readability (`flux get sources oci`).
 patches:
@@ -26,7 +26,7 @@ patches:
       path: /spec/ref
       value:
         tag: "pr-181"
-        digest: "sha256:fbf2849b0aa1cf5b53ecae4921d520f9b9b8ff7929b1bc96c2bb365e3a389251"
+        digest: "sha256:289d7c3f7d9be1c77392b906a21420da3ce255e9163f473ba3f2d2446767f2b3"
 - target:
     kind: Kustomization
     name: skylens
