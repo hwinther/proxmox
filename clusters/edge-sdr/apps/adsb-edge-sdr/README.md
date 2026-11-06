@@ -27,13 +27,13 @@ Namespace: **`adsb-edge-sdr`**. **Piaware** still requires **`FEEDER_ID`** at ru
 
 | Key                     | Used by                                     | Notes                                                                            |
 | ----------------------- | ------------------------------------------- | -------------------------------------------------------------------------------- |
-| `LAT`                   | piaware, adsbexchange, opensky | Overrides ConfigMap; use to avoid committing exact coordinates in Git.           |
-| `LON`                   | piaware, adsbexchange, opensky | Same as `LAT`.                                                                   |
-| `READSB_LAT`, `READSB_LON` | readsb (dump1090-fa Deployment) | The position **rounded to 2 decimals**. readsb prints its command line at startup, so it never gets the exact `LAT`/`LON`; 2 decimals is what `receiver.json` publishes anyway. Overrides the ConfigMap's placeholders. |
+| `LAT`                   | piaware, opensky | Overrides ConfigMap; use to avoid committing exact coordinates in Git.           |
+| `LON`                   | piaware, opensky | Same as `LAT`.                                                                   |
+| `READSB_LAT`, `READSB_LON` | readsb (dump1090-fa Deployment), adsbexchange, dump1090-exporter | The position **rounded to 2 decimals**. readsb prints its command line at startup, so it never gets the exact `LAT`/`LON`; 2 decimals is what `receiver.json` publishes anyway. Overrides the ConfigMap's placeholders. |
 | `ALT`                   | opensky                                     | Antenna altitude; overrides ConfigMap if set.                                    |
 | `FEEDER_ID`             | Piaware                                     | FlightAware feeder ID (required for Piaware to run).                             |
 | `FR24_KEY`              | FR24                                        | Flightradar24 sharing key.                                                       |
-| `ADSBX_UUID`            | adsbexchange                                | ADSB Exchange UUID.                                                              |
+| `ADSBX_UUID`            | adsbexchange                                | ADSB Exchange feeder UUID. Mounted as a file and sent with `beast_reduce_plus_out`; without the key the pod waits. |
 | `OPENSKY_USERNAME`      | OpenSky                                     | OpenSky account username.                                                        |
 | `OPENSKY_SERIAL`        | OpenSky                                     | Device serial (optional after first registration).                               |
 | `HEYWHATSTHAT_ID`       | tar1090                                     | HeyWhatsThat panorama id for tar1090.                                            |

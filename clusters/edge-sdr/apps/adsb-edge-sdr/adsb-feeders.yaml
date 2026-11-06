@@ -174,23 +174,88 @@ spec:
                 operator: In
                 values:
                 - "true"
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        # Group-owns the mounted UUID file (mode 0440 below) so uid 65532 can read it.
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
       containers:
+      # The ADSBexchange feed client is readsb in network-only mode (feedclient's feed-adsbx is a
+      # readsb build), so this runs our static readsb image with feedclient's feed settings: Beast in
+      # from dump1090-fa:30005, BeastReduce out to feed1/feed2.adsbexchange.com. MLAT was never on
+      # (the old image wrote USER="0", which disables feedclient's mlat-client), so no mlat-client.
+      # beast_reduce_plus_out carries the feeder UUID (ADSBX_UUID in adsb-secret, read from a file so
+      # it stays out of readsb's "invoked by" log line); the old beast_reduce_out sent none.
       - name: adsbexchange
-        image: ghcr.io/hwinther/wsh-rtl-sdr/adsbexchange:0.6.0@sha256:d80ce8784fa7055c11c85c6ffdeb912e13170891186afa916c71426895412662
+        image: ghcr.io/hwinther/wsh-rtl-sdr/readsb:0.9.0@sha256:bfd33a2773b4088c1cf751ffb4f68485ab69745ce60883c39f97b7dc0a1f68be
         imagePullPolicy: IfNotPresent
+        args:
+        - --net-only
+        - --quiet
+        - --net-connector
+        - dump1090-fa,30005,beast_in,silent_fail
+        - --net-connector
+        - feed1.adsbexchange.com,30004,beast_reduce_plus_out,feed2.adsbexchange.com,64004
+        - --uuid-file
+        - /etc/adsbx/uuid
+        - --net-beast-reduce-interval
+        - "0.5"
+        - --net-heartbeat
+        - "60"
+        - --net-ro-size
+        - "1280"
+        - --net-ro-interval
+        - "0.2"
+        - --net-ro-port
+        - "0"
+        - --net-sbs-port
+        - "0"
+        - --net-bi-port
+        - "0"
+        - --net-bo-port
+        - "0"
+        - --net-ri-port
+        - "0"
+        - --lat
+        - $(READSB_LAT)
+        - --lon
+        - $(READSB_LON)
+        - --max-range
+        - "450"
         envFrom:
         - configMapRef:
             name: adsb-env
         - secretRef:
             name: adsb-secret
             optional: true
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: adsbx-uuid
+          mountPath: /etc/adsbx
+          readOnly: true
         resources:
           requests:
             cpu: 50m
             memory: 32Mi
           limits:
             cpu: 500m
-            memory: 256Mi
+            memory: 128Mi
+      volumes:
+      - name: adsbx-uuid
+        secret:
+          secretName: adsb-secret
+          defaultMode: 0440
+          items:
+          - key: ADSBX_UUID
+            path: uuid
 ---
 apiVersion: apps/v1
 kind: Deployment
