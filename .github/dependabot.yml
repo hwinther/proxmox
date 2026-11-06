@@ -166,11 +166,6 @@ updates:
       patterns:
       - "postgres"
   open-pull-requests-limit: 20
-  # backup-client 0.7.0/0.7.1 are distroless with no /bin/sh, but every pbs-backup/restore Job
-  # runs a `/bin/sh -c` wrapper (StartError on 2026-11-06). Stay on 0.6.1 until a fixed release.
-  ignore:
-  - dependency-name: "hwinther/proxmox/proxmox/pbs/backup-client"
-    versions: ["0.7.0", "0.7.1"]
 
 # Production cluster — test-tier apps (separate PRs from prod workloads above).
 - package-ecosystem: "docker"
@@ -196,8 +191,3 @@ updates:
       patterns:
       - "postgres"
   open-pull-requests-limit: 20
-  # backup-client 0.7.0/0.7.1 are distroless with no /bin/sh, but every pbs-backup/restore Job
-  # runs a `/bin/sh -c` wrapper (StartError on 2026-11-06). Stay on 0.6.1 until a fixed release.
-  ignore:
-  - dependency-name: "hwinther/proxmox/proxmox/pbs/backup-client"
-    versions: ["0.7.0", "0.7.1"]

@@ -79,21 +79,15 @@ spec:
               mountPath: /dump
           containers:
           - name: backup
-            image: ghcr.io/hwinther/proxmox/proxmox/pbs/backup-client:0.6.1
+            image: ghcr.io/hwinther/proxmox/proxmox/pbs/backup-client:0.7.2
             imagePullPolicy: IfNotPresent
-            # Build args dynamically: append --ns / --keyfile only when configured.
-            # Image ENTRYPOINT is the proxmox-backup-client binary directly, but we need
-            # a shell to make these flags conditional, so call the binary explicitly.
+            # pbs-job adds --ns (PBS_NAMESPACE) and --keyfile (/etc/pbs/keyfile) when set, then runs
+            # proxmox-backup-client; the image has no shell.
             command:
-            - /bin/sh
-            - -c
-            - |
-              set -eu
-              set -- backup
-              [ -n "${PBS_NAMESPACE:-}" ] && set -- "$@" --ns "$PBS_NAMESPACE"
-              [ -f /etc/pbs/keyfile ] && set -- "$@" --keyfile /etc/pbs/keyfile
-              set -- "$@" db.pxar:/dump
-              exec /usr/bin/proxmox-backup-client "$@"
+            - /usr/bin/pbs-job
+            args:
+            - backup
+            - db.pxar:/dump
             envFrom:
             - secretRef:
                 name: clutterstock-test-pbs-backup
