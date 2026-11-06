@@ -1,4 +1,4 @@
-# ADSB stack (readsb under the dump1090-fa name, tar1090, feeders) on edge Pi workers. Shared JSON
+# ADSB stack (readsb, tar1090, feeders) on edge Pi workers. Shared JSON
 # under hostPath /run/k8s-edge-sdr/readsb (readsb, tar1090 and adsb-mqtt must land on the same node).
 apiVersion: v1
 kind: Namespace
