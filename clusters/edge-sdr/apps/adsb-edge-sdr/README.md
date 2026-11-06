@@ -38,7 +38,8 @@ Namespace: **`adsb-edge-sdr`**. piaware, opensky, fr24 and adsbexchange wait for
 | `OPENSKY_USERNAME`      | (source for `opensky.conf`)                 | OpenSky account username.                                                        |
 | `OPENSKY_SERIAL`        | (source for `opensky.conf`)                 | Device serial.                                                                   |
 | `opensky.conf`          | OpenSky                                     | **Required.** openskyd's config file, mounted into `/etc/openskyd/conf.d` (the image has no start script). Generate it from the keys above, see below. |
-| `HEYWHATSTHAT_ID`       | tar1090                                     | HeyWhatsThat panorama id for tar1090.                                            |
+| `HEYWHATSTHAT_ID`       | (source for `upintheair.json`)              | HeyWhatsThat panorama id.                                                        |
+| `upintheair.json`       | tar1090                                     | **Required.** HeyWhatsThat range rings, mounted into tar1090's html directory (fetched once, not at every start). See below. |
 | Any other ConfigMap key | All pods that `envFrom` the ConfigMap       | Same name overrides the Git-tracked default (e.g. `DEVICE_INDEX`). The decoder (readsb) takes its command line from the Deployment's `args`, with `$(VAR)` from this env. |
 
 **tar1090** `envFrom` loads the full ConfigMap; extra keys there are harmless. **FR24** only `envFrom` the Secret (for `FR24_KEY` and any future keys you add).
@@ -95,9 +96,24 @@ unset fid conf
 kubectl --context EdgeSDR -n adsb-edge-sdr rollout restart deployment/piaware
 ```
 
+### Fetching `upintheair.json`
+
+tar1090 (0.14.0+, static on distroless) draws HeyWhatsThat's range rings from `upintheair.json` in its
+html directory. Fetch it once from `HEYWHATSTHAT_ID` (the panorama only changes if the site does):
+
+```bash
+id=$(kubectl --context EdgeSDR -n adsb-edge-sdr get secret adsb-secret -o 'jsonpath={.data.HEYWHATSTHAT_ID}' | base64 -d)
+curl -fsS "http://www.heywhatsthat.com/api/upintheair.json?id=$id&refraction=0.25&alts=12192" -o upintheair.json && \
+kubectl --context EdgeSDR -n adsb-edge-sdr patch secret adsb-secret --type merge \
+  -p "{\"data\":{\"upintheair.json\":\"$(base64 -w0 upintheair.json)\"}}"
+rm -f upintheair.json; unset id
+kubectl --context EdgeSDR -n adsb-edge-sdr rollout restart deployment/tar1090
+```
+
 ### Operational notes
 
-- Shared JSON for tar1090 uses hostPath **`/var/lib/k8s-edge-sdr/dump1090-fa`** on the node; **tar1090** is scheduled on the same node as **dump1090-fa** (`podAffinity`).
+- readsb's JSON directory is the hostPath **`/run/k8s-edge-sdr/readsb`** on the node (tmpfs, so the per-second writes stay off the SD card; recreated after a reboot). readsb writes it with `--write-json-globe-index` (traces and globe files tar1090 reads its tracks from); **tar1090** and **adsb-mqtt** mount it read-only and are scheduled on the same node as **dump1090-fa** (`podAffinity`).
+- tar1090's `config.js` overrides (e.g. the AIS-catcher server for the ship layer) are the `tar1090-config` ConfigMap in `tar1090.yaml`.
 - Put **API keys and precise LAT/LON/ALT** in **`adsb-secret`**; keep **non-identifying defaults** in `configmap-adsb-env.yaml` if you want the repo to apply without a Secret.
 
 ## MQTT publishing
