@@ -9,6 +9,7 @@ resources:
 - homepage
 - headlamp-edge-sdr
 - oidc-k8s-admins-rbac
+- sdr-device-plugin-edge-sdr
 - ais-catcher-edge-sdr
 - adsb-edge-sdr
 - sdr-base-debug-edge-sdr

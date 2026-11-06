@@ -5,4 +5,3 @@ resources:
 - configmap-ais-catcher-env.yaml
 - ais-catcher-deployment.yaml
 - ingress.yaml
-- kyverno-policyexception-hostpath.yaml

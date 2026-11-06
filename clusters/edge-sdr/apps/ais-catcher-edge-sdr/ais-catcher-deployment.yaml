@@ -1,5 +1,6 @@
 # Schedules on Raspberry Pi edge workers: label role=sdr-edge, edge-sdr/ais-antenna=true,
-# and taint node-type=edge-sdr:NoSchedule. USB via hostPath /dev/bus/usb (see PolicyException).
+# and taint node-type=edge-sdr:NoSchedule. The dongle comes from the device plugin
+# (sdr.wsh.no/rtlsdr-ais, see sdr-device-plugin-edge-sdr), so the pod runs unprivileged as 65532.
 # Image from compose servers/radio-pi02/ais/docker-compose.yaml (GHCR publish workflow).
 apiVersion: apps/v1
 kind: Deployment
@@ -40,6 +41,14 @@ spec:
                 operator: In
                 values:
                 - "true"
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        # Group-owns the mounted feeds.json (mode 0440 below) so uid 65532 can read it.
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
       containers:
       - name: ais-catcher
         # 0.9.0: one static AIS-catcher binary on distroless, with no shell and no start script,
@@ -116,15 +125,16 @@ spec:
           periodSeconds: 30
           timeoutSeconds: 5
           failureThreshold: 6
-        # Still privileged and root (the image's default user is 65532): opening the dongle under
-        # /dev/bus/usb needs both until a device plugin hands it out (plan: drop privileged).
+        # The device plugin passes in only this dongle's /dev/bus/usb node; containerd's
+        # device_ownership_from_security_context makes it owned by 65532 (the host node is
+        # root:root 0664), see infra/k0s/raspberry-pi-worker.md.
         securityContext:
-          privileged: true
-          runAsUser: 0
-          runAsGroup: 0
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
         volumeMounts:
-        - name: dev-bus-usb
-          mountPath: /dev/bus/usb
         - name: feeds
           mountPath: /etc/ais-catcher
           readOnly: true
@@ -137,17 +147,14 @@ spec:
           limits:
             cpu: "1"
             memory: 512Mi
+            sdr.wsh.no/rtlsdr-ais: 1
       volumes:
-      - name: dev-bus-usb
-        hostPath:
-          path: /dev/bus/usb
-          type: Directory
       # The feeds config (key feeds.json in ais-catcher-secret). Not optional: without it AIS-catcher
       # would start with no feeds, so the pod waits for the Secret instead.
       - name: feeds
         secret:
           secretName: ais-catcher-secret
-          defaultMode: 0400
+          defaultMode: 0440
           items:
           - key: feeds.json
             path: feeds.json
