@@ -12,7 +12,6 @@ resources:
 - sdr-device-plugin-edge-sdr
 - ais-catcher-edge-sdr
 - adsb-edge-sdr
-- sdr-base-debug-edge-sdr
 - fluent-bit-edge-sdr
 - node-exporter-edge-sdr
 - prometheus-agent-edge-sdr

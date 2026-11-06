@@ -45,12 +45,7 @@ spec:
     - imageReferences:
       - ghcr.io/hwinther/*
       - ghcr.io/wshno/*
-      # sdr-base / sdr-build debug-dev base images are built by build-sdr-images.yml (not the
-      # reusable workflow) and carry no SBOM attestation; skip them to keep PolicyReports clean.
-      # See clusterpolicy-github-slsa-provenance.yaml for the full rationale and the Enforce block.
       skipImageReferences:
-      - ghcr.io/hwinther/wsh-rtl-sdr/sdr-base*
-      - ghcr.io/hwinther/wsh-rtl-sdr/sdr-build*
       # ddnsadmin (private package) is verified by its own entry below, with registry credentials.
       - ghcr.io/hwinther/ddnsadmin/*
       # Audit mode: mutateDigest requires Enforce, so it (and verifyDigest) are off here.
