@@ -253,7 +253,7 @@ spec:
       # beast_reduce_plus_out carries the feeder UUID (ADSBX_UUID in adsb-secret, read from a file so
       # it stays out of readsb's "invoked by" log line); the old beast_reduce_out sent none.
       - name: adsbexchange
-        image: ghcr.io/hwinther/wsh-rtl-sdr/readsb:0.9.0@sha256:bfd33a2773b4088c1cf751ffb4f68485ab69745ce60883c39f97b7dc0a1f68be
+        image: ghcr.io/hwinther/wsh-rtl-sdr/readsb:0.14.1@sha256:9093f0b276290a0cdd662ce61701254473aa42dbdbf68039bfec1980f7c7ab54
         imagePullPolicy: IfNotPresent
         args:
         - --net-only

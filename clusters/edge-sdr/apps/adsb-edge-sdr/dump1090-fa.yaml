@@ -79,7 +79,7 @@ spec:
       # the feeders (RECEIVER_HOST) and the exporter sidecar need no change; the rename to readsb is
       # a later refactor. Same ports: raw 30002, SBS 30003, Beast in 30004/30104, Beast out 30005.
       - name: readsb
-        image: ghcr.io/hwinther/wsh-rtl-sdr/readsb:0.9.0@sha256:bfd33a2773b4088c1cf751ffb4f68485ab69745ce60883c39f97b7dc0a1f68be
+        image: ghcr.io/hwinther/wsh-rtl-sdr/readsb:0.14.1@sha256:9093f0b276290a0cdd662ce61701254473aa42dbdbf68039bfec1980f7c7ab54
         imagePullPolicy: IfNotPresent
         # $(VAR) from the env below: ConfigMap then Secret. readsb prints its whole command line at
         # startup, so it gets the position rounded to 2 decimals (READSB_LAT/READSB_LON in
