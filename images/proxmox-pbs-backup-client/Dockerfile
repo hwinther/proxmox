@@ -11,7 +11,7 @@
 #
 # Upstream source mirror (for reference): https://github.com/proxmox/proxmox-backup
 #
-# Updates: Dependabot bumps the debian and distroless digests; .github/workflows/
+# Updates: Dependabot bumps the debian, golang and distroless digests; .github/workflows/
 # bump-pbs-client.yml opens a PR when Proxmox publishes a newer proxmox-backup-client-static (it
 # links OpenSSL statically, so its CVE fixes only arrive with a new package). Either change touches
 # this directory, so build-proxmox-pbs-backup-client.yml rebuilds the image on merge.
@@ -43,6 +43,15 @@ RUN set -eux; \
     apt-get autoremove -y; \
     rm -rf /var/lib/apt/lists/*
 
+# pbs-job: the Jobs' entrypoint. It adds --ns/--keyfile when set and execs the client, which a
+# `/bin/sh -c` wrapper did before; distroless has no shell (see pbs-job/main.go).
+FROM --platform=$BUILDPLATFORM golang:1.27.2-alpine3.24@sha256:f92b6ef800e499660581efdabdf25d9d817a9d124eaf900924f0504e7e27e12d AS pbs-job
+ARG TARGETOS
+ARG TARGETARCH
+WORKDIR /src
+COPY pbs-job/main.go .
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -ldflags='-s -w' -o /out/pbs-job main.go
+
 # Distroless static runtime: ships /etc/ssl/certs/ca-certificates.crt + minimal
 # /etc/passwd, no shell, no package manager. The :nonroot tag runs as UID 65532;
 # override with `--user 0` (or USER 0 in a downstream image) if you need to read
@@ -51,6 +60,7 @@ RUN set -eux; \
 FROM gcr.io/distroless/static-debian13:nonroot@sha256:25ac8f0c3b2334a9eb05452266bd4697864a8c8ef0ef71e5e6480d7f92868329 AS final
 
 COPY --from=builder /out/proxmox-backup-client /usr/bin/proxmox-backup-client
+COPY --from=pbs-job /out/pbs-job /usr/bin/pbs-job
 
 ENTRYPOINT ["/usr/bin/proxmox-backup-client"]
 CMD []
