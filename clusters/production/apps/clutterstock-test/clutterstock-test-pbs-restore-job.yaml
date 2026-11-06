@@ -44,7 +44,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       initContainers:
       - name: pbs-restore
-        image: ghcr.io/hwinther/proxmox/proxmox/pbs/backup-client:0.7.1
+        image: ghcr.io/hwinther/proxmox/proxmox/pbs/backup-client:0.6.1
         imagePullPolicy: IfNotPresent
         # Match backup Job: append --ns / --keyfile only when configured. Encrypted backups
         # require both --keyfile and PBS_ENCRYPTION_PASSWORD (read from env by the client).
