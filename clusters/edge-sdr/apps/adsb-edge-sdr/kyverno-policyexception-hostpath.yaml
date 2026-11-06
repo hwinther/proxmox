@@ -1,4 +1,4 @@
-# Namespace uses hostPath for USB (dump1090) and shared JSON dir (dump1090 + tar1090).
+# Namespace uses a hostPath for the shared JSON dir (readsb writes it; tar1090 and adsb-mqtt read it).
 apiVersion: kyverno.io/v2
 kind: PolicyException
 metadata:
