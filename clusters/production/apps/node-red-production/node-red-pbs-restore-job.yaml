@@ -42,20 +42,17 @@ spec:
       restartPolicy: Never
       containers:
       - name: restore
-        image: ghcr.io/hwinther/proxmox/proxmox/pbs/backup-client:0.6.1
+        image: ghcr.io/hwinther/proxmox/proxmox/pbs/backup-client:0.7.2
         imagePullPolicy: IfNotPresent
+        # pbs-job adds --ns (PBS_NAMESPACE) and --keyfile (/etc/pbs/keyfile) when set, then runs
+        # proxmox-backup-client; the image has no shell.
         command:
-        - /bin/sh
-        - -c
-        - |
-          set -eu
-          : "${PBS_RESTORE_SNAPSHOT:?set PBS_RESTORE_SNAPSHOT in Secret node-red-pbs-backup}"
-          set -- restore
-          [ -n "${PBS_NAMESPACE:-}" ] && set -- "$@" --ns "$PBS_NAMESPACE"
-          [ -f /etc/pbs/keyfile ] && set -- "$@" --keyfile /etc/pbs/keyfile
-          set -- "$@" "$PBS_RESTORE_SNAPSHOT" data.pxar /data
-          /usr/bin/proxmox-backup-client "$@"
-          chown -R 1000:1000 /data
+        - /usr/bin/pbs-job
+        args:
+        - restore
+        - $(PBS_RESTORE_SNAPSHOT)
+        - data.pxar
+        - /data
         envFrom:
         - secretRef:
             name: node-red-pbs-backup
