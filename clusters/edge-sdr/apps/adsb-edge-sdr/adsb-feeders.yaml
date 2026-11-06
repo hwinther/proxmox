@@ -329,20 +329,49 @@ spec:
                 operator: In
                 values:
                 - "true"
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        # Group-owns the mounted opensky.conf (mode 0440 below) so uid 65532 can read it.
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
       containers:
+      # 0.12.0: openskyd-dump1090 as one static binary on distroless, no start script. It reads every
+      # *.conf in /etc/openskyd/conf.d (opensky.conf from adsb-secret: [GPS] position, [DEVICE]
+      # type and serial, [IDENT] username, [INPUT] dump1090-fa:30005) and /var/lib/openskyd/conf.d,
+      # where it would save a serial OpenSky assigns (an emptyDir: the serial is in the Secret).
       - name: opensky
-        image: ghcr.io/hwinther/wsh-rtl-sdr/opensky:0.6.0@sha256:d021c1150b1e012e1d18120d0ff0c1bdbe3ee959e841139e0db940622be8e82c
+        image: ghcr.io/hwinther/wsh-rtl-sdr/opensky:0.12.0@sha256:77c5e115d307a6d10f743dcb5ae452529c986b23447e06261345f18e68b802af
         imagePullPolicy: IfNotPresent
-        envFrom:
-        - configMapRef:
-            name: adsb-env
-        - secretRef:
-            name: adsb-secret
-            optional: true
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: opensky-conf
+          mountPath: /etc/openskyd/conf.d
+          readOnly: true
+        - name: opensky-state
+          mountPath: /var/lib/openskyd
         resources:
           requests:
-            cpu: 50m
-            memory: 32Mi
+            cpu: 20m
+            memory: 8Mi
           limits:
             cpu: 500m
-            memory: 192Mi
+            memory: 64Mi
+      volumes:
+      - name: opensky-conf
+        secret:
+          secretName: adsb-secret
+          defaultMode: 0440
+          items:
+          - key: opensky.conf
+            path: 10-opensky.conf
+      - name: opensky-state
+        emptyDir:
+          sizeLimit: 1Mi

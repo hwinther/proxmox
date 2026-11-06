@@ -27,15 +27,16 @@ Namespace: **`adsb-edge-sdr`**. **Piaware** still requires **`FEEDER_ID`** at ru
 
 | Key                     | Used by                                     | Notes                                                                            |
 | ----------------------- | ------------------------------------------- | -------------------------------------------------------------------------------- |
-| `LAT`                   | piaware, opensky | Overrides ConfigMap; use to avoid committing exact coordinates in Git.           |
-| `LON`                   | piaware, opensky | Same as `LAT`.                                                                   |
+| `LAT`                   | piaware | Overrides ConfigMap; use to avoid committing exact coordinates in Git.           |
+| `LON`                   | piaware | Same as `LAT`.                                                                   |
 | `READSB_LAT`, `READSB_LON` | readsb (dump1090-fa Deployment), adsbexchange, dump1090-exporter | The position **rounded to 2 decimals**. readsb prints its command line at startup, so it never gets the exact `LAT`/`LON`; 2 decimals is what `receiver.json` publishes anyway. Overrides the ConfigMap's placeholders. |
-| `ALT`                   | opensky                                     | Antenna altitude; overrides ConfigMap if set.                                    |
+| `ALT`                   | (source for `opensky.conf`)                 | Antenna altitude.                                                                |
 | `FEEDER_ID`             | Piaware                                     | FlightAware feeder ID (required for Piaware to run).                             |
 | `FR24_KEY`              | FR24                                        | Flightradar24 sharing key.                                                       |
 | `ADSBX_UUID`            | adsbexchange                                | ADSB Exchange feeder UUID. Mounted as a file and sent with `beast_reduce_plus_out`; without the key the pod waits. |
-| `OPENSKY_USERNAME`      | OpenSky                                     | OpenSky account username.                                                        |
-| `OPENSKY_SERIAL`        | OpenSky                                     | Device serial (optional after first registration).                               |
+| `OPENSKY_USERNAME`      | (source for `opensky.conf`)                 | OpenSky account username.                                                        |
+| `OPENSKY_SERIAL`        | (source for `opensky.conf`)                 | Device serial.                                                                   |
+| `opensky.conf`          | OpenSky                                     | **Required.** openskyd's config file, mounted into `/etc/openskyd/conf.d` (the image has no start script). Generate it from the keys above, see below. |
 | `HEYWHATSTHAT_ID`       | tar1090                                     | HeyWhatsThat panorama id for tar1090.                                            |
 | Any other ConfigMap key | All pods that `envFrom` the ConfigMap       | Same name overrides the Git-tracked default (e.g. `DEVICE_INDEX`). The decoder (readsb) takes its command line from the Deployment's `args`, with `$(VAR)` from this env. |
 
@@ -61,6 +62,22 @@ kubectl create secret generic adsb-secret -n adsb-edge-sdr \
 Include only the keys you actually use; omit others or replace the Secret when you add keys later, or use a GitOps-friendly secret manager.
 
 Do **not** commit files that contain real credentials. Use the command above, Sealed Secrets, SOPS, or External Secrets instead.
+
+### Generating `opensky.conf`
+
+openskyd (0.12.0+, static on distroless) reads its settings from a config file, built here from the
+existing keys without printing them. Exact position: OpenSky needs it, and fluent-bit drops the
+daemon's "Sending position" log line.
+
+```bash
+get() { kubectl --context EdgeSDR -n adsb-edge-sdr get secret adsb-secret -o "jsonpath={.data.$1}" | base64 -d; }
+conf=$(printf '[GPS]\nLatitude=%s\nLongitude=%s\nAltitude=%s\n\n[DEVICE]\nType=default\nserial=%s\n\n[IDENT]\nUsername=%s\n\n[INPUT]\nHost=dump1090-fa\nPort=30005\n' \
+  "$(get LAT)" "$(get LON)" "$(get ALT)" "$(get OPENSKY_SERIAL)" "$(get OPENSKY_USERNAME)")
+kubectl --context EdgeSDR -n adsb-edge-sdr patch secret adsb-secret --type merge \
+  -p "{\"data\":{\"opensky.conf\":\"$(printf '%s\n' "$conf" | base64 -w0)\"}}"
+unset conf
+kubectl --context EdgeSDR -n adsb-edge-sdr rollout restart deployment/opensky
+```
 
 ### Operational notes
 
