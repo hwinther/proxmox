@@ -42,7 +42,7 @@ spec:
                 operator: In
                 values:
                 - "true"
-      # The JSON directory is a hostPath shared with tar1090 and adsb-mqtt (read-only there) and was
+      # The JSON directory is a hostPath shared with tar1090 and adsb-mqtt (read-only there) and is
       # created root-owned; readsb writes it as 65532 (temp file + rename, so only the directory needs
       # to be writable). Idempotent, CHOWN is the only capability.
       initContainers:
@@ -111,6 +111,8 @@ spec:
         - "30005"
         - --write-json
         - /run/dump1090-fa
+        # tar1090 reads tracks from readsb's per-aircraft traces and globe files (no tar1090.sh).
+        - --write-json-globe-index
         - --json-location-accuracy
         - "1"
         - --quiet
@@ -216,9 +218,12 @@ spec:
           limits:
             memory: 128Mi
       volumes:
+      # readsb's JSON directory, shared with tar1090 and adsb-mqtt on the same node. Under /run
+      # (tmpfs, ~90 MB on the Pi) so the per-second JSON, globe and trace writes stay off the SD card;
+      # a few MB, recreated after a reboot.
       - name: dump1090-run
         hostPath:
-          path: /var/lib/k8s-edge-sdr/dump1090-fa
+          path: /run/k8s-edge-sdr/readsb
           type: DirectoryOrCreate
 ---
 apiVersion: v1

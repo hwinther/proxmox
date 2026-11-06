@@ -13,6 +13,4 @@ data:
   READSB_LON: "10.0"
   ALT: "100"
   DEVICE_INDEX: "00001090"
-  AISCATCHER_SERVER: "https://ais.edge-sdr.wsh.no"
-  AISCATCHER_REFRESH: "15"
   DEBUG: "false"
