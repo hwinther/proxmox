@@ -84,7 +84,7 @@ spec:
               mountPath: /dump
           containers:
           - name: backup
-            image: ghcr.io/hwinther/proxmox/proxmox/pbs/backup-client:0.7.1
+            image: ghcr.io/hwinther/proxmox/proxmox/pbs/backup-client:0.6.1
             imagePullPolicy: IfNotPresent
             command:
             - /bin/sh
