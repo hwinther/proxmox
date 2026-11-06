@@ -51,8 +51,20 @@ spec:
             topologyKey: kubernetes.io/hostname
       containers:
       - name: adsb-mqtt
-        image: ghcr.io/hwinther/wsh-rtl-sdr/adsb-mqtt:0.6.0@sha256:51d342d8070aa6ff2093e529600aa7e636a1351bdbf0842b6b266b0b62881947
+        # 0.10.0: distroless python (no shell), runs as 65532.
+        image: ghcr.io/hwinther/wsh-rtl-sdr/adsb-mqtt:0.10.0@sha256:de8b7f7899aac81a6c16a0b009b8ef543c4a51e5fd9c6edb7e83b5759f62f4c8
         imagePullPolicy: IfNotPresent
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 65532
+          runAsGroup: 65532
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
         env:
         - name: MQTT_HOST
           value: "10.20.13.100"
