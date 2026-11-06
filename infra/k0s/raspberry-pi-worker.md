@@ -295,8 +295,42 @@ If Pis use **RBD** (or other CSI) volumes, ensure the driver’s node DaemonSet 
 ## USB / SDR checks (host, then cluster)
 
 1. **On the Pi host:** `lsusb`, correct `/dev` nodes, and a non-Kubernetes smoke test of the radio stack.
-2. **In-cluster:** For a disposable check with **hostPath** (e.g. `/dev/bus/usb`), see [usb-sdr-debug-pod.example.yaml](usb-sdr-debug-pod.example.yaml). Longer term, prefer a device plugin such as **smarter-device-manager** (outlined in [cluster-architecture-plan.md](../../cluster-architecture-plan.md)) so workloads request devices instead of raw host paths.
+2. **In-cluster:** For a disposable check with **hostPath** (e.g. `/dev/bus/usb`), see [usb-sdr-debug-pod.example.yaml](usb-sdr-debug-pod.example.yaml). Workloads get their dongle from the device plugin instead (next section).
 3. **Kyverno:** If [wsh-disallow-host-path](../../bases/kyverno-platform/clusterpolicy-disallow-host-path.yaml) moves to **Enforce** (or you want a clean audit trail), apply a scoped exception — see [kyverno-policyexception-usb-debug.example.yaml](kyverno-policyexception-usb-debug.example.yaml) (example only; tighten labels/namespaces before production use).
+
+## SDR dongles as device-plugin resources (unprivileged decoders)
+
+[sdr-device-plugin-edge-sdr](../../clusters/edge-sdr/apps/sdr-device-plugin-edge-sdr/) runs
+squat/generic-device-plugin on every `role=sdr-edge` node. Each RTL-SDR dongle is a resource matched
+by its USB serial, and a pod that requests it (`limits: sdr.wsh.no/rtlsdr-ais: 1`) gets only that
+`/dev/bus/usb/BBB/DDD` node, with no `privileged` and no hostPath.
+
+The host nodes are `root:root 0664`, so a decoder running as uid 65532 can only open its dongle when
+containerd chowns injected devices to the pod's `runAsUser`/`runAsGroup`. k0s generates the CRI config
+with that off; turn it on with a drop-in **on each Pi** (once, survives k0s upgrades):
+
+```bash
+sudo tee /etc/k0s/containerd.d/device-ownership.toml >/dev/null <<'TOML'
+version = 2
+[plugins."io.containerd.grpc.v1.cri"]
+  device_ownership_from_security_context = true
+TOML
+sudo systemctl restart k0sworker   # running pods keep running; containerd and kubelet restart
+grep device_ownership /run/k0s/containerd-cri.toml   # must say true
+```
+
+It changes nothing for containers that run as root.
+
+Check what a node advertises (`0` means that dongle is not plugged into that Pi):
+
+```bash
+kubectl get node radio-pi01 -o jsonpath='{.status.allocatable}' | tr ',' '
+' | grep sdr.wsh.no
+```
+
+A new dongle needs its serial (`cat /sys/bus/usb/devices/*/serial`, or `rtl_eeprom` to set one) in
+the plugin's `--device` list. The device node is fixed for the pod's lifetime: if a dongle
+re-enumerates (unplug, USB reset), delete the decoder pod so it is allocated the new node.
 
 ## How this differs from `k0s.yaml.example`
 

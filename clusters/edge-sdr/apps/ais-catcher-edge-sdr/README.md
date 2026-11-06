@@ -10,6 +10,12 @@ The Deployment requires **`role=sdr-edge`**, toleration for taint **`node-type=e
 kubectl label node <pi-hostname> edge-sdr/ais-antenna=true --overwrite
 ```
 
+The dongle (serial `00000162`) is the extended resource **`sdr.wsh.no/rtlsdr-ais`** from
+[sdr-device-plugin-edge-sdr](../sdr-device-plugin-edge-sdr/), so the pod runs as uid 65532 without
+`privileged` or a hostPath. This needs containerd's `device_ownership_from_security_context` on the
+Pi (see [raspberry-pi-worker.md](../../../../infra/k0s/raspberry-pi-worker.md) § SDR dongles). A pod stuck
+in `Pending` with `Insufficient sdr.wsh.no/rtlsdr-ais` means the plugin does not see the dongle.
+
 ## Secret: `ais-catcher-secret`
 
 The image (0.8.0 and later) is one static AIS-catcher binary on distroless: no shell, no start

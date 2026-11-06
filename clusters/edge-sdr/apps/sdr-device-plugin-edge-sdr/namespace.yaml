@@ -1,0 +1,8 @@
+# Namespace **sdr-device-plugin-edge-sdr**: hands the RTL-SDR dongles on the Pi workers to pods as
+# extended resources, so the decoders run unprivileged instead of mounting /dev/bus/usb.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sdr-device-plugin-edge-sdr
+  labels:
+    app.kubernetes.io/part-of: edge-sdr

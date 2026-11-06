@@ -1,0 +1,103 @@
+# squat/generic-device-plugin on the Pi workers. Each dongle is its own resource, matched by its
+# USB serial (both are Realtek 0bda:2838, so vendor/product alone cannot tell them apart):
+#   sdr.wsh.no/rtlsdr-ais   serial 00000162 (AIS antenna)  -> ais-catcher
+#   sdr.wsh.no/rtlsdr-adsb  serial 00001090 (1090 antenna) -> readsb
+# A pod that requests one gets only that /dev/bus/usb/BBB/DDD node. To run as non-root it also needs
+# containerd's device_ownership_from_security_context (see infra/k0s/raspberry-pi-worker.md), since
+# the host nodes are root:root 0664.
+# The device node is fixed for the pod's lifetime: if a dongle re-enumerates (new DDD), delete the
+# pod so it gets the new node.
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: generic-device-plugin
+  namespace: sdr-device-plugin-edge-sdr
+  labels:
+    app.kubernetes.io/name: generic-device-plugin
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: generic-device-plugin
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: generic-device-plugin
+    spec:
+      automountServiceAccountToken: false
+      priorityClassName: system-node-critical
+      tolerations:
+      - key: node-type
+        operator: Equal
+        value: edge-sdr
+        effect: NoSchedule
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: role
+                operator: In
+                values:
+                - sdr-edge
+      containers:
+      - name: generic-device-plugin
+        image: squat/generic-device-plugin:0.2.0@sha256:66c8d5c270eb2b721f1064c549b9b7898152a6d2f0163380a5d37dc7636c20ff
+        args:
+        - --domain
+        - sdr.wsh.no
+        - --device
+        - |
+          name: rtlsdr-ais
+          groups:
+            - usb:
+                - vendor: "0bda"
+                  product: "2838"
+                  serial: "00000162"
+        - --device
+        - |
+          name: rtlsdr-adsb
+          groups:
+            - usb:
+                - vendor: "0bda"
+                  product: "2838"
+                  serial: "00001090"
+        ports:
+        - name: http
+          containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+        resources:
+          requests:
+            cpu: 10m
+            memory: 10Mi
+          limits:
+            cpu: 50m
+            memory: 32Mi
+        securityContext:
+          runAsUser: 0
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
+        volumeMounts:
+        - name: device-plugin
+          mountPath: /var/lib/kubelet/device-plugins
+        - name: dev
+          mountPath: /dev
+          readOnly: true
+      volumes:
+      - name: device-plugin
+        hostPath:
+          path: /var/lib/kubelet/device-plugins
+          type: Directory
+      - name: dev
+        hostPath:
+          path: /dev
+          type: Directory

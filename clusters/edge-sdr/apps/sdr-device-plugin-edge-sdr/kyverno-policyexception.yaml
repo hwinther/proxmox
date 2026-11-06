@@ -1,0 +1,28 @@
+# The device plugin lists /dev and /sys on the host and registers a socket in the kubelet's
+# device-plugins directory (root-owned), so it needs hostPath and uid 0. All capabilities are dropped.
+apiVersion: kyverno.io/v2
+kind: PolicyException
+metadata:
+  name: generic-device-plugin
+  namespace: sdr-device-plugin-edge-sdr
+spec:
+  exceptions:
+  - policyName: wsh-disallow-host-path
+    ruleNames:
+    - host-path
+    - autogen-host-path
+  - policyName: wsh-require-run-as-non-root
+    ruleNames:
+    - run-as-non-root
+    - autogen-run-as-non-root
+  match:
+    any:
+    - resources:
+        kinds:
+        - Pod
+        - DaemonSet
+        namespaces:
+        - sdr-device-plugin-edge-sdr
+        selector:
+          matchLabels:
+            app.kubernetes.io/name: generic-device-plugin
