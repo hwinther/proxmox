@@ -114,11 +114,14 @@ spec:
 
         # The receiver's position never leaves the node. readsb ("invoked by: … --lat …", also inside
         # the adsbexchange feeder), piaware's faup1090 ("--lat …") and the old ais-catcher start script
-        # ("Executing: … LAT …") print it at startup, from the Secret's exact LAT/LON.
+        # ("Executing: … LAT …") print it at startup, from the Secret's exact LAT/LON, and so did
+        # dump1090-exporter ("--latitude=…", and "Position(latitude=…)" with 6 decimals under
+        # dump1090-fa). Coordinates with 3+ decimals are dropped too; the 2-decimal ones match what
+        # receiver.json publishes.
         [FILTER]
             Name                grep
             Match               kube.*
-            Exclude             log (--lat[ =]| LAT -?[0-9])
+            Exclude             log (--lat(itude)?[ =]| LAT -?[0-9]|itude=-?[0-9]+\.[0-9]{3})
       outputs: |
         [OUTPUT]
             Name                loki
