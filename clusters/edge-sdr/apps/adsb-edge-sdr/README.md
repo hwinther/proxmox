@@ -21,17 +21,18 @@ the plugin does not see the dongle.
 
 ## Secret: `adsb-secret`
 
-Namespace: **`adsb-edge-sdr`**. **Piaware** still requires **`FEEDER_ID`** at runtime: without it, the container exits. Other feeders may stay unhealthy until their keys are set.
+Namespace: **`adsb-edge-sdr`**. piaware, opensky, fr24 and adsbexchange wait for their keys (`piaware.conf`, `opensky.conf`, `FR24_KEY`, `ADSBX_UUID`).
 
 ### Keys you can set
 
 | Key                     | Used by                                     | Notes                                                                            |
 | ----------------------- | ------------------------------------------- | -------------------------------------------------------------------------------- |
-| `LAT`                   | piaware | Overrides ConfigMap; use to avoid committing exact coordinates in Git.           |
-| `LON`                   | piaware | Same as `LAT`.                                                                   |
+| `LAT`                   | (source for `opensky.conf`)                 | Exact position, kept out of Git.                                                 |
+| `LON`                   | (source for `opensky.conf`)                 | Same as `LAT`.                                                                   |
 | `READSB_LAT`, `READSB_LON` | readsb (dump1090-fa Deployment), adsbexchange, dump1090-exporter | The position **rounded to 2 decimals**. readsb prints its command line at startup, so it never gets the exact `LAT`/`LON`; 2 decimals is what `receiver.json` publishes anyway. Overrides the ConfigMap's placeholders. |
 | `ALT`                   | (source for `opensky.conf`)                 | Antenna altitude.                                                                |
-| `FEEDER_ID`             | Piaware                                     | FlightAware feeder ID (required for Piaware to run).                             |
+| `FEEDER_ID`             | (source for `piaware.conf`)                 | FlightAware feeder ID.                                                           |
+| `piaware.conf`          | piaware                                     | **Required.** piaware's `/etc/piaware.conf` (`key value` lines, not `key=value`), mounted from here. Generate it from `FEEDER_ID`, see below. piaware takes its position from FlightAware. |
 | `FR24_KEY`              | FR24                                        | Flightradar24 sharing key.                                                       |
 | `ADSBX_UUID`            | adsbexchange                                | ADSB Exchange feeder UUID. Mounted as a file and sent with `beast_reduce_plus_out`; without the key the pod waits. |
 | `OPENSKY_USERNAME`      | (source for `opensky.conf`)                 | OpenSky account username.                                                        |
@@ -79,10 +80,25 @@ unset conf
 kubectl --context EdgeSDR -n adsb-edge-sdr rollout restart deployment/opensky
 ```
 
+### Generating `piaware.conf`
+
+piaware (0.13.0+, no start script) reads `/etc/piaware.conf`. `receiver-type other` makes faup1090
+and fa-mlat-client connect to `receiver-host`/`receiver-port` directly (`relay` would mean a local
+beast-splitter on localhost); MLAT results go back to readsb on 30104.
+
+```bash
+fid=$(kubectl --context EdgeSDR -n adsb-edge-sdr get secret adsb-secret -o 'jsonpath={.data.FEEDER_ID}' | base64 -d)
+conf=$(printf 'allow-auto-updates no\nallow-manual-updates no\nallow-mlat yes\nmlat-results yes\nfeeder-id %s\nreceiver-type other\nreceiver-host dump1090-fa\nreceiver-port 30005\nmlat-results-format beast,connect,dump1090-fa:30104\nuse-gpsd no\n' "$fid")
+kubectl --context EdgeSDR -n adsb-edge-sdr patch secret adsb-secret --type merge \
+  -p "{\"data\":{\"piaware.conf\":\"$(printf '%s' "$conf" | base64 -w0)\"}}"
+unset fid conf
+kubectl --context EdgeSDR -n adsb-edge-sdr rollout restart deployment/piaware
+```
+
 ### Operational notes
 
 - Shared JSON for tar1090 uses hostPath **`/var/lib/k8s-edge-sdr/dump1090-fa`** on the node; **tar1090** is scheduled on the same node as **dump1090-fa** (`podAffinity`).
-- Put **API keys and precise LAT/LON/ALT** in **`adsb-secret`**; keep **non-identifying defaults** in `configmap-adsb-env.yaml` if you want the repo to apply without a Secret (Secret still optional except for Piaware’s `FEEDER_ID` in practice).
+- Put **API keys and precise LAT/LON/ALT** in **`adsb-secret`**; keep **non-identifying defaults** in `configmap-adsb-env.yaml` if you want the repo to apply without a Secret.
 
 ## MQTT publishing
 

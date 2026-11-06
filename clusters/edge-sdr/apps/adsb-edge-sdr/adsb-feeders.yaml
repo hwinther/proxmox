@@ -40,28 +40,40 @@ spec:
                 operator: In
                 values:
                 - "true"
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        # Group-owns the mounted piaware.conf (mode 0440 below) so uid 65532 can read it.
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
       containers:
+      # 0.13.0: piaware v11.1 on plain debian:trixie-slim (tcl + python at runtime), no s6, socat,
+      # lighttpd or start script; piaware is the entrypoint. /etc/piaware.conf comes from adsb-secret
+      # (key piaware.conf, "key value" lines incl. feeder-id): receiver-type other with
+      # receiver-host dump1090-fa:30005, MLAT results back to dump1090-fa:30104. piaware writes to
+      # /var/cache/piaware and /run/piaware (emptyDirs).
       - name: piaware
-        image: ghcr.io/hwinther/wsh-rtl-sdr/piaware:0.6.0@sha256:043daf57cc011e7ff6b6542db2d8c863b5c0dd57bf2a25173a8bf7b9ff2d2b36
+        image: ghcr.io/hwinther/wsh-rtl-sdr/piaware:0.13.0@sha256:a8132a98a3337119ca399119b799dd3ff2ffae45fb37310c8345b0472f55caa2
         imagePullPolicy: IfNotPresent
-        # env after envFrom so RECEIVER_* / MLAT_* override any accidental ConfigMap keys.
-        envFrom:
-        - configMapRef:
-            name: adsb-env
-        - secretRef:
-            name: adsb-secret
-            optional: true
-        env:
-        - name: RECEIVER_TYPE
-          value: other
-        - name: RECEIVER_HOST
-          value: localhost
-        - name: RECEIVER_PORT
-          value: "30005"
-        - name: MLAT_BEAST_HOST
-          value: dump1090-fa
-        - name: MLAT_BEAST_PORT
-          value: "30104"
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: piaware-conf
+          mountPath: /etc/piaware.conf
+          subPath: piaware.conf
+          readOnly: true
+        - name: piaware-cache
+          mountPath: /var/cache/piaware
+        - name: piaware-run
+          mountPath: /run/piaware
+        - name: tmp
+          mountPath: /tmp
         resources:
           requests:
             cpu: 50m
@@ -69,6 +81,25 @@ spec:
           limits:
             cpu: 500m
             memory: 256Mi
+      volumes:
+      - name: piaware-conf
+        secret:
+          secretName: adsb-secret
+          defaultMode: 0440
+          items:
+          - key: piaware.conf
+            path: piaware.conf
+      - name: piaware-cache
+        emptyDir:
+          sizeLimit: 8Mi
+      - name: piaware-run
+        emptyDir:
+          medium: Memory
+          sizeLimit: 8Mi
+      - name: tmp
+        emptyDir:
+          medium: Memory
+          sizeLimit: 32Mi
 ---
 apiVersion: apps/v1
 kind: Deployment
