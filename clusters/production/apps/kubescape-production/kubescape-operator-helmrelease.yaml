@@ -48,6 +48,11 @@ spec:
       continuousScan: enable
       networkPolicyService: disable
       prometheusExporter: enable
+      # Let Syft also read SBOM files shipped inside images (*.cdx.json and friends). The static
+      # distroless SDR images (ais-catcher, readsb) have no package database, so their compiled-in
+      # libraries (librtlsdr, libusb, zlib, zstd, musl) are only visible through the CycloneDX SBOM
+      # at /usr/share/sbom/; without this they scan as 0 packages / 0 vulnerabilities.
+      scanEmbeddedSBOMs: enable
     # Vulnerability counts per severity as Prometheus metrics (kubescape_vulnerabilities_total_*):
     # the "Kubescape Vulnerabilities" dashboard and the KubescapeOwnImageCriticalVulnerabilities
     # alert (observability). Workload metrics add one series per workload container.
