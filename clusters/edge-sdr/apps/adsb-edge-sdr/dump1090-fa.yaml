@@ -1,4 +1,6 @@
-# Requires node label edge-sdr/adsb-antenna=true (hardware with ADS-B antenna/SDR).
+# Requires node label edge-sdr/adsb-antenna=true (hardware with ADS-B antenna/SDR). The dongle comes
+# from the device plugin (sdr.wsh.no/rtlsdr-adsb, see sdr-device-plugin-edge-sdr), so readsb runs
+# unprivileged as 65532.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -40,6 +42,36 @@ spec:
                 operator: In
                 values:
                 - "true"
+      # The JSON directory is a hostPath shared with tar1090 and adsb-mqtt (read-only there) and was
+      # created root-owned; readsb writes it as 65532 (temp file + rename, so only the directory needs
+      # to be writable). Idempotent, CHOWN is the only capability.
+      initContainers:
+      - name: json-dir-owner
+        image: busybox:1.38@sha256:a46257e06c82ad85242d0d38077d0a52d9896389ca60a1a59d3463db586e5fa4
+        command:
+        - chown
+        - -R
+        - 65532:65532
+        - /run/dump1090-fa
+        securityContext:
+          runAsUser: 0
+          runAsGroup: 0
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+            add:
+            - CHOWN
+        volumeMounts:
+        - name: dump1090-run
+          mountPath: /run/dump1090-fa
+        resources:
+          requests:
+            cpu: 10m
+            memory: 8Mi
+          limits:
+            cpu: 100m
+            memory: 32Mi
       containers:
       # readsb (wiedehopf) replaces dump1090-fa as the decoder: one static binary on distroless, no
       # shell, so the command line is here. The Deployment, Service, pod label and the
@@ -88,16 +120,21 @@ spec:
         - secretRef:
             name: adsb-secret
             optional: true
-        # Still privileged and root (the image's default user is 65532): opening the dongle under
-        # /dev/bus/usb needs both until a device plugin hands it out, and the JSON hostPath is
-        # root-owned.
+        # The device plugin passes in only this dongle's /dev/bus/usb node; containerd's
+        # device_ownership_from_security_context makes it owned by 65532 (the host node is
+        # root:root 0664), see infra/k0s/raspberry-pi-worker.md.
         securityContext:
-          privileged: true
-          runAsUser: 0
-          runAsGroup: 0
+          runAsNonRoot: true
+          runAsUser: 65532
+          runAsGroup: 65532
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
         volumeMounts:
-        - name: dev-bus-usb
-          mountPath: /dev/bus/usb
         - name: dump1090-run
           mountPath: /run/dump1090-fa
         readinessProbe:
@@ -124,6 +161,7 @@ spec:
           limits:
             cpu: "1"
             memory: 384Mi
+            sdr.wsh.no/rtlsdr-adsb: 1
       # Prometheus exporter sidecar: reads stats.json/aircraft.json from the shared
       # dump1090-run volume and serves reception metrics (message rate, aircraft counts,
       # max range, signal levels) on :9105 — scraped by prometheus-agent-edge-sdr and
@@ -167,10 +205,6 @@ spec:
           limits:
             memory: 128Mi
       volumes:
-      - name: dev-bus-usb
-        hostPath:
-          path: /dev/bus/usb
-          type: Directory
       - name: dump1090-run
         hostPath:
           path: /var/lib/k8s-edge-sdr/dump1090-fa

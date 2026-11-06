@@ -12,6 +12,13 @@ Pods schedule only on edge workers with **`role=sdr-edge`**, toleration for tain
 kubectl label node <pi-hostname> edge-sdr/adsb-antenna=true --overwrite
 ```
 
+The readsb dongle (serial `00001090`) is the extended resource **`sdr.wsh.no/rtlsdr-adsb`** from
+[sdr-device-plugin-edge-sdr](../sdr-device-plugin-edge-sdr/), so readsb runs as uid 65532 without
+`privileged` or a USB hostPath (needs containerd's `device_ownership_from_security_context`, see
+[raspberry-pi-worker.md](../../../../infra/k0s/raspberry-pi-worker.md) § SDR dongles). An init container
+chowns the shared JSON hostPath to 65532. `Pending` with `Insufficient sdr.wsh.no/rtlsdr-adsb` means
+the plugin does not see the dongle.
+
 ## Secret: `adsb-secret`
 
 Namespace: **`adsb-edge-sdr`**. **Piaware** still requires **`FEEDER_ID`** at runtime: without it, the container exits. Other feeders may stay unhealthy until their keys are set.
