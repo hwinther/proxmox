@@ -307,7 +307,23 @@ by its USB serial, and a pod that requests it (`limits: sdr.wsh.no/rtlsdr-ais: 1
 
 The host nodes are `root:root 0664`, so a decoder running as uid 65532 can only open its dongle when
 containerd chowns injected devices to the pod's `runAsUser`/`runAsGroup`. k0s generates the CRI config
-with that off; turn it on with a drop-in **on each Pi** (once, survives k0s upgrades):
+with that off; turn it on with a drop-in **on each Pi** (once; survives patch upgrades). The
+format depends on the containerd that k0s bundles: k0s 1.36+ ships containerd 2 and refuses to start
+if a drop-in still uses the v2 format, so the file must be swapped during the 1.35 -> 1.36 upgrade
+(see [autopilot/README.md](autopilot/README.md#135---136-extra-steps)).
+
+k0s 1.36 and newer (containerd 2):
+
+```bash
+sudo tee /etc/k0s/containerd.d/device-ownership.toml >/dev/null <<'TOML'
+version = 3
+[plugins."io.containerd.cri.v1.runtime"]
+  device_ownership_from_security_context = true
+TOML
+grep -r device_ownership /run/k0s/   # must say true (k0s reloads containerd on its own)
+```
+
+k0s 1.35 and older (containerd 1.7):
 
 ```bash
 sudo tee /etc/k0s/containerd.d/device-ownership.toml >/dev/null <<'TOML'
