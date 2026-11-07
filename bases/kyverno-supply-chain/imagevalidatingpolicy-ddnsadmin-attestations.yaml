@@ -1,0 +1,96 @@
+# CycloneDX SBOM + vuln attestations for ddnsadmin (the ddnsadmin entries of the legacy
+# clusterpolicy-cyclonedx-sbom.yaml / clusterpolicy-cosign-vuln-attestation.yaml). AUDIT.
+# Reads the cosign v3 Sigstore BUNDLE copy of the attestation (reusable-workflows >= v2.22.0). The CEL
+# verifier ignores the cosign v2 `.att` tag once an image has any bundle, so images built with an older
+# reusable-workflows pin report `fail` here until they are rebuilt. That is expected during the rollout
+# (Audit only). Delete the legacy ClusterPolicy once every first-party image is rebuilt and this passes.
+#
+# Separate policy because the package is private: `credentials.secrets: [ghcr-pull]` (Kyverno's namespace,
+# see clusters/production/apps/ddnsadmin/base/secrets-bootstrap.md) stays scoped to ddnsadmin, and the
+# identity also pins the caller repo (githubWorkflowRepository), as the signature policy does.
+apiVersion: policies.kyverno.io/v1
+kind: ImageValidatingPolicy
+metadata:
+  name: wsh-require-ddnsadmin-attestations
+  annotations:
+    policies.kyverno.io/title: Require CycloneDX SBOM + vuln attestations (ghcr.io/hwinther/ddnsadmin)
+    policies.kyverno.io/category: Supply Chain
+    policies.kyverno.io/severity: medium
+spec:
+  validationActions:
+  - Audit
+  evaluation:
+    background:
+      enabled: false
+  # Kubernetes caps webhook timeout at 30s.
+  webhookConfiguration:
+    timeoutSeconds: 30
+  autogen:
+    podControllers:
+      controllers: []
+  matchConstraints:
+    namespaceSelector:
+      matchExpressions:
+      - key: kubernetes.io/metadata.name
+        operator: NotIn
+        values:
+        - kube-system
+        - kyverno
+        - flux-system
+    resourceRules:
+    - apiGroups: [""]
+      apiVersions: [v1]
+      operations: [CREATE, UPDATE]
+      resources: [pods]
+  matchConditions:
+  - name: create-or-image-changed
+    expression: >-
+      request.operation != 'UPDATE' ||
+      object.spec.containers.map(c, c.image) != oldObject.spec.containers.map(c, c.image) ||
+      object.spec.?initContainers.orValue([]).map(c, c.image) != oldObject.spec.?initContainers.orValue([]).map(c, c.image)
+  matchImageReferences:
+  - glob: ghcr.io/hwinther/ddnsadmin/*
+  credentials:
+    secrets:
+    - ghcr-pull
+  # Audit only: digest pinning is done by the enforcing SLSA / ddnsadmin-signature policies.
+  validationConfigurations:
+    mutateDigest: false
+    verifyDigest: false
+    required: false
+  attestors:
+  - name: ddnsadminBuild
+    cosign:
+      keyless:
+        identities:
+        - issuer: https://token.actions.githubusercontent.com
+          subjectRegExp: ^https://github.com/hwinther/reusable-workflows/\.github/workflows/(docker-container|image-push)\.yml@(refs/tags/v[0-9]+(\.[0-9]+){0,2}|[a-f0-9]{40})$
+        additionalExtensions:
+          githubWorkflowRepository: hwinther/ddnsadmin
+      ctlog:
+        url: https://rekor.sigstore.dev
+  attestations:
+  - name: cyclonedx
+    intoto:
+      type: https://cyclonedx.org/bom
+  - name: vuln
+    intoto:
+      type: https://cosign.sigstore.dev/attestation/vuln/v1
+  variables:
+  - name: allImages
+    expression: >-
+      images.?containers.orValue([]) + images.?initContainers.orValue([]) +
+      images.?ephemeralContainers.orValue([])
+  validations:
+  - expression: >-
+      variables.allImages.all(img, verifyAttestationSignatures(img, attestations.cyclonedx, [attestors.ddnsadminBuild]) > 0)
+    message: >-
+      Image has no CycloneDX SBOM attestation (Sigstore bundle) signed by the reusable-workflows build/push workflow.
+  - expression: >-
+      variables.allImages.all(img, extractPayload(img, attestations.cyclonedx).predicate.bomFormat == 'CycloneDX')
+    message: >-
+      The CycloneDX attestation's predicate is not a CycloneDX BOM.
+  - expression: >-
+      variables.allImages.all(img, verifyAttestationSignatures(img, attestations.vuln, [attestors.ddnsadminBuild]) > 0)
+    message: >-
+      Image has no cosign vuln attestation (Sigstore bundle) signed by the reusable-workflows build/push workflow.
