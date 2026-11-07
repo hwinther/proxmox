@@ -30,7 +30,7 @@ pbs-browser previews run the **real `proxmox-backup-client` against PBS** (not `
 validate the live browse/restore integration. That means each per-PR namespace gets real credentials:
 
 - the **PBS creds Secret** `pbs-browser-pbs` is cloned from `pbs-browser-production` by
-  `../kyverno-clusterpolicies.yaml` (matched on the `pbs-browser.wsh.no/preview` label);
+  `../kyverno-generatingpolicies.yaml` (matched on the `pbs-browser.wsh.no/preview` label);
 - the **encryption keyfile** is cloned by the existing platform-production
   `clone-pbs-encryption-keyfile` policy (matched on the `pbs.wsh.no/encryption-keyfile` label the
   namespace template sets).
@@ -44,7 +44,7 @@ reusable workflow no-ops when `database.yaml.tpl` is absent.
 
 > **GHCR visibility:** the preview pulls `ghcr.io/hwinther/pbs-browser/app` with no `imagePullSecrets`
 > (public-package convention, like wshno/clutterstock). If you keep that package **private**, add a
-> `ghcr-pull` clone rule to `../kyverno-clusterpolicies.yaml` (see `../ddnsadmin`) and
+> `ghcr-pull` clone rule to `../kyverno-generatingpolicies.yaml` (see `../ddnsadmin`) and
 > `imagePullSecrets` in pbs-browser's `deploy/deployment.yaml`.
 
 Editing a template here does not retroactively update existing previews — push a commit (or re-apply

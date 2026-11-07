@@ -6,7 +6,7 @@ packages like clutterstock pull anonymously and need none of this.)
 
 The credential is created **once, out-of-band**, as the Secret **`ghcr-pull`** in namespace
 **`platform-production`** — the same source namespace the other clone policies use. From there the
-[`clone-ddnsadmin-preview-secrets`](kyverno-clusterpolicies.yaml) Kyverno ClusterPolicy clones it
+[`clone-ddnsadmin-preview-secrets`](kyverno-generatingpolicies.yaml) Kyverno ClusterPolicy clones it
 into every namespace labeled `ddnsadmin.wsh.no/preview=true`, so each ephemeral per-PR preview ns
 gets it automatically. Two things use it there: the Deployment's `imagePullSecrets` (in
 ddnsadmin's `deploy/`), and the `OCIRepository` in [`base/ddnsadmin-manifests.yaml`](base/ddnsadmin-manifests.yaml),

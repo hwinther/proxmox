@@ -53,7 +53,7 @@ kubectl create secret generic <appname>-pg-secret \
 
 The same secret name `<appname>-pg-secret` is cloned by Kyverno into the application's namespace so the deployment can reference it via `secretKeyRef`.
 
-The Kyverno `ClusterPolicy` file is named `kyverno-clusterpolicy-clone-<appname>-pg-secret.yaml` and lives in the cluster namespace app directory. The supporting RBAC is in `kyverno-rbac-generate-<appname>-pg-secret.yaml` in the application's app directory.
+The Kyverno `GeneratingPolicy` file is named `kyverno-generatingpolicy-clone-<appname>-pg-secret.yaml` and lives in the cluster namespace app directory. The supporting RBAC is in `kyverno-rbac-generate-<appname>-pg-secret.yaml` in the application's app directory.
 
 ### CNPG-managed secrets (do not reference directly)
 
@@ -74,7 +74,7 @@ For each application using postgres, there should be:
 
 **In `postgres-<env>onment/`:**
 - `database-<appname>.yaml` — CNPG `Database` resource
-- `kyverno-clusterpolicy-clone-<appname>-pg-secret.yaml` — clones the secret into the app namespace
+- `kyverno-generatingpolicy-clone-<appname>-pg-secret.yaml` — clones the secret into the app namespace
 
 **In the application's app directory:**
 - `kyverno-rbac-generate-<appname>-pg-secret.yaml` — RBAC for Kyverno to write secrets in the app namespace

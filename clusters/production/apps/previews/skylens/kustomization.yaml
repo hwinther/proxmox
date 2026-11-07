@@ -2,7 +2,7 @@
 # gitops-preview-teardown.yml reusable workflows in hwinther/reusable-workflows — they add/remove
 # pr-<N> entries below as PRs labelled `deploy-feature` are opened/closed in hwinther/skylens.
 #
-# No `databases` entry and no kyverno-clusterpolicies: the skylens preview runs in Development mode
+# No `databases` entry and no kyverno-generatingpolicies: the skylens preview runs in Development mode
 # with the built-in DevAuth (Auth__Disabled=true) + MQTT replay (Mqtt__Replay=true) affordances, so it
 # needs NO secret, NO mosquitto, NO database, and NO per-PR pull credential (the GHCR package
 # ghcr.io/hwinther/skylens/api is public, like clutterstock/wshno). Starts empty; the workflow's `yq`

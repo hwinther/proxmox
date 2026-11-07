@@ -4,6 +4,6 @@ resources:
 - namespace.yaml
 - kyverno-rbac-clone-source-secrets.yaml
 - kyverno-clusterrole-clone-pbs-encryption-keyfile.yaml
-- kyverno-clusterpolicy-clone-pbs-encryption-keyfile.yaml
+- kyverno-generatingpolicy-clone-pbs-encryption-keyfile.yaml
 - kyverno-clusterrole-suspend-pbs-backup.yaml
-- kyverno-clusterpolicy-suspend-pbs-backup-when-hibernated.yaml
+- kyverno-mutatingpolicy-suspend-pbs-backup-when-hibernated.yaml

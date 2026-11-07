@@ -28,8 +28,9 @@
 # this policy: Kyverno's resourceFilters ([*/*,kyverno,*]) drop the `kyverno` Namespace as a
 # trigger too, so a generate rule for it is silently discarded (tried in #834). It is copied once by
 # hand instead; see base/secrets-bootstrap.md.
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
+# CEL GeneratingPolicy (policies.kyverno.io/v1); replaced the kyverno.io/v1 ClusterPolicy removed in Kyverno 1.20.
+apiVersion: policies.kyverno.io/v1
+kind: GeneratingPolicy
 metadata:
   name: clone-ddnsadmin-ghcr-pull
   annotations:
@@ -37,25 +38,25 @@ metadata:
     policies.kyverno.io/category: ddnsadmin
     policies.kyverno.io/severity: low
 spec:
-  generateExisting: true
-  rules:
-  - name: clone-ghcr-pull
-    match:
-      any:
-      - resources:
-          kinds:
-          - Namespace
-          selector:
-            matchLabels:
-              ddnsadmin.wsh.no/ghcr-pull: "true"
-    generate:
-      apiVersion: v1
-      kind: Secret
-      name: ghcr-pull
-      namespace: "{{request.object.metadata.name}}"
-      synchronize: true
-      # Keep generated Secrets when this policy is deleted (needed for the CEL GeneratingPolicy swap).
-      orphanDownstreamOnPolicyDelete: true
-      clone:
-        namespace: platform-production
-        name: ghcr-pull
+  evaluation:
+    generateExisting:
+      enabled: true
+    synchronize:
+      enabled: true
+    # Keep generated Secrets if this policy is ever deleted (Kyverno's default deletes them).
+    orphanDownstreamOnPolicyDelete:
+      enabled: true
+  matchConstraints:
+    objectSelector:
+      matchLabels:
+        ddnsadmin.wsh.no/ghcr-pull: "true"
+    resourceRules:
+    - apiGroups: [""]
+      apiVersions: [v1]
+      operations: [CREATE, UPDATE]
+      resources: [namespaces]
+  variables:
+  - name: ghcrPull
+    expression: resource.get("v1", "secrets", "platform-production", "ghcr-pull")
+  generate:
+  - expression: generator.apply(object.metadata.name, [variables.ghcrPull])

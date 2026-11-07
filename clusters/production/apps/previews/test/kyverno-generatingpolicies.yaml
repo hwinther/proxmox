@@ -1,0 +1,52 @@
+# ClusterPolicy that clones the Secrets a test-app preview env needs into every namespace labeled
+# `test.wsh.no/preview=true`. Same label-driven generate pattern as the ClutterStock previews
+# (../clutterstock/kyverno-generatingpolicies.yaml); the cluster-wide Secret RBAC for Kyverno is already
+# in place from the PBS work, so no extra RBAC is needed here.
+#
+# Trigger: a Namespace gets created (e.g. by the upsert workflow) with the preview label, OR an
+# existing namespace is labelled. `generateExisting: true` also re-applies on policy install so any
+# preview namespace already on the cluster gets the Secrets immediately.
+# CEL GeneratingPolicy (policies.kyverno.io/v1); replaced the kyverno.io/v1 ClusterPolicy removed in Kyverno 1.20.
+apiVersion: policies.kyverno.io/v1
+kind: GeneratingPolicy
+metadata:
+  name: clone-test-preview-secrets
+  annotations:
+    policies.kyverno.io/title: Clone test-app preview-env Secrets
+    policies.kyverno.io/category: Test
+    policies.kyverno.io/severity: low
+spec:
+  evaluation:
+    generateExisting:
+      enabled: true
+    synchronize:
+      enabled: true
+    # Keep generated Secrets if this policy is ever deleted (Kyverno's default deletes them).
+    orphanDownstreamOnPolicyDelete:
+      enabled: true
+  matchConstraints:
+    objectSelector:
+      matchLabels:
+        test.wsh.no/preview: "true"
+    resourceRules:
+    - apiGroups: [""]
+      apiVersions: [v1]
+      operations: [CREATE, UPDATE]
+      resources: [namespaces]
+  variables:
+  - name: testdbApp
+    expression: resource.get("v1", "secrets", "postgres-test", "testdb-app")
+  - name: testApiRabbitmq
+    expression: resource.get("v1", "secrets", "test-test", "test-api-rabbitmq")
+  # Generated, not cloned (see the comment at the top of this file). data is base64 of redis://redis:6379/0.
+  - name: testFrontendValkey
+    expression: >-
+      {
+        "apiVersion": dyn("v1"),
+        "kind": dyn("Secret"),
+        "metadata": dyn({"name": "test-frontend-valkey"}),
+        "type": dyn("Opaque"),
+        "data": dyn({"redis-url": "cmVkaXM6Ly9yZWRpczo2Mzc5LzA="})
+      }
+  generate:
+  - expression: generator.apply(object.metadata.name, [variables.testdbApp, variables.testApiRabbitmq, variables.testFrontendValkey])

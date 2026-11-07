@@ -2,7 +2,7 @@
 
 The backup CronJob and restore Job load environment variables from the Kubernetes Secret **`node-red-pbs-backup`** in namespace **`node-red-production`**. Create/update it with `kubectl`. Do not commit real values to git.
 
-The cluster-wide PBS encryption keyfile lives in `platform-production` and is cloned here automatically — see [`../platform-production/pbs-encryption-keyfile.md`](../platform-production/pbs-encryption-keyfile.md). The clone requires this namespace's Kyverno RBAC (`kyverno-rbac-generate-pbs-encryption-keyfile.yaml`) and a clone rule in `kyverno-clusterpolicy-clone-pbs-encryption-keyfile.yaml`.
+The cluster-wide PBS encryption keyfile lives in `platform-production` and is cloned here automatically — see [`../platform-production/pbs-encryption-keyfile.md`](../platform-production/pbs-encryption-keyfile.md). The clone requires this namespace's Kyverno RBAC (`kyverno-rbac-generate-pbs-encryption-keyfile.yaml`) and a clone rule in `kyverno-generatingpolicy-clone-pbs-encryption-keyfile.yaml`.
 
 ## Required keys
 
