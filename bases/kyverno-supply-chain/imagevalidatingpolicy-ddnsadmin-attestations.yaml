@@ -1,9 +1,9 @@
 # CycloneDX SBOM + vuln attestations for ddnsadmin (the ddnsadmin entries of the legacy
-# clusterpolicy-cyclonedx-sbom.yaml / clusterpolicy-cosign-vuln-attestation.yaml). AUDIT.
+# (removed) legacy clusterpolicy-cyclonedx-sbom.yaml / clusterpolicy-cosign-vuln-attestation.yaml). AUDIT.
 # Reads the cosign v3 Sigstore BUNDLE copy of the attestation (reusable-workflows >= v2.22.0). The CEL
 # verifier ignores the cosign v2 `.att` tag once an image has any bundle, so images built with an older
 # reusable-workflows pin report `fail` here until they are rebuilt. That is expected during the rollout
-# (Audit only). Delete the legacy ClusterPolicy once every first-party image is rebuilt and this passes.
+# (Audit only). The legacy ClusterPolicy is gone; every first-party image has been rebuilt with the bundles.
 #
 # Separate policy because the package is private: `credentials.secrets: [ghcr-pull]` (Kyverno's namespace,
 # see clusters/production/apps/ddnsadmin/base/secrets-bootstrap.md) stays scoped to ddnsadmin, and the
