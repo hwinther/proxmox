@@ -1,8 +1,8 @@
-# CEL successor of clusterpolicy-github-slsa-provenance.yaml (Kyverno 1.20 removes ClusterPolicy).
+# CEL successor of the removed clusterpolicy-github-slsa-provenance.yaml (Kyverno 1.20 removes ClusterPolicy).
 #
-# SOAKING IN AUDIT next to the legacy ClusterPolicy (which still enforces). Once the PolicyReports show
-# `pass` for the first-party pods created since rollout (the nightly pbs-backup jobs cover
-# ghcr.io/hwinther/proxmox/* quickly), flip validationActions to [Deny] and delete the ClusterPolicy.
+# ENFORCED (Deny, with mutateDigest) since batch 3b, after soaking in Audit next to the legacy
+# ClusterPolicy (removed in the same change): clutterstock-test 0.32.0 pods passed every check,
+# including the caller-repo binding. A failing image now BLOCKS pod creation.
 #
 # What it checks, per first-party image (ghcr.io/hwinther/*, ghcr.io/wshno/*, minus ddnsadmin):
 #   1. a SLSA v1 provenance attestation signed keyless by the reusable-workflows build/push workflow
@@ -35,7 +35,7 @@ metadata:
     policies.kyverno.io/severity: high
 spec:
   validationActions:
-  - Audit
+  - Deny
   evaluation:
     background:
       enabled: false
