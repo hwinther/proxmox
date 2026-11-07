@@ -68,3 +68,9 @@ jobs:
                   GH_TOKEN: ${{ github.token }}
                   REF: ${{ steps.ref.outputs.ref }}
               run: gh workflow run build-proxmox-pbs-backup-client.yml --ref "$REF"
+
+            - name: Dispatch esp-poller container workflow
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  REF: ${{ steps.ref.outputs.ref }}
+              run: gh workflow run build-esp-poller.yml --ref "$REF"
