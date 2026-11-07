@@ -40,6 +40,8 @@ spec:
       name: cluttertestdb-app
       namespace: "{{request.object.metadata.name}}"
       synchronize: true
+      # Keep generated Secrets when this policy is deleted (needed for the CEL GeneratingPolicy swap).
+      orphanDownstreamOnPolicyDelete: true
       clone:
         namespace: postgres-test
         name: cluttertestdb-app
@@ -61,6 +63,8 @@ spec:
       name: clutterstock-test-rabbitmq
       namespace: "{{request.object.metadata.name}}"
       synchronize: true
+      # Keep generated Secrets when this policy is deleted (needed for the CEL GeneratingPolicy swap).
+      orphanDownstreamOnPolicyDelete: true
       clone:
         namespace: clutterstock-test
         name: clutterstock-test-rabbitmq
@@ -85,6 +89,8 @@ spec:
       name: clutterstock-valkey
       namespace: "{{request.object.metadata.name}}"
       synchronize: true
+      # Keep generated Secrets when this policy is deleted (needed for the CEL GeneratingPolicy swap).
+      orphanDownstreamOnPolicyDelete: true
       data:
         type: Opaque
         data:

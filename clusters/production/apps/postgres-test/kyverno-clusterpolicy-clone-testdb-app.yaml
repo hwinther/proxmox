@@ -26,6 +26,8 @@ spec:
       name: testdb-app
       namespace: test-test
       synchronize: true
+      # Keep generated Secrets when this policy is deleted (needed for the CEL GeneratingPolicy swap).
+      orphanDownstreamOnPolicyDelete: true
       clone:
         namespace: postgres-test
         name: testdb-app

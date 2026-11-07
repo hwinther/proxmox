@@ -47,6 +47,8 @@ spec:
       name: pbs-browser-pbs
       namespace: "{{request.object.metadata.name}}"
       synchronize: true
+      # Keep generated Secrets when this policy is deleted (needed for the CEL GeneratingPolicy swap).
+      orphanDownstreamOnPolicyDelete: true
       clone:
         namespace: pbs-browser-production
         name: pbs-browser-pbs
