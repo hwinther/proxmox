@@ -12,3 +12,4 @@ kind: Kustomization
 resources:
   - pr-184
   - pr-185
+  - pr-187
