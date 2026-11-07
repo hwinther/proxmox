@@ -48,6 +48,67 @@ Expected transient states (seen in the edge-sdr run, 2026-10-27, ~14 min end to 
 - Pods pinned to a node (the SDR feeders, by USB dongle) stay Pending until that node is schedulable
   again, then fail one startup probe while binding ports.
 
+## 1.35 -> 1.36 (extra steps)
+
+Plans: `edge-sdr-v1.36.6.yaml`, then `production-v1.36.6.yaml`. Delete the completed 1.35.8 Plan in
+each cluster first (`kubectl delete plan autopilot`).
+
+**1. Cilium 1.20 before k0s 1.36 (production only).** Cilium 1.19 is only tested against Kubernetes
+1.32–1.35; 1.20 is the first release that covers 1.36 (and still covers 1.35), so upgrade Cilium
+first, on 1.35. Cilium is a k0s Helm extension (`spec.extensions.helm.charts` in
+`/etc/k0s/k0s.yaml` on prod01–03), not a Flux HelmRelease. The edge cluster runs kube-router and
+skips this step.
+
+- Go to the latest 1.19 patch first (Cilium's upgrade guide asks for it), then 1.20.x.
+- For each step, change `version:` of the `cilium` chart in `/etc/k0s/k0s.yaml` on **all three**
+  controllers, then restart `k0scontroller` on them one at a time. The leader applies the Chart CR;
+  check `kubectl -n kube-system get charts.helm.k0sproject.io k0s-addon-chart-cilium -o jsonpath='{.status.appVersion}'`
+  and `kubectl -n kube-system rollout status ds/cilium`.
+- Run Cilium's pre-flight check for 1.20 first (`helm template cilium/cilium --version <1.20.x>
+  --namespace kube-system --set preflight.enabled=true --set agent=false --set operator.enabled=false
+  --set k8sServiceHost=127.0.0.1 --set k8sServicePort=7443`), wait until the pre-flight DaemonSet is
+  fully Ready and the `cnp-validator` passes, then delete it.
+- 1.20 notes checked against our values (2026-11-07): nothing we set was renamed or removed. Policy
+  changes: no CNP uses Kafka/`l7proto` rules or `toServices`; empty CNPs are rejected on admission.
+
+**2. containerd drop-ins must use the v3 format.** k0s 1.36 ships containerd 2.3 (we are on
+1.7.35). Its pre-flight refuses to start k0s when any file in `/etc/k0s/containerd.d/` has
+`version = 2` or references the old `io.containerd.grpc.v1.cri` plugin. The Pis have one:
+`device-ownership.toml` (see `../raspberry-pi-worker.md`). Check every node for others:
+`ls /etc/k0s/containerd.d/` and `head -1 /etc/k0s/containerd.toml` (must still be `# k0s_managed=true`).
+
+containerd 1.7 can't read the v3 format, so the file can't simply be rewritten ahead of time. On
+each Pi, just **before** Autopilot reaches it (watch the Plan status; pi01 goes first):
+
+```bash
+sudo mv /etc/k0s/containerd.d/device-ownership.toml /root/device-ownership.toml.v2
+```
+
+Running containers keep their devices; k0s reloads containerd without the drop-in. Right **after**
+the Pi reports v1.36.6:
+
+```bash
+sudo tee /etc/k0s/containerd.d/device-ownership.toml >/dev/null <<'TOML'
+version = 3
+[plugins."io.containerd.cri.v1.runtime"]
+  device_ownership_from_security_context = true
+TOML
+grep -r device_ownership /run/k0s/   # must say true
+# decoders reopen their dongle (readsb in adsb-edge-sdr, ais-catcher in ais-catcher-edge-sdr)
+kubectl -n adsb-edge-sdr delete pod -l app.kubernetes.io/name=readsb --field-selector spec.nodeName=<pi>
+kubectl -n ais-catcher-edge-sdr delete pod --field-selector spec.nodeName=<pi>
+```
+
+Between the two steps, decoders that start as uid 65532 can't open their dongle (`usb_open error -3`).
+That's expected: those pods restart anyway during the drain.
+
+**3. ceph-csi 3.17.1 or newer** (3.17.0 is only tested up to 1.35): both clusters already run
+3.18.2 (#849, 2026-11-08), so nothing to do. 3.18's image needs x86-64-v3 (AVX2), which every k0s VM
+has had since 2026-11-08 (prod01/edge01 on `cpu: host`, prod02 moved to shuttle03). Any new k0s VM
+must also get an AVX2 CPU type, or its nodeplugin crash-loops.
+
+Kyverno 1.19 lists 1.33–1.35 as tested ("other versions may work"); CNPG 1.30 supports 1.36.
+
 ## Production
 
 Same flow, plus four things the edge cluster doesn't have.
