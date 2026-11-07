@@ -9,7 +9,7 @@
 # on the release path (docker-/dotnet-container.yml) and the PR path (image-push.yml) alike.
 # Verified on every first-party image running on 2026-10-31. Flip failureAction to Enforce (with
 # mutateDigest) once the PolicyReports stay clean. Real supply-chain gating is
-# clusterpolicy-github-slsa-provenance.yaml.
+# imagevalidatingpolicy-github-slsa-provenance.yaml.
 #
 # Identity (SAN): the reusable-workflows docker-/dotnet-container or image-push workflow, pinned
 # either by floating tag (@refs/tags/vN[.N[.N]]) or by 40-hex commit SHA.
