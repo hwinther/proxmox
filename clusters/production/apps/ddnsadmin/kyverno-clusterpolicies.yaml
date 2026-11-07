@@ -54,6 +54,8 @@ spec:
       name: ghcr-pull
       namespace: "{{request.object.metadata.name}}"
       synchronize: true
+      # Keep generated Secrets when this policy is deleted (needed for the CEL GeneratingPolicy swap).
+      orphanDownstreamOnPolicyDelete: true
       clone:
         namespace: platform-production
         name: ghcr-pull

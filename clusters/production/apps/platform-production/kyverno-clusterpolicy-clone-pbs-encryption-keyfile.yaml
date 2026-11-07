@@ -43,6 +43,8 @@ spec:
       name: pbs-encryption-keyfile
       namespace: "{{request.object.metadata.name}}"
       synchronize: true
+      # Keep generated Secrets when this policy is deleted (needed for the CEL GeneratingPolicy swap).
+      orphanDownstreamOnPolicyDelete: true
       clone:
         namespace: platform-production
         name: pbs-encryption-keyfile

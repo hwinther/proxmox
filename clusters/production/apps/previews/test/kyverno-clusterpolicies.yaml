@@ -35,6 +35,8 @@ spec:
       name: testdb-app
       namespace: "{{request.object.metadata.name}}"
       synchronize: true
+      # Keep generated Secrets when this policy is deleted (needed for the CEL GeneratingPolicy swap).
+      orphanDownstreamOnPolicyDelete: true
       clone:
         namespace: postgres-test
         name: testdb-app
@@ -56,6 +58,8 @@ spec:
       name: test-api-rabbitmq
       namespace: "{{request.object.metadata.name}}"
       synchronize: true
+      # Keep generated Secrets when this policy is deleted (needed for the CEL GeneratingPolicy swap).
+      orphanDownstreamOnPolicyDelete: true
       clone:
         namespace: test-test
         name: test-api-rabbitmq
@@ -79,6 +83,8 @@ spec:
       name: test-frontend-valkey
       namespace: "{{request.object.metadata.name}}"
       synchronize: true
+      # Keep generated Secrets when this policy is deleted (needed for the CEL GeneratingPolicy swap).
+      orphanDownstreamOnPolicyDelete: true
       data:
         type: Opaque
         data:

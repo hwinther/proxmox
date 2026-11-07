@@ -26,6 +26,8 @@ spec:
       name: cluttertestdb-app
       namespace: clutterstock-test
       synchronize: true
+      # Keep generated Secrets when this policy is deleted (needed for the CEL GeneratingPolicy swap).
+      orphanDownstreamOnPolicyDelete: true
       clone:
         namespace: postgres-test
         name: cluttertestdb-app
