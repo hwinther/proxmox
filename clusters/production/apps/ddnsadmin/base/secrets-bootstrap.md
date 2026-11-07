@@ -40,9 +40,9 @@ The PAT only needs `read:packages`. Rotate by deleting and recreating the Secret
 ### Copy for Kyverno (once)
 
 Kyverno verifies ddnsadmin's signature and attestations
-(`bases/kyverno-supply-chain/imagevalidatingpolicy-ddnsadmin-cosign-signature.yaml`, plus the legacy
-`clusterpolicy-*` files until they are removed) with registry credentials (`credentials.secrets` /
-`imageRegistryCredentials`), which read Secrets from Kyverno's own namespace only. Kyverno can't generate into that namespace (its resourceFilters exclude it), so copy
+(`bases/kyverno-supply-chain/imagevalidatingpolicy-ddnsadmin-cosign-signature.yaml`, which ENFORCES,
+and `imagevalidatingpolicy-ddnsadmin-attestations.yaml`) with `credentials.secrets`, which reads Secrets
+from Kyverno's own namespace only. A missing or stale copy blocks ddnsadmin pods. Kyverno can't generate into that namespace (its resourceFilters exclude it), so copy
 the source Secret by hand. The token never leaves the cluster:
 
 ```bash

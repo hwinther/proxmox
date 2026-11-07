@@ -1,8 +1,8 @@
-# CEL successor of clusterpolicy-cyclonedx-sbom.yaml (Kyverno 1.20 removes ClusterPolicy). AUDIT.
+# CEL successor of the removed clusterpolicy-cyclonedx-sbom.yaml (Kyverno 1.20 removes ClusterPolicy). AUDIT.
 # Reads the cosign v3 Sigstore BUNDLE copy of the attestation (reusable-workflows >= v2.22.0). The CEL
 # verifier ignores the cosign v2 `.att` tag once an image has any bundle, so images built with an older
 # reusable-workflows pin report `fail` here until they are rebuilt. That is expected during the rollout
-# (Audit only). Delete the legacy ClusterPolicy once every first-party image is rebuilt and this passes.
+# (Audit only). The legacy ClusterPolicy is gone; every first-party image has been rebuilt with the bundles.
 #
 # Identity: the reusable-workflows docker-/dotnet-container or image-push workflow (tag or SHA ref). The
 # caller repo isn't in this predicate, so scope is the image path; caller binding is the SLSA policy's job.

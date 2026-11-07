@@ -1,7 +1,10 @@
-# CEL successor of clusterpolicy-ddnsadmin-cosign-signature.yaml (Kyverno 1.20 removes ClusterPolicy).
+# CEL successor of the removed clusterpolicy-ddnsadmin-cosign-signature.yaml (Kyverno 1.20 removes ClusterPolicy).
 #
-# SOAKING IN AUDIT next to the legacy ClusterPolicy (which still enforces). Flip validationActions to
-# [Deny] and delete the ClusterPolicy once the PolicyReports show `pass` for ddnsadmin pods.
+# ENFORCED (Deny, with mutateDigest) since the last supply-chain batch, after soaking in Audit next to
+# the legacy ClusterPolicy (removed in the same change): the ddnsadmin 0.19.0 pods in test and
+# production passed (first build with the cosign v3 bundle signature). A missing or stale `ghcr-pull`
+# copy in the kyverno namespace now BLOCKS ddnsadmin pods; re-copy it after reinstalling Kyverno or
+# rotating the token.
 #
 # ddnsadmin is a user-owned PRIVATE repo, so it has no SLSA provenance; this checks the cosign keyless
 # signature instead, bound to the caller repo through the Fulcio certificate's GitHub
@@ -25,7 +28,7 @@ metadata:
     policies.kyverno.io/severity: high
 spec:
   validationActions:
-  - Audit
+  - Deny
   evaluation:
     background:
       enabled: false
