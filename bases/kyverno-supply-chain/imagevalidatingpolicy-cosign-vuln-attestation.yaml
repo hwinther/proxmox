@@ -1,0 +1,80 @@
+# CEL successor of clusterpolicy-cosign-vuln-attestation.yaml (Kyverno 1.20 removes ClusterPolicy). AUDIT.
+# Reads the cosign v3 Sigstore BUNDLE copy of the attestation (reusable-workflows >= v2.22.0). The CEL
+# verifier ignores the cosign v2 `.att` tag once an image has any bundle, so images built with an older
+# reusable-workflows pin report `fail` here until they are rebuilt. That is expected during the rollout
+# (Audit only). Delete the legacy ClusterPolicy once every first-party image is rebuilt and this passes.
+#
+# Identity and scope: as imagevalidatingpolicy-cyclonedx-sbom.yaml. ddnsadmin is in
+# imagevalidatingpolicy-ddnsadmin-attestations.yaml.
+apiVersion: policies.kyverno.io/v1
+kind: ImageValidatingPolicy
+metadata:
+  name: wsh-require-cosign-vuln-attestation
+  annotations:
+    policies.kyverno.io/title: Require Cosign vuln attestation (ghcr.io/hwinther, ghcr.io/wshno)
+    policies.kyverno.io/category: Supply Chain
+    policies.kyverno.io/severity: medium
+spec:
+  validationActions:
+  - Audit
+  evaluation:
+    background:
+      enabled: false
+  # Kubernetes caps webhook timeout at 30s.
+  webhookConfiguration:
+    timeoutSeconds: 30
+  autogen:
+    podControllers:
+      controllers: []
+  matchConstraints:
+    namespaceSelector:
+      matchExpressions:
+      - key: kubernetes.io/metadata.name
+        operator: NotIn
+        values:
+        - kube-system
+        - kyverno
+        - flux-system
+    resourceRules:
+    - apiGroups: [""]
+      apiVersions: [v1]
+      operations: [CREATE, UPDATE]
+      resources: [pods]
+  matchConditions:
+  - name: create-or-image-changed
+    expression: >-
+      request.operation != 'UPDATE' ||
+      object.spec.containers.map(c, c.image) != oldObject.spec.containers.map(c, c.image) ||
+      object.spec.?initContainers.orValue([]).map(c, c.image) != oldObject.spec.?initContainers.orValue([]).map(c, c.image)
+  matchImageReferences:
+  - expression: >-
+      (ref.startsWith('ghcr.io/hwinther/') || ref.startsWith('ghcr.io/wshno/')) &&
+      !ref.startsWith('ghcr.io/hwinther/ddnsadmin/')
+  # Audit only: digest pinning is done by the enforcing SLSA / ddnsadmin-signature policies.
+  validationConfigurations:
+    mutateDigest: false
+    verifyDigest: false
+    required: false
+  attestors:
+  - name: reusableWorkflows
+    cosign:
+      keyless:
+        identities:
+        - issuer: https://token.actions.githubusercontent.com
+          subjectRegExp: ^https://github.com/hwinther/reusable-workflows/\.github/workflows/(docker-container|dotnet-container|image-push)\.yml@(refs/tags/v[0-9]+(\.[0-9]+){0,2}|[a-f0-9]{40})$
+      ctlog:
+        url: https://rekor.sigstore.dev
+  attestations:
+  - name: vuln
+    intoto:
+      type: https://cosign.sigstore.dev/attestation/vuln/v1
+  variables:
+  - name: allImages
+    expression: >-
+      images.?containers.orValue([]) + images.?initContainers.orValue([]) +
+      images.?ephemeralContainers.orValue([])
+  validations:
+  - expression: >-
+      variables.allImages.all(img, verifyAttestationSignatures(img, attestations.vuln, [attestors.reusableWorkflows]) > 0)
+    message: >-
+      Image has no cosign vuln attestation (Sigstore bundle) signed by the reusable-workflows build/push workflow.

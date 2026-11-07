@@ -1,8 +1,6 @@
-# LEGACY, NOT YET MIGRATED (Kyverno 1.20 removes kyverno.io/v1 ClusterPolicy). The CEL cosign verifier
-# (ImageValidatingPolicy) reads ONLY Sigstore bundle referrers once an image has any, and every image
-# except ddnsadmin has one (the GitHub SLSA bundle), so it never sees this cosign v2 `.att` tag
-# attestation. Migrate after reusable-workflows publishes this attestation as a bundle too
-# (cosign v3 / --new-bundle-format).
+# LEGACY: superseded by imagevalidatingpolicy-cosign-vuln-attestation.yaml (+ imagevalidatingpolicy-ddnsadmin-attestations.yaml for
+# ddnsadmin), which read the cosign v3 bundle copy. Delete this file once every first-party image is
+# rebuilt with reusable-workflows >= v2.22.0 and the CEL policies pass. Kyverno 1.20 removes ClusterPolicy.
 #
 # Cosign vulnerability scan attestation (Grype → SARIF predicate, cosign attest --type vuln).
 #

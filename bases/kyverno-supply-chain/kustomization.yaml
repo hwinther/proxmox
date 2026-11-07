@@ -8,3 +8,6 @@ resources:
 # CEL successors, soaking in Audit next to the legacy policies above (batch 3a of the Kyverno 1.20 migration).
 - imagevalidatingpolicy-github-slsa-provenance.yaml
 - imagevalidatingpolicy-ddnsadmin-cosign-signature.yaml
+- imagevalidatingpolicy-cyclonedx-sbom.yaml
+- imagevalidatingpolicy-cosign-vuln-attestation.yaml
+- imagevalidatingpolicy-ddnsadmin-attestations.yaml
