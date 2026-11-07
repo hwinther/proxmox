@@ -1,0 +1,38 @@
+# Recommended Kubernetes labels: https://kubernetes.io/docs/concepts/overview/working-with-objects/common-labels/
+# CEL ValidatingPolicy; see validatingpolicy-disallow-host-namespaces.yaml for the autogen/namespaceSelector
+# notes (autogen also rewrites object.metadata to the pod template's metadata).
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: wsh-require-recommended-labels
+  annotations:
+    policies.kyverno.io/title: Require recommended Kubernetes labels on Pods
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: low
+    policies.kyverno.io/description: >-
+      Pods should set metadata.labels app.kubernetes.io/name (and optionally app.kubernetes.io/component).
+spec:
+  validationActions:
+  - Audit
+  evaluation:
+    background:
+      enabled: true
+  matchConstraints:
+    namespaceSelector:
+      matchExpressions:
+      - key: kubernetes.io/metadata.name
+        operator: NotIn
+        values:
+        - kube-system
+        - kyverno
+        - flux-system
+        - traefik
+    resourceRules:
+    - apiGroups: [""]
+      apiVersions: [v1]
+      operations: [CREATE, UPDATE]
+      resources: [pods]
+  validations:
+  - expression: "object.metadata.?labels['app.kubernetes.io/name'].orValue('') != ''"
+    message: >-
+      Set metadata.labels app.kubernetes.io/name to identify the application (see Kubernetes recommended labels).

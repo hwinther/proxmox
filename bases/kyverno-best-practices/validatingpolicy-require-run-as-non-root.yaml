@@ -1,0 +1,38 @@
+# Audit pods that don't set runAsNonRoot (pod level, or on every container).
+# CEL ValidatingPolicy; see validatingpolicy-disallow-privilege-escalation.yaml for the autogen/namespace notes.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: wsh-require-run-as-non-root
+  annotations:
+    policies.kyverno.io/title: Require runAsNonRoot
+    policies.kyverno.io/category: Pod Security
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      Audit pods that do not set runAsNonRoot at the pod or container level.
+spec:
+  validationActions:
+  - Audit
+  evaluation:
+    background:
+      enabled: true
+  matchConstraints:
+    namespaceSelector:
+      matchExpressions:
+      - key: kubernetes.io/metadata.name
+        operator: NotIn
+        values:
+        - kube-system
+        - kyverno
+        - flux-system
+    resourceRules:
+    - apiGroups: [""]
+      apiVersions: [v1]
+      operations: [CREATE, UPDATE]
+      resources: [pods]
+  validations:
+  - expression: >-
+      object.spec.?securityContext.?runAsNonRoot.orValue(false) == true ||
+      object.spec.containers.all(c, c.?securityContext.?runAsNonRoot.orValue(false) == true)
+    message: >-
+      Running as root is not allowed. Set spec.securityContext.runAsNonRoot to true or spec.containers[*].securityContext.runAsNonRoot to true.

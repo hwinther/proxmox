@@ -1,0 +1,47 @@
+# Based on kyverno/policies disallow-latest-tag. Tag-only refs are allowed (semver pins for Dependabot);
+# supply-chain verifyImages rules may still mutate tags to digests at admission where configured.
+# Audit only. CEL ValidatingPolicy; see validatingpolicy-disallow-host-namespaces.yaml for the
+# autogen/namespaceSelector notes.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: wsh-disallow-latest-require-digest
+  annotations:
+    policies.kyverno.io/title: Disallow latest container image tag
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      Containers must not use the :latest tag. Pin a specific version tag (e.g. v1.2.3 or 1.2.3-alpine).
+spec:
+  validationActions:
+  - Audit
+  evaluation:
+    background:
+      enabled: true
+  matchConstraints:
+    namespaceSelector:
+      matchExpressions:
+      - key: kubernetes.io/metadata.name
+        operator: NotIn
+        values:
+        - kube-system
+        - kyverno
+        - flux-system
+        - traefik
+    resourceRules:
+    - apiGroups: [""]
+      apiVersions: [v1]
+      operations: [CREATE, UPDATE]
+      resources: [pods]
+  variables:
+  - name: latestImages
+    expression: >-
+      (object.spec.containers +
+       object.spec.?initContainers.orValue([]) +
+       object.spec.?ephemeralContainers.orValue([]))
+      .map(c, c.image).filter(i, i.endsWith(':latest'))
+  validations:
+  - expression: size(variables.latestImages) == 0
+    messageExpression: >-
+      'Using a mutable image tag such as latest is not allowed. Pin a specific version tag: ' +
+      variables.latestImages.join(', ')

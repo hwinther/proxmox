@@ -1,0 +1,38 @@
+# Audit containers missing memory limits.
+# CEL ValidatingPolicy; see validatingpolicy-disallow-privilege-escalation.yaml for the autogen/namespace notes.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: wsh-require-resource-limits
+  annotations:
+    policies.kyverno.io/title: Require resource limits
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: low
+    policies.kyverno.io/description: >-
+      Audit containers that do not specify memory limits.
+spec:
+  validationActions:
+  - Audit
+  evaluation:
+    background:
+      enabled: true
+  matchConstraints:
+    namespaceSelector:
+      matchExpressions:
+      - key: kubernetes.io/metadata.name
+        operator: NotIn
+        values:
+        - kube-system
+        - kyverno
+        - flux-system
+    resourceRules:
+    - apiGroups: [""]
+      apiVersions: [v1]
+      operations: [CREATE, UPDATE]
+      resources: [pods]
+  validations:
+  - expression: >-
+      object.spec.containers.all(c,
+        'memory' in c.?resources.?limits.orValue({}))
+    message: >-
+      Memory limits are required. Set spec.containers[*].resources.limits.memory.

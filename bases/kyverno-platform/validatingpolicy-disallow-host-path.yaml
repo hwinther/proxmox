@@ -1,0 +1,37 @@
+# Pod Security baseline — no hostPath volumes.
+# CEL ValidatingPolicy; see validatingpolicy-disallow-host-namespaces.yaml for the autogen/namespaceSelector notes.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: wsh-disallow-host-path
+  annotations:
+    policies.kyverno.io/title: Disallow hostPath volumes
+    policies.kyverno.io/category: Pod Security Standards (Baseline)
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      hostPath volumes are forbidden unless an exception applies (e.g. CSI/node agents in kube-system).
+spec:
+  validationActions:
+  - Audit
+  evaluation:
+    background:
+      enabled: true
+  matchConstraints:
+    namespaceSelector:
+      matchExpressions:
+      - key: kubernetes.io/metadata.name
+        operator: NotIn
+        values:
+        - kube-system
+        - kyverno
+        - flux-system
+        - traefik
+    resourceRules:
+    - apiGroups: [""]
+      apiVersions: [v1]
+      operations: [CREATE, UPDATE]
+      resources: [pods]
+  validations:
+  - expression: "!object.spec.?volumes.orValue([]).exists(v, has(v.hostPath))"
+    message: >-
+      hostPath volumes are forbidden. Use PVCs or other volume types, or request a PolicyException.

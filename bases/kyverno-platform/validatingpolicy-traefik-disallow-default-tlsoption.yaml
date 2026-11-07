@@ -1,0 +1,39 @@
+# Upstream: kyverno/policies traefik/disallow-default-tlsoptions — kind set for traefik.io/v1alpha1.
+# CEL ValidatingPolicy (policies.kyverno.io/v1), admission only (as before: background false).
+# CEL policies can't match on ClusterRoles like the legacy `exclude.clusterRoles: [cluster-admin]`, so
+# the exemption is by identity instead: system:masters (cluster-admin kubeconfigs) and the Flux
+# controllers that apply this repo (both bound to cluster-admin).
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: wsh-traefik-disallow-default-tlsoption
+  annotations:
+    policies.kyverno.io/title: Disallow default Traefik TLSOption
+    policies.kyverno.io/category: Traefik
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      Creating a TLSOption named default affects cluster-wide TLS defaults; restrict to cluster-admin.
+spec:
+  validationActions:
+  - Audit
+  evaluation:
+    background:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+    - apiGroups: [traefik.io]
+      apiVersions: [v1alpha1]
+      operations: [CREATE, UPDATE]
+      resources: [tlsoptions]
+      resourceNames: [default]
+  matchConditions:
+  - name: not-cluster-admin
+    expression: >-
+      !('system:masters' in request.userInfo.groups) &&
+      !(request.userInfo.username in [
+        'system:serviceaccount:flux-system:kustomize-controller',
+        'system:serviceaccount:flux-system:helm-controller'])
+  validations:
+  - expression: "false"
+    message: >-
+      Only cluster administrators may create a TLSOption named default.

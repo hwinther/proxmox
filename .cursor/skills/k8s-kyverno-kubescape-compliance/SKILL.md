@@ -16,7 +16,7 @@ ClusterPolicies live under [`bases/kyverno-platform`](../../../bases/kyverno-pla
 Decide these **while authoring the initial PR**, so you do not chain fixes across multiple merges:
 
 1. **Image reference**
-   - Prefer **semver tags** (and digests where you mirror or pin) for every container, initContainer, and ephemeralContainer — **`wsh-disallow-latest-require-digest`** targets `:latest` (see [`bases/kyverno-platform/clusterpolicy-disallow-latest-require-digest.yaml`](../../../bases/kyverno-platform/clusterpolicy-disallow-latest-require-digest.yaml)).
+   - Prefer **semver tags** (and digests where you mirror or pin) for every container, initContainer, and ephemeralContainer — **`wsh-disallow-latest-require-digest`** targets `:latest` (see [`bases/kyverno-platform/validatingpolicy-disallow-latest-require-digest.yaml`](../../../bases/kyverno-platform/validatingpolicy-disallow-latest-require-digest.yaml)).
    - If upstream **only** publishes `:latest` (no semver tag to pin): choose **one** path before merge: **(a)** mirror the image to `ghcr.io/hwinther/...` with a semver tag you control, **(b)** pin `image: repo/name@sha256:…` after you compute the digest once, or **(c)** add a **narrow** `PolicyException` for `wsh-disallow-latest-require-digest` **in the same PR** as the workload, with a YAML comment explaining why upstream cannot comply.
 
 2. **`runAsNonRoot` vs image `USER` (kubelet, not Kyverno)**
