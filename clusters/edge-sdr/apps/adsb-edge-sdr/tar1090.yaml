@@ -61,7 +61,7 @@ spec:
       # config.js (overrides only; defaults.js holds the rest) comes from the tar1090-config
       # ConfigMap, upintheair.json (HeyWhatsThat range rings) from adsb-secret.
       - name: tar1090
-        image: ghcr.io/hwinther/wsh-rtl-sdr/tar1090:0.14.1@sha256:f2e753924e878adfa4a315c17bd075e988c243c36ca841e8dcc17d84352ea657
+        image: ghcr.io/hwinther/wsh-rtl-sdr/tar1090:0.16.1@sha256:8173d5047a6329922ad160335b70528569d5269ba6ef178f83c3e4cfa55a4eaa
         imagePullPolicy: IfNotPresent
         ports:
         - name: http
