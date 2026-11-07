@@ -1,3 +1,6 @@
+# LEGACY: superseded by imagevalidatingpolicy-ddnsadmin-cosign-signature.yaml (soaking in Audit). Delete
+# this file when that one is flipped to Deny. Kyverno 1.20 removes kyverno.io/v1 ClusterPolicy.
+#
 # Cosign signature check for ddnsadmin, the one first-party image without SLSA provenance.
 #
 # ddnsadmin is a user-owned PRIVATE GitHub repo, so actions/attest-build-provenance returns "Feature

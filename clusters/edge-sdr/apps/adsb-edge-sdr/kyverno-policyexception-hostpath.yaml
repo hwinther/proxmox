@@ -1,18 +1,17 @@
 # Namespace uses a hostPath for the shared JSON dir (readsb writes it; tar1090 and adsb-mqtt read it).
-apiVersion: kyverno.io/v2
+# INERT while Kyverno runs with --enablePolicyException=false (both clusters): the CEL engine
+# ignores PolicyExceptions just like the legacy one did. Kept as the documented, ready-to-use carve-out
+# for the Audit ValidatingPolicy below; it takes effect if exceptions are ever enabled.
+apiVersion: policies.kyverno.io/v1
 kind: PolicyException
 metadata:
   name: adsb-edge-sdr-hostpath
   namespace: adsb-edge-sdr
 spec:
-  exceptions:
-  - policyName: wsh-disallow-host-path
-    ruleNames:
-    - host-path
-  match:
-    any:
-    - resources:
-        kinds:
-        - Pod
-        namespaces:
-        - adsb-edge-sdr
+  policyRefs:
+  - name: wsh-disallow-host-path
+    kind: ValidatingPolicy
+  matchConditions:
+  - name: scope
+    expression: >-
+      object.metadata.namespace == 'adsb-edge-sdr'

@@ -44,19 +44,20 @@ Decide these **while authoring the initial PR**, so you do not chain fixes acros
 
 **Shape (this repo):**
 
-- Kyverno **`PolicyException` `apiVersion: kyverno.io/v2`**, in the **same namespace** as the workload.
-- Under **`spec.exceptions`**, list **`policyName`** and concrete **`ruleNames`** (include **`autogen-…`** variants when the policy generates them — mirror [`clusters/production/apps/headlamp-production/kyverno-policyexception-headlamp-plugin-images.yaml`](../../../clusters/production/apps/headlamp-production/kyverno-policyexception-headlamp-plugin-images.yaml)).
-- Under **`spec.match`**, scope by **`namespaces`** and **`selector.matchLabels`** on the Pod template label set — **never** a cluster-wide exception.
+- Kyverno **`PolicyException` `apiVersion: policies.kyverno.io/v1`** (CEL; the legacy `kyverno.io/v2` kind is removed in Kyverno 1.20), in the **same namespace** as the workload.
+- Under **`spec.policyRefs`**, list each policy by **`name`** and **`kind`** (`ValidatingPolicy`, `ImageValidatingPolicy`, …). There are no rule names any more, and autogen is covered by the policy itself — mirror [`clusters/edge-sdr/apps/sdr-device-plugin-edge-sdr/kyverno-policyexception.yaml`](../../../clusters/edge-sdr/apps/sdr-device-plugin-edge-sdr/kyverno-policyexception.yaml).
+- Under **`spec.matchConditions`**, scope with CEL on **`object.metadata.namespace`** and the workload's **`app.kubernetes.io/name`** label — **never** a cluster-wide exception.
+- **Note:** both clusters run Kyverno with `--enablePolicyException=false`, so exceptions are currently **inert** (documentation of intent only). Carve-outs that must actually work go in the policy itself (e.g. `matchImageReferences` / `namespaceSelector`).
 - **Same commit / same PR** as the Deployment (or HelmRelease) that needs it, with a short comment at the top of the exception file stating **why** the exception exists and **when** to remove it (e.g. “remove when upstream publishes semver tags”).
 
-**Avoid:** copying an exception from another app without matching `ruleNames`, broad namespace-only matches, or silencing policies you could satisfy by changing the image or securityContext.
+**Avoid:** copying an exception from another app without matching `policyRefs`, broad namespace-only matches, or silencing policies you could satisfy by changing the image or securityContext.
 
 ## Checklist for new workloads
 
 1. **Images**
    - Prefer **explicit version tags** (not `:latest`) for every container, initContainer, and ephemeralContainer so **Dependabot** can surface release notes. Kyverno **`wsh-disallow-latest-require-digest`** forbids `:latest` (see **Before the first commit** if upstream cannot comply).
    - For **CI images** published from this repo to `ghcr.io/hwinther/...`, use [`.github/actions/docker`](../../../.github/actions/docker) with **`attest_supply_chain: "true"`** on the calling workflow and job permissions: `contents: read`, `packages: write`, `id-token: write`, `attestations: write`. That pushes SLSA provenance to the registry and attaches **CycloneDX** + **vuln** Cosign attestations expected by **`wsh-require-github-slsa-provenance`**, **`wsh-require-cyclonedx-sbom`**, and **`wsh-require-cosign-vuln-attestation`**.
-   - If an image cannot satisfy a policy yet, add a **narrow** [`PolicyException`](../../../clusters/edge-sdr/apps/adsb-edge-sdr/kyverno-policyexception-hostpath.yaml) (Kyverno `v2`) scoped by **namespace + labels**, not a broad ClusterPolicy change — **together with** the workload in one PR (**PolicyExceptions** section above).
+   - If an image cannot satisfy a policy yet, add a **narrow** [`PolicyException`](../../../clusters/edge-sdr/apps/adsb-edge-sdr/kyverno-policyexception-hostpath.yaml) (`policies.kyverno.io/v1`) scoped by **namespace + labels**, not a broad policy change — **together with** the workload in one PR (**PolicyExceptions** section above).
 
 2. **Pod and container security**
    - Pod or container: **`runAsNonRoot: true`** where the image supports it — see **Before the first commit → `runAsNonRoot` vs image `USER`** if the pod fails with **CreateContainerConfigError** (kubelet) while PolicyReports still look green.

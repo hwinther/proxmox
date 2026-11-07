@@ -1,3 +1,6 @@
+# LEGACY: superseded by imagevalidatingpolicy-github-slsa-provenance.yaml (soaking in Audit). Delete this
+# file when that one is flipped to Deny. Kyverno 1.20 removes kyverno.io/v1 ClusterPolicy.
+#
 # GitHub actions/attest-build-provenance publishes Sigstore bundles (SLSA v1).
 # Keyless identity (SAN) is the reusable workflow ref (github.job_workflow_ref), not the caller repo —
 # even when the build is initiated by a workflow in a different repo (e.g. hwinther/wsh-rtl-sdr), the

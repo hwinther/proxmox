@@ -1,0 +1,89 @@
+# CEL successor of clusterpolicy-ddnsadmin-cosign-signature.yaml (Kyverno 1.20 removes ClusterPolicy).
+#
+# SOAKING IN AUDIT next to the legacy ClusterPolicy (which still enforces). Flip validationActions to
+# [Deny] and delete the ClusterPolicy once the PolicyReports show `pass` for ddnsadmin pods.
+#
+# ddnsadmin is a user-owned PRIVATE repo, so it has no SLSA provenance; this checks the cosign keyless
+# signature instead, bound to the caller repo through the Fulcio certificate's GitHub
+# workflow-repository extension (the SAN is the reusable workflow, not the caller).
+#
+# The package is private: `credentials.secrets` reads `ghcr-pull` from Kyverno's own namespace (a
+# cluster-scoped policy resolves bare Secret names there). It is copied in by hand once, see
+# clusters/production/apps/ddnsadmin/base/secrets-bootstrap.md. The credential sits on this policy
+# alone so a bad or missing copy only affects ddnsadmin. The edge cluster has no copy and no ddnsadmin
+# pod, so the policy never fires there.
+#
+# Pods only, image-changed-only on UPDATE, verifyDigest false: same reasons as
+# imagevalidatingpolicy-github-slsa-provenance.yaml.
+apiVersion: policies.kyverno.io/v1
+kind: ImageValidatingPolicy
+metadata:
+  name: wsh-require-ddnsadmin-cosign-signature
+  annotations:
+    policies.kyverno.io/title: Require cosign signature (ghcr.io/hwinther/ddnsadmin)
+    policies.kyverno.io/category: Supply Chain
+    policies.kyverno.io/severity: high
+spec:
+  validationActions:
+  - Audit
+  evaluation:
+    background:
+      enabled: false
+  # Kubernetes caps webhook timeout at 30s.
+  webhookConfiguration:
+    timeoutSeconds: 30
+  autogen:
+    podControllers:
+      controllers: []
+  matchConstraints:
+    namespaceSelector:
+      matchExpressions:
+      - key: kubernetes.io/metadata.name
+        operator: NotIn
+        values:
+        - kube-system
+        - kyverno
+        - flux-system
+    resourceRules:
+    - apiGroups: [""]
+      apiVersions: [v1]
+      operations: [CREATE, UPDATE]
+      resources: [pods]
+  matchConditions:
+  - name: create-or-image-changed
+    expression: >-
+      request.operation != 'UPDATE' ||
+      object.spec.containers.map(c, c.image) != oldObject.spec.containers.map(c, c.image) ||
+      object.spec.?initContainers.orValue([]).map(c, c.image) != oldObject.spec.?initContainers.orValue([]).map(c, c.image)
+  matchImageReferences:
+  - glob: ghcr.io/hwinther/ddnsadmin/*
+  credentials:
+    secrets:
+    - ghcr-pull
+  validationConfigurations:
+    mutateDigest: true
+    verifyDigest: false
+    required: true
+  attestors:
+  - name: ddnsadminBuild
+    cosign:
+      keyless:
+        identities:
+        - issuer: https://token.actions.githubusercontent.com
+          subjectRegExp: ^https://github.com/hwinther/reusable-workflows/\.github/workflows/(docker-container|image-push)\.yml@(refs/tags/v[0-9]+(\.[0-9]+){0,2}|[a-f0-9]{40})$
+        # The caller repo (the reusable workflow is the SAN, so the SAN alone doesn't say who called it).
+        additionalExtensions:
+          githubWorkflowRepository: hwinther/ddnsadmin
+      ctlog:
+        url: https://rekor.sigstore.dev
+  variables:
+  - name: allImages
+    expression: >-
+      images.?containers.orValue([]) + images.?initContainers.orValue([]) +
+      images.?ephemeralContainers.orValue([])
+  validations:
+  - expression: >-
+      variables.allImages.all(img, verifyImageSignatures(img, [attestors.ddnsadminBuild]) > 0)
+    message: >-
+      ddnsadmin image has no cosign signature from the reusable-workflows build/push workflow called by
+      hwinther/ddnsadmin.
