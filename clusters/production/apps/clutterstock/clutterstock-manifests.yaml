@@ -18,7 +18,7 @@ spec:
   interval: 10m
   url: oci://ghcr.io/hwinther/clutterstock/manifests
   ref:
-    tag: 0.31.0
+    tag: 0.32.0
   # Only artifacts co-signed by promote.yml on main are applied. promote.yml signs only after it has
   # verified the release signature (container.yml@refs/tags/v<version>) and the environment
   # approval, so a release that wasn't approved can't run here even if this tag is edited by hand.

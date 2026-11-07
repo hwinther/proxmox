@@ -42,7 +42,7 @@ spec:
       restartPolicy: Never
       containers:
       - name: restore
-        image: ghcr.io/hwinther/proxmox/proxmox/pbs/backup-client:0.7.2
+        image: ghcr.io/hwinther/proxmox/proxmox/pbs/backup-client:0.7.3
         imagePullPolicy: IfNotPresent
         # pbs-job adds --ns (PBS_NAMESPACE) and --keyfile (/etc/pbs/keyfile) when set, then runs
         # proxmox-backup-client; the image has no shell.
