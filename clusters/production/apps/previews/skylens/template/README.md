@@ -82,7 +82,7 @@ Two layers, both real:
 `gitops-preview-teardown.yml` removes the `pr-<N>` entry from `../kustomization.yaml` when the PR is
 closed; Flux (`prune: true`) then deletes the namespace and all its resources.
 
-There is no `kyverno-clusterpolicies.yaml`, no `database.yaml.tpl`, and no `imagePullSecrets`: the
+There is no `kyverno-generatingpolicies.yaml`, no `database.yaml.tpl`, and no `imagePullSecrets`: the
 preview needs no cloned secret, no per-PR database, and pulls the **public** package
 `ghcr.io/hwinther/skylens/api` with no credential (public-package convention, like wshno/clutterstock).
 

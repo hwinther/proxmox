@@ -27,7 +27,7 @@ the manifests runs them in its preview before any release. Only artifacts signed
 Ingress (`base/ingress.yaml`, host patched per PR), the netpols and the namespace stay in this tree.
 
 wshno is a single PUBLIC static image — no per-PR database, secret, or pull credential, so there is
-**no** `database.yaml.tpl`, `databases/` subtree, or `kyverno-clusterpolicies.yaml` (unlike
+**no** `database.yaml.tpl`, `databases/` subtree, or `kyverno-generatingpolicies.yaml` (unlike
 clutterstock/ddnsadmin). The database step in the reusable workflow no-ops when `database.yaml.tpl`
 is absent.
 

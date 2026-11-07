@@ -1,0 +1,88 @@
+# Auto-suspend an app's PBS backup CronJob while its StatefulSet is hibernated (scaled to 0),
+# and auto-resume it on scale-up. Opt-in per namespace via the label
+# `pbs.wsh.no/suspend-backup-when-hibernated=true` — no edit to this policy when onboarding
+# (including apps in the sibling private-apps repo, whose names intentionally stay out of this
+# public repo).
+#
+# Why: game servers hibernate; a backup pod that requires co-location with the (absent) server
+# pod pends forever, and `concurrencyPolicy: Forbid` then silently skips every later run (bit
+# all four hibernated games 2026-07-07..09). Nothing writes the PVC while the server is down,
+# so skipping backups during hibernation loses nothing — the CronJob just needs to be OFF.
+#
+# Naming contract: the target CronJob is `<app>-pbs-backup`, where `<app>` is the StatefulSet's
+# `spec.selector.matchLabels.app` (all game backup CronJobs follow this; e.g. STS selector
+# app=valheim -> CronJob valheim-pbs-backup, in every valheim-* namespace).
+#
+# `spec.suspend` is intentionally ABSENT from the CronJob manifests in git: Flux's server-side
+# apply only owns fields present in the manifest, so this policy's writes to suspend survive
+# Flux reconciles instead of being reverted.
+#
+# RBAC: the background controller mutates existing CronJobs cluster-wide — see
+# kyverno-clusterrole-suspend-pbs-backup.yaml (same literal-namespace SAR reasoning as the
+# clone-pbs-encryption-keyfile ClusterRole).
+# CEL MutatingPolicy (policies.kyverno.io/v1); replaced the kyverno.io/v1 ClusterPolicy removed in Kyverno 1.20.
+# The legacy policy had two rules (suspend on replicas == 0, resume on > 0) that read the triggering
+# StatefulSet. This one derives the value from the target instead: for each `<app>-pbs-backup`
+# CronJob in an opted-in namespace it looks up the StatefulSet(s) whose selector app=<app> and sets
+# suspend = (every one of them has replicas == 0). It doesn't depend on which object triggered it,
+# so the background run on policy create/update (old mutateExistingOnPolicyUpdate) fixes every
+# CronJob at once. A CronJob without a matching StatefulSet is left alone.
+apiVersion: policies.kyverno.io/v1
+kind: MutatingPolicy
+metadata:
+  name: suspend-pbs-backup-when-hibernated
+  annotations:
+    policies.kyverno.io/title: Suspend PBS backup CronJobs while the app StatefulSet is scaled to 0
+    policies.kyverno.io/category: PBS
+    policies.kyverno.io/severity: low
+spec:
+  evaluation:
+    # Never mutate the StatefulSet itself; only the existing CronJobs.
+    admission:
+      enabled: false
+    background:
+      enabled: true
+    mutateExisting:
+      enabled: true
+  # Trigger: a StatefulSet change (git-driven replicas: 0 is a plain UPDATE; scale covers kubectl scale).
+  matchConstraints:
+    namespaceSelector:
+      matchLabels:
+        pbs.wsh.no/suspend-backup-when-hibernated: "true"
+    resourceRules:
+    - apiGroups: [apps]
+      apiVersions: [v1]
+      operations: [CREATE, UPDATE]
+      resources: [statefulsets, statefulsets/scale]
+  targetMatchConstraints:
+    namespaceSelector:
+      matchLabels:
+        pbs.wsh.no/suspend-backup-when-hibernated: "true"
+    resourceRules:
+    - apiGroups: [batch]
+      apiVersions: [v1]
+      operations: [CREATE, UPDATE]
+      resources: [cronjobs]
+  # Evaluated against the target CronJob (object = the CronJob).
+  targetMatchConditions:
+  - name: app-backup-cronjob-with-statefulset
+    expression: object.metadata.name.endsWith('-pbs-backup') && size(variables.statefulsets) > 0
+  variables:
+  - name: app
+    expression: >-
+      object.metadata.name.endsWith('-pbs-backup')
+        ? object.metadata.name.substring(0, size(object.metadata.name) - size('-pbs-backup'))
+        : ''
+  - name: statefulsets
+    expression: >-
+      dyn(resource.List("apps/v1", "statefulsets", object.metadata.namespace).items)
+        .filter(s, variables.app != '' && s.spec.?selector.?matchLabels.?app.orValue('') == variables.app)
+  mutations:
+  - patchType: ApplyConfiguration
+    applyConfiguration:
+      expression: >-
+        Object{
+          spec: Object.spec{
+            suspend: variables.statefulsets.all(s, s.spec.?replicas.orValue(1) == 0)
+          }
+        }

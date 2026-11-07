@@ -17,5 +17,5 @@ resources:
 - adminer-ingress.yaml
 - cilium-cluster-nodes-to-adminer-http.yaml
 - cilium-networkpolicy-cnpg-apiserver.yaml
-- kyverno-clusterpolicy-clone-testdb-app.yaml
-- kyverno-clusterpolicy-clone-cluttertestdb-app.yaml
+- kyverno-generatingpolicy-clone-testdb-app.yaml
+- kyverno-generatingpolicy-clone-cluttertestdb-app.yaml

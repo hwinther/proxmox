@@ -131,7 +131,7 @@ spec:
         enabled: false
       # Postgres storage for Grafana's internal DB (users, dashboards, alerts, sessions, secure values).
       # Password is cloned into observability-production by Kyverno from postgres-production
-      # (see ../postgres-production/kyverno-clusterpolicy-clone-grafana-pg-secret.yaml).
+      # (see ../postgres-production/kyverno-generatingpolicy-clone-grafana-pg-secret.yaml).
       envValueFrom:
         GF_DATABASE_PASSWORD:
           secretKeyRef:

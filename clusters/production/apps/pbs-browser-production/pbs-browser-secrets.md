@@ -46,7 +46,7 @@ kubectl -n pbs-browser-production get secret pbs-encryption-keyfile
 The Deployment (pbs-browser `deploy/deployment.yaml`) references `ghcr.io/hwinther/pbs-browser/app` with **no `imagePullSecrets`**,
 matching clutterstock's public-package convention. Make that GHCR package **public**, or — if you
 keep it private — add a `ghcr-pull` clone policy + `imagePullSecrets` (copy the pattern in
-`../ddnsadmin/kyverno-clusterpolicies.yaml` and add a `…/ghcr-pull: "true"` namespace label).
+`../ddnsadmin/kyverno-generatingpolicies.yaml` and add a `…/ghcr-pull: "true"` namespace label).
 
 ## 4. Access
 

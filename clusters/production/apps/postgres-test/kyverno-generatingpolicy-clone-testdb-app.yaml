@@ -1,0 +1,35 @@
+# Clone CNPG application Secret into test-test so Pods there can use secretKeyRef (same-namespace only).
+# CEL GeneratingPolicy (policies.kyverno.io/v1); replaced the kyverno.io/v1 ClusterPolicy removed in Kyverno 1.20.
+apiVersion: policies.kyverno.io/v1
+kind: GeneratingPolicy
+metadata:
+  name: clone-testdb-app-secret-to-test-test
+  annotations:
+    policies.kyverno.io/title: Clone testdb-app secret to test-test
+    policies.kyverno.io/category: CNPG
+    policies.kyverno.io/severity: low
+spec:
+  evaluation:
+    generateExisting:
+      enabled: true
+    synchronize:
+      enabled: true
+    # Keep generated Secrets if this policy is ever deleted (Kyverno's default deletes them).
+    orphanDownstreamOnPolicyDelete:
+      enabled: true
+  # Trigger: the source Secret itself (create/update), so changes are re-cloned right away.
+  matchConstraints:
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: postgres-test
+    resourceRules:
+    - apiGroups: [""]
+      apiVersions: [v1]
+      operations: [CREATE, UPDATE]
+      resources: [secrets]
+      resourceNames: [testdb-app]
+  variables:
+  - name: source
+    expression: resource.get("v1", "secrets", "postgres-test", "testdb-app")
+  generate:
+  - expression: generator.apply("test-test", [variables.source])
