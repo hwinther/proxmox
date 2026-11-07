@@ -5,3 +5,6 @@ resources:
 - clusterpolicy-cyclonedx-sbom.yaml
 - clusterpolicy-cosign-vuln-attestation.yaml
 - clusterpolicy-ddnsadmin-cosign-signature.yaml
+# CEL successors, soaking in Audit next to the legacy policies above (batch 3a of the Kyverno 1.20 migration).
+- imagevalidatingpolicy-github-slsa-provenance.yaml
+- imagevalidatingpolicy-ddnsadmin-cosign-signature.yaml

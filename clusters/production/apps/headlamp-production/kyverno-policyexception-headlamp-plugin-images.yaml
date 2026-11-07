@@ -1,19 +1,17 @@
 # Headlamp Helm chart / plugin init images may use tags that tripped policy checks; scoped to this namespace.
-apiVersion: kyverno.io/v2
+# INERT while Kyverno runs with --enablePolicyException=false (both clusters): the CEL engine
+# ignores PolicyExceptions just like the legacy one did. Kept as the documented, ready-to-use carve-out
+# for the Audit ValidatingPolicy below; it takes effect if exceptions are ever enabled.
+apiVersion: policies.kyverno.io/v1
 kind: PolicyException
 metadata:
   name: headlamp-plugin-flux-image
   namespace: headlamp-production
 spec:
-  exceptions:
-  - policyName: wsh-disallow-latest-require-digest
-    ruleNames:
-    - disallow-latest-tag
-    - autogen-disallow-latest-tag
-  match:
-    any:
-    - resources:
-        kinds:
-        - Pod
-        namespaces:
-        - headlamp-production
+  policyRefs:
+  - name: wsh-disallow-latest-require-digest
+    kind: ValidatingPolicy
+  matchConditions:
+  - name: scope
+    expression: >-
+      object.metadata.namespace == 'headlamp-production'

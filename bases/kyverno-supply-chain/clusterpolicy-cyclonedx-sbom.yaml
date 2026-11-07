@@ -1,3 +1,9 @@
+# LEGACY, NOT YET MIGRATED (Kyverno 1.20 removes kyverno.io/v1 ClusterPolicy). The CEL cosign verifier
+# (ImageValidatingPolicy) reads ONLY Sigstore bundle referrers once an image has any, and every image
+# except ddnsadmin has one (the GitHub SLSA bundle), so it never sees this cosign v2 `.att` tag
+# attestation. Migrate after reusable-workflows publishes this attestation as a bundle too
+# (cosign v3 / --new-bundle-format).
+#
 # Requires a CycloneDX SBOM attestation in the registry (cosign attest --type cyclonedx from the build).
 # Predicate type must match cosign v2.x / in-toto: https://cyclonedx.org/bom (not …/schema — see cosign #2596).
 #

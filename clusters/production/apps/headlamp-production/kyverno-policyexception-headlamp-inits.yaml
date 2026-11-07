@@ -1,19 +1,17 @@
 # Headlamp chart initContainers copy plugins as root (chown to headlamp uid).
-apiVersion: kyverno.io/v2
+# INERT while Kyverno runs with --enablePolicyException=false (both clusters): the CEL engine
+# ignores PolicyExceptions just like the legacy one did. Kept as the documented, ready-to-use carve-out
+# for the Audit ValidatingPolicy below; it takes effect if exceptions are ever enabled.
+apiVersion: policies.kyverno.io/v1
 kind: PolicyException
 metadata:
   name: headlamp-init-root
   namespace: headlamp-production
 spec:
-  exceptions:
-  - policyName: wsh-require-run-as-non-root
-    ruleNames:
-    - run-as-non-root
-    - autogen-run-as-non-root
-  match:
-    any:
-    - resources:
-        kinds:
-        - Pod
-        namespaces:
-        - headlamp-production
+  policyRefs:
+  - name: wsh-require-run-as-non-root
+    kind: ValidatingPolicy
+  matchConditions:
+  - name: scope
+    expression: >-
+      object.metadata.namespace == 'headlamp-production'

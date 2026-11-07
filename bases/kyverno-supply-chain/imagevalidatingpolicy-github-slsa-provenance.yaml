@@ -1,0 +1,127 @@
+# CEL successor of clusterpolicy-github-slsa-provenance.yaml (Kyverno 1.20 removes ClusterPolicy).
+#
+# SOAKING IN AUDIT next to the legacy ClusterPolicy (which still enforces). Once the PolicyReports show
+# `pass` for the first-party pods created since rollout (the nightly pbs-backup jobs cover
+# ghcr.io/hwinther/proxmox/* quickly), flip validationActions to [Deny] and delete the ClusterPolicy.
+#
+# What it checks, per first-party image (ghcr.io/hwinther/*, ghcr.io/wshno/*, minus ddnsadmin):
+#   1. a SLSA v1 provenance attestation signed keyless by the reusable-workflows build/push workflow
+#      (GitHub attest-build-provenance stores it as a Sigstore bundle referrer; the CEL cosign verifier
+#      detects bundle referrers by itself, so there is no `type: SigstoreBundle` knob any more),
+#   2. the buildType is the GitHub Actions workflow build type,
+#   3. for repo-owned image paths, the build was started by the repo that owns the path
+#      (externalParameters.workflow.repository); see variables.callerRepos. Paths not listed there
+#      (new apps, headlamp plugins) only need 1 and 2, like the legacy fallback entry.
+#
+# ddnsadmin is excluded: it is a user-owned PRIVATE repo, so GitHub never publishes SLSA provenance
+# for it. Its cosign signature is checked by imagevalidatingpolicy-ddnsadmin-cosign-signature.yaml.
+#
+# Differences from the legacy policy, on purpose:
+# - Pods only (autogen off). The legacy autogen'd Deployment/StatefulSet rules are what produced the
+#   Flux dry-run "missing digest" failures; the CEL mutateDigest pins every tag-only image of a matched
+#   object (it has no "image unchanged" skip), so autogen would also rewrite every controller template
+#   to a digest and roll every first-party workload once. Pods are where pinning and gating matter.
+# - On UPDATE it only runs when a container image actually changed (matchConditions), mirroring the
+#   legacy engine's unchanged-image skip; the CEL engine would otherwise re-verify on every pod update.
+# - verifyDigest stays false for the same reason as before: the image is pinned by our own mutation,
+#   and `required` (default true) still gates admission on a successful verification.
+apiVersion: policies.kyverno.io/v1
+kind: ImageValidatingPolicy
+metadata:
+  name: wsh-require-github-slsa-provenance
+  annotations:
+    policies.kyverno.io/title: Require GitHub SLSA provenance (ghcr.io/hwinther, ghcr.io/wshno)
+    policies.kyverno.io/category: Supply Chain
+    policies.kyverno.io/severity: high
+spec:
+  validationActions:
+  - Audit
+  evaluation:
+    background:
+      enabled: false
+  # Kubernetes caps webhook timeout at 30s.
+  webhookConfiguration:
+    timeoutSeconds: 30
+  autogen:
+    podControllers:
+      controllers: []
+  matchConstraints:
+    namespaceSelector:
+      matchExpressions:
+      - key: kubernetes.io/metadata.name
+        operator: NotIn
+        values:
+        - kube-system
+        - kyverno
+        - flux-system
+    resourceRules:
+    - apiGroups: [""]
+      apiVersions: [v1]
+      operations: [CREATE, UPDATE]
+      resources: [pods]
+  matchConditions:
+  - name: create-or-image-changed
+    expression: >-
+      request.operation != 'UPDATE' ||
+      object.spec.containers.map(c, c.image) != oldObject.spec.containers.map(c, c.image) ||
+      object.spec.?initContainers.orValue([]).map(c, c.image) != oldObject.spec.?initContainers.orValue([]).map(c, c.image)
+  matchImageReferences:
+  - expression: >-
+      (ref.startsWith('ghcr.io/hwinther/') || ref.startsWith('ghcr.io/wshno/')) &&
+      !ref.startsWith('ghcr.io/hwinther/ddnsadmin/')
+  validationConfigurations:
+    mutateDigest: true
+    verifyDigest: false
+    required: true
+  attestors:
+  - name: reusableWorkflows
+    cosign:
+      keyless:
+        identities:
+        - issuer: https://token.actions.githubusercontent.com
+          subjectRegExp: ^https://github.com/hwinther/reusable-workflows/\.github/workflows/(docker-container|dotnet-container|image-push)\.yml@(refs/tags/v[0-9]+(\.[0-9]+){0,2}|[a-f0-9]{40})$
+      ctlog:
+        url: https://rekor.sigstore.dev
+  attestations:
+  - name: slsa
+    intoto:
+      type: https://slsa.dev/provenance/v1
+  variables:
+  - name: allImages
+    expression: >-
+      images.?containers.orValue([]) + images.?initContainers.orValue([]) +
+      images.?ephemeralContainers.orValue([])
+  # Image path prefix -> the only repo allowed to start its build. GitHub's spelling of the repo
+  # (ClutterStock is capitalised).
+  - name: callerRepos
+    expression: >-
+      {
+        'ghcr.io/hwinther/wsh-rtl-sdr/': 'https://github.com/hwinther/wsh-rtl-sdr',
+        'ghcr.io/wshno/': 'https://github.com/wshno/wshno',
+        'ghcr.io/hwinther/clutterstock/': 'https://github.com/hwinther/ClutterStock',
+        'ghcr.io/hwinther/skylens/': 'https://github.com/hwinther/skylens',
+        'ghcr.io/hwinther/pbs-browser/': 'https://github.com/hwinther/pbs-browser',
+        'ghcr.io/hwinther/test/': 'https://github.com/hwinther/test',
+        'ghcr.io/hwinther/proxmox/': 'https://github.com/hwinther/proxmox'
+      }
+  validations:
+  - expression: >-
+      variables.allImages.all(img,
+        verifyAttestationSignatures(img, attestations.slsa, [attestors.reusableWorkflows]) > 0)
+    message: >-
+      Image has no SLSA provenance signed by the hwinther/reusable-workflows build/push workflow.
+  - expression: >-
+      variables.allImages.all(img,
+        extractPayload(img, attestations.slsa).predicate.buildDefinition.buildType ==
+          'https://actions.github.io/buildtypes/workflow/v1')
+    message: >-
+      SLSA provenance buildType is not the GitHub Actions workflow build type.
+  - expression: >-
+      variables.allImages.all(img,
+        variables.callerRepos.all(prefix,
+          !img.startsWith(prefix) ||
+          extractPayload(img, attestations.slsa).predicate.buildDefinition.externalParameters.workflow.repository ==
+            variables.callerRepos[prefix]))
+    message: >-
+      SLSA provenance was not started by the repository that owns this image path
+      (externalParameters.workflow.repository).
