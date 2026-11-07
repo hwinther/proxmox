@@ -58,7 +58,7 @@ they only report the failure.
 
 If you spin up enough instances that manual creation becomes tedious, a Kyverno ClusterPolicy can
 clone a single source Secret into any namespace carrying a label — see
-`apps/previews/ddnsadmin/kyverno-clusterpolicies.yaml` for the preview-env precedent.
+`apps/previews/ddnsadmin/kyverno-generatingpolicies.yaml` for the preview-env precedent.
 
 ## After first boot
 

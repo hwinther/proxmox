@@ -16,9 +16,10 @@
 #
 # Onboarding a new PBS-using namespace is a single push: set the label
 # `pbs.wsh.no/encryption-keyfile=true` on the Namespace; the keyfile is cloned automatically.
-# No edit to this ClusterPolicy needed.
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
+# No edit to this policy needed.
+# CEL GeneratingPolicy (policies.kyverno.io/v1); replaced the kyverno.io/v1 ClusterPolicy removed in Kyverno 1.20.
+apiVersion: policies.kyverno.io/v1
+kind: GeneratingPolicy
 metadata:
   name: clone-pbs-encryption-keyfile
   annotations:
@@ -26,25 +27,25 @@ metadata:
     policies.kyverno.io/category: PBS
     policies.kyverno.io/severity: low
 spec:
-  generateExisting: true
-  rules:
-  - name: clone-to-labeled-namespaces
-    match:
-      any:
-      - resources:
-          kinds:
-          - Namespace
-          selector:
-            matchLabels:
-              pbs.wsh.no/encryption-keyfile: "true"
-    generate:
-      apiVersion: v1
-      kind: Secret
-      name: pbs-encryption-keyfile
-      namespace: "{{request.object.metadata.name}}"
-      synchronize: true
-      # Keep generated Secrets when this policy is deleted (needed for the CEL GeneratingPolicy swap).
-      orphanDownstreamOnPolicyDelete: true
-      clone:
-        namespace: platform-production
-        name: pbs-encryption-keyfile
+  evaluation:
+    generateExisting:
+      enabled: true
+    synchronize:
+      enabled: true
+    # Keep generated Secrets if this policy is ever deleted (Kyverno's default deletes them).
+    orphanDownstreamOnPolicyDelete:
+      enabled: true
+  matchConstraints:
+    objectSelector:
+      matchLabels:
+        pbs.wsh.no/encryption-keyfile: "true"
+    resourceRules:
+    - apiGroups: [""]
+      apiVersions: [v1]
+      operations: [CREATE, UPDATE]
+      resources: [namespaces]
+  variables:
+  - name: pbsEncryptionKeyfile
+    expression: resource.get("v1", "secrets", "platform-production", "pbs-encryption-keyfile")
+  generate:
+  - expression: generator.apply(object.metadata.name, [variables.pbsEncryptionKeyfile])

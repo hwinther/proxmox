@@ -49,7 +49,7 @@ metadata:
     pbs.wsh.no/encryption-keyfile: "true"
 ```
 
-That's it. No RoleBinding needed (Kyverno has cluster-wide Secret RBAC via `kyverno-clusterrole-clone-pbs-encryption-keyfile.yaml`), no edit to `kyverno-clusterpolicy-clone-pbs-encryption-keyfile.yaml` (label-selector matches all labeled namespaces). Apps in the sibling `private-apps` repo enrol themselves without naming themselves in this public repo.
+That's it. No RoleBinding needed (Kyverno has cluster-wide Secret RBAC via `kyverno-clusterrole-clone-pbs-encryption-keyfile.yaml`), no edit to `kyverno-generatingpolicy-clone-pbs-encryption-keyfile.yaml` (label-selector matches all labeled namespaces). Apps in the sibling `private-apps` repo enrol themselves without naming themselves in this public repo.
 
 ## Rotate the key
 

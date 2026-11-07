@@ -5,7 +5,7 @@
 #
 # Everything else is the test tier's wiring (../../../clutterstock-test/clutterstock-manifests.yaml):
 # the shared cluttertestdb cluster (one database per PR, ../databases/), the RabbitMQ `test` vhost,
-# and the Secrets Kyverno clones in (../kyverno-clusterpolicies.yaml). Previews get no homepage tile.
+# and the Secrets Kyverno clones in (../kyverno-generatingpolicies.yaml). Previews get no homepage tile.
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: OCIRepository
 metadata:

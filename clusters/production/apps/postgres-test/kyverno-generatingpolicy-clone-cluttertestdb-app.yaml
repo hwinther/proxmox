@@ -1,0 +1,35 @@
+# Clone CNPG application Secret into clutterstock-test for secretKeyRef on the API Deployment.
+# CEL GeneratingPolicy (policies.kyverno.io/v1); replaced the kyverno.io/v1 ClusterPolicy removed in Kyverno 1.20.
+apiVersion: policies.kyverno.io/v1
+kind: GeneratingPolicy
+metadata:
+  name: clone-cluttertestdb-app-secret-to-clutterstock-test
+  annotations:
+    policies.kyverno.io/title: Clone cluttertestdb-app secret to clutterstock-test
+    policies.kyverno.io/category: CNPG
+    policies.kyverno.io/severity: low
+spec:
+  evaluation:
+    generateExisting:
+      enabled: true
+    synchronize:
+      enabled: true
+    # Keep generated Secrets if this policy is ever deleted (Kyverno's default deletes them).
+    orphanDownstreamOnPolicyDelete:
+      enabled: true
+  # Trigger: the source Secret itself (create/update), so changes are re-cloned right away.
+  matchConstraints:
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: postgres-test
+    resourceRules:
+    - apiGroups: [""]
+      apiVersions: [v1]
+      operations: [CREATE, UPDATE]
+      resources: [secrets]
+      resourceNames: [cluttertestdb-app]
+  variables:
+  - name: source
+    expression: resource.get("v1", "secrets", "postgres-test", "cluttertestdb-app")
+  generate:
+  - expression: generator.apply("clutterstock-test", [variables.source])

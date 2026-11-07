@@ -21,8 +21,9 @@
 #
 # `generateExisting: true` re-applies on policy install so any preview namespace already on the
 # cluster gets the Secret immediately rather than only on the next namespace create.
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
+# CEL GeneratingPolicy (policies.kyverno.io/v1); replaced the kyverno.io/v1 ClusterPolicy removed in Kyverno 1.20.
+apiVersion: policies.kyverno.io/v1
+kind: GeneratingPolicy
 metadata:
   name: clone-pbs-browser-preview-secrets
   annotations:
@@ -30,25 +31,25 @@ metadata:
     policies.kyverno.io/category: PBS
     policies.kyverno.io/severity: low
 spec:
-  generateExisting: true
-  rules:
-  - name: clone-pbs-browser-pbs
-    match:
-      any:
-      - resources:
-          kinds:
-          - Namespace
-          selector:
-            matchLabels:
-              pbs-browser.wsh.no/preview: "true"
-    generate:
-      apiVersion: v1
-      kind: Secret
-      name: pbs-browser-pbs
-      namespace: "{{request.object.metadata.name}}"
-      synchronize: true
-      # Keep generated Secrets when this policy is deleted (needed for the CEL GeneratingPolicy swap).
-      orphanDownstreamOnPolicyDelete: true
-      clone:
-        namespace: pbs-browser-production
-        name: pbs-browser-pbs
+  evaluation:
+    generateExisting:
+      enabled: true
+    synchronize:
+      enabled: true
+    # Keep generated Secrets if this policy is ever deleted (Kyverno's default deletes them).
+    orphanDownstreamOnPolicyDelete:
+      enabled: true
+  matchConstraints:
+    objectSelector:
+      matchLabels:
+        pbs-browser.wsh.no/preview: "true"
+    resourceRules:
+    - apiGroups: [""]
+      apiVersions: [v1]
+      operations: [CREATE, UPDATE]
+      resources: [namespaces]
+  variables:
+  - name: pbsBrowserPbs
+    expression: resource.get("v1", "secrets", "pbs-browser-production", "pbs-browser-pbs")
+  generate:
+  - expression: generator.apply(object.metadata.name, [variables.pbsBrowserPbs])
