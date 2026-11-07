@@ -1,0 +1,43 @@
+# Pod Security baseline — host PID/IPC/network. Excludes platform namespaces that need hostNetwork.
+# CEL ValidatingPolicy (policies.kyverno.io/v1); replaces the kyverno.io/v1 ClusterPolicy removed in Kyverno 1.20.
+# Matches Pods only; Kyverno autogenerates the Deployment/StatefulSet/DaemonSet/Job/CronJob variants
+# (rewriting object.spec to the pod template). Namespaces are excluded with namespaceSelector, not
+# excludeResourceRules, because exclude rules turn autogen off.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: wsh-disallow-host-namespaces
+  annotations:
+    policies.kyverno.io/title: Disallow host namespaces
+    policies.kyverno.io/category: Pod Security Standards (Baseline)
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      spec.hostPID, spec.hostIPC, and spec.hostNetwork must be unset or false except in excluded namespaces.
+spec:
+  validationActions:
+  - Audit
+  evaluation:
+    background:
+      enabled: true
+  matchConstraints:
+    namespaceSelector:
+      matchExpressions:
+      - key: kubernetes.io/metadata.name
+        operator: NotIn
+        values:
+        - kube-system
+        - kyverno
+        - flux-system
+        - traefik
+    resourceRules:
+    - apiGroups: [""]
+      apiVersions: [v1]
+      operations: [CREATE, UPDATE]
+      resources: [pods]
+  validations:
+  - expression: >-
+      !object.spec.?hostPID.orValue(false) &&
+      !object.spec.?hostIPC.orValue(false) &&
+      !object.spec.?hostNetwork.orValue(false)
+    message: >-
+      Sharing the host PID, IPC, or network namespace is disallowed. Set hostPID, hostIPC, and hostNetwork to false or omit them.

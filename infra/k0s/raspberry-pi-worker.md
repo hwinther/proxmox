@@ -296,7 +296,7 @@ If Pis use **RBD** (or other CSI) volumes, ensure the driver’s node DaemonSet 
 
 1. **On the Pi host:** `lsusb`, correct `/dev` nodes, and a non-Kubernetes smoke test of the radio stack.
 2. **In-cluster:** For a disposable check with **hostPath** (e.g. `/dev/bus/usb`), see [usb-sdr-debug-pod.example.yaml](usb-sdr-debug-pod.example.yaml). Workloads get their dongle from the device plugin instead (next section).
-3. **Kyverno:** If [wsh-disallow-host-path](../../bases/kyverno-platform/clusterpolicy-disallow-host-path.yaml) moves to **Enforce** (or you want a clean audit trail), apply a scoped exception — see [kyverno-policyexception-usb-debug.example.yaml](kyverno-policyexception-usb-debug.example.yaml) (example only; tighten labels/namespaces before production use).
+3. **Kyverno:** If [wsh-disallow-host-path](../../bases/kyverno-platform/validatingpolicy-disallow-host-path.yaml) moves to **Enforce** (or you want a clean audit trail), apply a scoped exception — see [kyverno-policyexception-usb-debug.example.yaml](kyverno-policyexception-usb-debug.example.yaml) (example only; tighten labels/namespaces before production use).
 
 ## SDR dongles as device-plugin resources (unprivileged decoders)
 

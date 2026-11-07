@@ -1,0 +1,40 @@
+# Audit containers that haven't explicitly disabled privilege escalation.
+# CEL ValidatingPolicy (policies.kyverno.io/v1). Background scanning on, so existing resources show up
+# in PolicyReports. Matches Pods; Kyverno autogenerates the pod-controller variants. Namespaces are
+# excluded with namespaceSelector because excludeResourceRules would turn autogen off.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: wsh-disallow-privilege-escalation
+  annotations:
+    policies.kyverno.io/title: Disallow privilege escalation
+    policies.kyverno.io/category: Pod Security
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      Audit containers that do not set allowPrivilegeEscalation to false.
+spec:
+  validationActions:
+  - Audit
+  evaluation:
+    background:
+      enabled: true
+  matchConstraints:
+    namespaceSelector:
+      matchExpressions:
+      - key: kubernetes.io/metadata.name
+        operator: NotIn
+        values:
+        - kube-system
+        - kyverno
+        - flux-system
+    resourceRules:
+    - apiGroups: [""]
+      apiVersions: [v1]
+      operations: [CREATE, UPDATE]
+      resources: [pods]
+  validations:
+  - expression: >-
+      object.spec.containers.all(c,
+        c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false)
+    message: >-
+      Privilege escalation is disallowed. Set spec.containers[*].securityContext.allowPrivilegeEscalation to false.

@@ -1,0 +1,42 @@
+# Adapted from kyverno/policies flux/verify-flux-sources — scoped to this repo's GitHub org and TLS/OCI sources.
+# CEL ValidatingPolicy (policies.kyverno.io/v1). The three legacy rules are one validation per kind,
+# each a no-op for the other kinds.
+# ssh://git@ssh.github.com:443/ is GitHub's SSH-over-443 endpoint (used by private-apps).
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: wsh-flux-trusted-sources
+  annotations:
+    policies.kyverno.io/title: Flux sources from trusted Git and Helm endpoints
+    policies.kyverno.io/category: Flux
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      GitRepository URLs must be under github.com/hwinther (HTTPS, SSH, or git@ form). HelmRepository and OCIRepository URLs must use https:// or oci:// (not plain http).
+spec:
+  validationActions:
+  - Audit
+  evaluation:
+    background:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+    - apiGroups: [source.toolkit.fluxcd.io]
+      apiVersions: [v1]
+      operations: [CREATE, UPDATE]
+      resources: [gitrepositories, helmrepositories, ocirepositories]
+  validations:
+  - expression: >-
+      object.kind != 'GitRepository' ||
+      ['https://github.com/hwinther/', 'ssh://git@github.com/hwinther/',
+       'ssh://git@ssh.github.com:443/hwinther/', 'git@github.com:hwinther/']
+      .exists(p, object.spec.url.startsWith(p))
+    message: >-
+      GitRepository spec.url must point to github.com/hwinther (adjust org in this policy if you fork).
+  - expression: >-
+      object.kind != 'HelmRepository' ||
+      object.spec.url.startsWith('https://') || object.spec.url.startsWith('oci://')
+    message: >-
+      HelmRepository spec.url must use https:// or oci://.
+  - expression: object.kind != 'OCIRepository' || object.spec.url.startsWith('oci://')
+    message: >-
+      OCIRepository spec.url must use the oci:// scheme.
