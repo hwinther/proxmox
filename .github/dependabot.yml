@@ -96,6 +96,7 @@ updates:
   - "/clusters/production/apps/ceph-csi"
   - "/clusters/production/apps/cert-manager"
   - "/clusters/production/apps/cert-manager/install"
+  - "/clusters/production/apps/cilium"
   - "/clusters/production/apps/cilium-lb"
   - "/clusters/production/apps/cnpg-system"
   - "/clusters/production/apps/clutterstock"
