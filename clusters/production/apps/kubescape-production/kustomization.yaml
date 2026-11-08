@@ -6,3 +6,4 @@ resources:
 - kubescape-operator-helmrelease.yaml
 - networkpolicies.yaml
 - prometheus-exporter-podmonitor.yaml
+- kyverno-policyexception-hostpath.yaml
