@@ -1,5 +1,7 @@
 # AIS-Catcher (edge-sdr)
 
+> **Workloads live in hwinther/wsh-rtl-sdr** (`deploy/ais-catcher/`, since 2026-11-08). They ship as the signed artifact `ghcr.io/hwinther/wsh-rtl-sdr/manifests`, applied by [`wsh-rtl-sdr-manifests.yaml`](wsh-rtl-sdr-manifests.yaml), which also holds the release tag (bumped by Renovate). Change a workload there; this directory keeps the namespace, the `ais-catcher-env` ConfigMap, the Secret docs below and the Ingress.
+
 GitOps manifests for **ais-catcher** on Raspberry Pi workers. Non-sensitive defaults live in ConfigMap **`ais-catcher-env`**; optional overrides and secrets live in **`ais-catcher-secret`**.
 
 ## Scheduling (hardware)

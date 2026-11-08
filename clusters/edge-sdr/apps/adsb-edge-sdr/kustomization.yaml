@@ -3,9 +3,6 @@ kind: Kustomization
 resources:
 - namespace.yaml
 - configmap-adsb-env.yaml
-- readsb.yaml
-- tar1090.yaml
 - tar1090-ingress.yaml
-- adsb-feeders.yaml
-- adsb-mqtt.yaml
 - kyverno-policyexception-hostpath.yaml
+- wsh-rtl-sdr-manifests.yaml
