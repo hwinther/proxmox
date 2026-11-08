@@ -1,3 +1,8 @@
+# Generic reference ClusterConfig (example IPs). The live production file is production/k0s.yaml.
+# Production no longer installs Cilium via spec.extensions.helm: it is a Flux HelmRelease in
+# clusters/production/apps/cilium/. The extensions block below is kept as a values reference only.
+# WARNING: removing a chart from a running cluster's extensions makes k0s helm-uninstall it, even
+# after stripping the Chart CR finalizer (see cilium-k0s-setup.md § Where Cilium lives).
 apiVersion: k0s.k0sproject.io/v1beta1
 kind: ClusterConfig
 metadata:

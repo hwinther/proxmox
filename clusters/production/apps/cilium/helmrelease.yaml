@@ -1,0 +1,91 @@
+# Cilium CNI, moved from a k0s Helm extension (/etc/k0s/k0s.yaml on prod01-03) to Flux.
+# Flux adopted the existing release "cilium" (k0s created it); see infra/k0s/cilium-k0s-setup.md.
+#
+# This is the cluster network. A broken upgrade can take Flux down with it; recover with
+#   helm -n kube-system rollback cilium <rev>      (or flux suspend hr cilium -n kube-system first)
+# The API stays reachable on the controllers' hostNetwork (10.20.13.11-13:6443).
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: cilium
+  namespace: kube-system
+spec:
+  interval: 24h
+  url: https://helm.cilium.io
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: cilium
+  namespace: kube-system
+  annotations:
+    # Removing this file from git must never uninstall the CNI.
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  # Same name as the release k0s created, so helm-controller adopts it instead of installing.
+  releaseName: cilium
+  interval: 30m
+  # The agent DaemonSet rolls node by node over 5 nodes.
+  timeout: 15m
+  driftDetection:
+    mode: warn
+  install:
+    # Cilium is already installed. An install attempt means the adoption went wrong: fail, don't retry.
+    remediation:
+      retries: 0
+  upgrade:
+    remediation:
+      retries: 1
+      remediateLastFailure: true
+  uninstall:
+    keepHistory: true
+  chart:
+    spec:
+      chart: cilium
+      version: "1.20.4"
+      sourceRef:
+        kind: HelmRepository
+        name: cilium
+        namespace: kube-system
+  # Copied 1:1 from the k0s Chart CR (helm get values cilium, 2026-11-08).
+  # hubble.tls.auto.method=helm mints new Hubble certs on every upgrade; agents and relay reload them.
+  values:
+    bpf:
+      masquerade: true
+    egressGateway:
+      enabled: true
+    hubble:
+      enabled: true
+      metrics:
+        enabled:
+        - dns
+        - drop:labelsContext=source_namespace,destination_namespace
+        - tcp
+        - flow
+        - icmp
+        - port-distribution
+      relay:
+        enabled: true
+        peerService:
+          internalTrafficPolicy: Cluster
+      tls:
+        auto:
+          enabled: true
+          method: helm
+        enabled: true
+      ui:
+        enabled: true
+    ipam:
+      mode: kubernetes
+    k8sClientRateLimit:
+      burst: 20
+      qps: 10
+    k8sServiceHost: 127.0.0.1
+    k8sServicePort: 7443
+    kubeProxyReplacement: true
+    l2announcements:
+      enabled: true
+    prometheus:
+      enabled: true
+    routingMode: tunnel
+    tunnelProtocol: vxlan

@@ -1,0 +1,39 @@
+# k0s Autopilot upgrade plan — production cluster, v1.35.8 -> v1.36.6+k0s.0.
+#
+# Applied by hand, NOT reconciled by Flux (see ./README.md). Same release and checksums as
+# edge-sdr-v1.36.6.yaml, which runs first. Before applying, read the "1.35 -> 1.36" and "Production"
+# sections of the runbook: Cilium must be on 1.20 first (done 2026-11-08, Flux HelmRelease), containerd drop-ins must be in v3 format,
+# and CNPG primary PDBs block drains until CNPG switches over.
+apiVersion: autopilot.k0sproject.io/v1beta2
+kind: Plan
+metadata:
+  name: autopilot
+spec:
+  id: production-k0s-v1.36.6
+  timestamp: now
+  commands:
+  - k0supdate:
+      version: v1.36.6+k0s.0
+      platforms:
+        linux-amd64:
+          url: https://github.com/k0sproject/k0s/releases/download/v1.36.6%2Bk0s.0/k0s-v1.36.6%2Bk0s.0-amd64
+          sha256: 60bac39d4ed8292adb8576a55866389cde4700f9be7d152587e15f8aa67c12fc
+      targets:
+        # Controller+worker nodes (etcd members: exactly these three). Autopilot upgrades
+        # controllers one at a time, so etcd keeps quorum (2 of 3) throughout.
+        controllers:
+          discovery:
+            static:
+              nodes:
+              - k0s-prod01.k0s.wsh.no
+              - k0s-prod02.k0s.wsh.no
+              - k0s-prod03
+        # Worker-only nodes, one at a time.
+        workers:
+          discovery:
+            static:
+              nodes:
+              - k0s-prod04
+              - k0s-prod05
+          limits:
+            concurrent: 1
