@@ -40,6 +40,7 @@ spec:
   # Pis pull new images slowly (minutes per image); don't fail the health check before they're up.
   timeout: 15m
   targetNamespace: adsb-edge-sdr
+  serviceAccountName: flux-tenant
   # Values without a default in the artifact's contract. Strings only: kustomize drops the quotes
   # around a substituted value, so a number would become a YAML int in an env value.
   postBuild:

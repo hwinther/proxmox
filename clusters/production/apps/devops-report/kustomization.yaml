@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: devops-report-production
 components:
 - ../../../../bases/netpol-baseline
+- ../../../../bases/flux-tenant
 resources:
 - namespace.yaml
 - devops-report-source.yaml

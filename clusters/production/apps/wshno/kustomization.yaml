@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: wshno-production
 components:
 - ../../../../bases/netpol-baseline
+- ../../../../bases/flux-tenant
 resources:
 - namespace.yaml
 # The site Deployment + Service (signed OCI artifact from the wshno repo).

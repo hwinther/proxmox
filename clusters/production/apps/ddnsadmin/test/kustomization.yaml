@@ -12,6 +12,7 @@ kind: Kustomization
 namespace: ddnsadmin-test
 components:
 - ../../../../../bases/netpol-baseline
+- ../../../../../bases/flux-tenant
 resources:
 - ../base
 - namespace.yaml

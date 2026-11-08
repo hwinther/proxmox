@@ -6,4 +6,5 @@ resources:
 - validatingpolicy-disallow-host-path.yaml
 - validatingpolicy-require-recommended-labels.yaml
 - validatingpolicy-flux-trusted-sources.yaml
+- validatingpolicy-flux-tenant-service-account.yaml
 - validatingpolicy-traefik-disallow-default-tlsoption.yaml

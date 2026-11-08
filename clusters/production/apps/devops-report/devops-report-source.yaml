@@ -39,3 +39,4 @@ spec:
   prune: true
   timeout: 2m
   targetNamespace: devops-report-production
+  serviceAccountName: flux-tenant

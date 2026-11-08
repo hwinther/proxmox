@@ -41,6 +41,7 @@ spec:
   wait: true
   timeout: 5m
   targetNamespace: test-test
+  serviceAccountName: flux-tenant
   # Values without a default in the artifact's contract. Strings only: kustomize drops the quotes
   # around a substituted value.
   postBuild:

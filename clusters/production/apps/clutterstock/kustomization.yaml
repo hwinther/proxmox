@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: clutterstock-production
 components:
 - ../../../../bases/netpol-baseline
+- ../../../../bases/flux-tenant
 resources:
 - namespace.yaml
 - kyverno-rbac-generate-clutterstock-pg-secret.yaml

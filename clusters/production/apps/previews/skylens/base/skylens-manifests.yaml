@@ -40,6 +40,7 @@ spec:
   wait: true
   timeout: 5m
   targetNamespace: placeholder # patched per PR
+  serviceAccountName: flux-tenant
   postBuild:
     substitute:
       APP_HOST: placeholder # patched per PR

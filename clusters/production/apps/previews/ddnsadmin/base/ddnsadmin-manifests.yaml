@@ -42,6 +42,7 @@ spec:
   # Startup does apk add + migrate + axfr + collectstatic before the pod is Ready.
   timeout: 10m
   targetNamespace: placeholder # patched per PR
+  serviceAccountName: flux-tenant
   postBuild:
     substitute:
       APP_HOST: placeholder # patched per PR

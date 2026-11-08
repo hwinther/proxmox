@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: clutterstock-test
 components:
 - ../../../../bases/netpol-baseline
+- ../../../../bases/flux-tenant
 resources:
 - namespace.yaml
 - kyverno-rbac-generate-cluttertestdb-app-secret.yaml

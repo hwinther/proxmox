@@ -43,6 +43,7 @@ spec:
   wait: true
   timeout: 5m
   targetNamespace: ddnsadmin-production
+  serviceAccountName: flux-tenant
   postBuild:
     substitute:
       APP_HOST: ddns.wsh.no

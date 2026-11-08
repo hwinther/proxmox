@@ -1,0 +1,21 @@
+# The kinds app artifacts ship today (Kustomization inventories on both clusters, 2026-11-08):
+# Deployment, Service, Ingress, ConfigMap and CronJob (sdr-toolbox). kustomize-controller needs
+# get/list/watch for diffing and health checks, create/patch/update for server-side apply, and
+# delete for pruning.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: flux-tenant
+rules:
+- apiGroups: [""]
+  resources: [configmaps, services]
+  verbs: [get, list, watch, create, update, patch, delete]
+- apiGroups: [apps]
+  resources: [deployments]
+  verbs: [get, list, watch, create, update, patch, delete]
+- apiGroups: [batch]
+  resources: [cronjobs]
+  verbs: [get, list, watch, create, update, patch, delete]
+- apiGroups: [networking.k8s.io]
+  resources: [ingresses]
+  verbs: [get, list, watch, create, update, patch, delete]

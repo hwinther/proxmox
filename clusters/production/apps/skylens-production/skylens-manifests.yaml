@@ -40,6 +40,7 @@ spec:
   wait: true
   timeout: 5m
   targetNamespace: skylens-production
+  serviceAccountName: flux-tenant
   # Values without a default in the artifact's contract. Strings only: kustomize drops the quotes
   # around a substituted value, so a number would become a YAML int in an env value.
   postBuild:
