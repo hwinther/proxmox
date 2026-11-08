@@ -34,6 +34,20 @@ spec:
         kind: HelmRepository
         name: ceph-csi
         namespace: ceph-csi-edge-sdr
+  # The chart has no value for it: raise the provisioner Deployment's progressDeadlineSeconds
+  # (default 600s) to match the 30m timeout above. On 2026-11-08 the 3.18.2 image pull took 11.5 min
+  # on radio-pi02, the Deployment went Failed at 10 min and Helm aborted the upgrade ("stalled
+  # resources") long before its own timeout.
+  postRenderers:
+  - kustomize:
+      patches:
+      - target:
+          kind: Deployment
+          name: ceph-csi-rbd-provisioner
+        patch: |
+          - op: add
+            path: /spec/progressDeadlineSeconds
+            value: 1800
   values:
     # k0s uses a non-standard kubelet path — required for volume attach/mount.
     kubeletDir: /var/lib/k0s/kubelet
