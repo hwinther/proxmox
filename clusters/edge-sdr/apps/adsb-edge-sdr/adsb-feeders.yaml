@@ -55,7 +55,7 @@ spec:
       # receiver-host readsb:30005, MLAT results back to readsb:30104. piaware writes to
       # /var/cache/piaware and /run/piaware (emptyDirs).
       - name: piaware
-        image: ghcr.io/hwinther/wsh-rtl-sdr/piaware:0.16.1@sha256:f01af20125222fb6addfb47c6cc0ecbaad0eab02cdbbd66aa088247d28d40107
+        image: ghcr.io/hwinther/wsh-rtl-sdr/piaware:0.17.0@sha256:54cd78651dbb65e1f848fb914ff5e5fbb8f4eecdcb9059c213789924408187a2
         imagePullPolicy: IfNotPresent
         securityContext:
           allowPrivilegeEscalation: false
@@ -152,7 +152,7 @@ spec:
       # settings are fr24feed's own flags. FR24_KEY comes from adsb-secret (fr24feed does not log
       # its command line). Status on :8754/monitor.json (no key in it) is the health check.
       - name: fr24
-        image: ghcr.io/hwinther/wsh-rtl-sdr/fr24:0.16.1@sha256:12e789d80f530ae808a78fcc71e3b954c05f7187a3d1c6dddc2b41dcec905b1f
+        image: ghcr.io/hwinther/wsh-rtl-sdr/fr24:0.17.0@sha256:b2e3dd2aaa0f6987a35831df5919ddc6644bb624a7f34b4c4f32792cb1b41d08
         imagePullPolicy: IfNotPresent
         args:
         - --fr24key=$(FR24_KEY)
@@ -253,7 +253,7 @@ spec:
       # beast_reduce_plus_out carries the feeder UUID (ADSBX_UUID in adsb-secret, read from a file so
       # it stays out of readsb's "invoked by" log line); the old beast_reduce_out sent none.
       - name: adsbexchange
-        image: ghcr.io/hwinther/wsh-rtl-sdr/readsb:0.16.1@sha256:99b6a09275171d8f161df7efee03e10ab4f6c53908df1afb309c3b370b961485
+        image: ghcr.io/hwinther/wsh-rtl-sdr/readsb:0.17.0@sha256:ec56343c99a7347541fc6178c2ff528805a5c42bc1c3f6f0c9f3121669b6cd1e
         imagePullPolicy: IfNotPresent
         args:
         - --net-only
@@ -374,7 +374,7 @@ spec:
       # type and serial, [IDENT] username, [INPUT] readsb:30005) and /var/lib/openskyd/conf.d,
       # where it would save a serial OpenSky assigns (an emptyDir: the serial is in the Secret).
       - name: opensky
-        image: ghcr.io/hwinther/wsh-rtl-sdr/opensky:0.16.1@sha256:4fa89321f608e8d7c5ccd9d4ac01e93ed03dca74cfe3b3170115c7f7af58de9d
+        image: ghcr.io/hwinther/wsh-rtl-sdr/opensky:0.17.0@sha256:06fc96bbd84d7af37d0ba09529fb5579c7b47928ccdaf5ff5a2e5264be620503
         imagePullPolicy: IfNotPresent
         securityContext:
           allowPrivilegeEscalation: false
