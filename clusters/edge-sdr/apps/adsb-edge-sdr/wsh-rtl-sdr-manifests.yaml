@@ -1,0 +1,49 @@
+# The ADS-B workloads (readsb + dump1090-exporter, tar1090, the feeders, adsb-mqtt) come(s) from the wsh-rtl-sdr repo as a rendered, cosign-signed OCI artifact,
+# built by its release workflow (.github/workflows/release.yml) from deploy/adsb/ (the variable
+# contract is deploy/README.md there). This directory keeps what the cluster owns: namespace, the station ConfigMap adsb-env, the out-of-band Secret adsb-secret
+# (README.md), the tar1090 Ingress and the Kyverno hostPath exception.
+#
+# One artifact feeds adsb-edge-sdr, ais-catcher-edge-sdr and sdr-debug-edge-sdr (one path each), so
+# the three OCIRepositories carry the same tag; Renovate bumps them together in one PR. The PR's
+# manifest-diff comment in wsh-rtl-sdr is where the manifest content is reviewed.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: wsh-rtl-sdr
+  namespace: adsb-edge-sdr
+spec:
+  interval: 10m
+  url: oci://ghcr.io/hwinther/wsh-rtl-sdr/manifests
+  ref:
+    tag: 0.18.0
+  # Only artifacts signed by the wsh-rtl-sdr release workflow at a version tag are applied.
+  verify:
+    provider: cosign
+    matchOIDCIdentity:
+    - issuer: ^https://token\.actions\.githubusercontent\.com$
+      subject: ^https://github\.com/hwinther/wsh-rtl-sdr/\.github/workflows/release\.yml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: wsh-rtl-sdr
+  namespace: adsb-edge-sdr
+spec:
+  interval: 10m
+  retryInterval: 2m
+  sourceRef:
+    kind: OCIRepository
+    name: wsh-rtl-sdr
+  path: ./adsb
+  prune: true
+  wait: true
+  # Pis pull new images slowly (minutes per image); don't fail the health check before they're up.
+  timeout: 15m
+  targetNamespace: adsb-edge-sdr
+  # Values without a default in the artifact's contract. Strings only: kustomize drops the quotes
+  # around a substituted value, so a number would become a YAML int in an env value.
+  postBuild:
+    substitute:
+      # mosquitto LoadBalancer VIP in the production cluster (mosquitto-production).
+      MQTT_HOST: "10.20.13.100"
+      AIS_CATCHER_URL: https://ais.edge-sdr.wsh.no

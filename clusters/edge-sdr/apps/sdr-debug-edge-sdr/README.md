@@ -1,5 +1,7 @@
 # sdr-debug-edge-sdr
 
+> **Workloads live in hwinther/wsh-rtl-sdr** (`deploy/sdr-debug/`, since 2026-11-08). They ship as the signed artifact `ghcr.io/hwinther/wsh-rtl-sdr/manifests`, applied by [`wsh-rtl-sdr-manifests.yaml`](wsh-rtl-sdr-manifests.yaml), which also holds the release tag (bumped by Renovate). Change a workload there; this directory keeps the namespace and these instructions.
+
 On-demand **sdr-toolbox** pods for testing and debugging the edge RTL-SDR dongles, and for trying
 other SDR work (433/868 MHz ISM with `rtl_433`, pagers with `multimon-ng`, `rtl_power` scans). The
 image (`ghcr.io/hwinther/wsh-rtl-sdr/sdr-toolbox`, Debian, uid 65532) has rtl-sdr, rtl_433,

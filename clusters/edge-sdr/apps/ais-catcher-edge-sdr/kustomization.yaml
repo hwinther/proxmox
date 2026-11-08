@@ -3,5 +3,5 @@ kind: Kustomization
 resources:
 - namespace.yaml
 - configmap-ais-catcher-env.yaml
-- ais-catcher-deployment.yaml
 - ingress.yaml
+- wsh-rtl-sdr-manifests.yaml

@@ -1,5 +1,7 @@
 # ADSB stack (edge-sdr)
 
+> **Workloads live in hwinther/wsh-rtl-sdr** (`deploy/adsb/`, since 2026-11-08). They ship as the signed artifact `ghcr.io/hwinther/wsh-rtl-sdr/manifests`, applied by [`wsh-rtl-sdr-manifests.yaml`](wsh-rtl-sdr-manifests.yaml), which also holds the release tag (bumped by Renovate). Change a workload there; this directory keeps the namespace, the `adsb-env` ConfigMap, the `adsb-secret` docs below, the tar1090 Ingress and the Kyverno exception.
+
 GitOps manifests for the ADS-B decoder (**readsb**, Deployment and Service `readsb`), **tar1090**, and feeders (**piaware**, **fr24**, **adsbexchange**, **opensky**) on Raspberry Pi workers. Baseline values are in ConfigMap **`adsb-env`**. Sensitive values and optional **position overrides** go in **`adsb-secret`**, which you create in the cluster (not from this repo).
 
 Each workload that needs config uses **`envFrom`**: ConfigMap **`adsb-env`** first, then Secret **`adsb-secret`** (`optional: true`). If the same variable exists in both, the **Secret** value wins.
@@ -113,12 +115,12 @@ kubectl --context EdgeSDR -n adsb-edge-sdr rollout restart deployment/tar1090
 ### Operational notes
 
 - readsb's JSON directory is the hostPath **`/run/k8s-edge-sdr/readsb`** on the node (tmpfs, so the per-second writes stay off the SD card; recreated after a reboot). readsb writes it with `--write-json-globe-index` (traces and globe files tar1090 reads its tracks from); **tar1090** and **adsb-mqtt** mount it read-only and are scheduled on the same node as **readsb** (`podAffinity`).
-- tar1090's `config.js` overrides (e.g. the AIS-catcher server for the ship layer) are the `tar1090-config` ConfigMap in `tar1090.yaml`.
+- tar1090's `config.js` overrides (e.g. the AIS-catcher server for the ship layer) are the `tar1090-config` ConfigMap in wsh-rtl-sdr `deploy/adsb/tar1090.yaml`; the AIS-catcher URL is the `AIS_CATCHER_URL` value in `wsh-rtl-sdr-manifests.yaml`.
 - Put **API keys and precise LAT/LON/ALT** in **`adsb-secret`**; keep **non-identifying defaults** in `configmap-adsb-env.yaml` if you want the repo to apply without a Secret.
 
 ## MQTT publishing
 
-[`adsb-mqtt.yaml`](adsb-mqtt.yaml) runs a small publisher (`ghcr.io/hwinther/wsh-rtl-sdr/adsb-mqtt`,
+`adsb-mqtt` (wsh-rtl-sdr `deploy/adsb/adsb-mqtt.yaml`; broker from `MQTT_HOST` in `wsh-rtl-sdr-manifests.yaml`) runs a small publisher (`ghcr.io/hwinther/wsh-rtl-sdr/adsb-mqtt`,
 built from `hwinther/wsh-rtl-sdr/images/adsb-mqtt`) that polls readsb's `aircraft.json` and
 republishes the **full snapshot** (~1 Hz) to the production Mosquitto broker for downstream apps —
 not Home Assistant. It co-locates with readsb (`podAffinity`) and reads the same shared
@@ -136,7 +138,7 @@ Non-secret settings are env on the Deployment; the password is in `adsb-mqtt-sec
 | `POLL_INTERVAL` | `1` | Seconds between snapshots. Publisher skips republishing if the blob is unchanged. |
 
 Prerequisites: (1) build the `adsb-mqtt` image in `hwinther/wsh-rtl-sdr`, then pin its tag/digest in
-[adsb-mqtt.yaml](adsb-mqtt.yaml); (2) create the `adsb` mosquitto user and the Secret:
+wsh-rtl-sdr `deploy/adsb/adsb-mqtt.yaml`; (2) create the `adsb` mosquitto user and the Secret:
 
 ```bash
 kubectl create secret generic adsb-mqtt-secret -n adsb-edge-sdr \

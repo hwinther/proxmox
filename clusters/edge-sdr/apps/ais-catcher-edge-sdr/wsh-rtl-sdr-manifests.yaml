@@ -1,0 +1,42 @@
+# The AIS-catcher Deployment and Service come(s) from the wsh-rtl-sdr repo as a rendered, cosign-signed OCI artifact,
+# built by its release workflow (.github/workflows/release.yml) from deploy/ais-catcher/ (the variable
+# contract is deploy/README.md there). This directory keeps what the cluster owns: namespace, the station ConfigMap ais-catcher-env, the out-of-band Secret
+# ais-catcher-secret (README.md) and the Ingress.
+#
+# One artifact feeds adsb-edge-sdr, ais-catcher-edge-sdr and sdr-debug-edge-sdr (one path each), so
+# the three OCIRepositories carry the same tag; Renovate bumps them together in one PR. The PR's
+# manifest-diff comment in wsh-rtl-sdr is where the manifest content is reviewed.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: wsh-rtl-sdr
+  namespace: ais-catcher-edge-sdr
+spec:
+  interval: 10m
+  url: oci://ghcr.io/hwinther/wsh-rtl-sdr/manifests
+  ref:
+    tag: 0.18.0
+  # Only artifacts signed by the wsh-rtl-sdr release workflow at a version tag are applied.
+  verify:
+    provider: cosign
+    matchOIDCIdentity:
+    - issuer: ^https://token\.actions\.githubusercontent\.com$
+      subject: ^https://github\.com/hwinther/wsh-rtl-sdr/\.github/workflows/release\.yml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: wsh-rtl-sdr
+  namespace: ais-catcher-edge-sdr
+spec:
+  interval: 10m
+  retryInterval: 2m
+  sourceRef:
+    kind: OCIRepository
+    name: wsh-rtl-sdr
+  path: ./ais-catcher
+  prune: true
+  wait: true
+  # Pis pull new images slowly (minutes per image); don't fail the health check before they're up.
+  timeout: 15m
+  targetNamespace: ais-catcher-edge-sdr
