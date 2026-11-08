@@ -1,7 +1,8 @@
 # The daily repository report from wshno/devops (.github/workflows/report.yml): index.html and
 # data.json in ConfigMap `devops-report`, shipped as the cosign-signed OCI artifact
-# ghcr.io/wshno/devops/report:latest. The workflow overwrites :latest every morning; Flux picks up
-# the new digest within the interval and kubelet swaps the mounted files in nginx (no restart).
+# ghcr.io/wshno/devops/report:latest. The workflow overwrites :latest every 6 hours (and on manual
+# runs); Flux picks up the new digest within the interval and kubelet swaps the mounted files in
+# nginx (no restart).
 #
 # Prereq (out-of-band): Secret `ghcr-pull` in this namespace, because wshno/devops is private and so
 # is its package. See devops-report-secrets.md.
@@ -10,7 +11,8 @@ kind: OCIRepository
 metadata:
   name: devops-report
 spec:
-  interval: 15m
+  # Each poll only resolves the tag's digest; the artifact is pulled (and verified) when it changes.
+  interval: 5m
   url: oci://ghcr.io/wshno/devops/report
   ref:
     tag: latest
