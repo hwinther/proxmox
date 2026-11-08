@@ -10,6 +10,36 @@ This guide is tailored for a **multi-node** k0s cluster on Proxmox VMs, using **
 
 ---
 
+## Where Cilium lives (Flux HelmRelease)
+
+Since **2026-11-08**, production Cilium is a **Flux `HelmRelease`**:
+[`clusters/production/apps/cilium/helmrelease.yaml`](../../clusters/production/apps/cilium/helmrelease.yaml)
+(release `cilium` in `kube-system`). Before that, it was a k0s Helm extension in `/etc/k0s/k0s.yaml`.
+Sections below that say "edit `k0s.yaml` and restart the leader" describe that old setup. Today the
+same change is a PR to the HelmRelease.
+
+- **Version bumps / value changes:** a PR. Dependabot watches the directory. Flux runs `helm upgrade`. A
+  `cilium-config` change still does **not** restart the agents on its own (see Rollout gotchas §2/§3),
+  so roll the operator first and then the agents when a value only applies at agent start.
+- **Rollback:** `flux suspend hr cilium -n kube-system`, then `helm -n kube-system rollback cilium <rev>`.
+  The API stays reachable on the controllers' hostNetwork (`10.20.13.11-13:6443`) even with the pod
+  network down.
+- **Safety settings:** `kustomize.toolkit.fluxcd.io/prune: disabled` (removing the file never uninstalls the
+  CNI) and `install.remediation.retries: 0`.
+- **New cluster bootstrap:** Flux needs a working CNI. Install Cilium once by hand with the HelmRelease's
+  chart version and values (`helm install cilium cilium/cilium -n kube-system --version <v> -f values.yaml`),
+  then bootstrap Flux. The HelmRelease adopts the existing release (same `releaseName`, upgrade
+  instead of install).
+
+> **Never remove a chart from k0s `spec.extensions.helm` on a running cluster expecting it to stay.**
+> k0s deletes the `Chart` CR and runs **`helm uninstall`**. Stripping the CR's
+> `helm.k0sproject.io/uninstall-helm-release` finalizer first did **not** prevent this (k0s most
+> likely re-adds it on reconcile). On 2026-11-08 this took production's Cilium down for a few minutes,
+> until it was reinstalled from a values backup. If you ever have to hand a k0s-managed chart to
+> something else, treat the removal as an outage window with the reinstall command ready.
+
+---
+
 ## 1. Plan addresses before installing
 
 | Range            | Typical default               | Check                                                                                                 |
@@ -323,7 +353,7 @@ outbound instead of the whole pod/node range. Bound per-workload with a
 egress IP/interface). This is **outbound only** — inbound to the workload is a separate path
 (LoadBalancer VIP / port-forward, see note below).
 
-### The two Helm values (already in [`k0s.yaml.example`](k0s.yaml.example))
+### The two Helm values (in the [Cilium HelmRelease](../../clusters/production/apps/cilium/helmrelease.yaml))
 
 ```yaml
 bpf:
@@ -343,6 +373,9 @@ window** and **verify every app's outbound connectivity afterwards** — treat i
 cluster-wide datapath flip (see the **Operational hard rules** below).
 
 ### Roll procedure (multi-controller) — verified sequence
+
+> **Since 2026-11-08:** steps 1–3 are now one PR changing the HelmRelease values (Flux renders
+> `cilium-config`). Steps 4 onward (operator first, then agents) still apply unchanged.
 
 This is the **actual working order** (corrected after the 2026-06-15 rollout, where the naive
 "restart each k0s node and assume it applies" approach silently did nothing — see **Rollout
@@ -395,12 +428,14 @@ renders the new `cilium-config`, but the running agents do **not** pick it up un
 Three non-obvious traps, each of which silently stalled the rollout until found. They bite in this
 order:
 
-1. **Only the leader controller renders Helm extensions, from its _own_ `/etc/k0s/k0s.yaml`.** This
+1. *(Historical: Cilium is no longer a k0s extension.)* **Only the leader controller renders Helm extensions, from its _own_ `/etc/k0s/k0s.yaml`.** This
    cluster runs **static config** (no `clusterconfig` CR — `kubectl -n kube-system get clusterconfig`
    returns `the server doesn't have a resource type`). Editing a non-leader's file and restarting it
    does **nothing**: the `Chart` CR keeps the old values, `cilium-config` never changes. The leader
-   is whoever holds the `k0s-endpoint-reconciler` lease (also `k0s-autopilot-controller`,
-   `kube-controller-manager`). Update all controllers' files; restart the leader to apply.
+   is whoever holds `kube-node-lease/k0s-endpoint-reconciler` (match the holder identity against the
+   `k0s-ctrl-<node>` leases). The `kube-controller-manager` lease holder is a **different** election
+   and can be another node: on 2026-11-08, restarting that node did nothing. Update all controllers'
+   files; restart the non-leaders, then the leader.
 2. **A `cilium-config` change does NOT restart the agents.** Cilium reads masquerade mode only at
    agent startup. `k0s stop && k0s start` on a node restarts the controller process but leaves the
    cilium **pod** running (containerd keeps it), so the dataplane stays on **IPTables** even though
@@ -440,7 +475,7 @@ from both the egress policy and the workload manifests.
 
 ## 7. Hubble Relay (stay healthy)
 
-Keep **Cilium + Hubble** values **in `k0s`’s Cilium Helm stanza** (see [`k0s.yaml.example`](k0s.yaml.example) or [`k0s.production.example.yaml`](k0s.production.example.yaml)) so upgrades do not silently strip Hubble. That file pins **`cluster.name`**, **`hubble.relay.peerService.internalTrafficPolicy: Cluster`**, and **`hubble.tls.auto`** (`method: helm`) — all of which matter for a stable **Hubble Relay**.
+Keep **Cilium + Hubble** values **in the [Cilium HelmRelease](../../clusters/production/apps/cilium/helmrelease.yaml)** so upgrades do not silently strip Hubble. It pins **`cluster.name`**, **`hubble.relay.peerService.internalTrafficPolicy: Cluster`**, and **`hubble.tls.auto`** (`method: helm`) — all of which matter for a stable **Hubble Relay**.
 
 ### TLS / `cluster-name` mismatch
 
@@ -526,7 +561,7 @@ Interpretation:
    kubectl -n kube-system delete secret hubble-server-certs hubble-relay-client-certs --ignore-not-found
    ```
 
-4. **Re-run the Cilium Helm install** so templates recreate secrets. With **k0s extensions**, that means bringing the release in sync again — for example **restart k0s on a controller** after saving `/etc/k0s/k0s.yaml`, or run the equivalent **Helm upgrade** yourself against `kube-system` using the same `values` block as in ClusterConfig. Until Helm runs again, pods may stay broken.
+4. **Re-run the Cilium Helm upgrade** so templates recreate secrets: `flux reconcile hr cilium -n kube-system --force`. Until Helm runs again, pods may stay broken.
 
 5. **Roll workloads** to load new mounts:
 
@@ -571,7 +606,7 @@ kubectl -n kube-system get svc hubble-ui
 ## 8. After CNI: CSI (Ceph) and GitOps
 
 - **Ceph CSI** is **separate** from this guide: install the driver, pools, secrets, and **`StorageClass`** after pod networking is stable — see the overview in [`README.md`](README.md) §5–7.
-- **Flux** can own **Cilium long-term** (HelmRelease) once you are comfortable repeating bootstrap; first cluster install is often **plain Helm** or k0s extensions, then migrate to GitOps if you want.
+- **Flux owns Cilium** (HelmRelease, since 2026-11-08). A new cluster needs one manual `helm install` before Flux bootstrap; see [Where Cilium lives](#where-cilium-lives-flux-helmrelease).
 
 ---
 
@@ -586,12 +621,13 @@ cross-node datapath outage. Durable rules so it doesn't repeat:
 - **Pre-flight any cluster-wide Cilium endpoint change** (`k8sServicePort` etc.): confirm
   `127.0.0.1:<port>` LISTEN on **all** nodes via `/proc/net/tcp` (hex `:1D13`=7443,
   `:192B`=6443, state `0A`) before flipping. A naive flip nearly caused a full outage.
-- **k0s helm extensions have no GitOps reconcile**: a stuck `pending-upgrade` Helm release
+- *(Resolved 2026-11-08 by moving Cilium to Flux.)* **k0s helm extensions have no GitOps reconcile**: a stuck `pending-upgrade` Helm release
   (`sh.helm.release.v1.cilium.*` secret) silently blocked Cilium upgrades for 43 days.
   Periodically check `kubectl -n kube-system get charts.helm.k0sproject.io` and those
   secret statuses.
 - **k0s static config drift is invisible**: live `/etc/k0s/k0s.yaml` had drifted from
-  `infra/k0s/k0s.yaml.example` (`k8sServicePort` 6443 vs 7443). Periodically diff live ↔ repo.
+  `infra/k0s/k0s.yaml.example` (`k8sServicePort` 6443 vs 7443). Periodically diff live ↔
+  [`production/k0s.yaml`](production/k0s.yaml) (the versioned live copy).
 - **NLLB binding depends on `/etc/hosts`**: hand-built Alpine nodes had `localhost` → `::1`,
   so the k0s node-local LB bound IPv6-only `[::1]:7443` while Cilium dials IPv4. Ensure
   `getent hosts localhost` → `127.0.0.1` on every node (cloud-init-built nodes are correct;

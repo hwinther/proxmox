@@ -1,0 +1,87 @@
+# Production controller ClusterConfig: /etc/k0s/k0s.yaml on k0s-prod01/02/03 (static config).
+#
+# Copied from the live file on 2026-11-08, after Cilium moved to Flux
+# (clusters/production/apps/cilium/helmrelease.yaml). The three controllers differ ONLY in
+# <NODE_IP> (api.address + storage.etcd.peerAddress): prod01 10.20.13.11, prod02 .12, prod03 .13.
+#
+# Rules:
+# - Change all three controllers, then restart k0s one controller at a time
+#   (scripts/k0s-reconverge-check.sh -> GO between each); keep this file in sync with them.
+# - Drift check: ssh root@<ip> cat /etc/k0s/k0s.yaml | sed 's/<ip>/<NODE_IP>/' | diff - <this file without comments>
+# - Do NOT add Helm extensions back (spec.extensions.helm). Removing a chart from this file makes
+#   k0s helm-uninstall it, even with the Chart CR finalizer stripped (took down Cilium 2026-11-08).
+# - The kubeProxy.* and kuberouter.* blocks are k0s defaults; both are inactive
+#   (kubeProxy.disabled: true, provider: custom).
+apiVersion: k0s.k0sproject.io/v1beta1
+kind: ClusterConfig
+metadata:
+  name: k0s
+  namespace: kube-system
+spec:
+  api:
+    address: <NODE_IP>
+    ca:
+      certificatesExpireAfter: 8760h0m0s
+      expiresAfter: 87600h0m0s
+    extraArgs:
+      enable-aggregator-routing: "true"
+      oidc-issuer-url: https://auth.wsh.no
+      oidc-client-id: headlamp
+      oidc-username-claim: preferred_username
+      oidc-groups-claim: groups
+    k0sApiPort: 9443
+    port: 6443
+  controllerManager: {}
+  installConfig:
+    users:
+      etcdUser: etcd
+      kineUser: kube-apiserver
+      konnectivityUser: konnectivity-server
+      kubeAPIserverUser: kube-apiserver
+      kubeSchedulerUser: kube-scheduler
+  konnectivity:
+    adminPort: 8133
+    agentPort: 8132
+  network:
+    clusterDomain: cluster.local
+    dualStack:
+      enabled: false
+    kubeProxy:
+      disabled: true
+      iptables:
+        minSyncPeriod: 0s
+        syncPeriod: 0s
+      ipvs:
+        minSyncPeriod: 0s
+        syncPeriod: 0s
+        tcpFinTimeout: 0s
+        tcpTimeout: 0s
+        udpTimeout: 0s
+      metricsBindAddress: 0.0.0.0:10249
+      mode: iptables
+      nftables:
+        minSyncPeriod: 0s
+        syncPeriod: 0s
+    kuberouter:
+      autoMTU: true
+      hairpin: Enabled
+      metricsPort: 8080
+    nodeLocalLoadBalancing:
+      enabled: true
+      envoyProxy:
+        apiServerBindPort: 7443
+        konnectivityServerBindPort: 7132
+      type: EnvoyProxy
+    podCIDR: 10.244.0.0/16
+    provider: custom
+    serviceCIDR: 10.96.0.0/12
+  scheduler: {}
+  storage:
+    etcd:
+      ca:
+        certificatesExpireAfter: 8760h0m0s
+        expiresAfter: 87600h0m0s
+      peerAddress: <NODE_IP>
+    type: etcd
+  telemetry:
+    enabled: false
