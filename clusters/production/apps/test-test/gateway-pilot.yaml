@@ -1,0 +1,85 @@
+# Gateway API pilot, side by side with the artifact's Ingress (test.test.wsh.no is untouched). Two
+# throwaway hosts on the platform Gateway (../traefik/gateway.yaml):
+# - gateway-pilot.test.wsh.no: the same paths as the Ingress, plain HTTPRoute.
+# - gateway-pilot-auth.test.wsh.no: the frontend behind Authelia via an ExtensionRef filter.
+#
+# An HTTPRoute ExtensionRef is a local reference: the Middleware must be in the route's namespace.
+# The Ingresses use the single authelia-production/authelia-forwardauth (Traefik
+# allowCrossNamespace), so this is a namespace-local copy of it. If the pilot holds, a Kyverno
+# generate policy keeps one copy per labeled namespace instead.
+#
+# Remove this file (and the namespace label, if nothing else uses it) when the app's own artifact
+# ships HTTPRoutes.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: authelia-forwardauth
+spec:
+  forwardAuth:
+    address: http://authelia.authelia-production.svc.cluster.local/api/authz/forward-auth
+    maxResponseBodySize: 1048576
+    trustForwardHeader: true
+    authResponseHeaders:
+    - Remote-User
+    - Remote-Name
+    - Remote-Email
+    - Remote-Groups
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: gateway-pilot
+spec:
+  parentRefs:
+  - name: traefik
+    namespace: traefik
+    sectionName: web
+  hostnames:
+  - gateway-pilot.test.wsh.no
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /api
+    - path:
+        type: PathPrefix
+        value: /swagger
+    - path:
+        type: PathPrefix
+        value: /hubs
+    backendRefs:
+    - name: test-api
+      port: 8080
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: test-frontend
+      port: 8080
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: gateway-pilot-auth
+spec:
+  parentRefs:
+  - name: traefik
+    namespace: traefik
+    sectionName: web
+  hostnames:
+  - gateway-pilot-auth.test.wsh.no
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    filters:
+    - type: ExtensionRef
+      extensionRef:
+        group: traefik.io
+        kind: Middleware
+        name: authelia-forwardauth
+    backendRefs:
+    - name: test-frontend
+      port: 8080

@@ -4,6 +4,14 @@
 - **`traefik-crds.yaml`** — CRDs from `helm show crds traefik/traefik --version 39.0.7`. Committed so Flux can apply `Middleware` / `IngressRoute` objects (e.g. in `observability`) in the same reconcile as this chart; without CRDs in Git, `kubectl`/Flux dry-run fails with _no matches for kind "Middleware"_ before Helm installs the chart.
 - **`traefik-helmrelease.yaml`** — HelmRelease pins chart **`39.0.7`** and uses **`install.crds: Skip`** / **`upgrade.crds: Skip`** so CRD lifecycle is owned by `traefik-crds.yaml`, not Helm.
 
+## Gateway API (migration from Ingress)
+
+- The `kubernetesGateway` provider is enabled next to the Ingress provider. The CRDs (standard channel, the version Traefik documents) are in `../gateway-api`.
+- `gateway.yaml` is the single platform Gateway `traefik/traefik`. Its listener `web` is on port 8000, which must match the `web` entryPoint.
+- App namespaces opt in with the label `gateway.wsh.no/traefik: "true"`. Routes use `parentRefs: [{name: traefik, namespace: traefik, sectionName: web}]`.
+- **ForwardAuth:** an HTTPRoute references a Middleware with an `ExtensionRef` filter (`group: traefik.io`, `kind: Middleware`). The reference is namespace-local, so the shared `authelia-production/authelia-forwardauth` that the Ingresses use can't be referenced across namespaces. Each namespace needs its own copy (see `../test-test/gateway-pilot.yaml`).
+- Pilot: `../test-test/gateway-pilot.yaml`.
+
 After upgrading the Traefik chart version, re-export CRDs and replace `traefik-crds.yaml`:
 
 ```bash

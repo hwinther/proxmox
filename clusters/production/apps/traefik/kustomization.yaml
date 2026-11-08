@@ -4,3 +4,5 @@ kind: Kustomization
 resources:
 - traefik-crds.yaml
 - traefik-helmrelease.yaml
+# Platform Gateway (Gateway API CRDs come from ../gateway-api).
+- gateway.yaml

@@ -53,6 +53,22 @@ spec:
     providers:
       kubernetesCRD:
         allowCrossNamespace: true
+      # Gateway API (HTTPRoute) next to Ingress during the migration. CRDs: ../gateway-api (standard
+      # channel only, so experimentalChannel stays off). Traefik serves the Gateway in gateway.yaml.
+      # statusAddress: the Service is ClusterIP (hostNetwork DaemonSet), so there's no LB address to
+      # copy into Gateway status.
+      kubernetesGateway:
+        enabled: true
+        statusAddress:
+          service:
+            enabled: false
+    # The chart's default Gateway is off; the platform Gateway is gateway.yaml. Keep the chart's
+    # GatewayClass (controllerName traefik.io/gateway-controller) with a fixed name.
+    gateway:
+      enabled: false
+    gatewayClass:
+      enabled: true
+      name: traefik
     # Sized from observed usage (1-2m CPU, 74-126Mi across the DaemonSet); no CPU limit
     # to avoid throttling the ingress data path.
     resources:

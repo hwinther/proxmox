@@ -12,6 +12,8 @@ resources:
 - private-apps
 # cnpg-system + postgres-* Cluster CRs: separate Flux Kustomizations (gotk-sync) so Helm installs CRDs before dry-run.
 - cert-manager
+# Gateway API CRDs (standard channel) before traefik, which serves the platform Gateway.
+- gateway-api
 - traefik
 - authelia-production
 - headlamp-production
