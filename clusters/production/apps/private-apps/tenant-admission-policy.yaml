@@ -1,0 +1,53 @@
+# Confines the flux-private-apps ServiceAccount (tenant-rbac.yaml) to namespaces labeled
+# `flux.wsh.no/tenant: private-apps`, which the private repo puts on the namespaces it creates.
+# - Namespaces: create only with the label; update or delete only one that already has it, and
+#   never remove it. So the tenant can't claim kube-system or another app's namespace.
+# - Namespaced objects: only in a namespace that carries the label.
+# - Cluster-scoped objects other than Namespaces: RBAC already limits these to the two Cilium kinds.
+#
+# A native ValidatingAdmissionPolicy rather than Kyverno: it runs in the API server and can't be
+# switched off by a Kyverno outage. It also covers kube-system, which Kyverno's resourceFilters skip.
+# matchConditions keep it from evaluating any request except the tenant's.
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: flux-private-apps-tenant-namespaces
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+    - apiGroups: ["*"]
+      apiVersions: ["*"]
+      operations: [CREATE, UPDATE, DELETE]
+      resources: ["*"]
+  matchConditions:
+  - name: private-apps-tenant
+    expression: request.userInfo.username == 'system:serviceaccount:flux-system:flux-private-apps'
+  variables:
+  - name: newTenant
+    expression: "object == null ? '' : object.metadata.?labels['flux.wsh.no/tenant'].orValue('')"
+  - name: oldTenant
+    expression: "oldObject == null ? '' : oldObject.metadata.?labels['flux.wsh.no/tenant'].orValue('')"
+  validations:
+  - expression: >-
+      request.kind.kind != 'Namespace' ||
+      (request.operation == 'CREATE' && variables.newTenant == 'private-apps') ||
+      (request.operation == 'UPDATE' && variables.oldTenant == 'private-apps' && variables.newTenant == 'private-apps') ||
+      (request.operation == 'DELETE' && variables.oldTenant == 'private-apps')
+    message: >-
+      flux-private-apps may only create, change or delete Namespaces labeled flux.wsh.no/tenant=private-apps
+      (and may not remove the label).
+  - expression: >-
+      request.kind.kind == 'Namespace' || request.namespace == '' ||
+      (namespaceObject != null &&
+       namespaceObject.metadata.?labels['flux.wsh.no/tenant'].orValue('') == 'private-apps')
+    message: >-
+      flux-private-apps may only write to namespaces labeled flux.wsh.no/tenant=private-apps.
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: flux-private-apps-tenant-namespaces
+spec:
+  policyName: flux-private-apps-tenant-namespaces
+  validationActions: [Deny]
