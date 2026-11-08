@@ -1,0 +1,70 @@
+# Identity for the private-apps Flux Kustomization (spec.serviceAccountName). kustomize-controller
+# impersonates it instead of applying the private repo with its own cluster-admin.
+#
+# RBAC can't scope a ClusterRoleBinding to namespaces chosen by label, and the private namespace
+# names stay out of this public repo, so this ClusterRole is cluster-wide. tenant-admission-policy.yaml
+# narrows the writes to namespaces labeled `flux.wsh.no/tenant: private-apps`. The kinds below are the
+# private-apps inventory (2026-11-09). Adding a kind to the private repo means adding it here first.
+#
+# Notes on what's included:
+# - secrets (all verbs), pods and pods/log (get): the private repo creates Roles with these rules, and
+#   RBAC escalation prevention only lets an identity create a Role it could grant itself.
+# - Namespaces: private-apps creates its own; the admission policy limits it to labeled ones.
+# - CiliumLoadBalancerIPPool and CiliumEgressGatewayPolicy are cluster-scoped and can't be
+#   namespace-limited. They're accepted as part of the tenant's trust.
+# - Nothing for Flux, Kyverno policies, CRDs, webhooks or cluster RBAC: those stay platform-owned.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: flux-private-apps
+  namespace: flux-system
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: flux-private-apps
+rules:
+- apiGroups: [""]
+  resources: [namespaces, configmaps, secrets, services, serviceaccounts, persistentvolumeclaims]
+  verbs: [get, list, watch, create, update, patch, delete]
+- apiGroups: [""]
+  resources: [pods, pods/log]
+  verbs: [get]
+- apiGroups: [apps]
+  resources: [deployments, statefulsets]
+  verbs: [get, list, watch, create, update, patch, delete]
+- apiGroups: [batch]
+  resources: [cronjobs]
+  verbs: [get, list, watch, create, update, patch, delete]
+- apiGroups: [networking.k8s.io]
+  resources: [ingresses]
+  verbs: [get, list, watch, create, update, patch, delete]
+- apiGroups: [rbac.authorization.k8s.io]
+  resources: [roles, rolebindings]
+  verbs: [get, list, watch, create, update, patch, delete]
+- apiGroups: [cilium.io]
+  resources: [ciliumnetworkpolicies, ciliumegressgatewaypolicies, ciliumloadbalancerippools]
+  verbs: [get, list, watch, create, update, patch, delete]
+- apiGroups: [monitoring.coreos.com]
+  resources: [podmonitors, prometheusrules, scrapeconfigs]
+  verbs: [get, list, watch, create, update, patch, delete]
+- apiGroups: [policies.kyverno.io]
+  resources: [policyexceptions]
+  verbs: [get, list, watch, create, update, patch, delete]
+- apiGroups: [traefik.io]
+  resources: [middlewares]
+  verbs: [get, list, watch, create, update, patch, delete]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: flux-private-apps
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: flux-private-apps
+subjects:
+- kind: ServiceAccount
+  name: flux-private-apps
+  namespace: flux-system
