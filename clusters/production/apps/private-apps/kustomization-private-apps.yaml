@@ -15,3 +15,6 @@ spec:
   sourceRef:
     kind: GitRepository
     name: private-apps
+  # Applied as a tenant, not as kustomize-controller's cluster-admin: tenant-rbac.yaml limits the kinds,
+  # tenant-admission-policy.yaml limits the namespaces to those labeled flux.wsh.no/tenant=private-apps.
+  serviceAccountName: flux-private-apps
