@@ -35,7 +35,9 @@ kubectl --context EdgeSDR get nodes -w                 # kubelet versions change
 ```
 
 Controllers upgrade first, then workers (`limits.concurrent: 1`). The plan is done when
-`.status.state` is `Completed`.
+`.status.state` is `Completed`. **Autopilot does not follow the order of the `nodes:` lists**: on
+2026-11-08 edge did radio-pi02 before pi01, and production did prod03, prod02, prod01, then
+prod05 before prod04. Never rely on "node X goes first"; prepare every node before applying.
 
 **Autopilot cordons and drains every node it upgrades**, controllers included: all non-DaemonSet
 pods on the node are evicted and rescheduled elsewhere, and Kubernetes does not move them back
@@ -68,8 +70,10 @@ reports `cilium-dbg version` 1.20.x. The edge cluster runs kube-router and skips
 Checked 2026-11-08: prod01–05 and edge01 have **no** drop-ins and a k0s-managed `containerd.toml`,
 so only the Pis need the swap below.
 
-containerd 1.7 can't read the v3 format, so the file can't simply be rewritten ahead of time. On
-each Pi, just **before** Autopilot reaches it (watch the Plan status; pi01 goes first):
+containerd 1.7 can't read the v3 format, so the file can't simply be rewritten ahead of time.
+On **all** Pis, **before applying the Plan** (Autopilot picks the worker order itself; on 2026-11-08
+pi02 went first while only pi01 had been prepared, and k0s 1.36 refused to start on it:
+`pre-flight checks failed ... expected 3, got 2`):
 
 ```bash
 sudo mv /etc/k0s/containerd.d/device-ownership.toml /root/device-ownership.toml.v2
@@ -92,6 +96,9 @@ kubectl -n ais-catcher-edge-sdr delete pod --field-selector spec.nodeName=<pi>
 
 Between the two steps, decoders that start as uid 65532 can't open their dongle (`usb_open error -3`).
 That's expected: those pods restart anyway during the drain.
+
+If a Pi was missed and its k0s fails the pre-flight check, write the v3 file right away (the new
+binary is already in place) and `systemctl restart k0sworker`; it comes back in about a minute.
 
 **3. ceph-csi 3.17.1 or newer** (3.17.0 is only tested up to 1.35): both clusters already run
 3.18.2 (#849, 2026-11-08), so nothing to do. 3.18's image needs x86-64-v3 (AVX2), which every k0s VM
@@ -174,6 +181,30 @@ Seen in the 2026-10-27 production run (22:12–22:25, ~13 min):
     reconcile fixed it.
   - A few pods were left in `Error` from the evictions.
   - Requests were unbalanced: prod02 at 95% CPU, prod05 at 10%.
+
+Seen in the 2026-11-08 production run (1.35.8 → 1.36.6, 17:15–17:23, ~8 min):
+
+- Order: prod03, prod02, prod01, prod05, prod04 (not the list order).
+- Cordoning the next controller early (prod01, which held all three CNPG primaries) made CNPG
+  switch every primary over before its drain, and no drain hung.
+- **Stale rbd mappings:** three RWO pods that moved during the drains (ddnsadmin production/test,
+  grafana) stuck in `ContainerCreating` on the new node with
+  `MountVolume.MountDevice failed ... rbd image ... is still being used`. The old node kept a
+  kernel rbd mapping (not mounted, no holders) because k0s/kubelet restarted before NodeUnstage.
+  Fix, per volume:
+
+  ```bash
+  # image name of the PV, then the watcher (10.20.4.1x = prod0x storage NIC), on a PVE Ceph host:
+  kubectl get pv <pv> -o jsonpath='{.spec.csi.volumeAttributes.imageName}'
+  rbd status k8s-rbd/<image>
+  # on that old node: find the device, confirm it is not mounted, unmap it
+  grep -l <image> /sys/bus/rbd/devices/*/name; grep /dev/rbd<N> /proc/mounts
+  echo <N> > /sys/bus/rbd/remove_single_major   # rbd is loaded with single_major=Y: plain `remove` gives EINVAL
+  ```
+
+  Kubelet's next retry mounts within a minute. After every run, list `ContainerCreating` pods with
+  PVCs before calling it done.
+- Requests ended at prod03 92% CPU/93% memory, prod04 3%. Rebalance as in **2. Capacity**.
 
 ## If it stalls
 
