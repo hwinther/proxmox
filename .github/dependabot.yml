@@ -58,6 +58,7 @@ updates:
   - "/clusters/edge-sdr/apps/node-exporter-edge-sdr"
   - "/clusters/edge-sdr/apps/prometheus-agent-edge-sdr"
   - "/clusters/edge-sdr/apps/sdr-device-plugin-edge-sdr"
+  - "/clusters/edge-sdr/apps/sdr-debug-edge-sdr"
   - "/clusters/edge-sdr/apps/traefik"
   - "/clusters/edge-sdr/apps/ceph-csi"
   - "/clusters/edge-sdr/apps/homepage"

@@ -1,0 +1,8 @@
+# Namespace **sdr-debug-edge-sdr**: on-demand sdr-toolbox jobs for testing and debugging the edge
+# dongles (see README.md).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sdr-debug-edge-sdr
+  labels:
+    app.kubernetes.io/part-of: sdr-debug-edge-sdr
