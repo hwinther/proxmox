@@ -37,3 +37,4 @@ spec:
   wait: true
   timeout: 5m
   targetNamespace: wshno-production
+  serviceAccountName: flux-tenant

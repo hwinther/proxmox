@@ -8,6 +8,7 @@ kind: Kustomization
 namespace: ddnsadmin-production
 components:
 - ../../../../../bases/netpol-baseline
+- ../../../../../bases/flux-tenant
 resources:
 - ../base
 - namespace.yaml

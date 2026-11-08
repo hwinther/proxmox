@@ -131,6 +131,14 @@ Kyverno keyfile-clone policy, and the source/release reference (`GitRepository` 
 `Kustomization`/`HelmRelease`). Register the app in `clusters/production/apps/kustomization.yaml` as
 today.
 
+The app's Flux `Kustomization` sets `serviceAccountName: flux-tenant`, and the namespace's
+kustomization adds the `bases/flux-tenant` component. kustomize-controller then applies the artifact
+as a namespace-local ServiceAccount, and the Role there whitelists the kinds the artifact may ship.
+That way a signed artifact can't create cluster-scoped objects or touch other namespaces. Kyverno
+policy `wsh-flux-tenant-service-account` reports any Kustomization outside flux-system that lacks
+it. When an artifact starts shipping a new kind, add that kind to `bases/flux-tenant/role.yaml`
+first.
+
 ## Cross-cutting decisions to settle
 
 - **netpol-baseline**: inline (Options 1/2), template with a values toggle (Option 3), or keep it

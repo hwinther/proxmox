@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: skylens-production
 components:
 - ../../../../bases/netpol-baseline
+- ../../../../bases/flux-tenant
 resources:
 - namespace.yaml
 - skylens-manifests.yaml

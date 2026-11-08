@@ -39,3 +39,4 @@ spec:
   # Pis pull new images slowly (minutes per image); don't fail the health check before they're up.
   timeout: 5m
   targetNamespace: sdr-debug-edge-sdr
+  serviceAccountName: flux-tenant

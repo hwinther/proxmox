@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: test-test
 components:
 - ../../../../bases/netpol-baseline
+- ../../../../bases/flux-tenant
 resources:
 - namespace.yaml
 - kyverno-rbac-generate-testdb-app-secret.yaml

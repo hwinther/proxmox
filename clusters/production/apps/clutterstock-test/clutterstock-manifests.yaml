@@ -41,6 +41,7 @@ spec:
   wait: true
   timeout: 5m
   targetNamespace: clutterstock-test
+  serviceAccountName: flux-tenant
   # Values without a default in the artifact's contract, plus test's overrides. Strings only:
   # kustomize drops the quotes around a substituted value.
   postBuild:

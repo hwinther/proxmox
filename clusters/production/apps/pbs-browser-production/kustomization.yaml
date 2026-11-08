@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: pbs-browser-production
 components:
 - ../../../../bases/netpol-baseline
+- ../../../../bases/flux-tenant
 resources:
 - namespace.yaml
 - pbs-browser-manifests.yaml

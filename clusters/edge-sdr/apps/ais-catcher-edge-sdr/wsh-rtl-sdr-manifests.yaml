@@ -40,3 +40,4 @@ spec:
   # Pis pull new images slowly (minutes per image); don't fail the health check before they're up.
   timeout: 15m
   targetNamespace: ais-catcher-edge-sdr
+  serviceAccountName: flux-tenant
