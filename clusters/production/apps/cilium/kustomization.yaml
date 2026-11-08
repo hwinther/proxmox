@@ -1,0 +1,6 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# Cilium (CNI) itself. Lives in kube-system, so no netpol-baseline component here.
+# LB-IPAM pool + L2 announcement policy stay in ../cilium-lb.
+resources:
+- helmrelease.yaml
