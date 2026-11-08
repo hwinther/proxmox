@@ -52,7 +52,7 @@ spec:
       containers:
       - name: adsb-mqtt
         # 0.10.0: distroless python (no shell), runs as 65532.
-        image: ghcr.io/hwinther/wsh-rtl-sdr/adsb-mqtt:0.16.1@sha256:202dec39f27a4c756350f36130940a0052906752212a2c368e214d9e13ab4dc0
+        image: ghcr.io/hwinther/wsh-rtl-sdr/adsb-mqtt:0.17.0@sha256:350d09b3c5479d6ddb0c2a015813afc5f1dedd4b6f48309426d779f9f9430399
         imagePullPolicy: IfNotPresent
         securityContext:
           runAsNonRoot: true

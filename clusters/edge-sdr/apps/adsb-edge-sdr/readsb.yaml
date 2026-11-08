@@ -77,7 +77,7 @@ spec:
       # command line is here. Ports: raw 30002, SBS 30003, Beast in 30004/30104 (MLAT results from
       # piaware), Beast out 30005 (the feeders).
       - name: readsb
-        image: ghcr.io/hwinther/wsh-rtl-sdr/readsb:0.16.1@sha256:99b6a09275171d8f161df7efee03e10ab4f6c53908df1afb309c3b370b961485
+        image: ghcr.io/hwinther/wsh-rtl-sdr/readsb:0.17.0@sha256:ec56343c99a7347541fc6178c2ff528805a5c42bc1c3f6f0c9f3121669b6cd1e
         imagePullPolicy: IfNotPresent
         # $(VAR) from the env below: ConfigMap then Secret. readsb prints its whole command line at
         # startup, so it gets the position rounded to 2 decimals (READSB_LAT/READSB_LON in
@@ -168,7 +168,7 @@ spec:
       # remote-written to production Prometheus, so history survives pod restarts.
       - name: dump1090-exporter
         # 0.10.0: distroless python (no shell).
-        image: ghcr.io/hwinther/wsh-rtl-sdr/dump1090-exporter:0.16.1@sha256:90b74749b43c31f896a6402c9652e7d3aad4849a1264e841955dd4189df7d3c5
+        image: ghcr.io/hwinther/wsh-rtl-sdr/dump1090-exporter:0.17.0@sha256:3159bad438d7c23685e9cb0429895e7c80f9a15b44816b8f1501296c0da0f2df
         imagePullPolicy: IfNotPresent
         # LAT/LON for the max-range calculation. Overridden with the rounded READSB_LAT/READSB_LON
         # (2 decimals, ~1 km, as receiver.json): the exporter logs its origin, and the start script
