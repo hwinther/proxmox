@@ -22,6 +22,7 @@ resources:
 # Tier-1 custom alerting (gaps not covered by kube-prometheus-stack defaults): Ceph, CNPG Postgres,
 # RabbitMQ. Labeled release=obs-kps so the operator ruleSelector picks them up.
 - prometheusrule-ceph.yaml
+- prometheusrule-cilium.yaml
 - prometheusrule-postgres-cnpg.yaml
 - prometheusrule-rabbitmq.yaml
 # Tier-2 custom alerting: Flux GitOps health (controllers are otherwise unscraped — flux-podmonitor.yaml;

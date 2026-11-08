@@ -87,8 +87,6 @@ spec:
             enabled: true
             relay:
               enabled: true
-              peerService:
-                internalTrafficPolicy: Cluster
             ui:
               enabled: true
             tls:

@@ -1,0 +1,25 @@
+# Cilium agent health. Metrics: cilium-agent :9962, scraped by cilium-podmonitors.yaml.
+# release=obs-kps so the operator ruleSelector picks it up.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: cilium
+  labels:
+    release: obs-kps
+spec:
+  groups:
+  - name: cilium
+    rules:
+    # Cilium 1.20 drift checker: how many cilium-config keys this agent has NOT applied. Many
+    # settings (masquerade mode, egress gateway, datapath mode, ...) are read only at agent start, so
+    # a ConfigMap change that isn't followed by an agent restart silently leaves the old dataplane
+    # running (2026-06-15 egress rollout: ConfigMap said BPF masquerade, agents stayed on iptables).
+    # `for: 30m` rides out a normal DaemonSet roll after a HelmRelease change.
+    - alert: CiliumConfigNotApplied
+      expr: max by (pod, instance) (cilium_drift_checker_config_delta) > 0
+      for: 30m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Cilium agent {{ $labels.pod }} runs with an outdated config"
+        description: "{{ $labels.pod }} ({{ $labels.instance }}) has {{ $value | humanize }} cilium-config key(s) it hasn't applied for >30m; the agent only reads them at start. Roll the agents (operator first if the change needs new CRDs): `kubectl -n kube-system rollout restart ds/cilium`, see infra/k0s/cilium-k0s-setup.md § Rollout gotchas."
