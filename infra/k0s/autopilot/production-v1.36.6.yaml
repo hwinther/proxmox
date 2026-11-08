@@ -2,7 +2,7 @@
 #
 # Applied by hand, NOT reconciled by Flux (see ./README.md). Same release and checksums as
 # edge-sdr-v1.36.6.yaml, which runs first. Before applying, read the "1.35 -> 1.36" and "Production"
-# sections of the runbook: Cilium must be on 1.20 first, containerd drop-ins must be in v3 format,
+# sections of the runbook: Cilium must be on 1.20 first (done 2026-11-08, Flux HelmRelease), containerd drop-ins must be in v3 format,
 # and CNPG primary PDBs block drains until CNPG switches over.
 apiVersion: autopilot.k0sproject.io/v1beta2
 kind: Plan

@@ -53,29 +53,20 @@ Expected transient states (seen in the edge-sdr run, 2026-10-27, ~14 min end to 
 Plans: `edge-sdr-v1.36.6.yaml`, then `production-v1.36.6.yaml`. Delete the completed 1.35.8 Plan in
 each cluster first (`kubectl delete plan autopilot`).
 
-**1. Cilium 1.20 before k0s 1.36 (production only).** Cilium 1.19 is only tested against Kubernetes
-1.32–1.35; 1.20 is the first release that covers 1.36 (and still covers 1.35), so upgrade Cilium
-first, on 1.35. Cilium is a k0s Helm extension (`spec.extensions.helm.charts` in
-`/etc/k0s/k0s.yaml` on prod01–03), not a Flux HelmRelease. The edge cluster runs kube-router and
-skips this step.
-
-- Go to the latest 1.19 patch first (Cilium's upgrade guide asks for it), then 1.20.x.
-- For each step, change `version:` of the `cilium` chart in `/etc/k0s/k0s.yaml` on **all three**
-  controllers, then restart `k0scontroller` on them one at a time. The leader applies the Chart CR;
-  check `kubectl -n kube-system get charts.helm.k0sproject.io k0s-addon-chart-cilium -o jsonpath='{.status.appVersion}'`
-  and `kubectl -n kube-system rollout status ds/cilium`.
-- Run Cilium's pre-flight check for 1.20 first (`helm template cilium/cilium --version <1.20.x>
-  --namespace kube-system --set preflight.enabled=true --set agent=false --set operator.enabled=false
-  --set k8sServiceHost=127.0.0.1 --set k8sServicePort=7443`), wait until the pre-flight DaemonSet is
-  fully Ready and the `cnp-validator` passes, then delete it.
-- 1.20 notes checked against our values (2026-11-07): nothing we set was renamed or removed. Policy
-  changes: no CNP uses Kafka/`l7proto` rules or `toServices`; empty CNPs are rejected on admission.
+**1. Cilium 1.20 before k0s 1.36 (production only): DONE 2026-11-08.** Cilium 1.19 is only tested
+against Kubernetes 1.32–1.35, and 1.20 is the first release that covers 1.36. Production went
+1.19.4 → 1.19.10 → 1.20.4 on 1.35, and Cilium is now a Flux HelmRelease
+(`clusters/production/apps/cilium/`, #951/#953), no longer a k0s extension. Before applying the
+Plan, just confirm: `kubectl -n kube-system get hr cilium` is Ready on chart 1.20.x and every agent
+reports `cilium-dbg version` 1.20.x. The edge cluster runs kube-router and skips this step.
 
 **2. containerd drop-ins must use the v3 format.** k0s 1.36 ships containerd 2.3 (we are on
 1.7.35). Its pre-flight refuses to start k0s when any file in `/etc/k0s/containerd.d/` has
 `version = 2` or references the old `io.containerd.grpc.v1.cri` plugin. The Pis have one:
 `device-ownership.toml` (see `../raspberry-pi-worker.md`). Check every node for others:
 `ls /etc/k0s/containerd.d/` and `head -1 /etc/k0s/containerd.toml` (must still be `# k0s_managed=true`).
+Checked 2026-11-08: prod01–05 and edge01 have **no** drop-ins and a k0s-managed `containerd.toml`,
+so only the Pis need the swap below.
 
 containerd 1.7 can't read the v3 format, so the file can't simply be rewritten ahead of time. On
 each Pi, just **before** Autopilot reaches it (watch the Plan status; pi01 goes first):
