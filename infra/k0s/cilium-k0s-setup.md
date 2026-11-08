@@ -475,7 +475,7 @@ from both the egress policy and the workload manifests.
 
 ## 7. Hubble Relay (stay healthy)
 
-Keep **Cilium + Hubble** values **in the [Cilium HelmRelease](../../clusters/production/apps/cilium/helmrelease.yaml)** so upgrades do not silently strip Hubble. It pins **`cluster.name`**, **`hubble.relay.peerService.internalTrafficPolicy: Cluster`**, and **`hubble.tls.auto`** (`method: helm`) — all of which matter for a stable **Hubble Relay**.
+Keep **Cilium + Hubble** values **in the [Cilium HelmRelease](../../clusters/production/apps/cilium/helmrelease.yaml)** so upgrades do not silently strip Hubble. It pins **`hubble.tls.auto`** (`method: helm`), which matters for a stable **Hubble Relay**; keep **`cluster.name`** consistent with the Hubble certs (see below). `hubble.relay.peerService` is **not a chart key** (1.19 and 1.20 have only `hubble.peerService.{targetPort,clusterDomain}`), so setting it never did anything; it was removed from the HelmRelease on 2026-11-08. `hubble-peer` renders with `internalTrafficPolicy: Local` and Relay is healthy with it on 1.20.4.
 
 ### TLS / `cluster-name` mismatch
 
@@ -495,7 +495,7 @@ kubectl get secret -n kube-system hubble-server-certs -o jsonpath='{.data.tls\.c
 ```bash
 kubectl -n kube-system delete secret hubble-server-certs hubble-relay-client-certs
 helm upgrade cilium cilium/cilium -n kube-system --version 1.19.4 --reuse-values \
-  --set cluster.name=default --set hubble.relay.peerService.internalTrafficPolicy=Cluster --wait
+  --set cluster.name=default --wait
 kubectl -n kube-system rollout restart ds/cilium deploy/hubble-relay
 kubectl -n kube-system patch svc hubble-peer -p '{"spec":{"internalTrafficPolicy":"Cluster"}}'
 ```
@@ -516,7 +516,7 @@ kubectl -n kube-system rollout restart deploy/hubble-relay
 
 ### Relay cannot open peer notify (Cilium 1.19.x)
 
-If Relay logs **`Failed to create peer notify client`** with **`operation not permitted`** dialing the **ClusterIP**, set the peer Service to **Cluster** policy (Helm: `hubble.relay.peerService.internalTrafficPolicy: Cluster`; or one-shot `kubectl patch svc hubble-peer -n kube-system -p '{"spec":{"internalTrafficPolicy":"Cluster"}}'`). Rare cases need a **one-time** `cleanBPFState: true` Cilium cycle — see [cilium#44891](https://github.com/cilium/cilium/issues/44891).
+If Relay logs **`Failed to create peer notify client`** with **`operation not permitted`** dialing the **ClusterIP**, set the peer Service to **Cluster** policy with a one-shot `kubectl patch svc hubble-peer -n kube-system -p '{"spec":{"internalTrafficPolicy":"Cluster"}}'`. There is no Helm value for it (see the note in §7), so every Helm upgrade puts it back to `Local`. Not needed on 1.20.4. Rare cases need a **one-time** `cleanBPFState: true` Cilium cycle — see [cilium#44891](https://github.com/cilium/cilium/issues/44891).
 
 **Always capture the full line** (Relay truncates in some UIs):
 
@@ -677,4 +677,4 @@ Blog posts (e.g. [OneUptime – Configure Cilium on k0s](https://oneuptime.com/b
 - [ ] Cilium **Ready**; basic pod + **DNS** check passed
 - [ ] **`kubectl exec`** works to pods on **every** node (Konnectivity healthy)
 - [ ] Then: Ceph CSI, then workloads / Flux
-- [ ] **Hubble:** `cluster.name` aligned with Hubble TLS; `peerService.internalTrafficPolicy: Cluster`; Relay **Ready** (`cilium status`)
+- [ ] **Hubble:** `cluster.name` aligned with Hubble TLS; Relay **Ready** (`cilium status`)

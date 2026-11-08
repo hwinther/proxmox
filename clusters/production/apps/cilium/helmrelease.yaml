@@ -66,8 +66,6 @@ spec:
         - port-distribution
       relay:
         enabled: true
-        peerService:
-          internalTrafficPolicy: Cluster
       tls:
         auto:
           enabled: true
