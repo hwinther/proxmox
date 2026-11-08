@@ -9,3 +9,4 @@ resources:
 - namespace.yaml
 - ceph-csi-rbd-helmrelease.yaml
 - cilium-ceph-csi-provisioner.yaml
+- kyverno-policyexception-hostpath.yaml

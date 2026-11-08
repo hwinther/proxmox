@@ -1,7 +1,7 @@
 # Headlamp chart initContainers copy plugins as root (chown to headlamp uid).
-# INERT while Kyverno runs with --enablePolicyException=false (both clusters): the CEL engine
-# ignores PolicyExceptions just like the legacy one did. Kept as the documented, ready-to-use carve-out
-# for the Audit ValidatingPolicy below; it takes effect if exceptions are ever enabled.
+# Active: Kyverno 1.19 applies policies.kyverno.io PolicyExceptions to the CEL ValidatingPolicy below
+# even with --enablePolicyException=false (that flag only governs the legacy kyverno.io kind); the
+# PolicyReports show "rule is skipped due to policy exception".
 apiVersion: policies.kyverno.io/v1
 kind: PolicyException
 metadata:

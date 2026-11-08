@@ -1,0 +1,18 @@
+# kube-prometheus-stack's node-exporter reads /proc, /sys and / from the host for node metrics.
+# Active: Kyverno 1.19 applies policies.kyverno.io PolicyExceptions to the CEL ValidatingPolicy below
+# even with --enablePolicyException=false (that flag only governs the legacy kyverno.io kind); the
+# PolicyReports show "rule is skipped due to policy exception".
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
+  name: node-exporter-hostpath
+  namespace: observability-production
+spec:
+  policyRefs:
+  - name: wsh-disallow-host-path
+    kind: ValidatingPolicy
+  matchConditions:
+  - name: scope
+    expression: >-
+      object.metadata.namespace == 'observability-production' &&
+      object.metadata.?labels['app.kubernetes.io/name'].orValue('') == 'prometheus-node-exporter'

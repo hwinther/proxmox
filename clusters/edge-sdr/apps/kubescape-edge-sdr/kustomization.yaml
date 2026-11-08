@@ -4,3 +4,4 @@ resources:
 - namespace-kubescape-edge-sdr.yaml
 - helmrepository.yaml
 - kubescape-operator-helmrelease.yaml
+- kyverno-policyexception-hostpath.yaml

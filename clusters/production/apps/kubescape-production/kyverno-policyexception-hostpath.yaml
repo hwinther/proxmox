@@ -1,0 +1,19 @@
+# Kubescape's node-agent (eBPF runtime detection, image SBOMs from the container runtime) and
+# host-scanner read host paths on every node.
+# Active: Kyverno 1.19 applies policies.kyverno.io PolicyExceptions to the CEL ValidatingPolicy below
+# even with --enablePolicyException=false (that flag only governs the legacy kyverno.io kind); the
+# PolicyReports show "rule is skipped due to policy exception".
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
+  name: kubescape-node-agents-hostpath
+  namespace: kubescape-production
+spec:
+  policyRefs:
+  - name: wsh-disallow-host-path
+    kind: ValidatingPolicy
+  matchConditions:
+  - name: scope
+    expression: >-
+      object.metadata.namespace == 'kubescape-production' &&
+      object.metadata.?labels['app.kubernetes.io/component'].orValue('') in ['node-agent', 'host-scanner']

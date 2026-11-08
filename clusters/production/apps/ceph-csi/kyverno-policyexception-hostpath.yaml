@@ -1,0 +1,19 @@
+# ceph-csi's nodeplugin mounts the kubelet, /dev, /sys and /lib/modules from the host to map and
+# mount RBD images, and the provisioner shares host paths from the same chart; neither works without hostPath.
+# Active: Kyverno 1.19 applies policies.kyverno.io PolicyExceptions to the CEL ValidatingPolicy below
+# even with --enablePolicyException=false (that flag only governs the legacy kyverno.io kind); the
+# PolicyReports show "rule is skipped due to policy exception".
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
+  name: ceph-csi-hostpath
+  namespace: ceph-csi-production
+spec:
+  policyRefs:
+  - name: wsh-disallow-host-path
+    kind: ValidatingPolicy
+  matchConditions:
+  - name: scope
+    expression: >-
+      object.metadata.namespace == 'ceph-csi-production' &&
+      object.metadata.?labels['app'].orValue('') == 'ceph-csi-rbd'

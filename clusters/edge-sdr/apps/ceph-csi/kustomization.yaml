@@ -3,3 +3,4 @@ kind: Kustomization
 resources:
 - namespace.yaml
 - ceph-csi-rbd-helmrelease.yaml
+- kyverno-policyexception-hostpath.yaml
