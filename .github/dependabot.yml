@@ -99,6 +99,7 @@ updates:
   - "/clusters/production/apps/cilium"
   - "/clusters/production/apps/cilium-lb"
   - "/clusters/production/apps/cnpg-system"
+  - "/clusters/production/apps/gateway-api"
   - "/clusters/production/apps/clutterstock"
   - "/clusters/production/apps/ddnsadmin"
   - "/clusters/production/apps/ddnsadmin/base"

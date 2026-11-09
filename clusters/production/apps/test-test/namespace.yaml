@@ -8,3 +8,5 @@ metadata:
     # trust-manager Bundle (../cert-manager/bundle-wsh-internal-ca.yaml) renders ConfigMap
     # wsh-internal-ca in every namespace with this label — consumed by the API in the test artifact (see test-manifests.yaml).
     wsh.no/trust-bundle: "true"
+    # May attach HTTPRoutes to the platform Gateway (../traefik/gateway.yaml).
+    gateway.wsh.no/traefik: "true"

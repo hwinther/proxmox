@@ -11,3 +11,5 @@ resources:
 - test-manifests.yaml
 - networkpolicies.yaml
 - cilium-cluster-nodes-to-http.yaml
+# Gateway API pilot next to the artifact's Ingress.
+- gateway-pilot.yaml
