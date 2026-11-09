@@ -8,7 +8,7 @@ resources:
 - namespace-headlamp-production.yaml
 - helmrepository.yaml
 - headlamp-helmrelease.yaml
-- headlamp-ingress.yaml
+- headlamp-httproute.yaml
 - kyverno-policyexception-headlamp-inits.yaml
 - kyverno-policyexception-headlamp-plugin-images.yaml
 - networkpolicies.yaml

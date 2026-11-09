@@ -14,7 +14,7 @@ resources:
 - adminer-service.yaml
 - oauth2-proxy-adminer-deployment.yaml
 - oauth2-proxy-adminer-service.yaml
-- adminer-ingress.yaml
+- adminer-httproute.yaml
 - cilium-cluster-nodes-to-adminer-http.yaml
 - cilium-networkpolicy-cnpg-apiserver.yaml
 - kyverno-generatingpolicy-clone-testdb-app.yaml

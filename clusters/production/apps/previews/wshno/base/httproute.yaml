@@ -1,0 +1,25 @@
+# Host is patched per-PR by the overlay (wshno-<N>.preview.wsh.no). the platform Gateway's web listener, because the LAN
+# nginx fronting the cluster terminates TLS with the existing *.preview.wsh.no wildcard cert.
+#
+# NOTE: previews serve the static site only — the /status page's /api/valheim/* fetch has no backend
+# here (the valheim-status service lives in wshno-production), so the widget shows "could not load".
+# That's expected; previews exist to test UI/site changes, not the live status backend.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: wshno
+spec:
+  parentRefs:
+  - name: traefik
+    namespace: traefik
+    sectionName: web
+  hostnames:
+  - wshno-preview.preview.wsh.no
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: wshno
+      port: 8080

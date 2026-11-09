@@ -1,0 +1,34 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: mqttui
+  namespace: mosquitto-production
+  annotations:
+    gethomepage.dev/href: "https://mqtt.mgmt.wsh.no/"
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: "Platform"
+    gethomepage.dev/name: "MQTT UI"
+    gethomepage.dev/siteMonitor: "https://mqtt.mgmt.wsh.no"
+    gethomepage.dev/icon: "mdi-transit-connection-variant"
+    gethomepage.dev/description: "Mosquitto broker inspector"
+spec:
+  parentRefs:
+  - name: traefik
+    namespace: traefik
+    sectionName: web
+  hostnames:
+  - mqtt.mgmt.wsh.no
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    filters:
+    - type: ExtensionRef
+      extensionRef:
+        group: traefik.io
+        kind: Middleware
+        name: authelia-forwardauth
+    backendRefs:
+    - name: mqttui
+      port: 5000

@@ -8,6 +8,6 @@ resources:
 - namespace-policy-reporter-production.yaml
 - helmrepository.yaml
 - policy-reporter-helmrelease.yaml
-- policy-reporter-ingress.yaml
+- policy-reporter-httproute.yaml
 - networkpolicies.yaml
 - cilium-cluster-nodes-to-http.yaml

@@ -1,0 +1,33 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: policy-reporter-ui
+  namespace: policy-reporter-production
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: "Observability"
+    gethomepage.dev/name: "Policy Reporter"
+    gethomepage.dev/siteMonitor: "https://policy-reporter.mgmt.wsh.no"
+    gethomepage.dev/icon: "mdi-clipboard-text-search"
+    gethomepage.dev/description: "Kyverno policy reports dashboard"
+spec:
+  parentRefs:
+  - name: traefik
+    namespace: traefik
+    sectionName: web
+  hostnames:
+  - policy-reporter.mgmt.wsh.no
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    filters:
+    - type: ExtensionRef
+      extensionRef:
+        group: traefik.io
+        kind: Middleware
+        name: authelia-forwardauth
+    backendRefs:
+    - name: policy-reporter-ui
+      port: 8080

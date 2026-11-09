@@ -39,5 +39,5 @@ resources:
 - devops-report
 - skylens-production
 - wshno
-- ingress.yaml
+- httproutes.yaml
 - hubble-ui-ingress.yaml

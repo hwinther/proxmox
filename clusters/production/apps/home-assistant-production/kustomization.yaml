@@ -7,7 +7,7 @@ components:
 resources:
 - namespace.yaml
 - home-assistant-statefulset.yaml
-- home-assistant-ingress.yaml
+- home-assistant-httproute.yaml
 - networkpolicies.yaml
 - cilium-cluster-nodes-to-http.yaml
 - cilium-node-red-to-home-assistant.yaml

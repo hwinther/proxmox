@@ -14,5 +14,5 @@ resources:
 - kyverno-rbac-generate-pbs-encryption-keyfile.yaml
 - mosquitto-pbs-backup-cronjob.yaml
 - mqttui-deployment.yaml
-- mqttui-ingress.yaml
+- mqttui-httproute.yaml
 - cilium-cluster-nodes-to-mqttui-http.yaml

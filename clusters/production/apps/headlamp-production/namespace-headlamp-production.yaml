@@ -2,5 +2,11 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: headlamp-production
+  annotations:
+    # Hostnames HTTPRoutes here may claim (traefik/httproute-hostnames-policy.yaml).
+    gateway.wsh.no/hostnames: headlamp.mgmt.wsh.no
   labels:
+    # May attach HTTPRoutes to the platform Gateway (traefik/gateway.yaml); Kyverno also puts the
+    # authelia-forwardauth Middleware here for ExtensionRef filters.
+    gateway.wsh.no/traefik: "true"
     app.kubernetes.io/part-of: production

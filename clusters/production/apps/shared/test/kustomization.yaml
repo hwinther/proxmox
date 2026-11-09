@@ -5,4 +5,4 @@ resources:
 - valkey-statefulset.yaml
 - networkpolicy-redis.yaml
 - redisinsight-deployment.yaml
-- redisinsight-ingress.yaml
+- redisinsight-httproute.yaml
