@@ -4,9 +4,9 @@ kind: Namespace
 metadata:
   name: test-test
   annotations:
-    # Hostnames HTTPRoutes here may claim (../traefik/httproute-hostnames-policy.yaml). The pilot hosts go
-    # away with gateway-pilot.yaml.
-    gateway.wsh.no/hostnames: test.test.wsh.no,gateway-pilot.test.wsh.no,gateway-pilot-auth.test.wsh.no
+    # Hostnames HTTPRoutes here may claim (../traefik/httproute-hostnames-policy.yaml); the artifact's
+    # HTTPRoute/test uses APP_HOST.
+    gateway.wsh.no/hostnames: test.test.wsh.no
   labels:
     app.kubernetes.io/part-of: test-test
     # trust-manager Bundle (../cert-manager/bundle-wsh-internal-ca.yaml) renders ConfigMap
