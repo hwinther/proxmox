@@ -37,6 +37,10 @@ spec:
       apiVersions: [v1]
       operations: [CREATE, UPDATE]
       resources: [namespaces]
+  # authelia-production holds the source Middleware (and carries the Gateway label for its own route).
+  matchConditions:
+  - name: not-the-source-namespace
+    expression: object.metadata.name != 'authelia-production'
   variables:
   - name: source
     expression: resource.get("traefik.io/v1alpha1", "middlewares", "authelia-production", "authelia-forwardauth")

@@ -86,62 +86,41 @@ spec:
     - name: obs-otel-collector
       port: 4318
 ---
-apiVersion: networking.k8s.io/v1
-kind: Ingress
+# Same-host OTLP HTTP traces: browsers POST to https://<app-host>/v1/traces, and this route sends that
+# one path to the collector :4318 (same origin, so no CORS), while each app's own HTTPRoute serves the
+# rest of its host.
+#
+# Precedence relies on Traefik's Gateway provider, which ranks by path before hostname: PathPrefix
+# /v1/traces scores 10000 + 10*100 (+ host length) against 1 (+ host length) for an app's PathPrefix /,
+# so it wins even for *.preview.wsh.no against a preview's exact host. The Gateway API spec ranks an
+# exact hostname above a wildcard; a strictly conformant implementation (e.g. Cilium) would send preview
+# /v1/traces to the app instead. Revisit this route if the Gateway controller changes.
+#
+# The hosts are other apps' hostnames, so observability-production's hostname grant lists them too.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
 metadata:
   name: otel-collector-otlp-http-app-host-traces
   namespace: observability-production
-  annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web
-    # Each app's own Ingress has a `/` catch-all on the same host. Traefik's default priority is
-    # the rule length, which let the app win against the *.preview.wsh.no HostRegexp rule (the
-    # nightly preview still got 404 on /v1/traces). An explicit priority above any rule length
-    # makes /v1/traces reach the collector on every host listed here, and only that path.
-    traefik.ingress.kubernetes.io/router.priority: "1000"
 spec:
+  parentRefs:
+  - name: traefik
+    namespace: traefik
+    sectionName: web
+  hostnames:
+  - test.test.wsh.no
+  - clutterstock.test.wsh.no
+  - clutterstock.wsh.no
+  # Every preview env (PR previews and ClutterStock's nightly).
+  - "*.preview.wsh.no"
   rules:
-  - host: test.test.wsh.no
-    http:
-      paths:
-      - path: /v1/traces
-        pathType: Prefix
-        backend:
-          service:
-            name: obs-otel-collector
-            port:
-              number: 4318
-  - host: clutterstock.test.wsh.no
-    http:
-      paths:
-      - path: /v1/traces
-        pathType: Prefix
-        backend:
-          service:
-            name: obs-otel-collector
-            port:
-              number: 4318
-  - host: clutterstock.wsh.no
-    http:
-      paths:
-      - path: /v1/traces
-        pathType: Prefix
-        backend:
-          service:
-            name: obs-otel-collector
-            port:
-              number: 4318
-  # Every preview env (PR previews and ClutterStock's nightly): their frontends send browser traces
-  # to https://<host>/v1/traces like test and production.
-  - host: "*.preview.wsh.no"
-    http:
-      paths:
-      - path: /v1/traces
-        pathType: Prefix
-        backend:
-          service:
-            name: obs-otel-collector
-            port:
-              number: 4318
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /v1/traces
+    backendRefs:
+    - name: obs-otel-collector
+      port: 4318
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute

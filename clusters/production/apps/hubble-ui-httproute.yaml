@@ -1,0 +1,52 @@
+# Hubble UI runs in kube-system, a namespace this repo doesn't own (no Gateway label, no generated
+# forward-auth Middleware there). The HTTPRoute therefore lives in platform-production and references the
+# Service across namespaces; the ReferenceGrant in kube-system allows exactly that reference.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: hubble-ui
+  namespace: platform-production
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: "Observability"
+    gethomepage.dev/name: "Hubble"
+    gethomepage.dev/siteMonitor: "https://hubble.mgmt.wsh.no"
+    gethomepage.dev/icon: "mdi-chart-timeline-variant"
+    gethomepage.dev/description: "Cilium Hubble service map & flows"
+spec:
+  parentRefs:
+  - name: traefik
+    namespace: traefik
+    sectionName: web
+  hostnames:
+  - hubble.mgmt.wsh.no
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    filters:
+    - type: ExtensionRef
+      extensionRef:
+        group: traefik.io
+        kind: Middleware
+        name: authelia-forwardauth
+    backendRefs:
+    - name: hubble-ui
+      namespace: kube-system
+      port: 80
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: platform-production-httproutes-to-hubble-ui
+  namespace: kube-system
+spec:
+  from:
+  - group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    namespace: platform-production
+  to:
+  - group: ""
+    kind: Service
+    name: hubble-ui

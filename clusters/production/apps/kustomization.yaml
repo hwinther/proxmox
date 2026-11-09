@@ -40,4 +40,4 @@ resources:
 - skylens-production
 - wshno
 - httproutes.yaml
-- hubble-ui-ingress.yaml
+- hubble-ui-httproute.yaml
