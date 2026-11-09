@@ -12,6 +12,9 @@
 # - Namespaces: private-apps creates its own; the admission policy limits it to labeled ones.
 # - CiliumLoadBalancerIPPool and CiliumEgressGatewayPolicy are cluster-scoped and can't be
 #   namespace-limited. They're accepted as part of the tenant's trust.
+# - HTTPRoutes attach to the platform Gateway once a namespace carries gateway.wsh.no/traefik=true. The
+#   tenant sets that label and the gateway.wsh.no/hostnames grant on its own namespaces, so its hostname
+#   grants are trusted (the same trust as its Namespaces).
 # - Nothing for Flux, Kyverno policies, CRDs, webhooks or cluster RBAC: those stay platform-owned.
 apiVersion: v1
 kind: ServiceAccount
@@ -39,6 +42,9 @@ rules:
   verbs: [get, list, watch, create, update, patch, delete]
 - apiGroups: [networking.k8s.io]
   resources: [ingresses]
+  verbs: [get, list, watch, create, update, patch, delete]
+- apiGroups: [gateway.networking.k8s.io]
+  resources: [httproutes]
   verbs: [get, list, watch, create, update, patch, delete]
 - apiGroups: [rbac.authorization.k8s.io]
   resources: [roles, rolebindings]
