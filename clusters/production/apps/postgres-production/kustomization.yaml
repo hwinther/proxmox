@@ -16,7 +16,7 @@ resources:
 - adminer-service.yaml
 - oauth2-proxy-adminer-deployment.yaml
 - oauth2-proxy-adminer-service.yaml
-- adminer-ingress.yaml
+- adminer-httproute.yaml
 - cilium-cluster-nodes-to-adminer-http.yaml
 - kyverno-generatingpolicy-clone-clutterstock-pg-secret.yaml
 - kyverno-generatingpolicy-clone-authelia-pg-secret.yaml

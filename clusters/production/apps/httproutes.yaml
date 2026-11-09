@@ -1,0 +1,85 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: wshno
+  namespace: wshno-production
+  annotations:
+    gethomepage.dev/href: "https://www.wsh.no/"
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: "Apps"
+    gethomepage.dev/name: "wsh.no"
+    gethomepage.dev/siteMonitor: "https://www.wsh.no"
+    gethomepage.dev/icon: "mdi-web"
+    gethomepage.dev/description: "Personal homepage (root domain)"
+spec:
+  parentRefs:
+  - name: traefik
+    namespace: traefik
+    sectionName: web
+  hostnames:
+  - wsh.no
+  - www.wsh.no
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /api/valheim
+    backendRefs:
+    - name: valheim-status
+      port: 8080
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /api/enshrouded
+    backendRefs:
+    - name: enshrouded-status
+      port: 8080
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /api/satisfactory
+    backendRefs:
+    - name: satisfactory-status
+      port: 8080
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /api/spaceengineers
+    backendRefs:
+    - name: spaceengineers-status
+      port: 8080
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: wshno
+      port: 8080
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: homepage
+  namespace: platform-production
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: "Platform"
+    gethomepage.dev/name: "Homepage"
+    gethomepage.dev/siteMonitor: "https://mgmt.wsh.no"
+    gethomepage.dev/icon: "homepage"
+    gethomepage.dev/description: "Service dashboard"
+spec:
+  parentRefs:
+  - name: traefik
+    namespace: traefik
+    sectionName: web
+  hostnames:
+  - mgmt.wsh.no
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: homepage
+      port: 3000

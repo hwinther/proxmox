@@ -13,7 +13,7 @@ resources:
 - prometheus-nodeport.yaml
 - tempo-helmrelease.yaml
 - otel-collector-helmrelease.yaml
-- observability-ingress.yaml
+- observability-routes.yaml
 - cilium-host-to-otel-otlp-http.yaml
 - kyverno-rbac-generate-grafana-pg-secret.yaml
 - kyverno-rbac-generate-pbs-encryption-keyfile.yaml

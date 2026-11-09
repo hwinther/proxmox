@@ -1,26 +1,26 @@
-apiVersion: networking.k8s.io/v1
-kind: Ingress
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
 metadata:
   name: grafana
   namespace: observability-production
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web
-    # Auto-discovery disabled — Grafana is a static tile in homepage services.yaml (the widget needs
-    # credentials, which can't live in annotations). See homepage-secrets.md.
     gethomepage.dev/enabled: "false"
-    gethomepage.dev/name: Grafana
+    gethomepage.dev/name: "Grafana"
 spec:
+  parentRefs:
+  - name: traefik
+    namespace: traefik
+    sectionName: web
+  hostnames:
+  - grafana.mgmt.wsh.no
   rules:
-  - host: grafana.mgmt.wsh.no
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: obs-kps-grafana
-            port:
-              number: 80
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: obs-kps-grafana
+      port: 80
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
@@ -49,57 +49,42 @@ spec:
     - https://test.test.wsh.no
     accessControlMaxAge: 3600
 ---
-apiVersion: networking.k8s.io/v1
-kind: Ingress
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
 metadata:
   name: otel-collector-otlp-http
   namespace: observability-production
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web
-    traefik.ingress.kubernetes.io/router.middlewares: observability-production-otel-cors@kubernetescrd
     gethomepage.dev/enabled: "true"
-    gethomepage.dev/group: Observability
-    gethomepage.dev/name: OpenTelemetry Collector
-    gethomepage.dev/siteMonitor: https://otel.mgmt.wsh.no
-    # 'opentelemetry' isn't in homepage's default (dashboard-icons) set; use the simple-icons variant.
-    gethomepage.dev/icon: si-opentelemetry
-    gethomepage.dev/description: OTLP HTTP endpoint
-    # Ingress name is not a pod label; match the OTel Helm release.
-    gethomepage.dev/pod-selector: app.kubernetes.io/instance=obs-otel-collector
+    gethomepage.dev/group: "Observability"
+    gethomepage.dev/name: "OpenTelemetry Collector"
+    gethomepage.dev/siteMonitor: "https://otel.mgmt.wsh.no"
+    gethomepage.dev/icon: "si-opentelemetry"
+    gethomepage.dev/description: "OTLP HTTP endpoint"
+    gethomepage.dev/pod-selector: "app.kubernetes.io/instance=obs-otel-collector"
 spec:
+  parentRefs:
+  - name: traefik
+    namespace: traefik
+    sectionName: web
+  hostnames:
+  - otel.mgmt.wsh.no
+  - otel.test.wsh.no
+  - otel.wsh.no
   rules:
-  - host: otel.mgmt.wsh.no
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: obs-otel-collector
-            port:
-              number: 4318
-  - host: otel.test.wsh.no
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: obs-otel-collector
-            port:
-              number: 4318
-  - host: otel.wsh.no
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: obs-otel-collector
-            port:
-              number: 4318
-
-# Same-host OTLP HTTP traces: browser POSTs to https://<app-host>/v1/traces → collector :4318 (no CORS).
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    filters:
+    - type: ExtensionRef
+      extensionRef:
+        group: traefik.io
+        kind: Middleware
+        name: otel-cors
+    backendRefs:
+    - name: obs-otel-collector
+      port: 4318
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -158,27 +143,32 @@ spec:
             port:
               number: 4318
 ---
-apiVersion: networking.k8s.io/v1
-kind: Ingress
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
 metadata:
   name: alertmanager
   namespace: observability-production
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web
-    traefik.ingress.kubernetes.io/router.middlewares: authelia-production-authelia-forwardauth@kubernetescrd
-    # Auto-discovery disabled — Alertmanager is a static tile in homepage services.yaml (customapi
-    # widget; homepage has no native alertmanager widget type).
     gethomepage.dev/enabled: "false"
-    gethomepage.dev/name: Alertmanager
+    gethomepage.dev/name: "Alertmanager"
 spec:
+  parentRefs:
+  - name: traefik
+    namespace: traefik
+    sectionName: web
+  hostnames:
+  - alertmanager.mgmt.wsh.no
   rules:
-  - host: alertmanager.mgmt.wsh.no
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: obs-kps-kube-prometheus-st-alertmanager
-            port:
-              number: 9093
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    filters:
+    - type: ExtensionRef
+      extensionRef:
+        group: traefik.io
+        kind: Middleware
+        name: authelia-forwardauth
+    backendRefs:
+    - name: obs-kps-kube-prometheus-st-alertmanager
+      port: 9093

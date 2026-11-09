@@ -35,9 +35,9 @@ patches:
       path: /spec/targetNamespace
       value: wshno-preview-pr-__PR__
 - target:
-    kind: Ingress
+    kind: HTTPRoute
     name: wshno
   patch: |-
     - op: replace
-      path: /spec/rules/0/host
+      path: /spec/hostnames/0
       value: __HOST__
