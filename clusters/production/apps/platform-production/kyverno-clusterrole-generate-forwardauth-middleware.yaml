@@ -1,0 +1,16 @@
+# Kyverno needs Traefik Middleware access for generate-forwardauth-middleware: read the source in
+# authelia-production, and write the copies in every Gateway-enabled namespace. Cluster-wide for the
+# same reason as kyverno-clusterrole-clone-pbs-encryption-keyfile.yaml (the policy webhook's SAR
+# checks a templated namespace). Aggregates into the chart's admission and background controller
+# ClusterRoles (aggregationRule labels).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kyverno-kyverno:aggregate:traefik-middlewares
+  labels:
+    rbac.kyverno.io/aggregate-to-admission-controller: "true"
+    rbac.kyverno.io/aggregate-to-background-controller: "true"
+rules:
+- apiGroups: [traefik.io]
+  resources: [middlewares]
+  verbs: [get, list, watch, create, update, patch, delete]
