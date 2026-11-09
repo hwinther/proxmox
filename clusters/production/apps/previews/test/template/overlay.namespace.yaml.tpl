@@ -2,6 +2,9 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: test-preview-pr-__PR__
+  annotations:
+    # The only hostname this preview's HTTPRoute may claim (../../../traefik/httproute-hostnames-policy.yaml).
+    gateway.wsh.no/hostnames: "__HOST__"
   labels:
     app.kubernetes.io/part-of: test
     test.wsh.no/preview: "true"

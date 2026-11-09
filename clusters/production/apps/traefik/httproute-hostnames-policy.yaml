@@ -1,0 +1,44 @@
+# Binds HTTPRoute hostnames to what the platform granted the namespace. Routes come from app artifacts,
+# whose content the app repo controls (signed, but a signature proves origin, not intent). Without this,
+# any route on the shared Gateway could claim any host, e.g. auth.wsh.no or another app's hostname,
+# and take its traffic.
+#
+# The grant is the Namespace annotation gateway.wsh.no/hostnames: a comma-separated list of exact
+# hostnames (no wildcards), set in the namespace.yaml here or in a preview template. App tenants
+# (flux-tenant) can't modify Namespaces, so they can't widen their own grant. Exception: the
+# private-apps tenant manages its own namespaces, so it is trusted with its grants.
+#
+# A route must also list hostnames. An empty list would match every host on the listener.
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: httproute-hostnames-granted
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+    - apiGroups: [gateway.networking.k8s.io]
+      apiVersions: ["*"]
+      operations: [CREATE, UPDATE]
+      resources: [httproutes]
+  variables:
+  - name: granted
+    expression: >-
+      namespaceObject.metadata.?annotations['gateway.wsh.no/hostnames'].orValue('')
+      .split(',').map(h, h.trim()).filter(h, h != '')
+  validations:
+  - expression: has(object.spec.hostnames) && size(object.spec.hostnames) > 0
+    message: >-
+      HTTPRoutes must set spec.hostnames; an empty list matches every host on the Gateway listener.
+  - expression: "!has(object.spec.hostnames) || object.spec.hostnames.all(h, h in variables.granted)"
+    messageExpression: >-
+      'spec.hostnames must be granted by the namespace annotation gateway.wsh.no/hostnames (granted: ' +
+      (size(variables.granted) == 0 ? 'none' : variables.granted.join(', ')) + ')'
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: httproute-hostnames-granted
+spec:
+  policyName: httproute-hostnames-granted
+  validationActions: [Deny]
