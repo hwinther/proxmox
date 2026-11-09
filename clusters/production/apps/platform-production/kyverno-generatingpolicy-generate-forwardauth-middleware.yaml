@@ -1,0 +1,52 @@
+# Keeps a copy of the Authelia ForwardAuth Middleware in every namespace that may attach HTTPRoutes
+# to the platform Gateway (label gateway.wsh.no/traefik=true, ../traefik/gateway.yaml).
+#
+# Why a copy per namespace: Ingresses reference the single authelia-production/authelia-forwardauth
+# across namespaces (Traefik allowCrossNamespace). An HTTPRoute ExtensionRef is a local reference, so
+# the Middleware has to be in the route's own namespace. Apps then use:
+#
+#   filters:
+#   - type: ExtensionRef
+#     extensionRef: {group: traefik.io, kind: Middleware, name: authelia-forwardauth}
+#
+# The copy is built from the source's spec only, not cloned as a whole object. That way the source's
+# Flux ownership labels don't end up on objects Flux doesn't manage. The source stays the one place
+# to edit (../authelia-production/traefik-middleware-authelia-forwardauth.yaml). Copies follow it the
+# next time the policy is evaluated for a namespace (label change or background generateExisting).
+# RBAC: kyverno-clusterrole-generate-forwardauth-middleware.yaml.
+apiVersion: policies.kyverno.io/v1
+kind: GeneratingPolicy
+metadata:
+  name: generate-forwardauth-middleware
+  annotations:
+    policies.kyverno.io/title: Authelia ForwardAuth Middleware in Gateway-enabled namespaces
+    policies.kyverno.io/category: Traefik
+    policies.kyverno.io/severity: low
+spec:
+  evaluation:
+    generateExisting:
+      enabled: true
+    synchronize:
+      enabled: true
+  matchConstraints:
+    objectSelector:
+      matchLabels:
+        gateway.wsh.no/traefik: "true"
+    resourceRules:
+    - apiGroups: [""]
+      apiVersions: [v1]
+      operations: [CREATE, UPDATE]
+      resources: [namespaces]
+  variables:
+  - name: source
+    expression: resource.get("traefik.io/v1alpha1", "middlewares", "authelia-production", "authelia-forwardauth")
+  - name: middleware
+    expression: >-
+      {
+        "apiVersion": dyn("traefik.io/v1alpha1"),
+        "kind": dyn("Middleware"),
+        "metadata": dyn({"name": "authelia-forwardauth"}),
+        "spec": dyn(variables.source.spec)
+      }
+  generate:
+  - expression: generator.apply(object.metadata.name, [variables.middleware])
