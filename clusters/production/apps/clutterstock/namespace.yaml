@@ -5,7 +5,12 @@ metadata:
   # The retired clutterstock-migrate Kustomization also listed this Namespace; keep Flux from ever
   # garbage-collecting it (and with it the PBS state and Secrets).
   annotations:
+    # Hostnames HTTPRoutes here may claim (../traefik/httproute-hostnames-policy.yaml).
+    gateway.wsh.no/hostnames: clutterstock.wsh.no
     kustomize.toolkit.fluxcd.io/prune: disabled
   labels:
+    # May attach HTTPRoutes to the platform Gateway (../traefik/gateway.yaml); Kyverno also puts the
+    # authelia-forwardauth Middleware here for ExtensionRef filters.
+    gateway.wsh.no/traefik: "true"
     app.kubernetes.io/part-of: clutterstock-production
     pbs.wsh.no/encryption-keyfile: "true"
