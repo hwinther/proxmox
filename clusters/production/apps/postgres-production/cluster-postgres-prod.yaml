@@ -35,3 +35,8 @@ spec:
       login: true
       passwordSecret:
         name: grafana-pg-secret
+    - name: romslig
+      ensure: present
+      login: true
+      passwordSecret:
+        name: romslig-pg-secret

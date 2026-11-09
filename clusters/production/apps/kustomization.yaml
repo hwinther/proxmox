@@ -38,6 +38,8 @@ resources:
 # Daily repository report from wshno/devops (signed OCI artifact, served behind Authelia).
 - devops-report
 - skylens-production
+# Signed OCI artifact from wshno/romslig (api + web), behind Authelia (group romslig-users).
+- romslig
 - wshno
 - httproutes.yaml
 - hubble-ui-httproute.yaml

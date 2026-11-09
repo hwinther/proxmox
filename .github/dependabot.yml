@@ -128,6 +128,7 @@ updates:
   - "/clusters/production/apps/pbs-browser-production"
   - "/clusters/production/apps/devops-report"
   - "/clusters/production/apps/skylens-production"
+  - "/clusters/production/apps/romslig"
   - "/clusters/production/apps/previews/clutterstock"
   - "/clusters/production/apps/previews/clutterstock/base"
   - "/clusters/production/apps/previews/clutterstock/databases"

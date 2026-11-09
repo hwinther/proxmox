@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# namespace: is required by the netpol-baseline component (its policies carry no namespace).
+namespace: romslig-production
+components:
+- ../../../../bases/netpol-baseline
+- ../../../../bases/flux-tenant
+resources:
+- namespace.yaml
+- kyverno-rbac-generate-romslig-pg-secret.yaml
+- romslig-manifests.yaml
+- romslig-pbs-backup-job.yaml
+# Restore is romslig-pbs-restore-job.yaml — apply manually so Flux does not keep a failed/duplicate restore Job.
+- networkpolicies.yaml
+- cilium-cluster-nodes-to-http.yaml

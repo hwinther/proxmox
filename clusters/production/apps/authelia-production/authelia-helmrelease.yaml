@@ -191,6 +191,14 @@ spec:
           policy: two_factor
         - domain: clutterstock.test.wsh.no
           policy: two_factor
+        # romslig: forward auth only (no OIDC client), limited to LDAP group romslig-users. The
+        # deny rule is required: default_policy is two_factor, so without it non-members would fall
+        # through to the default and get in. First match wins, so keep the group rule first.
+        - domain: romslig.wsh.no
+          policy: two_factor
+          subject: "group:romslig-users"
+        - domain: romslig.wsh.no
+          policy: deny
       authentication_backend:
         password_change:
           disable: true

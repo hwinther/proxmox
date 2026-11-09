@@ -1,7 +1,7 @@
 # netpol-baseline floor, inlined with explicit namespace rather than via the
 # bases/netpol-baseline component. The component needs the kustomization's `namespace:` directive,
 # which we cannot set here: this kustomization also carries the secret-clone RBAC/policies that
-# live in authelia-production, clutterstock-production, observability-production and kyverno, so a
+# live in authelia-production, clutterstock-production, romslig-production, observability-production and kyverno, so a
 # blanket namespace transform would wrongly re-home them.
 # Every existing pod (cnpg, adminer, oauth2-proxy) already has its own Ingress+Egress NetworkPolicy,
 # so this floor is additive hardening for any future/unlabeled pod — it changes no current traffic.

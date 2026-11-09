@@ -22,6 +22,7 @@ One logical database per application, named after the application.
 | clutterstock | `clutterstock` |
 | authelia     | `authelia`     |
 | test-api     | `test-api`     |
+| romslig      | `romslig`      |
 
 Each database is declared as a CNPG `Database` resource in the cluster namespace, in a file named `database-<appname>.yaml`.
 
@@ -34,6 +35,7 @@ One dedicated role per application, named after the application. No application 
 | clutterstock | `clutterstock` |
 | authelia     | `authelia`     |
 | test-api     | `test-api`     |
+| romslig      | `romslig`      |
 
 Roles are declared in the `Cluster` spec under `managed.roles` with `login: true` and a `passwordSecret` reference.
 
@@ -67,14 +69,17 @@ CNPG auto-generates `<cluster>-app`, `<cluster>-superuser`, `<cluster>-ca`, `<cl
 | authelia            | `postgres-prod` | `authelia` ✓            | `authelia-pg-user` → `authelia-pg-secret`      |
 | clutterstock (test) | `postgres-test` | `app` → `clutterstock`  | `cluttertestdb-app` → `clutterstock-pg-secret` |
 | test-api            | `postgres-test` | `app` → `test-api`      | `testdb-app` → `test-api-pg-secret`            |
+| romslig             | `postgres-prod` | `romslig` ✓             | `romslig-pg-secret` ✓                          |
 
 ## Summary of files per app
 
 For each application using postgres, there should be:
 
 **In `postgres-<env>onment/`:**
+
 - `database-<appname>.yaml` — CNPG `Database` resource
 - `kyverno-generatingpolicy-clone-<appname>-pg-secret.yaml` — clones the secret into the app namespace
 
 **In the application's app directory:**
+
 - `kyverno-rbac-generate-<appname>-pg-secret.yaml` — RBAC for Kyverno to write secrets in the app namespace
