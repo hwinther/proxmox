@@ -199,6 +199,18 @@ spec:
           subject: "group:romslig-users"
         - domain: romslig.wsh.no
           policy: deny
+        # romslig previews (apps/previews/romslig): romslig-<PR>.preview.wsh.no and
+        # romslig-nightly.preview.wsh.no, same group gate as production. /api/health carries no data and
+        # is how the preview workflows wait for readiness, so it bypasses (first match wins).
+        - domain_regex: '^romslig-([0-9]+|nightly)\.preview\.wsh\.no$'
+          policy: bypass
+          resources:
+          - "^/api/health$"
+        - domain_regex: '^romslig-([0-9]+|nightly)\.preview\.wsh\.no$'
+          policy: two_factor
+          subject: "group:romslig-users"
+        - domain_regex: '^romslig-([0-9]+|nightly)\.preview\.wsh\.no$'
+          policy: deny
       authentication_backend:
         password_change:
           disable: true

@@ -1,0 +1,25 @@
+# Traefik -> api and web on 8080. DNS + default-deny come from the netpol-baseline component; a preview
+# needs no other egress (no database, and the browser talks to Anthropic directly in byok mode).
+# No metadata.namespace: the per-PR overlay sets it.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: romslig-from-traefik
+spec:
+  podSelector:
+    matchExpressions:
+    - key: app
+      operator: In
+      values:
+      - romslig-api
+      - romslig-web
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: traefik
+    ports:
+    - port: 8080
+      protocol: TCP
