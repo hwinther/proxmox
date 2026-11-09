@@ -115,7 +115,7 @@ Production starts with **`AI_MODE: byok`**: each user supplies their own Anthrop
      --from-literal=api-key='<anthropic-api-key>'
    ```
 
-2. In [`romslig-manifests.yaml`](romslig-manifests.yaml), set `AI_MODE: server` and `AI_SECRET: romslig-anthropic` under `postBuild.substitute`, and merge. Egress to the internet on 443 is already allowed for `romslig-api` (`networkpolicies.yaml`).
+2. In [`romslig-manifests.yaml`](romslig-manifests.yaml), set `AI_MODE: server` under `postBuild.substitute` (`AI_SECRET` already points at `romslig-anthropic`), and merge. Egress to the internet on 443 is already allowed for `romslig-api` (`networkpolicies.yaml`).
 
 To rotate the key, replace the value and restart the API:
 
