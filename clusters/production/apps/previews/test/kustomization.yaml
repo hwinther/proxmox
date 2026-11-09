@@ -9,4 +9,3 @@ kind: Kustomization
 resources:
   - databases
   - kyverno-generatingpolicies.yaml
-  - pr-1319
