@@ -50,15 +50,21 @@ spec:
       MQTT_HOST: replay
       OTEL_EXPORTER_OTLP_ENDPOINT: http://obs-otel-collector.observability-production.svc.cluster.local:4317
   patches:
+  # Previews stay behind Authelia (the API runs in Development mode with fixtures), and get no Homepage
+  # tile. The HTTPRoute has a single rule; the preview namespace's Gateway label makes the platform
+  # generate the authelia-forwardauth Middleware there.
   - target:
-      kind: Ingress
+      kind: HTTPRoute
       name: skylens
     patch: |-
-      apiVersion: networking.k8s.io/v1
-      kind: Ingress
-      metadata:
-        name: skylens
-        annotations:
-          traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
-          traefik.ingress.kubernetes.io/router.middlewares: authelia-production-authelia-forwardauth@kubernetescrd
-          gethomepage.dev/enabled: "false"
+      - op: add
+        path: /spec/rules/0/filters
+        value:
+        - type: ExtensionRef
+          extensionRef:
+            group: traefik.io
+            kind: Middleware
+            name: authelia-forwardauth
+      - op: replace
+        path: /metadata/annotations/gethomepage.dev~1enabled
+        value: "false"
