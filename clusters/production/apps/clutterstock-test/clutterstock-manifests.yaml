@@ -60,7 +60,7 @@ spec:
       HOMEPAGE_NAME: Clutterstock (test)
   patches:
   - target:
-      kind: Ingress
+      kind: HTTPRoute
       name: clutterstock
     patch: |-
       - op: replace
