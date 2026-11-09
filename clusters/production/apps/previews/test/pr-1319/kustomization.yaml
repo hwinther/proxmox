@@ -1,0 +1,43 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: test-preview-pr-1319
+
+resources:
+- ../base
+- namespace.yaml
+
+# `labels` (vs deprecated `commonLabels`) with includeSelectors: false avoids leaking the PR label
+# into NetworkPolicy podSelectors that target peers in other namespaces (kube-dns, etc.).
+labels:
+- pairs:
+    test.wsh.no/pr: "1319"
+  includeSelectors: false
+  includeTemplates: true
+
+# pr-1319 / sha256:468eac94cb2933cbbb503a8a7324ce0ca83cfb464aaece78d75e5b814d864021 carry the MANIFEST ARTIFACT's tag (pr-<N>) and digest, not an
+# image's: the artifact pins the api and frontend images itself. The digest pins the deploy to
+# exactly what this PR run pushed after e2e + grype; the tag is kept alongside for readability
+# (`flux get sources oci`).
+patches:
+- target:
+    kind: OCIRepository
+    name: test
+  patch: |-
+    - op: replace
+      path: /spec/ref
+      value:
+        tag: "pr-1319"
+        digest: "sha256:468eac94cb2933cbbb503a8a7324ce0ca83cfb464aaece78d75e5b814d864021"
+- target:
+    kind: Kustomization
+    name: test
+  patch: |-
+    - op: replace
+      path: /spec/targetNamespace
+      value: test-preview-pr-1319
+    - op: replace
+      path: /spec/postBuild/substitute/APP_HOST
+      value: test-1319.preview.wsh.no
+    - op: replace
+      path: /spec/postBuild/substitute/PG_DB
+      value: test_pr1319
