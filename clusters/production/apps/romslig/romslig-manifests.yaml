@@ -1,0 +1,69 @@
+# romslig's API, web frontend and HTTPRoute come from the wshno/romslig repo as a rendered,
+# cosign-signed OCI artifact, built by its release workflow (container.yml, `manifests` action) from
+# deploy/ (the variable contract is deploy/README.md there). This directory keeps what the cluster
+# owns: namespace, netpols, PBS backup, and the Secrets (romslig-secrets.md).
+#
+# The artifact ships Deployments romslig-api and romslig-web (both :8080), their Services, and one
+# HTTPRoute (host ${APP_HOST}: /api -> api, / -> web), both rules filtered through the
+# authelia-forwardauth Middleware Kyverno copies into this namespace. Access is limited to the LDAP
+# group romslig-users by the romslig.wsh.no rules in ../authelia-production/authelia-helmrelease.yaml.
+#
+# Promotion: romslig has no promote.yml yet, so there is no approval-gated co-signature to pin to
+# like ../clutterstock. Until there is, this follows the newest release automatically (ref.semver,
+# like ../clutterstock-test): a `v*` tag lands here within ~10 minutes with no PR. Once romslig gets
+# a promote.yml, switch to an exact `ref.tag` + the promote.yml@refs/heads/main identity.
+#
+# Prereqs (out-of-band, see romslig-secrets.md): `romslig-pg-secret` in postgres-production (cloned
+# in here by Kyverno), `romslig-pbs-backup`, LDAP group `romslig-users`; optionally
+# `romslig-anthropic` for AI_MODE=server.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: romslig
+spec:
+  interval: 10m
+  url: oci://ghcr.io/wshno/romslig/manifests
+  ref:
+    semver: ">=0.0.0"
+  # Only artifacts signed by the romslig release workflow at a version tag are applied. The
+  # workflow runs on `v*` tag pushes, so the certificate's ref is refs/tags/v*, never a branch.
+  verify:
+    provider: cosign
+    matchOIDCIdentity:
+    - issuer: ^https://token\.actions\.githubusercontent\.com$
+      subject: ^https://github\.com/wshno/romslig/\.github/workflows/container\.yml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: romslig
+spec:
+  interval: 10m
+  sourceRef:
+    kind: OCIRepository
+    name: romslig
+  path: ./
+  prune: true
+  wait: true
+  timeout: 5m
+  targetNamespace: romslig-production
+  serviceAccountName: flux-tenant
+  # Values without a default in the artifact's contract. Strings only: kustomize drops the quotes
+  # around a substituted value.
+  postBuild:
+    substitute:
+      APP_HOST: romslig.wsh.no
+      APP_ENVIRONMENT: production
+      PG_HOST: postgres-prod-rw.postgres-production.svc.cluster.local
+      PG_DB: romslig
+      PG_USER: romslig
+      PG_SECRET: romslig-pg-secret
+      ALLOWED_GROUP: romslig-users
+      # byok: users bring their own Anthropic key, the API holds none. To proxy with a server-held
+      # key instead, create Secret romslig-anthropic (key api-key, see romslig-secrets.md) and set
+      # AI_MODE: server. The secret reference is optional, so it may be missing in byok mode, but
+      # its name must not be empty (Kubernetes rejects an empty secretKeyRef name).
+      AI_MODE: byok
+      AI_SECRET: romslig-anthropic
+      CSP_MODE: report-only
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://obs-otel-collector.observability-production.svc.cluster.local:4317

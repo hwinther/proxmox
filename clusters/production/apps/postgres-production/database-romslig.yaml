@@ -1,0 +1,13 @@
+# romslig application database on the production CNPG cluster.
+# Owned by the managed `romslig` role declared in cluster-postgres-prod.yaml; see
+# romslig-pg-secret for the role password (cloned by Kyverno into romslig-production).
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: romslig
+  namespace: postgres-production
+spec:
+  cluster:
+    name: postgres-prod
+  name: romslig
+  owner: romslig

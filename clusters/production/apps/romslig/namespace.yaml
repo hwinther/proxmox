@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: romslig-production
+  annotations:
+    # Hostnames HTTPRoutes here may claim (../traefik/httproute-hostnames-policy.yaml).
+    gateway.wsh.no/hostnames: romslig.wsh.no
+    # Keep Flux from ever garbage-collecting the namespace (and with it the PBS state and Secrets).
+    kustomize.toolkit.fluxcd.io/prune: disabled
+  labels:
+    # May attach HTTPRoutes to the platform Gateway (../traefik/gateway.yaml); Kyverno also puts the
+    # authelia-forwardauth Middleware here for ExtensionRef filters.
+    gateway.wsh.no/traefik: "true"
+    app.kubernetes.io/part-of: romslig-production
+    pbs.wsh.no/encryption-keyfile: "true"

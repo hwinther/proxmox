@@ -97,7 +97,8 @@ spec:
     expression: >-
       {
         'ghcr.io/hwinther/wsh-rtl-sdr/': 'https://github.com/hwinther/wsh-rtl-sdr',
-        'ghcr.io/wshno/': 'https://github.com/wshno/wshno',
+        'ghcr.io/wshno/wshno/': 'https://github.com/wshno/wshno',
+        'ghcr.io/wshno/romslig/': 'https://github.com/wshno/romslig',
         'ghcr.io/hwinther/clutterstock/': 'https://github.com/hwinther/ClutterStock',
         'ghcr.io/hwinther/skylens/': 'https://github.com/hwinther/skylens',
         'ghcr.io/hwinther/pbs-browser/': 'https://github.com/hwinther/pbs-browser',

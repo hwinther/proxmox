@@ -48,6 +48,16 @@ kubectl -n observability-production rollout restart deployment obs-kps-grafana
 
 The schema is created on first boot. Existing UI-only state (UI-created dashboards, user accounts, alert rules, annotations) does **not** migrate from the old SQLite — file-provisioned dashboards reload from their ConfigMaps, and Authelia OAuth re-creates user accounts on first login.
 
+## romslig
+
+CNPG managed role **`romslig`** owns the **`romslig`** database (declared in `database-romslig.yaml`) on cluster **`postgres-prod`**.
+
+Secret **`romslig-pg-secret`** is created manually (referenced by `passwordSecret` on the managed role) and cloned by Kyverno into **`romslig-production`** for the API and the PBS backup/restore Jobs. The app's other secrets are listed in [`../romslig/romslig-secrets.md`](../romslig/romslig-secrets.md).
+
+```bash
+kubectl create secret generic romslig-pg-secret   --from-literal=password=<password>   -n postgres-production
+```
+
 ## Adminer + OIDC
 
 **oauth2-proxy** in front of Adminer; Authelia OIDC public client **`adminer-pg-prod`** (PKCE, `two_factor`) in [`../authelia-production/authelia-helmrelease.yaml`](../authelia-production/authelia-helmrelease.yaml). Ingress **`https://adminer-pg-prod.mgmt.wsh.no`**. Default server **`postgres-prod-rw.postgres-production.svc.cluster.local`**.
