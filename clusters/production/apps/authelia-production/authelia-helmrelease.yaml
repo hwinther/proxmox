@@ -77,10 +77,11 @@ spec:
             path: storage.encryption.key
           - key: storage.postgres.password.txt
             path: storage.postgres.password.txt
+    # With gatewayAPI enabled the chart renders an HTTPRoute (no Ingress) on the platform Gateway; the
+    # annotations below go on that HTTPRoute (Homepage tile).
     ingress:
       enabled: true
       annotations:
-        traefik.ingress.kubernetes.io/router.entrypoints: web
         gethomepage.dev/enabled: "true"
         gethomepage.dev/group: Platform
         gethomepage.dev/name: Authelia
@@ -90,6 +91,14 @@ spec:
       rulesOverride:
       - host: auth.wsh.no
         path: /
+      gatewayAPI:
+        enabled: true
+        hostnamesOverride:
+        - auth.wsh.no
+        parentRefs:
+        - name: traefik
+          namespace: traefik
+          sectionName: web
     configMap:
       theme: auto
       ntp:

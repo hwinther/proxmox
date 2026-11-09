@@ -6,7 +6,7 @@ metadata:
   name: platform-production
   annotations:
     # Hostnames HTTPRoutes here may claim (traefik/httproute-hostnames-policy.yaml).
-    gateway.wsh.no/hostnames: mgmt.wsh.no
+    gateway.wsh.no/hostnames: mgmt.wsh.no,hubble.mgmt.wsh.no
   labels:
     # May attach HTTPRoutes to the platform Gateway (traefik/gateway.yaml); Kyverno also puts the
     # authelia-forwardauth Middleware here for ExtensionRef filters.
