@@ -1,5 +1,6 @@
 # The kinds app artifacts ship today (Kustomization inventories on both clusters, 2026-11-08):
-# Deployment, Service, Ingress, ConfigMap and CronJob (sdr-toolbox). kustomize-controller needs
+# Deployment, Service, Ingress, ConfigMap and CronJob (sdr-toolbox), plus HTTPRoute as artifacts move
+# from Ingress to the platform Gateway (clusters/production/apps/traefik/gateway.yaml). kustomize-controller needs
 # get/list/watch for diffing and health checks, create/patch/update for server-side apply, and
 # delete for pruning. The health check (`wait: true`) also reads ReplicaSets and Pods: the status
 # poller derives a Deployment's readiness from them, and without read access it stays Unknown until
@@ -20,6 +21,9 @@ rules:
   verbs: [get, list, watch, create, update, patch, delete]
 - apiGroups: [networking.k8s.io]
   resources: [ingresses]
+  verbs: [get, list, watch, create, update, patch, delete]
+- apiGroups: [gateway.networking.k8s.io]
+  resources: [httproutes]
   verbs: [get, list, watch, create, update, patch, delete]
 - apiGroups: [""]
   resources: [pods]

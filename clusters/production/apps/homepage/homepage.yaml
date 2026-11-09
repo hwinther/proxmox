@@ -30,6 +30,8 @@ data:
   kubernetes.yaml: |
     mode: cluster
     ingress: true
+    # HTTPRoutes on the platform Gateway (gethomepage.dev annotations work the same as on Ingress).
+    gateway: true
   settings.yaml: |
     title: Production Management
     favicon: https://gethomepage.dev/favicon.ico
@@ -254,6 +256,14 @@ rules:
   - get
   - list
 - apiGroups:
+  - gateway.networking.k8s.io
+  resources:
+  - httproutes
+  - gateways
+  verbs:
+  - get
+  - list
+- apiGroups:
   - metrics.k8s.io
   resources:
   - nodes
@@ -293,6 +303,10 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: homepage
+      annotations:
+        # The config files are subPath mounts of the homepage ConfigMap, which never update in a running
+        # pod. Bump this when kubernetes.yaml/settings.yaml change and the change must apply right away.
+        wsh.no/config-revision: "2026-11-09-gateway"
     spec:
       serviceAccountName: homepage
       automountServiceAccountToken: true
