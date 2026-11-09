@@ -11,7 +11,7 @@
 - App namespaces opt in with the label `gateway.wsh.no/traefik: "true"`. Routes use `parentRefs: [{name: traefik, namespace: traefik, sectionName: web}]`.
 - **ForwardAuth:** an HTTPRoute references a Middleware with an `ExtensionRef` filter (`group: traefik.io`, `kind: Middleware`). The reference is namespace-local, so the shared `authelia-production/authelia-forwardauth` that the Ingresses use can't be referenced across namespaces. Kyverno therefore generates a copy named `authelia-forwardauth` in every namespace with the opt-in label (`../platform-production/kyverno-generatingpolicy-generate-forwardauth-middleware.yaml`). The source stays in authelia-production.
 - **Hostnames:** `httproute-hostnames-policy.yaml` (ValidatingAdmissionPolicy) only admits an HTTPRoute whose `spec.hostnames` are all listed in the namespace annotation `gateway.wsh.no/hostnames` (comma-separated, exact). Routes without hostnames are rejected too. To onboard an app, add the label and this annotation to its `namespace.yaml`.
-- Pilot: `../test-test/gateway-pilot.yaml`.
+- First app on it: test (`deploy/httproute.yaml` in hwinther/test, v0.78.0). ForwardAuth usage example: the comment in `../platform-production/kyverno-generatingpolicy-generate-forwardauth-middleware.yaml`.
 
 After upgrading the Traefik chart version, re-export CRDs and replace `traefik-crds.yaml`:
 
