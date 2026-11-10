@@ -1,0 +1,15 @@
+# Keeps a preview's projects (JSON files and plan images under /data in the API pod) across
+# redeploys. Without it every push to the PR wiped what testers had made, and an editor still open
+# then failed with 404s. The volume lives in the preview namespace, so tearing the preview down
+# (namespace deleted) deletes it too; ceph-rbd's reclaim policy is Delete.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: romslig-data
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: ceph-rbd
+  resources:
+    requests:
+      storage: 1Gi

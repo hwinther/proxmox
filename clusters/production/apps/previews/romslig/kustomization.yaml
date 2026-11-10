@@ -4,7 +4,8 @@
 # wshno/romslig, and around its nightly-preview.yml run.
 #
 # No `databases` entry and no kyverno-generatingpolicies: a romslig preview runs without PostgreSQL
-# (PG_HOST empty, so the API keeps projects in its file store inside the pod) and in byok AI mode (no
+# (PG_HOST empty, so the API keeps projects in its file store on a small per-preview volume,
+# base/data-volume.yaml) and in byok AI mode (no
 # Anthropic key), so it needs no database, no secret and no pull credential (the GHCR packages
 # ghcr.io/wshno/romslig/* are public). Starts empty; the workflow's `yq` creates/extends the
 # resources list as previews are deployed.
