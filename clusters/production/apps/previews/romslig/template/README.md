@@ -9,7 +9,9 @@ substitutes them with `sed`.
 | `overlay.kustomization.yaml.tpl` | `../pr-<N>/kustomization.yaml` | Per-PR kustomize overlay |
 | `overlay.namespace.yaml.tpl`     | `../pr-<N>/namespace.yaml`     | Per-PR Namespace         |
 
-There is no `database.yaml.tpl`: a romslig preview has no database (see `../kustomization.yaml`).
+There is no `database.yaml.tpl`: a romslig preview has no database (see `../kustomization.yaml`). It
+keeps projects in a file store on a 1 GiB volume (`../base/data-volume.yaml`), so they survive a new
+push to the PR, and go away with the preview.
 
 Placeholders the workflow replaces:
 

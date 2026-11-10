@@ -4,7 +4,8 @@
 # (same render as a release, PR images pinned) and signs. The per-PR overlay pins the artifact by
 # digest and sets targetNamespace and APP_HOST.
 #
-# Compared to production (../../../romslig/romslig-manifests.yaml): no PG_* (file store in the pod),
+# Compared to production (../../../romslig/romslig-manifests.yaml): no PG_* (file store on the
+# romslig-data volume from data-volume.yaml, so projects survive a redeploy),
 # byok AI, CSP enforced, no homepage tile. Access is limited to LDAP group romslig-users by the
 # romslig-<N>.preview.wsh.no rules in ../../../authelia-production/authelia-helmrelease.yaml, and
 # again by ALLOWED_GROUP in the API.
@@ -58,3 +59,24 @@ spec:
       - op: replace
         path: /metadata/annotations/gethomepage.dev~1enabled
         value: "false"
+  # The file store on a volume that outlives the pod. Recreate, because the ReadWriteOnce volume can
+  # only be attached to one pod: a rolling update would leave the new pod waiting for it.
+  - target:
+      kind: Deployment
+      name: romslig-api
+    patch: |-
+      - op: replace
+        path: /spec/strategy
+        value:
+          type: Recreate
+      - op: add
+        path: /spec/template/spec/volumes
+        value:
+        - name: data
+          persistentVolumeClaim:
+            claimName: romslig-data
+      - op: add
+        path: /spec/template/spec/containers/0/volumeMounts
+        value:
+        - name: data
+          mountPath: /data
