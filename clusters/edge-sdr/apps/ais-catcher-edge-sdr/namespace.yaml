@@ -3,5 +3,10 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: ais-catcher-edge-sdr
+  annotations:
+    # Hostnames HTTPRoutes here may claim (bases/traefik-gateway/httproute-hostnames-policy.yaml).
+    gateway.wsh.no/hostnames: ais.edge-sdr.wsh.no
   labels:
+    # May attach HTTPRoutes to the platform Gateway (bases/traefik-gateway/gateway.yaml).
+    gateway.wsh.no/traefik: "true"
     app.kubernetes.io/part-of: ais-catcher-edge-sdr

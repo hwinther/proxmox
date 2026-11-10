@@ -4,5 +4,10 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: adsb-edge-sdr
+  annotations:
+    # Hostnames HTTPRoutes here may claim (bases/traefik-gateway/httproute-hostnames-policy.yaml).
+    gateway.wsh.no/hostnames: tar1090.edge-sdr.wsh.no
   labels:
+    # May attach HTTPRoutes to the platform Gateway (bases/traefik-gateway/gateway.yaml).
+    gateway.wsh.no/traefik: "true"
     app.kubernetes.io/part-of: adsb-edge-sdr

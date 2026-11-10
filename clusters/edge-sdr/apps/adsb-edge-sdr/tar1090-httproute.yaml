@@ -1,0 +1,26 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: tar1090
+  namespace: adsb-edge-sdr
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: "Applications"
+    gethomepage.dev/name: "tar1090 (edge / Pi)"
+    gethomepage.dev/icon: "mdi-airplane"
+    gethomepage.dev/description: "ADS-B map; pairs with readsb on the same node (shared hostPath)"
+spec:
+  parentRefs:
+  - name: traefik
+    namespace: traefik
+    sectionName: web
+  hostnames:
+  - tar1090.edge-sdr.wsh.no
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: tar1090
+      port: 80

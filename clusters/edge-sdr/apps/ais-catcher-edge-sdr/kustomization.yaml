@@ -7,5 +7,5 @@ components:
 resources:
 - namespace.yaml
 - configmap-ais-catcher-env.yaml
-- ingress.yaml
+- httproute.yaml
 - wsh-rtl-sdr-manifests.yaml

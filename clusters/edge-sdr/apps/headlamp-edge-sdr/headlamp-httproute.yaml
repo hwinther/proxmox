@@ -1,0 +1,33 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: headlamp
+  namespace: headlamp-edge-sdr
+  annotations:
+    gethomepage.dev/href: "https://headlamp.mgmt-edge-sdr.wsh.no/"
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: "Management"
+    gethomepage.dev/name: "Headlamp"
+    gethomepage.dev/icon: "mdi-view-dashboard-variant"
+    gethomepage.dev/description: "Kubernetes UI with Flux GitOps plugin"
+spec:
+  parentRefs:
+  - name: traefik
+    namespace: traefik
+    sectionName: web
+  hostnames:
+  - headlamp.mgmt-edge-sdr.wsh.no
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    filters:
+    - type: ExtensionRef
+      extensionRef:
+        group: traefik.io
+        kind: Middleware
+        name: authelia-forwardauth
+    backendRefs:
+    - name: headlamp
+      port: 80

@@ -7,6 +7,6 @@ components:
 resources:
 - namespace.yaml
 - configmap-adsb-env.yaml
-- tar1090-ingress.yaml
+- tar1090-httproute.yaml
 - kyverno-policyexception-hostpath.yaml
 - wsh-rtl-sdr-manifests.yaml

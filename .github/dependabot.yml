@@ -55,6 +55,7 @@ updates:
   - "/clusters/edge-sdr/apps/adsb-edge-sdr"
   - "/clusters/edge-sdr/apps/ais-catcher-edge-sdr"
   - "/clusters/edge-sdr/apps/fluent-bit-edge-sdr"
+  - "/clusters/edge-sdr/apps/gateway-api"
   - "/clusters/edge-sdr/apps/node-exporter-edge-sdr"
   - "/clusters/edge-sdr/apps/prometheus-agent-edge-sdr"
   - "/clusters/edge-sdr/apps/sdr-device-plugin-edge-sdr"

@@ -4,3 +4,9 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: platform-edge-sdr
+  annotations:
+    # Hostnames HTTPRoutes here may claim (bases/traefik-gateway/httproute-hostnames-policy.yaml).
+    gateway.wsh.no/hostnames: mgmt-edge-sdr.wsh.no
+  labels:
+    # May attach HTTPRoutes to the platform Gateway (bases/traefik-gateway/gateway.yaml).
+    gateway.wsh.no/traefik: "true"

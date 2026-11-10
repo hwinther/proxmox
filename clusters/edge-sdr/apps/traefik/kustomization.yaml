@@ -4,3 +4,5 @@ kind: Kustomization
 resources:
 - traefik-crds.yaml
 - traefik-helmrelease.yaml
+# Platform Gateway + HTTPRoute hostname policy, shared with production (CRDs: ../gateway-api).
+- ../../../../bases/traefik-gateway

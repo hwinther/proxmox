@@ -6,11 +6,11 @@ metadata:
   # Kustomization also listed this Namespace; prune: disabled keeps any Flux garbage collection
   # (that one's, or a future move) from deleting it.
   annotations:
-    # Hostnames HTTPRoutes here may claim (../traefik/httproute-hostnames-policy.yaml).
+    # Hostnames HTTPRoutes here may claim (bases/traefik-gateway/httproute-hostnames-policy.yaml).
     gateway.wsh.no/hostnames: clutterstock.test.wsh.no
     kustomize.toolkit.fluxcd.io/prune: disabled
   labels:
-    # May attach HTTPRoutes to the platform Gateway (../traefik/gateway.yaml); Kyverno also puts the
+    # May attach HTTPRoutes to the platform Gateway (bases/traefik-gateway/gateway.yaml); Kyverno also puts the
     # authelia-forwardauth Middleware here for ExtensionRef filters.
     gateway.wsh.no/traefik: "true"
     app.kubernetes.io/part-of: clutterstock-test

@@ -4,5 +4,5 @@ resources:
 - namespace-headlamp-edge-sdr.yaml
 - helmrepository.yaml
 - headlamp-helmrelease.yaml
-- headlamp-ingress.yaml
+- headlamp-httproute.yaml
 - traefik-middleware-authelia-forwardauth.yaml

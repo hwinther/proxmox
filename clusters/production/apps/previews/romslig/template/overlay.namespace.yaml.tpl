@@ -3,10 +3,10 @@ kind: Namespace
 metadata:
   name: romslig-preview-pr-__PR__
   annotations:
-    # The only hostname this preview's HTTPRoute may claim (../../../traefik/httproute-hostnames-policy.yaml).
+    # The only hostname this preview's HTTPRoute may claim (bases/traefik-gateway/httproute-hostnames-policy.yaml).
     gateway.wsh.no/hostnames: "__HOST__"
   labels:
-    # May attach HTTPRoutes to the platform Gateway (../../../traefik/gateway.yaml); Kyverno also puts the
+    # May attach HTTPRoutes to the platform Gateway (bases/traefik-gateway/gateway.yaml); Kyverno also puts the
     # authelia-forwardauth Middleware here for the HTTPRoute's ExtensionRef filters.
     gateway.wsh.no/traefik: "true"
     app.kubernetes.io/part-of: romslig

@@ -1,6 +1,5 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-## Gateway API CRDs (standard channel) for Traefik's kubernetesGateway provider. Must exist before
-## traefik/gateway.yaml and any HTTPRoute. See README.md for the version and how to bump it.
+## Gateway API CRDs (standard channel), shared base. Must exist before the Gateway and any HTTPRoute.
 resources:
-- standard-install.yaml
+- ../../../../bases/gateway-api

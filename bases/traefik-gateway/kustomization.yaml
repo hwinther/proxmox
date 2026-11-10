@@ -1,0 +1,8 @@
+# The platform Gateway and its HTTPRoute hostname policy, shared by both clusters. Each cluster's
+# Traefik HelmRelease enables the kubernetesGateway provider and the GatewayClass `traefik`; the `web`
+# entryPoint (port 8000) must match the Gateway listener.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- gateway.yaml
+- httproute-hostnames-policy.yaml

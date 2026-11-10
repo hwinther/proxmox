@@ -2,6 +2,8 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
 - namespace-platform-edge-sdr.yaml
+# Gateway API CRDs (standard channel) before traefik, which serves the platform Gateway.
+- gateway-api
 - traefik
 - ceph-csi
 - kubescape-edge-sdr
@@ -16,4 +18,4 @@ resources:
 - fluent-bit-edge-sdr
 - node-exporter-edge-sdr
 - prometheus-agent-edge-sdr
-- ingress.yaml
+- httproutes.yaml

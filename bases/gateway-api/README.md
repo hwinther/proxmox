@@ -1,4 +1,4 @@
-# Gateway API CRDs (production)
+# Gateway API CRDs (both clusters)
 
 `standard-install.yaml` is the upstream **standard channel** bundle, **v1.6.3**, unmodified:
 `https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.3/standard-install.yaml`.
@@ -12,13 +12,14 @@ Leave the Traefik provider's `experimentalChannel` off: turning it on without th
 stops the Gateway provider from serving anything. HTTPRoute is standard.
 
 Cilium also implements Gateway API, but `gatewayAPI.enabled` is not set in
-`../cilium/helmrelease.yaml`. Keep it that way so only Traefik reconciles Gateways.
+`clusters/production/apps/cilium/helmrelease.yaml` (edge-sdr has no Cilium). Keep it that way so only Traefik reconciles Gateways.
 
 Bump (together with a Traefik bump that documents the new version):
 
 ```bash
-curl -sSLo clusters/production/apps/gateway-api/standard-install.yaml \
+curl -sSLo bases/gateway-api/standard-install.yaml \
   https://github.com/kubernetes-sigs/gateway-api/releases/download/<version>/standard-install.yaml
 ```
 
-The platform Gateway is `traefik/traefik` in `../traefik/gateway.yaml`.
+Used by `clusters/production/apps/gateway-api` and `clusters/edge-sdr/apps/gateway-api`. The platform
+Gateway is `traefik/traefik` in `../traefik-gateway/gateway.yaml`.
