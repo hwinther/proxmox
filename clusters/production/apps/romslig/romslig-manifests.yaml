@@ -65,5 +65,6 @@ spec:
       # its name must not be empty (Kubernetes rejects an empty secretKeyRef name).
       AI_MODE: byok
       AI_SECRET: romslig-anthropic
-      CSP_MODE: report-only
+      # Enforced, like the previews: the nightly preview passes its e2e suite under this policy.
+      CSP_MODE: enforce
       OTEL_EXPORTER_OTLP_ENDPOINT: http://obs-otel-collector.observability-production.svc.cluster.local:4317
