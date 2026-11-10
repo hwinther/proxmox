@@ -4,7 +4,5 @@ kind: Kustomization
 resources:
 - traefik-crds.yaml
 - traefik-helmrelease.yaml
-# Platform Gateway + HTTPRoute hostname policy, shared with edge-sdr (CRDs: ../gateway-api).
+# Platform Gateway, HTTPRoute hostname policy and IngressRoute ban, shared with edge-sdr (CRDs: ../gateway-api).
 - ../../../../bases/traefik-gateway
-# No IngressRoutes (they would bypass the hostname grants too).
-- traefik-ingressroute-policy.yaml

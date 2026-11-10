@@ -6,7 +6,7 @@
 
 ## Gateway API (the only way in)
 
-The Ingress provider and the chart's IngressClass are off, and `traefik-ingressroute-policy.yaml` refuses Traefik IngressRoutes. Both would expose hosts past the HTTPRoute hostname grants. Production has no Ingress since 2026-11-09. Every app has an HTTPRoute on `traefik/traefik`.
+The Ingress provider and the chart's IngressClass are off, and `bases/traefik-gateway/traefik-ingressroute-policy.yaml` refuses Traefik IngressRoutes (on both clusters). Both would expose hosts past the HTTPRoute hostname grants. Production has no Ingress since 2026-11-09. Every app has an HTTPRoute on `traefik/traefik`.
 
 
 - The `kubernetesGateway` provider is enabled next to the Ingress provider. The CRDs (standard channel, the version Traefik documents) are in `../gateway-api`.

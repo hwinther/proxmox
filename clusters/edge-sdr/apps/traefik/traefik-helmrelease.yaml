@@ -67,13 +67,20 @@ spec:
     # Gateway API (HTTPRoute), as in production. CRDs: ../gateway-api (standard channel only, so
     # experimentalChannel stays off). The Gateway comes from bases/traefik-gateway. statusAddress: the
     # Service is ClusterIP (hostNetwork DaemonSet), so there's no LB address for Gateway status.
+    # Gateway API is the only way in, as in production: the Ingress provider would serve any Ingress past
+    # the HTTPRoute hostname grants, so it's off along with the chart's (default) IngressClass.
+    # IngressRoutes are refused by bases/traefik-gateway/traefik-ingressroute-policy.yaml.
     providers:
+      kubernetesIngress:
+        enabled: false
       kubernetesGateway:
         enabled: true
         statusAddress:
           service:
             enabled: false
     gateway:
+      enabled: false
+    ingressClass:
       enabled: false
     gatewayClass:
       enabled: true
