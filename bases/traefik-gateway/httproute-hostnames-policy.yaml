@@ -4,7 +4,8 @@
 # and take its traffic.
 #
 # The grant is the Namespace annotation gateway.wsh.no/hostnames: a comma-separated list of exact
-# hostnames (no wildcards), set in the namespace.yaml here or in a preview template. App tenants
+# hostnames (a wildcard entry matches only the same literal wildcard), set in the namespace.yaml or a
+# preview template. App tenants
 # (flux-tenant) can't modify Namespaces, so they can't widen their own grant. Exception: the
 # private-apps tenant manages its own namespaces, so it is trusted with its grants.
 #

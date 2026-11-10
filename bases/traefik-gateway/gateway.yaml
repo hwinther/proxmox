@@ -1,12 +1,12 @@
 # The platform Gateway: one per cluster, owned here. Apps attach HTTPRoutes to it (parentRefs
 # traefik/traefik, sectionName web) the same way they use ingressClassName: traefik today.
 #
-# Listener `web` must equal Traefik's `web` entryPoint port (8000, traefik-helmrelease.yaml), or
+# Listener `web` must equal Traefik's `web` entryPoint port (8000, each cluster's traefik-helmrelease.yaml), or
 # Traefik logs an error and leaves the Gateway unprogrammed. TLS terminates in front of Traefik
 # (OPNsense/abyss), as it does for the Ingresses, so there's no HTTPS listener.
 #
 # Only namespaces labeled gateway.wsh.no/traefik=true may attach routes. That label is the platform's
-# opt-in per app namespace, set in the namespace.yaml here.
+# opt-in per app namespace, set in its namespace.yaml.
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:

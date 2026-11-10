@@ -4,4 +4,4 @@ resources:
 - namespace-policy-reporter-edge-sdr.yaml
 - helmrepository.yaml
 - policy-reporter-helmrelease.yaml
-- policy-reporter-ingress.yaml
+- policy-reporter-httproute.yaml

@@ -4,9 +4,7 @@ kind: Kustomization
 resources:
 - traefik-crds.yaml
 - traefik-helmrelease.yaml
-# Platform Gateway (Gateway API CRDs come from ../gateway-api).
-- gateway.yaml
-# HTTPRoute hostnames must be granted by the namespace (gateway.wsh.no/hostnames).
-- httproute-hostnames-policy.yaml
+# Platform Gateway + HTTPRoute hostname policy, shared with edge-sdr (CRDs: ../gateway-api).
+- ../../../../bases/traefik-gateway
 # No IngressRoutes (they would bypass the hostname grants too).
 - traefik-ingressroute-policy.yaml

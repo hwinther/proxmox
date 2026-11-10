@@ -64,6 +64,20 @@ spec:
         maxUnavailable: 1
         maxSurge: 0
     hostNetwork: true
+    # Gateway API (HTTPRoute), as in production. CRDs: ../gateway-api (standard channel only, so
+    # experimentalChannel stays off). The Gateway comes from bases/traefik-gateway. statusAddress: the
+    # Service is ClusterIP (hostNetwork DaemonSet), so there's no LB address for Gateway status.
+    providers:
+      kubernetesGateway:
+        enabled: true
+        statusAddress:
+          service:
+            enabled: false
+    gateway:
+      enabled: false
+    gatewayClass:
+      enabled: true
+      name: traefik
     # Sized from observed usage (1m CPU, 52Mi); memory-limited for the 2vCPU/low-RAM Pis,
     # no CPU limit to avoid throttling the ingress data path.
     resources:

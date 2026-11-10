@@ -4,7 +4,7 @@ kind: Namespace
 metadata:
   name: test-test
   annotations:
-    # Hostnames HTTPRoutes here may claim (../traefik/httproute-hostnames-policy.yaml); the artifact's
+    # Hostnames HTTPRoutes here may claim (bases/traefik-gateway/httproute-hostnames-policy.yaml); the artifact's
     # HTTPRoute/test uses APP_HOST.
     gateway.wsh.no/hostnames: test.test.wsh.no
   labels:
@@ -12,5 +12,5 @@ metadata:
     # trust-manager Bundle (../cert-manager/bundle-wsh-internal-ca.yaml) renders ConfigMap
     # wsh-internal-ca in every namespace with this label — consumed by the API in the test artifact (see test-manifests.yaml).
     wsh.no/trust-bundle: "true"
-    # May attach HTTPRoutes to the platform Gateway (../traefik/gateway.yaml).
+    # May attach HTTPRoutes to the platform Gateway (bases/traefik-gateway/gateway.yaml).
     gateway.wsh.no/traefik: "true"

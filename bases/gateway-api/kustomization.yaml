@@ -1,0 +1,6 @@
+# Gateway API CRDs (standard channel) for Traefik's kubernetesGateway provider, shared by both clusters.
+# See README.md for the version and how to bump it.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- standard-install.yaml

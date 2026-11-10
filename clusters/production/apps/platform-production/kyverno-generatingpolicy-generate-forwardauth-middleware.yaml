@@ -1,5 +1,5 @@
 # Keeps a copy of the Authelia ForwardAuth Middleware in every namespace that may attach HTTPRoutes
-# to the platform Gateway (label gateway.wsh.no/traefik=true, ../traefik/gateway.yaml).
+# to the platform Gateway (label gateway.wsh.no/traefik=true, bases/traefik-gateway/gateway.yaml).
 #
 # Why a copy per namespace: Ingresses reference the single authelia-production/authelia-forwardauth
 # across namespaces (Traefik allowCrossNamespace). An HTTPRoute ExtensionRef is a local reference, so

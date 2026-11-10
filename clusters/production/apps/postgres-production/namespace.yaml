@@ -3,10 +3,10 @@ kind: Namespace
 metadata:
   name: postgres-production
   annotations:
-    # Hostnames HTTPRoutes here may claim (traefik/httproute-hostnames-policy.yaml).
+    # Hostnames HTTPRoutes here may claim (bases/traefik-gateway/httproute-hostnames-policy.yaml).
     gateway.wsh.no/hostnames: adminer-pg-prod.mgmt.wsh.no
   labels:
-    # May attach HTTPRoutes to the platform Gateway (traefik/gateway.yaml); Kyverno also puts the
+    # May attach HTTPRoutes to the platform Gateway (bases/traefik-gateway/gateway.yaml); Kyverno also puts the
     # authelia-forwardauth Middleware here for ExtensionRef filters.
     gateway.wsh.no/traefik: "true"
     app.kubernetes.io/part-of: postgres-production

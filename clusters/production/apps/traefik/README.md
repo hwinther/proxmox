@@ -10,7 +10,7 @@ The Ingress provider and the chart's IngressClass are off, and `traefik-ingressr
 
 
 - The `kubernetesGateway` provider is enabled next to the Ingress provider. The CRDs (standard channel, the version Traefik documents) are in `../gateway-api`.
-- `gateway.yaml` is the single platform Gateway `traefik/traefik`. Its listener `web` is on port 8000, which must match the `web` entryPoint.
+- `bases/traefik-gateway/gateway.yaml` is the single platform Gateway `traefik/traefik`. Its listener `web` is on port 8000, which must match the `web` entryPoint.
 - App namespaces opt in with the label `gateway.wsh.no/traefik: "true"`. Routes use `parentRefs: [{name: traefik, namespace: traefik, sectionName: web}]`.
 - **ForwardAuth:** an HTTPRoute references a Middleware with an `ExtensionRef` filter (`group: traefik.io`, `kind: Middleware`). The reference is namespace-local, so the shared `authelia-production/authelia-forwardauth` that the Ingresses use can't be referenced across namespaces. Kyverno therefore generates a copy named `authelia-forwardauth` in every namespace with the opt-in label (`../platform-production/kyverno-generatingpolicy-generate-forwardauth-middleware.yaml`). The source stays in authelia-production.
 - **Hostnames:** `httproute-hostnames-policy.yaml` (ValidatingAdmissionPolicy) only admits an HTTPRoute whose `spec.hostnames` are all listed in the namespace annotation `gateway.wsh.no/hostnames` (comma-separated, exact). Routes without hostnames are rejected too. To onboard an app, add the label and this annotation to its `namespace.yaml`.
