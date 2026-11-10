@@ -13,3 +13,4 @@ kind: Kustomization
 resources:
   - pr-19
   - pr-24
+  - pr-nightly
