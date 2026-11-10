@@ -1,0 +1,60 @@
+# The preview workload (Deployments + Services romslig-api and romslig-web, HTTPRoute romslig with the
+# authelia-forwardauth filter) comes from the PR's manifest artifact,
+# ghcr.io/wshno/romslig/manifests:pr-<N>, which romslig's pr-e2e.yml renders from the PR's deploy/
+# (same render as a release, PR images pinned) and signs. The per-PR overlay pins the artifact by
+# digest and sets targetNamespace and APP_HOST.
+#
+# Compared to production (../../../romslig/romslig-manifests.yaml): no PG_* (file store in the pod),
+# byok AI, CSP enforced, no homepage tile. Access is limited to LDAP group romslig-users by the
+# romslig-<N>.preview.wsh.no rules in ../../../authelia-production/authelia-helmrelease.yaml, and
+# again by ALLOWED_GROUP in the API.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: romslig
+spec:
+  interval: 10m
+  url: oci://ghcr.io/wshno/romslig/manifests
+  ref:
+    tag: placeholder # patched per PR (tag + digest)
+  # Only artifacts signed by romslig's PR workflow, on a PR or on main (manifests:main-<sha7>, for the
+  # nightly preview env). Production accepts container.yml at release tags only, so neither can be
+  # promoted there.
+  verify:
+    provider: cosign
+    matchOIDCIdentity:
+    - issuer: ^https://token\.actions\.githubusercontent\.com$
+      subject: ^https://github\.com/wshno/romslig/\.github/workflows/pr-e2e\.yml@refs/(pull/[0-9]+/merge|heads/main)$
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: romslig
+spec:
+  interval: 10m
+  retryInterval: 1m
+  sourceRef:
+    kind: OCIRepository
+    name: romslig
+  path: ./
+  prune: true
+  wait: true
+  timeout: 5m
+  targetNamespace: placeholder # patched per PR
+  serviceAccountName: flux-tenant
+  # Strings only: kustomize drops the quotes around a substituted value.
+  postBuild:
+    substitute:
+      APP_HOST: placeholder # patched per PR
+      APP_ENVIRONMENT: preview
+      ALLOWED_GROUP: romslig-users
+      AI_MODE: byok
+      CSP_MODE: enforce
+  patches:
+  - target:
+      kind: HTTPRoute
+      name: romslig
+    patch: |-
+      - op: replace
+        path: /metadata/annotations/gethomepage.dev~1enabled
+        value: "false"

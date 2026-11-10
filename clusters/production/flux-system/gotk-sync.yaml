@@ -65,6 +65,21 @@ spec:
     kind: GitRepository
     name: flux-system
 ---
+# Per-PR ephemeral preview envs for romslig (wshno/romslig), plus its nightly preview. No database and
+# no cloned secrets (file store in the pod, byok AI), so no cnpg or kyverno dependency.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: previews-romslig
+  namespace: flux-system
+spec:
+  interval: 1m0s
+  path: ./clusters/production/apps/previews/romslig
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+---
 # Per-PR ephemeral preview envs for pbs-browser. Runs the REAL client against PBS, so it clones the
 # PBS creds Secret + encryption keyfile per-PR via Kyverno — dependsOn kyverno so the ClusterPolicy
 # CRD is installed before this tree applies on first bootstrap.

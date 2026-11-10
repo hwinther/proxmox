@@ -1,0 +1,14 @@
+# Shared kustomize base for romslig PR preview environments. Every per-PR overlay under ../pr-<N>/
+# references this base. Resources here intentionally have no metadata.namespace so the overlay's
+# namespace: directive populates it. The workload (api, web, HTTPRoute) comes from the PR's signed
+# manifest artifact (romslig-manifests.yaml); this base keeps what the cluster owns: the network
+# policies. No egress beyond DNS: no database, and AI calls go from the browser (byok).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+components:
+- ../../../../../../bases/netpol-baseline
+- ../../../../../../bases/flux-tenant
+resources:
+- romslig-manifests.yaml
+- networkpolicies.yaml
+- cilium-cluster-nodes-to-http.yaml
