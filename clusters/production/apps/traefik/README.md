@@ -4,7 +4,10 @@
 - **`traefik-crds.yaml`** — CRDs from `helm show crds traefik/traefik --version 39.0.7`. Committed so Flux can apply `Middleware` / `IngressRoute` objects (e.g. in `observability`) in the same reconcile as this chart; without CRDs in Git, `kubectl`/Flux dry-run fails with _no matches for kind "Middleware"_ before Helm installs the chart.
 - **`traefik-helmrelease.yaml`** — HelmRelease pins chart **`39.0.7`** and uses **`install.crds: Skip`** / **`upgrade.crds: Skip`** so CRD lifecycle is owned by `traefik-crds.yaml`, not Helm.
 
-## Gateway API (migration from Ingress)
+## Gateway API (the only way in)
+
+The Ingress provider and the chart's IngressClass are off, and `traefik-ingressroute-policy.yaml` refuses Traefik IngressRoutes. Both would expose hosts past the HTTPRoute hostname grants. Production has no Ingress since 2026-11-09. Every app has an HTTPRoute on `traefik/traefik`.
+
 
 - The `kubernetesGateway` provider is enabled next to the Ingress provider. The CRDs (standard channel, the version Traefik documents) are in `../gateway-api`.
 - `gateway.yaml` is the single platform Gateway `traefik/traefik`. Its listener `web` is on port 8000, which must match the `web` entryPoint.

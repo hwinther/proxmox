@@ -8,3 +8,5 @@ resources:
 - gateway.yaml
 # HTTPRoute hostnames must be granted by the namespace (gateway.wsh.no/hostnames).
 - httproute-hostnames-policy.yaml
+# No IngressRoutes (they would bypass the hostname grants too).
+- traefik-ingressroute-policy.yaml

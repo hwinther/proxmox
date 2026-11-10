@@ -47,14 +47,19 @@ spec:
         maxUnavailable: 1
         maxSurge: 0
     hostNetwork: true
-    # Single-tenant cluster: allow Ingress/IngressRoute in any namespace to reference
-    # Middlewares in other namespaces (used for the canonical authelia-forwardauth in
-    # authelia-production instead of a per-namespace copy).
+    # Gateway API is the only way in. HTTPRoute hostnames are bound to namespace grants
+    # (httproute-hostnames-policy.yaml), and the Ingress provider would serve any Ingress (with this
+    # class or none) past that check, so it's off, together with the chart's IngressClass.
+    # kubernetesCRD stays for the Middlewares that HTTPRoutes reference through ExtensionRef filters.
+    # ExtensionRef is always namespace-local, so no cross-namespace Middleware references.
+    # IngressRoutes are refused by traefik-ingressroute-policy.yaml.
     providers:
+      kubernetesIngress:
+        enabled: false
       kubernetesCRD:
-        allowCrossNamespace: true
-      # Gateway API (HTTPRoute) next to Ingress during the migration. CRDs: ../gateway-api (standard
-      # channel only, so experimentalChannel stays off). Traefik serves the Gateway in gateway.yaml.
+        allowCrossNamespace: false
+      # CRDs: ../gateway-api (standard channel only, so experimentalChannel stays off). Traefik serves
+      # the Gateway in gateway.yaml.
       # statusAddress: the Service is ClusterIP (hostNetwork DaemonSet), so there's no LB address to
       # copy into Gateway status.
       kubernetesGateway:
@@ -65,6 +70,8 @@ spec:
     # The chart's default Gateway is off; the platform Gateway is gateway.yaml. Keep the chart's
     # GatewayClass (controllerName traefik.io/gateway-controller) with a fixed name.
     gateway:
+      enabled: false
+    ingressClass:
       enabled: false
     gatewayClass:
       enabled: true
