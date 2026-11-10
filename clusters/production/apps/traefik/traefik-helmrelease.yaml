@@ -52,7 +52,7 @@ spec:
     # class or none) past that check, so it's off, together with the chart's IngressClass.
     # kubernetesCRD stays for the Middlewares that HTTPRoutes reference through ExtensionRef filters.
     # ExtensionRef is always namespace-local, so no cross-namespace Middleware references.
-    # IngressRoutes are refused by traefik-ingressroute-policy.yaml.
+    # IngressRoutes are refused by bases/traefik-gateway/traefik-ingressroute-policy.yaml.
     providers:
       kubernetesIngress:
         enabled: false
