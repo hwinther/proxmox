@@ -1,0 +1,30 @@
+# Traefik's own routing CRDs (IngressRoute, IngressRouteTCP, IngressRouteUDP) are served by the
+# kubernetesCRD provider, which stays on for Middlewares. Like an Ingress, they would expose a host past
+# the HTTPRoute hostname grants (httproute-hostnames-policy.yaml), so nobody may create them; routes
+# go through the platform Gateway. UPDATE and DELETE stay allowed, so a stray object can still be
+# cleaned up.
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: deny-traefik-ingressroutes
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+    - apiGroups: [traefik.io]
+      apiVersions: ["*"]
+      operations: [CREATE]
+      resources: [ingressroutes, ingressroutetcps, ingressrouteudps]
+  validations:
+  - expression: "false"
+    message: >-
+      Traefik IngressRoutes are not allowed: expose services with an HTTPRoute on the platform Gateway
+      (traefik/traefik), whose hostnames the namespace must grant (gateway.wsh.no/hostnames).
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: deny-traefik-ingressroutes
+spec:
+  policyName: deny-traefik-ingressroutes
+  validationActions: [Deny]
