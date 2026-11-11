@@ -1,7 +1,8 @@
 name: Publish esp-poller container to GHCR
 
-# Manual-only trigger: this image isn't tied to GitVersion releases, just
-# rebuild when poller.py or its deps change.
+# This image isn't tied to GitVersion releases. It rebuilds on every merge that touches the image
+# (poller.py, requirements.txt, Dependabot's base-image digest bumps), publishing :<version>-<sha>,
+# and can still be dispatched by hand.
 on:
     workflow_dispatch:
         inputs:
@@ -9,6 +10,10 @@ on:
                 description: "Fail the build if Grype finds vulnerabilities"
                 type: boolean
                 default: true
+    push:
+        branches: [main]
+        paths:
+            - "images/esp-poller/**"
 
 permissions:
     contents: read
