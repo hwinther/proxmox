@@ -10,22 +10,51 @@ on:
     # reports, and the queue evicts the PR when it times out.
     merge_group:
         types: [checks_requested]
+    # On main for the quality artifact (wshno/devops repository report). Path-filtered: most
+    # commits on main are manifests and preview upserts, which the Python suite doesn't cover.
+    push:
+        branches:
+            - main
+        paths:
+            - "src/**"
+            - "scripts/**"
+            - "pyproject.toml"
+            - ".github/workflows/pr-build.yml"
+    # Weekly too, so the quality-summary artifact (90 days) never expires between pushes.
+    schedule:
+        - cron: "23 4 * * 1"
     workflow_dispatch:
 
 concurrency:
     group: pr-build-caller-${{ github.ref }}
     cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-permissions:
-    contents: read
-    pull-requests: write
-    checks: write
-    packages: read
+permissions: {}
 
 jobs:
     pr-build:
-        uses: hwinther/reusable-workflows/.github/workflows/pr-build.yml@523b5580b380c07200a565f13aae350565418277 # v2.24.0
+        permissions:
+            contents: read
+            pull-requests: write
+            checks: write
+            packages: read
+        uses: hwinther/reusable-workflows/.github/workflows/pr-build.yml@5ba6e5a72dec8dcd121cc864279889bb2fa6ed73 # v2.31.0
         with:
             python_enabled: true
             python_version: "3.13"
             python_changes_regex: '^(src/|scripts/|pyproject\.toml|\.github/workflows/pr-build\.yml)'
+
+    # pytest results, coverage and warnings as ghcr.io/hwinther/proxmox/quality:main, and as the
+    # workflow artifact quality-summary that the wshno/devops report reads. Also runs when the
+    # tests failed, so the failures are reported.
+    quality:
+        needs: [pr-build]
+        if: ${{ !cancelled() && (github.event_name == 'push' || github.event_name == 'schedule') && github.ref == 'refs/heads/main' }}
+        permissions:
+            contents: read
+            packages: write
+            id-token: write
+        uses: hwinther/reusable-workflows/.github/workflows/quality-artifact.yml@5ba6e5a72dec8dcd121cc864279889bb2fa6ed73 # v2.31.0
+        with:
+            tags: |
+                main
