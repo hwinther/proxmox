@@ -11,7 +11,7 @@
 # Updates: Dependabot bumps both digests; .github/workflows/build-esp-poller.yml rebuilds on merge.
 # The free tier only publishes `latest`, so the Python minor can move with a digest bump. The
 # builder is `latest-dev` (same Python plus pip and a shell), and the two images have to be bumped
-# together so the wheels pip resolves (PyYAML has a compiled one) match the runtime's Python.
+# together so the packages pip installs match the runtime's Python.
 
 FROM cgr.dev/chainguard/python:latest-dev@sha256:9f76d277ca81d3079eb3be24c742de3b6598f032fc9943fed6951ff99e581d02 AS builder
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -22,8 +22,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 USER root
 WORKDIR /build
 COPY requirements.txt .
-# --target gives a plain directory that the runtime picks up through PYTHONPATH.
-RUN pip install --target=/deps --only-binary=:all: -r requirements.txt
+# --target gives a plain directory that the runtime picks up through PYTHONPATH. Not
+# --only-binary: `latest` can be a Python that PyYAML has no wheel for yet (3.15 at the switch),
+# and its sdist then builds the pure-Python fallback, fine for reading devices.yaml once.
+RUN pip install --target=/deps --prefer-binary -r requirements.txt
 
 FROM cgr.dev/chainguard/python:latest@sha256:e5322b9d32064a645225b8b2419f11127bcf2d8b9927f9514f0acee1e1d25751 AS final
 ENV PYTHONDONTWRITEBYTECODE=1 \
