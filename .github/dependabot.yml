@@ -37,6 +37,21 @@ updates:
   schedule:
     interval: "weekly"
 
+# esp-poller image: the python builder and distroless runtime digests. Each bump touches the
+# image directory, so build-esp-poller.yml rebuilds it on merge.
+- package-ecosystem: "docker"
+  directory: "/images/esp-poller"
+  open-pull-requests-limit: 20
+  schedule:
+    interval: "weekly"
+  cooldown:
+    default-days: 7
+  # The builder's Python minor has to match the runtime's python3.13; a 3.14 builder would
+  # produce cp314 wheels the runtime can't load.
+  ignore:
+  - dependency-name: "python"
+    update-types: ["version-update:semver-major", "version-update:semver-minor"]
+
 # proxmox-pbs-backup-client image: the debian builder and distroless runtime digests. Each bump
 # touches the image directory, so build-proxmox-pbs-backup-client.yml rebuilds it on merge.
 - package-ecosystem: "docker"
