@@ -1,5 +1,5 @@
-# Bump esp-poller image tag via Dependabot / manual edit; the workflow
-# .github/workflows/build-esp-poller.yml publishes images on manual dispatch.
+# Bump esp-poller image tag via Dependabot / manual edit; .github/workflows/build-esp-poller.yml
+# publishes an image for each esp-poller-v* tag.
 # Pre-rollout: create the esp-poller-mqtt Secret (see esp-poller-mqtt-secrets.md).
 apiVersion: apps/v1
 kind: Deployment
@@ -8,6 +8,10 @@ metadata:
   namespace: esp-poller-production
 spec:
   replicas: 1
+  # Old ReplicaSets keep their image, and Kubescape rescans them: a scaled-to-zero one with a long-gone
+  # image overwrote the deployment's vulnerability summary and fired KubescapeOwnImageCriticalVulnerabilities.
+  # Rollback goes through git, so two are plenty.
+  revisionHistoryLimit: 2
   # Recreate (not RollingUpdate): a second poller would double-publish to MQTT
   # during the overlap and briefly skew Prometheus gauges.
   strategy:
@@ -29,7 +33,7 @@ spec:
         fsGroup: 1888
       containers:
       - name: esp-poller
-        image: ghcr.io/hwinther/proxmox/esp-poller:0.7.4-bfa96ef@sha256:baca9ac979c67582e7b6794647876b94a3eb969b62354905c1143c2189a15920
+        image: ghcr.io/hwinther/proxmox/esp-poller:0.8.0@sha256:918625a74de34d7b209a10b5d662e05483ebbbb3ffe0ebe9b716356fff0832f0
         imagePullPolicy: IfNotPresent
         securityContext:
           allowPrivilegeEscalation: false
