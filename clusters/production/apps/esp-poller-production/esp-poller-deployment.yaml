@@ -29,7 +29,7 @@ spec:
         fsGroup: 1888
       containers:
       - name: esp-poller
-        image: ghcr.io/hwinther/proxmox/esp-poller:0.7.3-6372640@sha256:dba1cf876313318c692150a86643d981a5afd7f1433e3f18e37efb65866f5f3b
+        image: ghcr.io/hwinther/proxmox/esp-poller:0.7.4-bfa96ef@sha256:baca9ac979c67582e7b6794647876b94a3eb969b62354905c1143c2189a15920
         imagePullPolicy: IfNotPresent
         securityContext:
           allowPrivilegeEscalation: false
