@@ -14,7 +14,7 @@ spec:
   interval: 10m
   url: oci://ghcr.io/hwinther/wsh-rtl-sdr/manifests
   ref:
-    tag: 0.18.0
+    tag: 0.19.2
   # Only artifacts signed by the wsh-rtl-sdr release workflow at a version tag are applied.
   verify:
     provider: cosign
