@@ -1,63 +1,93 @@
-name: Publish esp-poller container to GHCR
+name: esp-poller container
 
-# This image isn't tied to GitVersion releases. It rebuilds on every merge that touches the image
-# (poller.py, requirements.txt, Dependabot's base-image digest bumps), publishing :<version>-<sha>,
-# and can still be dispatched by hand.
+# Releases per image, like wshno/frontend-packages: the image has its own tags, `esp-poller-v<version>`,
+# separate from the repo's v* tags and from the other images here.
+#
+#   - Pull request touching the image: build and Grype-scan, no push (the report lands on the PR).
+#   - Tag `esp-poller-v0.8.0`: build, scan, push and sign ghcr.io/hwinther/proxmox/esp-poller:0.8.0.
+#     GitVersion reads only esp-poller-v* tags (tag-prefix), so the tag's version is the image's.
+#   - Manual dispatch: only at an esp-poller-v* tag ref (a tag pushed with GITHUB_TOKEN doesn't fire
+#     on.push.tags). Dispatched at a branch it fails, so nothing but release tags ends up in GHCR,
+#     which is all Dependabot sees.
+#
+# Merges to main publish nothing. Dependabot's base-image and pip bumps reach the cluster at the
+# next release tag:
+#   git tag esp-poller-v0.8.1 origin/main && git push origin esp-poller-v0.8.1
 on:
+    pull_request:
+        branches: [main]
+        paths:
+            - "images/esp-poller/**"
+            - ".github/workflows/build-esp-poller.yml"
+    push:
+        tags:
+            - "esp-poller-v[0-9]*"
     workflow_dispatch:
         inputs:
             grype_fail_build:
                 description: "Fail the build if Grype finds vulnerabilities"
                 type: boolean
                 default: true
-    push:
-        branches: [main]
-        paths:
-            - "images/esp-poller/**"
 
-permissions:
-    contents: read
-    packages: write
-    id-token: write
-    attestations: write
-    actions: write
-    security-events: write
-    pull-requests: write
+permissions: {}
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
-    cancel-in-progress: false
+    cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-    # Compute a short SHA that the build job appends to gitversion-derived tags as a suffix
-    # (e.g. :0.6.1-86a584a). Without this every workflow_dispatch on main publishes the same
-    # gitversion tag (GitHubFlow/v1 keeps MajorMinorPatch constant between v* tags) and
-    # silently overwrites the previous image.
-    setup:
-        runs-on: ubuntu-latest
+    # No `secrets:` blocks below: the called workflows only take an optional npm_auth_token (unused
+    # here); GITHUB_TOKEN is auto-available to called workflows. Avoids the zizmor "secrets
+    # unconditionally inherited" finding.
+    pr:
+        if: github.event_name == 'pull_request'
         permissions:
             contents: read
-        outputs:
-            short_sha: ${{ steps.sha.outputs.short_sha }}
-        steps:
-        - name: Compute short SHA
-          id: sha
-          env:
-              GITHUB_SHA: ${{ github.sha }}
-          run: echo "short_sha=${GITHUB_SHA:0:7}" >> "$GITHUB_OUTPUT"
+            packages: read
+            security-events: write
+            pull-requests: write
+        uses: hwinther/reusable-workflows/.github/workflows/build-and-scan-docker.yml@5ba6e5a72dec8dcd121cc864279889bb2fa6ed73 # v2.31.0
+        with:
+            container_registry: ghcr.io
+            container_image_name_postfix: esp-poller
+            build_context: images/esp-poller
+            dockerfile: images/esp-poller/Dockerfile
+            override_config: tag-prefix=esp-poller-v
+            # Nothing downstream consumes the loaded image or supply-chain files on a PR.
+            generate_supply_chain_artifacts: false
+            release_asset_upload_enabled: false
 
-    esp_poller:
-        needs: setup
-        # No `secrets:` block: docker-container.yml only takes an optional npm_auth_token
-        # (unused here); GITHUB_TOKEN is auto-available to called workflows. Avoids the
-        # zizmor "secrets unconditionally inherited" finding.
-        uses: hwinther/reusable-workflows/.github/workflows/docker-container.yml@3d2710f9d075c767c77d3e7fe78af4fbb298e10b # v2.26.2
+    release:
+        if: github.event_name != 'pull_request' && startsWith(github.ref, 'refs/tags/esp-poller-v')
+        permissions:
+            contents: read
+            packages: write
+            id-token: write
+            attestations: write
+            actions: write
+            security-events: write
+            pull-requests: write
+        uses: hwinther/reusable-workflows/.github/workflows/docker-container.yml@5ba6e5a72dec8dcd121cc864279889bb2fa6ed73 # v2.31.0
         with:
             container_registry: ghcr.io
             # ghcr.io/<repo-owner>/<repo>/<postfix> → ghcr.io/hwinther/proxmox/esp-poller
             container_image_name_postfix: esp-poller
             build_context: images/esp-poller
             dockerfile: images/esp-poller/Dockerfile
-            # Makes gitversion-derived tags unique per commit: :0.6.1 → :0.6.1-86a584a.
-            tag_suffix: ${{ needs.setup.outputs.short_sha }}
+            override_config: tag-prefix=esp-poller-v
+            # Releases stay immutable: the SBOM is the signed CycloneDX attestation in GHCR.
+            release_asset_upload_enabled: false
             grype_fail_build: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.grype_fail_build == 'false' && 'never' || 'auto' }}
+
+    # A dispatch at a branch would otherwise skip both jobs and report success.
+    wrong-ref:
+        if: github.event_name == 'workflow_dispatch' && !startsWith(github.ref, 'refs/tags/esp-poller-v')
+        runs-on: ubuntu-latest
+        permissions: {}
+        steps:
+        - name: Refuse
+          env:
+              REF: ${{ github.ref }}
+          run: |
+              echo "::error::Dispatch at an esp-poller-v* tag, not $REF (only release tags are published)."
+              exit 1

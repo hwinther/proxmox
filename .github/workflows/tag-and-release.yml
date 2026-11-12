@@ -16,10 +16,11 @@ on:
                 default: true
                 type: boolean
 
+# Repo-wide v* tags only. The container images release on their own tags (esp-poller-v*,
+# pbs-backup-client-v*; see build-esp-poller.yml and build-proxmox-pbs-backup-client.yml), so a v* release
+# no longer builds them.
 permissions:
     contents: write
-    # Required so we can dispatch container workflows after tagging (tag push from GITHUB_TOKEN does not fire on.push.tags)
-    actions: write
 
 jobs:
     tag:
@@ -31,46 +32,3 @@ jobs:
             tag_name: ${{ inputs.tag_name }}
             release_notes: ${{ inputs.release_notes }}
             create_release: ${{ inputs.create_release }}
-
-    # GitHub does not run tag-push workflows when the tag was created with GITHUB_TOKEN; dispatch the same jobs explicitly.
-    trigger-container-builds:
-        needs: tag
-        if: success()
-        runs-on: ubuntu-latest
-        permissions:
-            actions: write
-            contents: read
-        steps:
-            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-              with:
-                  fetch-depth: 0
-
-            - name: Determine ref for container builds
-              id: ref
-              env:
-                  TAG: ${{ inputs.tag_name }}
-              run: |
-                  git fetch --tags --force
-                  if [ "$TAG" = "auto" ] || [ -z "$TAG" ]; then
-                    REF=$(git tag -l 'v*' --sort=-v:refname | head -n1)
-                  else
-                    REF="$TAG"
-                  fi
-                  if [ -z "$REF" ]; then
-                    echo "::error::Could not resolve a tag ref for container builds."
-                    exit 1
-                  fi
-                  echo "Using ref: $REF"
-                  echo "ref=$REF" >> "$GITHUB_OUTPUT"
-
-            - name: Dispatch proxmox-pbs-backup-client container workflow
-              env:
-                  GH_TOKEN: ${{ github.token }}
-                  REF: ${{ steps.ref.outputs.ref }}
-              run: gh workflow run build-proxmox-pbs-backup-client.yml --ref "$REF"
-
-            - name: Dispatch esp-poller container workflow
-              env:
-                  GH_TOKEN: ${{ github.token }}
-                  REF: ${{ steps.ref.outputs.ref }}
-              run: gh workflow run build-esp-poller.yml --ref "$REF"

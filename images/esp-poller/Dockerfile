@@ -8,7 +8,8 @@
 # python:3.13-slim in unused userland (util-linux, perl, tar, ncurses), and distroless python in
 # Debian's older python3.13 and krb5.
 #
-# Updates: Dependabot bumps both digests; .github/workflows/build-esp-poller.yml rebuilds on merge.
+# Updates: Dependabot bumps both digests; .github/workflows/build-esp-poller.yml builds and scans the
+# PR, and an esp-poller-v* tag publishes the image.
 # The free tier only publishes `latest`, so the Python minor can move with a digest bump. The
 # builder is `latest-dev` (same Python plus pip and a shell), and the two images have to be bumped
 # together so the packages pip installs match the runtime's Python.

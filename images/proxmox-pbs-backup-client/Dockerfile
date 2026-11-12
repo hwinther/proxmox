@@ -14,7 +14,8 @@
 # Updates: Dependabot bumps the debian, golang and distroless digests; .github/workflows/
 # bump-pbs-client.yml opens a PR when Proxmox publishes a newer proxmox-backup-client-static (it
 # links OpenSSL statically, so its CVE fixes only arrive with a new package). Either change touches
-# this directory, so build-proxmox-pbs-backup-client.yml rebuilds the image on merge.
+# this directory, so build-proxmox-pbs-backup-client.yml builds and scans it on the PR; a
+# pbs-backup-client-v* tag publishes it.
 
 # proxmox-backup-client-static from the pbs-client trixie repo, pinned so a rebuild is reproducible
 # and a new upstream version is a reviewed PR.
