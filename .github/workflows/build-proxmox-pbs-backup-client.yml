@@ -1,73 +1,95 @@
-name: Publish Proxmox PBS backup client container to GHCR
+name: PBS backup client container
 
-# Dispatched by tag-and-release.yml after a v* tag is created (push from
-# GITHUB_TOKEN does not fire on.push.tags, so the orchestrator dispatches
-# this workflow explicitly against the tag ref). Also runs on every merge that touches the image
-# (Dependabot's digest bumps, bump-pbs-client.yml's version bumps), publishing :<version>-<sha>.
+# Releases per image, like wshno/frontend-packages: the image has its own tags,
+# `pbs-backup-client-v<version>`, separate from the repo's v* tags and from the other images here.
+#
+#   - Pull request touching the image: build and Grype-scan, no push (the report lands on the PR).
+#   - Tag `pbs-backup-client-v0.8.0`: build, scan, push and sign
+#     ghcr.io/hwinther/proxmox/proxmox/pbs/backup-client:0.8.0, which Dependabot moves the CronJobs
+#     to. GitVersion reads only pbs-backup-client-v* tags (tag-prefix), so the tag's version is the
+#     image's.
+#   - Manual dispatch: only at a pbs-backup-client-v* tag ref (a tag pushed with GITHUB_TOKEN
+#     doesn't fire on.push.tags). Dispatched at a branch it fails, so nothing but release tags ends
+#     up in GHCR, which is all Dependabot sees.
+#
+# Merges to main publish nothing. Dependabot's digest bumps and bump-pbs-client.yml's version bumps
+# reach the CronJobs at the next release tag:
+#   git tag pbs-backup-client-v0.8.1 origin/main && git push origin pbs-backup-client-v0.8.1
 on:
+    pull_request:
+        branches: [main]
+        paths:
+            - "images/proxmox-pbs-backup-client/**"
+            - ".github/workflows/build-proxmox-pbs-backup-client.yml"
+    push:
+        tags:
+            - "pbs-backup-client-v[0-9]*"
     workflow_dispatch:
         inputs:
             grype_fail_build:
                 description: "Fail the build if Grype finds vulnerabilities"
                 type: boolean
                 default: true
-    push:
-        branches: [main]
-        paths:
-            - "images/proxmox-pbs-backup-client/**"
 
-permissions:
-    contents: read
-    packages: write
-    id-token: write
-    attestations: write
-    actions: write
-    security-events: write
-    pull-requests: write
+permissions: {}
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
-    cancel-in-progress: false
+    cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-    # Compute a short SHA that the build job appends to gitversion-derived tags as a suffix
-    # (e.g. :0.6.1-86a584a). Without this every workflow_dispatch on main publishes the same
-    # gitversion tag (GitHubFlow/v1 keeps MajorMinorPatch constant between v* tags) and
-    # silently overwrites the previous image. A release build (tag-and-release dispatches this
-    # against the v* tag) gets no suffix, so it publishes the plain :0.7.0 that Dependabot moves the
-    # CronJobs to.
-    setup:
-        runs-on: ubuntu-latest
+    # No `secrets:` blocks below: the called workflows only take an optional npm_auth_token (unused
+    # here); GITHUB_TOKEN is auto-available to called workflows. Avoids the zizmor "secrets
+    # unconditionally inherited" finding.
+    pr:
+        if: github.event_name == 'pull_request'
         permissions:
             contents: read
-        outputs:
-            short_sha: ${{ steps.sha.outputs.short_sha }}
-        steps:
-        - name: Compute short SHA
-          id: sha
-          env:
-              GITHUB_SHA: ${{ github.sha }}
-              GITHUB_REF: ${{ github.ref }}
-          run: |
-              if [[ "$GITHUB_REF" == refs/tags/* ]]; then
-                  echo "short_sha=" >> "$GITHUB_OUTPUT"
-              else
-                  echo "short_sha=${GITHUB_SHA:0:7}" >> "$GITHUB_OUTPUT"
-              fi
+            packages: read
+            security-events: write
+            pull-requests: write
+        uses: hwinther/reusable-workflows/.github/workflows/build-and-scan-docker.yml@3a42f0c604e95cd46a9b9e01519aea3f425c5589 # v2.33.0
+        with:
+            container_registry: ghcr.io
+            container_image_name_postfix: proxmox/pbs/backup-client
+            build_context: images/proxmox-pbs-backup-client
+            dockerfile: images/proxmox-pbs-backup-client/Dockerfile
+            override_config: tag-prefix=pbs-backup-client-v
+            # Nothing downstream consumes the loaded image or supply-chain files on a PR.
+            generate_supply_chain_artifacts: false
+            release_asset_upload_enabled: false
 
-    proxmox_pbs_backup_client:
-        needs: setup
-        # No `secrets:` block: docker-container.yml only takes an optional npm_auth_token
-        # (unused here); GITHUB_TOKEN is auto-available to called workflows. Avoids the
-        # zizmor "secrets unconditionally inherited" finding.
-        uses: hwinther/reusable-workflows/.github/workflows/docker-container.yml@3d2710f9d075c767c77d3e7fe78af4fbb298e10b # v2.26.2
+    release:
+        if: github.event_name != 'pull_request' && startsWith(github.ref, 'refs/tags/pbs-backup-client-v')
+        permissions:
+            contents: read
+            packages: write
+            id-token: write
+            attestations: write
+            actions: write
+            security-events: write
+            pull-requests: write
+        uses: hwinther/reusable-workflows/.github/workflows/docker-container.yml@3a42f0c604e95cd46a9b9e01519aea3f425c5589 # v2.33.0
         with:
             container_registry: ghcr.io
             # ghcr.io/<repo-owner>/<repo>/<postfix> → ghcr.io/hwinther/proxmox/proxmox/pbs/backup-client
             container_image_name_postfix: proxmox/pbs/backup-client
             build_context: images/proxmox-pbs-backup-client
             dockerfile: images/proxmox-pbs-backup-client/Dockerfile
-            # Makes gitversion-derived tags unique per commit on branch builds: :0.6.1 → :0.6.1-86a584a.
-            # Empty on a release build (see setup).
-            tag_suffix: ${{ needs.setup.outputs.short_sha }}
+            override_config: tag-prefix=pbs-backup-client-v
+            # Releases stay immutable: the SBOM is the signed CycloneDX attestation in GHCR.
+            release_asset_upload_enabled: false
             grype_fail_build: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.grype_fail_build == 'false' && 'never' || 'auto' }}
+
+    # A dispatch at a branch would otherwise skip both jobs and report success.
+    wrong-ref:
+        if: github.event_name == 'workflow_dispatch' && !startsWith(github.ref, 'refs/tags/pbs-backup-client-v')
+        runs-on: ubuntu-latest
+        permissions: {}
+        steps:
+        - name: Refuse
+          env:
+              REF: ${{ github.ref }}
+          run: |
+              echo "::error::Dispatch at a pbs-backup-client-v* tag, not $REF (only release tags are published)."
+              exit 1

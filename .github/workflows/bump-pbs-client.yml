@@ -4,8 +4,8 @@ name: Bump proxmox-backup-client
 # repo) in an ARG, which Dependabot cannot track. The client links OpenSSL statically, so its CVE
 # fixes only reach the image with a new package. Once a week this moves the pin to the newest
 # version whose .deb is at least 7 days old (the same cooldown as Dependabot) and opens or updates
-# a PR. The merge touches the image directory, so build-proxmox-pbs-backup-client.yml rebuilds it;
-# a release (tag-and-release) then gives the CronJobs a new tag through Dependabot.
+# a PR. build-proxmox-pbs-backup-client.yml builds and scans it on the PR; after the merge, a
+# pbs-backup-client-v* tag publishes it and Dependabot moves the CronJobs to it.
 
 on:
   schedule:
@@ -78,7 +78,7 @@ jobs:
             echo
             echo "Release notes: https://pbs.proxmox.com/docs/ (Proxmox Backup Server roadmap) and the package changelog in the pbs-client repo."
             echo
-            echo "The merge rebuilds \`ghcr.io/hwinther/proxmox/proxmox/pbs/backup-client\` (build-proxmox-pbs-backup-client.yml, with the Grype gate). Run tag-and-release afterwards to give the CronJobs a new tag."
+            echo "build-proxmox-pbs-backup-client.yml builds and Grype-scans the image on this PR. After the merge, push a \`pbs-backup-client-v*\` tag to publish \`ghcr.io/hwinther/proxmox/proxmox/pbs/backup-client\` and give the CronJobs a new tag."
           } > "$RUNNER_TEMP/body.md"
 
           git config user.name "github-actions[bot]"

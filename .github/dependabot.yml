@@ -37,8 +37,8 @@ updates:
   schedule:
     interval: "weekly"
 
-# esp-poller image: the Chainguard python builder (latest-dev) and runtime (latest) digests. Each
-# bump touches the image directory, so build-esp-poller.yml rebuilds it on merge.
+# esp-poller image: the Chainguard python builder (latest-dev) and runtime (latest) digests. The PR
+# is built and scanned by build-esp-poller.yml; the next esp-poller-v* tag publishes it.
 - package-ecosystem: "docker"
   directory: "/images/esp-poller"
   open-pull-requests-limit: 20
@@ -53,8 +53,8 @@ updates:
       patterns:
       - "*"
 
-# proxmox-pbs-backup-client image: the debian builder and distroless runtime digests. Each bump
-# touches the image directory, so build-proxmox-pbs-backup-client.yml rebuilds it on merge.
+# proxmox-pbs-backup-client image: the debian builder and distroless runtime digests. The PR is built
+# and scanned by build-proxmox-pbs-backup-client.yml; the next pbs-backup-client-v* tag publishes it.
 - package-ecosystem: "docker"
   directory: "/images/proxmox-pbs-backup-client"
   open-pull-requests-limit: 20
