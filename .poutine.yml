@@ -6,3 +6,8 @@ skip:
   - rule: github_action_from_unverified_creator_used
     purl:
       - pkg:githubactions/hwinther/reusable-workflows
+  # anthropics/claude-code-action is Anthropic's own action for the Claude API we already pay for
+  # (dependency-review.yml), SHA-pinned; Anthropic just isn't a GitHub "verified creator" either.
+  - rule: github_action_from_unverified_creator_used
+    purl:
+      - pkg:githubactions/anthropics/claude-code-action

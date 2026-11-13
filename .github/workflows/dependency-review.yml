@@ -69,7 +69,7 @@ jobs:
                   cp "$RUNNER_TEMP/manifests-report.md" .review/manifest-diff.md
 
             - name: Review
-              uses: anthropics/claude-code-action@12043dd146b4203c64397708bacc201910da95c8 # v1.0.276
+              uses: anthropics/claude-code-action@f3b070c88125d33dbae5653df5f143101d4ea9dc # v1.0.276
               with:
                   anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
                   github_token: ${{ github.token }}
