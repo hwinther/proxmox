@@ -69,6 +69,7 @@ jobs:
                   cp "$RUNNER_TEMP/manifests-report.md" .review/manifest-diff.md
 
             - name: Review
+              id: review
               uses: anthropics/claude-code-action@f3b070c88125d33dbae5653df5f143101d4ea9dc # v1.0.276
               with:
                   anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -121,3 +122,11 @@ jobs:
                       --model claude-sonnet-5-5
                       --max-turns 40
                       --allowedTools "Read,Grep,Glob,WebFetch,WebSearch,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),Bash(gh release list:*),Bash(gh release view:*),Bash(gh api repos/*/releases*),Bash(gh api repos/*/contents/*)"
+
+            # The action hides Claude's output in a public repo's log; on failure, print only the final
+            # result text (an API error such as an invalid key), never the tool output.
+            - name: Show why the review failed
+              if: failure() && steps.review.outcome == 'failure'
+              run: |
+                  jq -r '(if type == "array" then . else [.] end) | map(select(.type == "result")) | last | .result // "no result recorded"' \
+                      "$RUNNER_TEMP/claude-execution-output.json" || true
