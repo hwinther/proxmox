@@ -1,0 +1,13 @@
+# Shared kustomize base for pbs-browser's fake-data preview envs (the nightly e2e env). The workload
+# comes from the signed manifest artifact (pbs-browser-manifests.yaml), patched into PBS_FAKE mode.
+# On top of netpol-baseline (default-deny + DNS) it only needs the Traefik->:8080 ingress allow and
+# the OTLP egress for CSP reports (networkpolicies.yaml); there's no egress to PBS.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+components:
+- ../../../../../../bases/netpol-baseline
+- ../../../../../../bases/flux-tenant
+resources:
+- pbs-browser-manifests.yaml
+- networkpolicies.yaml
+- cilium-cluster-nodes-to-http.yaml

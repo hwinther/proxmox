@@ -1,0 +1,65 @@
+# The workload (Deployment, Service, HTTPRoute) comes from pbs-browser's manifest artifact,
+# ghcr.io/hwinther/pbs-browser/manifests:main-<sha7>, which its pr-e2e.yml renders from deploy/ and
+# signs on every merge to main. The overlay pins it by digest and sets targetNamespace and APP_HOST.
+#
+# Cluster-side differences from production, as patches:
+#   - PBS_FAKE=1 and no PBS credentials: the app serves its built-in sample data and never runs the
+#     client. The keyfile volume stays (it's optional, and no keyfile is cloned here);
+#   - no homepage tile.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: pbs-browser
+spec:
+  interval: 10m
+  url: oci://ghcr.io/hwinther/pbs-browser/manifests
+  ref:
+    tag: placeholder # patched per env (tag + digest)
+  # Only artifacts signed by pbs-browser's PR workflow on main (manifests:main-<sha7>). Production's
+  # OCIRepository accepts release-tag signatures only.
+  verify:
+    provider: cosign
+    matchOIDCIdentity:
+    - issuer: ^https://token\.actions\.githubusercontent\.com$
+      subject: ^https://github\.com/hwinther/pbs-browser/\.github/workflows/pr-e2e\.yml@refs/heads/main$
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pbs-browser
+spec:
+  interval: 10m
+  retryInterval: 1m
+  sourceRef:
+    kind: OCIRepository
+    name: pbs-browser
+  path: ./
+  prune: true
+  wait: true
+  timeout: 5m
+  targetNamespace: placeholder # patched per env
+  serviceAccountName: flux-tenant
+  postBuild:
+    substitute:
+      APP_HOST: placeholder # patched per env
+      APP_ENVIRONMENT: preview
+      OTEL_EXPORTER_OTLP_HTTP_ENDPOINT: http://obs-otel-collector.observability-production.svc.cluster.local:4318
+  patches:
+  - target:
+      kind: Deployment
+      name: pbs-browser
+    patch: |-
+      - op: remove
+        path: /spec/template/spec/containers/0/envFrom
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: PBS_FAKE
+          value: "1"
+  - target:
+      kind: HTTPRoute
+      name: pbs-browser
+    patch: |-
+      - op: replace
+        path: /metadata/annotations/gethomepage.dev~1enabled
+        value: "false"

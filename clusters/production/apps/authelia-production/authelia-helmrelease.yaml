@@ -224,6 +224,13 @@ spec:
           policy: bypass
           resources:
           - "^/healthz$"
+        # pbs-browser's fake-data nightly env (apps/previews/pbs-browser-fake, PBS_FAKE sample data, no
+        # PBS access) stays on the default two_factor; /healthz is the workflow's readiness wait. The PR
+        # previews (pbs-browser-<N>, real backups) get no bypass.
+        - domain: pbs-browser-nightly.preview.wsh.no
+          policy: bypass
+          resources:
+          - "^/healthz$"
       authentication_backend:
         password_change:
           disable: true

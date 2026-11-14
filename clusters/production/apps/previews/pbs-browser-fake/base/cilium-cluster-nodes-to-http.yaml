@@ -1,0 +1,18 @@
+# Allow cluster nodes to reach the preview pod on 8080: Traefik is hostNetwork (arrives as
+# host/remote-node) and kubelet probes come via node IPs. Mirrors the production app's policy.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-cluster-nodes-to-pbs-browser-http
+spec:
+  endpointSelector:
+    matchLabels:
+      app: pbs-browser
+  ingress:
+  - fromEntities:
+    - host
+    - remote-node
+    toPorts:
+    - ports:
+      - port: "8080"
+        protocol: TCP

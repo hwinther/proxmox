@@ -1,0 +1,10 @@
+# Parent kustomization for pbs-browser's fake-data preview envs. Maintained by the gitops-preview-upsert /
+# gitops-preview-teardown reusable workflows: pbs-browser's nightly-preview.yml (preview_base_path
+# clusters/production/apps/previews/pbs-browser-fake) adds and removes the pr-nightly entry below.
+#
+# Unlike ../pbs-browser (the PR previews, which run the real client against PBS), envs here run the
+# same image in PBS_FAKE mode (sample data): no PBS credentials, no encryption keyfile, no egress to
+# PBS. That is what lets the shared e2e user sign in to them. See template/README.md.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources: []
