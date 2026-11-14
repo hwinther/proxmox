@@ -1,0 +1,40 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: romslig-preview-pr-48
+
+resources:
+- ../base
+- namespace.yaml
+
+# `labels` (vs deprecated `commonLabels`) with includeSelectors: false: identification only; keeps
+# the PR label out of selectors so it can't break the netpol-baseline same-namespace matching.
+labels:
+- pairs:
+    romslig.wsh.no/pr: "48"
+  includeSelectors: false
+  includeTemplates: true
+
+# pr-48 / sha256:1503985931537437a80e26d91b5f62ff15abd36b6aa30efc6f40f5e69ff18e64 carry the MANIFEST ARTIFACT's tag (pr-<N>, or main for the nightly)
+# and digest, not an image's: the artifact pins the api and web images itself. The digest pins the
+# deploy to exactly what the run pushed after e2e + Grype; the tag is kept alongside for readability
+# (`flux get sources oci`).
+patches:
+- target:
+    kind: OCIRepository
+    name: romslig
+  patch: |-
+    - op: replace
+      path: /spec/ref
+      value:
+        tag: "pr-48"
+        digest: "sha256:1503985931537437a80e26d91b5f62ff15abd36b6aa30efc6f40f5e69ff18e64"
+- target:
+    kind: Kustomization
+    name: romslig
+  patch: |-
+    - op: replace
+      path: /spec/targetNamespace
+      value: romslig-preview-pr-48
+    - op: replace
+      path: /spec/postBuild/substitute/APP_HOST
+      value: romslig-48.preview.wsh.no
