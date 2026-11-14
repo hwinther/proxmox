@@ -46,7 +46,7 @@ RUN set -eux; \
 
 # pbs-job: the Jobs' entrypoint. It adds --ns/--keyfile when set and execs the client, which a
 # `/bin/sh -c` wrapper did before; distroless has no shell (see pbs-job/main.go).
-FROM --platform=$BUILDPLATFORM golang:1.27.2-alpine3.24@sha256:f92b6ef800e499660581efdabdf25d9d817a9d124eaf900924f0504e7e27e12d AS pbs-job
+FROM --platform=$BUILDPLATFORM golang:1.27.3-alpine3.24@sha256:fa3d596898d9f126af7c01d14ee7597bab3f39cccf392ef36b69fe77cd681f18 AS pbs-job
 ARG TARGETOS
 ARG TARGETARCH
 WORKDIR /src
