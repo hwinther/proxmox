@@ -23,8 +23,9 @@ Placeholders the workflow replaces:
 `base/skylens-manifests.yaml` holds an `OCIRepository` and a Flux `Kustomization` per preview
 namespace. The artifact is the PR's own `deploy/` rendered with `deploy/components/preview`, so a
 PR that changes the manifests runs them in its preview before any release. Only artifacts signed by
-skylens' `pr-e2e.yml` on a pull-request ref are accepted; production accepts release-tag
-signatures only. Preview-only cluster concerns (forward-auth, no homepage tile) are patches on that
+skylens' `pr-e2e.yml` on a pull-request ref or on main are accepted (main's `manifests:main` is what
+skylens' `nightly-preview.yml` deploys as `pr-nightly`, `skylens-nightly.preview.wsh.no`); production
+accepts release-tag signatures only. Preview-only cluster concerns (forward-auth, no homepage tile) are patches on that
 Kustomization, and the namespace, netpols and per-PR values stay in this tree.
 
 ## Replay + real-auth model (no secrets, no broker)
