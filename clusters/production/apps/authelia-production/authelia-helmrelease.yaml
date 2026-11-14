@@ -194,6 +194,12 @@ spec:
         # romslig: forward auth only (no OIDC client), limited to LDAP group romslig-users. The
         # deny rule is required: default_policy is two_factor, so without it non-members would fall
         # through to the default and get in. First match wins, so keep the group rule first.
+        # /api/health carries no data ({ ok: true }) and is how romslig's production smoke workflow
+        # waits for the site, so it bypasses, like on the previews below.
+        - domain: romslig.wsh.no
+          policy: bypass
+          resources:
+          - "^/api/health$"
         - domain: romslig.wsh.no
           policy: two_factor
           subject: "group:romslig-users"
