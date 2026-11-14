@@ -36,7 +36,9 @@ validate the live browse/restore integration. That means each per-PR namespace g
   namespace template sets).
 
 Because a preview can therefore read **real backup contents**, its Ingress is **Authelia-gated**,
-same as production: the forward-auth middleware is part of the Ingress in pbs-browser's `deploy/`. Prefer a read-only / restore-scoped PBS API token in
+same as production: the forward-auth middleware is part of the Ingress in pbs-browser's `deploy/`, and
+Authelia limits `pbs-browser-<N>.preview.wsh.no` (like `pbs-browser.mgmt.wsh.no`) to LDAP group
+`pbs-browser-users`. The nightly e2e env runs from `../../pbs-browser-fake` instead (sample data). Prefer a read-only / restore-scoped PBS API token in
 `pbs-browser-pbs` so ephemeral previews can never mutate the datastore.
 
 There is no `database.yaml.tpl` / `databases/` subtree (no per-PR database). The database step in the
