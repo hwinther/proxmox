@@ -217,6 +217,22 @@ spec:
           subject: "group:romslig-users"
         - domain_regex: '^romslig-([0-9]+|nightly)\.preview\.wsh\.no$'
           policy: deny
+        # pbs-browser reads and restores real (decrypted) backups, in production and in the PR previews
+        # (apps/previews/pbs-browser runs the real client with the PBS credentials and keyfile), so
+        # both are limited to LDAP group pbs-browser-users. The deny rules are required: default_policy
+        # is two_factor, so non-members would otherwise fall through and get in. The fake-data nightly
+        # env (pbs-browser-nightly, apps/previews/pbs-browser-fake) doesn't match and stays on the
+        # default, which is how the e2e user (not a member) signs in there.
+        - domain: pbs-browser.mgmt.wsh.no
+          policy: two_factor
+          subject: "group:pbs-browser-users"
+        - domain: pbs-browser.mgmt.wsh.no
+          policy: deny
+        - domain_regex: '^pbs-browser-[0-9]+\.preview\.wsh\.no$'
+          policy: two_factor
+          subject: "group:pbs-browser-users"
+        - domain_regex: '^pbs-browser-[0-9]+\.preview\.wsh\.no$'
+          policy: deny
         # skylens previews (apps/previews/skylens) stay on the default two_factor. /healthz is the
         # nightly preview workflow's readiness wait; it's anonymous in the app and public on
         # skylens.wsh.no, and previews only serve replayed fixtures.
