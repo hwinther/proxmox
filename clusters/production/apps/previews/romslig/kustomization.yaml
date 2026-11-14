@@ -14,3 +14,4 @@ kind: Kustomization
 resources:
   - pr-48
   - pr-49
+  - pr-50
