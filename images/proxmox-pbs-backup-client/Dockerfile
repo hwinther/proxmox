@@ -58,7 +58,7 @@ RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -ldflags=
 # override with `--user 0` (or USER 0 in a downstream image) if you need to read
 # host-mounted paths that aren't world-readable. Multi-arch is not configured
 # because pbs-client trixie ships binary-amd64 only (see builder-stage comment).
-FROM gcr.io/distroless/static-debian13:nonroot@sha256:25ac8f0c3b2334a9eb05452266bd4697864a8c8ef0ef71e5e6480d7f92868329 AS final
+FROM gcr.io/distroless/static-debian13:nonroot@sha256:aafe993665bf6200db38a02c11a9351e782a84b6a45e7f33b6695638c88e3931 AS final
 
 COPY --from=builder /out/proxmox-backup-client /usr/bin/proxmox-backup-client
 COPY --from=pbs-job /out/pbs-job /usr/bin/pbs-job
