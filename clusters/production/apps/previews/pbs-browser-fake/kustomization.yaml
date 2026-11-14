@@ -7,4 +7,5 @@
 # PBS. That is what lets the shared e2e user sign in to them. See template/README.md.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-resources: []
+resources:
+  - pr-nightly
