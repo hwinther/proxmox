@@ -560,6 +560,10 @@ spec:
             # Per-PR preview env pool (clusters/production/apps/previews/test/). Authelia requires
             # exact-match redirect_uris (no wildcards), so previews use a fixed pool of PR numbers.
             # Current pool: 1271-1320. Move it forward when PRs approach 1320.
+            # Plus the nightly preview env (hwinther/test nightly-preview.yml): main deployed to an
+            # ephemeral preview namespace and e2e-tested every night.
+            - https://test-nightly.preview.wsh.no/auth/callback
+            - https://test-nightly.preview.wsh.no/swagger/oauth2-redirect.html
             - https://test-1271.preview.wsh.no/auth/callback
             - https://test-1271.preview.wsh.no/swagger/oauth2-redirect.html
             - https://test-1272.preview.wsh.no/auth/callback
