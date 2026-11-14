@@ -14,7 +14,7 @@ labels:
   includeSelectors: false
   includeTemplates: true
 
-# pr-48 / sha256:1503985931537437a80e26d91b5f62ff15abd36b6aa30efc6f40f5e69ff18e64 carry the MANIFEST ARTIFACT's tag (pr-<N>, or main for the nightly)
+# pr-48 / sha256:8db09094c18257ab867cfbde6524f97bc924638cb24da65014115a1230aa1650 carry the MANIFEST ARTIFACT's tag (pr-<N>, or main for the nightly)
 # and digest, not an image's: the artifact pins the api and web images itself. The digest pins the
 # deploy to exactly what the run pushed after e2e + Grype; the tag is kept alongside for readability
 # (`flux get sources oci`).
@@ -27,7 +27,7 @@ patches:
       path: /spec/ref
       value:
         tag: "pr-48"
-        digest: "sha256:1503985931537437a80e26d91b5f62ff15abd36b6aa30efc6f40f5e69ff18e64"
+        digest: "sha256:8db09094c18257ab867cfbde6524f97bc924638cb24da65014115a1230aa1650"
 - target:
     kind: Kustomization
     name: romslig
