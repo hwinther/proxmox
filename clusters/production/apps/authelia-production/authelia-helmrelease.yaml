@@ -211,6 +211,13 @@ spec:
           subject: "group:romslig-users"
         - domain_regex: '^romslig-([0-9]+|nightly)\.preview\.wsh\.no$'
           policy: deny
+        # skylens previews (apps/previews/skylens) stay on the default two_factor. /healthz is the
+        # nightly preview workflow's readiness wait; it's anonymous in the app and public on
+        # skylens.wsh.no, and previews only serve replayed fixtures.
+        - domain_regex: '^skylens-([0-9]+|nightly)\.preview\.wsh\.no$'
+          policy: bypass
+          resources:
+          - "^/healthz$"
       authentication_backend:
         password_change:
           disable: true
@@ -785,6 +792,8 @@ spec:
             - https://skylens-269.preview.wsh.no/oauth
             - https://skylens-270.preview.wsh.no/oauth
             - https://skylens-271.preview.wsh.no/oauth
+            # The nightly preview env (skylens' nightly-preview.yml): its e2e setup signs in here.
+            - https://skylens-nightly.preview.wsh.no/oauth
             scopes:
             - openid
             - profile

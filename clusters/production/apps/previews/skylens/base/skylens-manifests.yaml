@@ -17,13 +17,14 @@ spec:
   url: oci://ghcr.io/hwinther/skylens/manifests
   ref:
     tag: placeholder # patched per PR (tag + digest)
-  # Only artifacts signed by skylens' PR workflow (pr-e2e.yml). Production's OCIRepository accepts
-  # release-tag signatures only, so a PR artifact can't be promoted there.
+  # Only artifacts signed by skylens' PR workflow (pr-e2e.yml), on a PR or on main (manifests:main-<sha7>,
+  # for the nightly preview env). Production's OCIRepository accepts release-tag signatures only, so
+  # neither can be promoted there.
   verify:
     provider: cosign
     matchOIDCIdentity:
     - issuer: ^https://token\.actions\.githubusercontent\.com$
-      subject: ^https://github\.com/hwinther/skylens/\.github/workflows/pr-e2e\.yml@refs/pull/[0-9]+/merge$
+      subject: ^https://github\.com/hwinther/skylens/\.github/workflows/pr-e2e\.yml@refs/(pull/[0-9]+/merge|heads/main)$
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
