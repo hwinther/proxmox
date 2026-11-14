@@ -1,0 +1,43 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: test-preview-pr-nightly
+
+resources:
+- ../base
+- namespace.yaml
+
+# `labels` (vs deprecated `commonLabels`) with includeSelectors: false avoids leaking the PR label
+# into NetworkPolicy podSelectors that target peers in other namespaces (kube-dns, etc.).
+labels:
+- pairs:
+    test.wsh.no/pr: "nightly"
+  includeSelectors: false
+  includeTemplates: true
+
+# main / sha256:dd578bad8795e01f8332322722b568d8046e1ece7700dd91b01f8b44848606a5 carry the MANIFEST ARTIFACT's tag (pr-<N>) and digest, not an
+# image's: the artifact pins the api and frontend images itself. The digest pins the deploy to
+# exactly what this PR run pushed after e2e + grype; the tag is kept alongside for readability
+# (`flux get sources oci`).
+patches:
+- target:
+    kind: OCIRepository
+    name: test
+  patch: |-
+    - op: replace
+      path: /spec/ref
+      value:
+        tag: "main"
+        digest: "sha256:dd578bad8795e01f8332322722b568d8046e1ece7700dd91b01f8b44848606a5"
+- target:
+    kind: Kustomization
+    name: test
+  patch: |-
+    - op: replace
+      path: /spec/targetNamespace
+      value: test-preview-pr-nightly
+    - op: replace
+      path: /spec/postBuild/substitute/APP_HOST
+      value: test-nightly.preview.wsh.no
+    - op: replace
+      path: /spec/postBuild/substitute/PG_DB
+      value: test_nightly
