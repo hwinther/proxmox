@@ -14,19 +14,20 @@ Files that the workflow renders per PR:
 
 Placeholders the workflow replaces:
 
-- `__PR__` — PR number (e.g. `1271`)
+- `__PR__` — PR number (e.g. `1271`), or `nightly` for hwinther/test's nightly-preview.yml
 - `__HOST__` — preview hostname (e.g. `test-1271.preview.wsh.no`)
 - `__IMAGE_TAG__` / `__IMAGE_DIGEST__` — despite the names, the **manifest artifact's** tag
   (`pr-<N>`) and digest, `ghcr.io/hwinther/test/manifests`, as pushed by the test repo's
   `pr-e2e.yml`. The artifact pins the api and frontend images itself.
-- `__DB_NAME__` — SQL database name (e.g. `test_pr1271`)
+- `__DB_NAME__` — SQL database name (e.g. `test_pr1271`, or `test_nightly`)
 
 ## Where the preview workload comes from
 
 `base/test-manifests.yaml` holds an `OCIRepository` and a Flux `Kustomization` per preview
 namespace. The artifact is the PR's own `deploy/`, rendered exactly like a release but with the PR's
 images, so a PR that changes the manifests runs them in its preview before any release. Only
-artifacts signed by the test repo's `pr-e2e.yml` on a pull-request ref are accepted; the test
+artifacts signed by the test repo's `pr-e2e.yml` on a pull-request ref or on main (for the nightly
+env) are accepted; the test
 environment accepts release-tag signatures only. The values follow the test tier (shared `testdb`,
 RabbitMQ `test` vhost), with the per-PR database and host patched in by the overlay. The namespace,
 network policies, per-preview Valkey and Kyverno-cloned Secrets stay in this tree.
