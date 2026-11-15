@@ -228,7 +228,8 @@ config.ini
 # .tmp-helm is a temporary folder for extracted helm charts for debugging configuration issues, it should not be version-controlled
 .tmp-helm/
 
-# Claude code files
-.claude/
+# Claude code files (local settings stay out; .claude/skills/ holds the shared repo skills)
+.claude/*
+!.claude/skills/
 .mcp.json
 .playwright-mcp/
