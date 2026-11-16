@@ -42,3 +42,13 @@ Two Raspberry Pi ARM64 nodes tainted for SDR-only workloads (`edge-sdr` cluster 
 ### Python automation
 
 `src/` is a modular library for LXC/VM management. `scripts/example.py` and `scripts/lsio.py` require a live Proxmox host (call `pvesh`, query hardware) and will not work locally.
+
+## Skills
+
+Procedures live in `.claude/skills/<name>/SKILL.md`. If a skill is not offered by the Skill tool in your session, read the file directly before starting the matching kind of work:
+
+- `new-cluster-app`: adding or reshaping an app or namespace under `clusters/` (routes, Authelia, netpol, backups, secrets docs, images, previews).
+- `homelab-alert-triage`: a firing alert or odd symptom; known causes and false alarms with the check that confirms each.
+- `k0s-node-maintenance`: reboots, drains, k0s upgrades, rebalancing and node VM changes.
+
+When a new cause or convention is learned, add it to the matching skill.

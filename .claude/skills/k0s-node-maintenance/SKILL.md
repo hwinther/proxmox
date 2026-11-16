@@ -34,14 +34,36 @@ Host-side commands (SSH, sysfs, sysctl, `helm install`, `qm`) are usually blocke
 
 The two 2-core nodes should not run much. The game servers on prod03/04 and the NAS-colocated stack on prod05 are intentional.
 
+Node names in commands are exact: `kubectl get nodes` shows some as FQDN (`k0s-prod01.k0s.wsh.no`) and some as short names (`k0s-prod03`). Placement facts in older notes (which app or which VM sits where) go stale; check the live state.
+
+## Rebooting a Proxmox host (not just one node)
+
+A host reboot takes down **every guest on that host**. Find them first, because node VMs move between hosts:
+
+```
+kubectl get --raw "/api/v1/namespaces/observability-production/services/http:obs-kps-kube-prometheus-st-prometheus:9090/proxy/api/v1/query?query=proxmox_vm_maxmem_bytes"
+```
+
+Each result has the guest `name` and its host in `node`. The same read-only path answers other host questions (Ceph daemons, kernels, failed units) without SSH.
+
+Then plan for all of it:
+- **Several k0s nodes on one host:** add up the requests of all of them (step 1 below), and **cordon all of them before draining any**, so pods evicted from one don't land on the other.
+- **A controller on the host:** etcd runs on 2 of 3 while it is down. Don't touch the other controller hosts in the same window.
+- **Ceph OSD or mon on the host:** the user checks `ceph -s` and the pool `min_size` first, sets `ceph osd set noout` before the reboot, and unsets it when all PGs are active+clean again.
+- **Other guests** (CI runner, network controller, test VMs) go down too; tell the user which.
+- **If capacity is short,** the game servers are the cheapest thing to park. Their replica counts live in git (private-apps), so ask the user how they want it done; a live `kubectl scale` is reverted by Flux.
+- After boot the user checks: VMs started, `systemctl --failed` (the `zfs-volume-wait` race), NIC offloads still off on a host with an r8169 NIC, Ceph healthy.
+- Then uncordon and rebalance (below).
+
 ## Before any reboot, drain or upgrade
 
 1. Check what moves: `kubectl describe nodes | grep -A5 'Allocated resources'`. If the remaining nodes can't fit the drained node's requests, the drain hangs or pods pend.
 2. **CNPG:** primaries have PDBs (minAvailable 1).
-   - Cordon the node early and CNPG usually switches over by itself.
-   - If not, set `targetPrimary` via the status subresource.
+   - Cordon the node early and CNPG usually switches over by itself. Watch with `kubectl get clusters.postgresql.cnpg.io -A -w`.
+   - If not: `kubectl -n <ns> patch cluster <name> --subresource=status --type=merge -p '{"status":{"targetPrimary":"<replica pod>"}}'`. The `kubectl cnpg` plugin is not installed.
+   - Don't drain until every cluster is healthy on its new primary. There is no WAL archive, so an unplanned failover can wedge in `pg_rewind`.
    - Make sure the replica is **not** on the next node to be drained.
-3. **RabbitMQ:** it has a PDB with maxUnavailable 1, but no anti-affinity, so members can share a node.
+3. **RabbitMQ:** it has a PDB with maxUnavailable 1 and only *preferred* anti-affinity, so check that two members don't end up on the nodes you drain.
 4. **Hibernated games:** expect no backups; that's fine.
 5. **Shutdown of everything:** `flux suspend kustomization postgres-cnpg-production` **before** annotating CNPG hibernation, because Flux strips the annotation. Follow `return-from-shutdown.md`.
 6. Take a k0s backup on the leader before an upgrade.
@@ -88,7 +110,7 @@ Kubernetes never moves running pods, so the last node back stays empty while oth
 
 - **Removing a chart from k0s.yaml runs helm uninstall, even with the finalizer stripped.** That took production's CNI down once.
 - Cilium is now a Flux HelmRelease. For any other k0s-managed chart, plan removal as a short outage: have the exact version and a backup of the values ready for an immediate `helm install`, run by the user.
-- Editing controller k0s config: edit all controllers, restart the followers first, then the **leader**. The leader is the holder of `kube-node-lease/k0s-endpoint-reconciler`.
+- Editing controller k0s config: edit all controllers, then restart them **one at a time**, waiting for each to be Ready and for `kubectl get controlnodes` to be stable before the next. Restart the leader last if you can tell which it is: the holder of `kube-node-lease/k0s-endpoint-reconciler` is a hashed ID, not a node name, so ask the user to check the k0s log on the controllers when it matters.
 
 ## Node OS issues
 
