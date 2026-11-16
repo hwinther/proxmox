@@ -52,3 +52,7 @@ Procedures live in `.claude/skills/<name>/SKILL.md`. If a skill is not offered b
 - `k0s-node-maintenance`: reboots, drains, k0s upgrades, rebalancing and node VM changes.
 
 When a new cause or convention is learned, add it to the matching skill.
+
+## Backlog and plans
+
+Open work is in `docs/backlog.md`, with larger plans under `docs/plans/`. Read the item before starting on it, re-check its state against the cluster, and update the file in the same PR when an item is done or its state changes. Edge/WAF and game-server items are in the private-apps repo (`infra/backlog.md`).
