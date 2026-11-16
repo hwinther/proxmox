@@ -91,7 +91,7 @@ When you finish or re-check an item, update it here in the same PR.
 
 ### 10a. Standing policy drops seen by Hubble
 
-- **State (2026-11-16):** `hubble_drop_total{reason="POLICY_DENIED"}` shows a steady drop from kubescape to a non-pod destination (about 0.9 per second, since June) and a small one into the FlareSolverr namespace.
+- **State (2026-11-16):** `hubble_drop_total{reason="POLICY_DENIED"}` shows a steady drop from kubescape to a non-pod destination (about 0.9 per second, since June) and a small one into one of the private-apps namespaces.
 - **Do:** identify each flow with `hubble observe --verdict DROPPED -n <namespace>`, then allow it or note here why the drop is wanted.
 - **Done when:** both are allowed or documented.
 
