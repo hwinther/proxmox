@@ -35,7 +35,7 @@ When you finish or re-check an item, update it here in the same PR.
 
 - **State:** shuttle03 runs `k0s-prod02` and the edge controller VM, but has no node-exporter and is missing from `clusters/production/apps/observability/host-exporters.md`.
 - **Do:** install the exporter as that document describes (**host**), then add shuttle03 to the scrape targets and to the document in a PR.
-- **Done when:** `up{job="node-exporter-pve"}` has a series for shuttle03 and `NodeCpuOverheating` covers it.
+- **Done when:** `up{job="node-exporter", instance="shuttle03"}` is 1 (the host scrape is relabelled to that job name) and `NodeCpuOverheating` covers it.
 
 ### 5. Controller freezes behind `KubeAggregatedAPIDown`
 
@@ -55,12 +55,19 @@ When you finish or re-check an item, update it here in the same PR.
 - **Do (owner):** swap in the spare AVX2 CPU when convenient. Until then, don't migrate VMs with CPU type `host` or `x86-64-v3` to shuttle01.
 - **Done when:** swapped, or dropped from this list.
 
+### 7a. prod05 runs an older kernel than the other nodes
+
+- **State:** on 2026-11-17 `k0s-prod05` runs 6.18.48 and the other four run 6.18.58. If `apk upgrade` has already run on prod05 without a reboot, modules that were not loaded (nfsv4) cannot load, and this is the node that mounts the NAS.
+- **Do (host):** compare `uname -r` with `ls /lib/modules` on prod05. If they differ, plan a reboot with the `k0s-node-maintenance` skill.
+- **Done when:** all five nodes report the same kernel.
+
 ## Scheduling
 
 ### 8. The 2-core NAS-adjacent node is nearly full
 
 - **State:** CPU requests on 2026-11-16: prod05 75 %, prod03 56 %, prod04 46 %, prod02 43 %, prod01 40 %. Memory requests: prod04 76 %, prod05 70 %. One extra pod with a large request on prod05 blocks the nightly backup pods, which are pinned to their app's node.
 - **Do:** find pods on prod05 that have no reason to be there (no NAS mount, no `topology.wsh.no/colocated-with` preference) and give them a node affinity away from it, in git. Don't change the backup affinity.
+- **Open decision (owner):** a `PreferNoSchedule` taint for this node is documented and already tolerated by the NAS-adjacent apps in private-apps, but it is not on the node. Apply it, or drop the idea.
 - **Done when:** prod05 stays under about 60 % CPU requests after a reboot-and-rebalance cycle.
 
 ### 9. Containers without a memory request
@@ -81,6 +88,12 @@ When you finish or re-check an item, update it here in the same PR.
 
 - **State:** every namespace carries three copies of the netpol baseline. Kubernetes `ClusterNetworkPolicy` (Baseline tier) could replace them with one object, but the API is alpha.
 - **Do:** nothing until the API is beta. Then note that a Baseline tier also applies to `kube-system` unless excluded.
+
+### 10a. Standing policy drops seen by Hubble
+
+- **State (2026-11-16):** `hubble_drop_total{reason="POLICY_DENIED"}` shows a steady drop from kubescape to a non-pod destination (about 0.9 per second, since June) and a small one into one of the private-apps namespaces.
+- **Do:** identify each flow with `hubble observe --verdict DROPPED -n <namespace>`, then allow it or note here why the drop is wanted.
+- **Done when:** both are allowed or documented.
 
 ## Policy and supply chain
 
