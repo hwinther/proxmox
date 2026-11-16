@@ -27,7 +27,7 @@ When you finish or re-check an item, update it here in the same PR.
 
 ### 3. Two k0s nodes share one host
 
-- **State:** `k0s-prod03` and `k0s-prod04` both run on office-pve-i9, which also carries one of three etcd members, one of three Ceph OSDs and a mon. Rebooting that host drains two nodes at once and leaves etcd and Ceph without margin. All three CNPG primaries were on prod03 on 2026-11-16. That host also has the Realtek r8169 NIC.
+- **State:** `k0s-prod03` and `k0s-prod04` both run on office-pve-i9, which also carries one of three etcd members, one of three Ceph OSDs and a mon. Rebooting that host drains two nodes at once and leaves etcd and Ceph without margin. All three CNPG primaries were on prod03 on 2026-11-16. That host also has the Realtek r8169 NIC; the offload fix there is permanent (owner, 2026-11-17).
 - **Do (host):** move `k0s-prod04` to shuttle03 as planned on 2026-11-07. The VM disk is a local ZFS zvol, so it is an offline migration: follow "Node VM changes" in the `k0s-node-maintenance` skill. Reduce it to 4 vCPU, because the target has 4 threads. Before that, drain the node and rebalance afterwards.
 - **Done when:** `proxmox_vm_*` shows prod03 and prod04 on different hosts.
 
@@ -67,7 +67,7 @@ When you finish or re-check an item, update it here in the same PR.
 
 - **State:** CPU requests on 2026-11-16: prod05 75 %, prod03 56 %, prod04 46 %, prod02 43 %, prod01 40 %. Memory requests: prod04 76 %, prod05 70 %. One extra pod with a large request on prod05 blocks the nightly backup pods, which are pinned to their app's node.
 - **Do:** find pods on prod05 that have no reason to be there (no NAS mount, no `topology.wsh.no/colocated-with` preference) and give them a node affinity away from it, in git. Don't change the backup affinity.
-- **Open decision (owner):** a `PreferNoSchedule` taint for this node is documented and already tolerated by the NAS-adjacent apps in private-apps, but it is not on the node. Apply it, or drop the idea.
+- **Open decision (owner):** a soft `PreferNoSchedule` taint for this node was prepared to keep generic pods off it. The NAS-adjacent apps already tolerate it and the reason is written in the private-apps README, but the taint was never put on the node. Either apply it (one `kubectl taint node` command, reversible) or remove the tolerations and the README section.
 - **Done when:** prod05 stays under about 60 % CPU requests after a reboot-and-rebalance cycle.
 
 ### 9. Containers without a memory request
@@ -108,6 +108,13 @@ When you finish or re-check an item, update it here in the same PR.
 - **State:** first-party images are verified at admission. A spot check of 47 third-party images on 2026-10-27 found keyless cosign signatures or attestations on Cilium, the Flux controllers, cert-manager, trust-manager, prometheus-operator, otel-collector-contrib, the CNPG operator and its postgresql image, Kyverno, policy-reporter, kubescape and headlamp. The observability stack, ceph-csi, the k0s images, Authelia and most community images had none.
 - **Do:** add one `ImageValidatingPolicy` in **Audit** for the signed set, each entry pinned to the vendor's signer identity (for example the vendor's release workflow on `refs/tags/v*`). Never Deny on cluster-critical images (CNI, admission controller, Flux, DNS, CSI): a failed verification would block the cluster's own recovery. Re-check the list with `cosign verify` before writing it; it is three weeks old. For the unsigned majority the controls stay digest pinning and in-cluster scanning.
 - **Done when:** the policy reports results for the signed set and nothing is blocked.
+
+### 13a. Digest pins in git for our own images
+
+- **Decision (owner, 2026-11-17):** our own images are pinned by digest in git and verified for signature and attestations; third-party images get an exception only with a good reason.
+- **State:** one first-party image and 13 third-party image lines carry `tag@sha256` today. The rest of the first-party images are tag-only, and the admission policy runs with `verifyDigest: false` and adds the digest itself. App manifests that come from OCI artifacts are rendered in the app repos, so the pin has to be produced there.
+- **Do:** first write down how the pin is produced and kept current: the release workflow that renders the manifests artifact writes `tag@sha256`, and Renovate or Dependabot must move tag and digest together. Then convert one app end to end, check that the policy still admits it with `verifyDigest: true` for that image, and roll out. List the third-party images that stay unpinned or unverified, each with its reason.
+- **Done when:** every first-party image reference in git has a digest, and the exceptions list exists.
 
 ### 14. Promotion and rollback of the pinned production app, untested paths
 

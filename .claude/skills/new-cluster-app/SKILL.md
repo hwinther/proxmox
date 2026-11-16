@@ -71,7 +71,8 @@ Copy node-red's `*-pbs-backup-cronjob.yaml`, `*-pbs-restore-job.yaml` (applied b
 
 ## 7. Images
 
-- First-party (`ghcr.io/hwinther/*`, `ghcr.io/wshno/*`): **semver tag only** in git. Kyverno's ImageValidatingPolicy adds the digest and verifies the SLSA signature (Deny), so expect git-vs-live drift on `.image`. Third-party: tag-pinned. `:latest` is not allowed.
+- **Direction (owner, 2026-11-17):** our own images get a **digest pin in git** (`tag@sha256:...`) and are verified at admission (signature and attestations). A third-party image without a pin or a signature needs a stated reason, written next to it. `:latest` is not allowed.
+- **Today:** most first-party images (`ghcr.io/hwinther/*`, `ghcr.io/wshno/*`) are still tag-only in git; Kyverno's ImageValidatingPolicy adds the digest and verifies the SLSA signature (Deny), so expect git-vs-live drift on `.image` for those. Don't remove an existing digest pin. For a new app, pin by digest from the start. Moving the rest is backlog item 13a.
 - **First-party app with a `deploy/` dir:** use an `OCIRepository` plus a Flux `Kustomization` for `ghcr.io/<owner>/<app>/manifests` (copy `<app>-manifests.yaml`).
   - cosign `matchOIDCIdentity` pins the signer workflow: `container.yml@refs/tags/v*` for prod, `promote.yml@refs/heads/main` where promotion is used, `pr-e2e.yml@refs/pull/N/merge` for previews.
   - Renaming the app's workflow breaks verification.
