@@ -67,7 +67,9 @@ When you finish or re-check an item, update it here in the same PR.
 
 - **State:** CPU requests on 2026-11-16: prod05 75 %, prod03 56 %, prod04 46 %, prod02 43 %, prod01 40 %. Memory requests: prod04 76 %, prod05 70 %. One extra pod with a large request on prod05 blocks the nightly backup pods, which are pinned to their app's node.
 - **Do:** find pods on prod05 that have no reason to be there (no NAS mount, no `topology.wsh.no/colocated-with` preference) and give them a node affinity away from it, in git. Don't change the backup affinity.
-- **Open decision (owner):** a soft `PreferNoSchedule` taint for this node was prepared to keep generic pods off it. The NAS-adjacent apps already tolerate it and the reason is written in the private-apps README, but the taint was never put on the node. Either apply it (one `kubectl taint node` command, reversible) or remove the tolerations and the README section.
+- **Taint applied 2026-11-17:** the soft `PreferNoSchedule` taint (`wsh.no/dedicated=truenas-colocated`) is on the node now. It is set by hand, not from git, and it evicts nothing.
+- **Found the same day:** the NAS-adjacent apps that tolerate the taint all run on prod01, with their NFS mounts working, so they no longer depend on this node. prod05 holds generic pods instead (a RabbitMQ member, a few Deployments, a game server).
+- **Open decision (owner):** either bring the design back (move the generic Deployment pods off with `kubectl rollout restart`, then restart the NAS-adjacent apps so their preferred affinity returns them here; never move the RabbitMQ member by deleting it without checking the other two are healthy), or drop the colocation (remove the taint, the tolerations and the README section in private-apps).
 - **Done when:** prod05 stays under about 60 % CPU requests after a reboot-and-rebalance cycle.
 
 ### 9. Containers without a memory request
