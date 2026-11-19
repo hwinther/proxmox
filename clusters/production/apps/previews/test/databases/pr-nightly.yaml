@@ -1,0 +1,12 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: test-preview-pr-nightly
+  namespace: postgres-test
+spec:
+  name: test_nightly
+  owner: app
+  cluster:
+    name: testdb
+  databaseReclaimPolicy: delete
+  ensure: present
