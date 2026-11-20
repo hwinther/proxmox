@@ -59,6 +59,9 @@ spec:
       continuousScan: enable
       networkPolicyService: enable
       prometheusExporter: enable
+      # Honour SecurityException/ClusterSecurityException CRDs (bases/kubescape-exceptions). Also adds the
+      # kubevuln RBAC to read them and workload/namespace labels for their selectors.
+      riskAcceptance: enable
       # Let Syft also read SBOM files shipped inside images (*.cdx.json and friends). The static
       # distroless SDR images (ais-catcher, readsb) have no package database, so their compiled-in
       # libraries (librtlsdr, libusb, zlib, zstd, musl) are only visible through the CycloneDX SBOM
