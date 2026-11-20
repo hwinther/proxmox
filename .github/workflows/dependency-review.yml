@@ -74,7 +74,7 @@ jobs:
 
             - name: Review
               id: review
-              uses: anthropics/claude-code-action@f3b070c88125d33dbae5653df5f143101d4ea9dc # v1.0.276
+              uses: anthropics/claude-code-action@cc98b3ae241b0fcfb6a42a2690751afffecb4452 # v1.0.278
               with:
                   anthropic_federation_rule_id: fdrl_01GNep6xwQDF4QS4zLqRYcUq
                   anthropic_organization_id: 20b38977-bcc8-4582-96a7-71c1d36e6074
