@@ -2,6 +2,9 @@
 # https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
 
 version: 2
+# Flux itself (clusters/*/flux-system/gotk-components.yaml) is updated by Renovate's flux manager only
+# (renovate.json): it re-runs `flux install` so CRDs and RBAC change with the images. A Dependabot docker
+# bump there would only change the image tags.
 updates:
 - package-ecosystem: "github-actions"
   directories:
@@ -108,7 +111,6 @@ updates:
   - "/clusters/edge-sdr/apps/kubescape-edge-sdr"
   - "/clusters/edge-sdr/apps/policy-reporter-edge-sdr"
   - "/clusters/edge-sdr/apps/oidc-k8s-admins-rbac"
-  - "/clusters/edge-sdr/flux-system"
   schedule:
     interval: "daily"
   groups:
@@ -118,9 +120,6 @@ updates:
     test:
       patterns:
       - "hwinther/test/*"
-    fluxcd:
-      patterns:
-      - "fluxcd/*"
     # The wsh-rtl-sdr feeders are released together (one v* tag), so their bumps come as one PR.
     wsh-rtl-sdr:
       patterns:
@@ -188,7 +187,6 @@ updates:
   - "/clusters/production/apps/previews/test/base"
   - "/clusters/production/apps/previews/test/databases"
   - "/clusters/production/apps/shared/production"
-  - "/clusters/production/flux-system"
   schedule:
     interval: "daily"
   groups:
@@ -201,9 +199,6 @@ updates:
     skylens:
       patterns:
       - "hwinther/skylens/*"
-    fluxcd:
-      patterns:
-      - "fluxcd/*"
     # Our own infrastructure images (pbs backup-client, esp-poller, mosquitto-exporter) and the pgdump postgres image
     # appear in many app directories; one release is one PR across all of them, not one per app.
     proxmox-images:
