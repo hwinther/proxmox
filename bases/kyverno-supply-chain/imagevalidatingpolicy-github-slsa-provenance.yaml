@@ -68,7 +68,8 @@ spec:
   matchImageReferences:
   - expression: >-
       (ref.startsWith('ghcr.io/hwinther/') || ref.startsWith('ghcr.io/wshno/')) &&
-      !ref.startsWith('ghcr.io/hwinther/ddnsadmin/')
+      !ref.startsWith('ghcr.io/hwinther/ddnsadmin/') &&
+      !ref.startsWith('ghcr.io/hwinther/private-apps/')
   validationConfigurations:
     mutateDigest: true
     verifyDigest: false
