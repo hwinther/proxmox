@@ -5,3 +5,4 @@ resources:
 - helmrepository.yaml
 - kubescape-operator-helmrelease.yaml
 - kyverno-policyexception-hostpath.yaml
+- ../../../../bases/kubescape-exceptions

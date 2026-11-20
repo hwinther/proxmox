@@ -7,3 +7,4 @@ resources:
 - networkpolicies.yaml
 - prometheus-exporter-podmonitor.yaml
 - kyverno-policyexception-hostpath.yaml
+- ../../../../bases/kubescape-exceptions

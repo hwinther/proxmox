@@ -1,0 +1,27 @@
+# Cluster-wide Kubescape vulnerability exceptions, shared by production and edge-sdr.
+# kubevuln reads these only with capabilities.riskAcceptance=enable in the kubescape HelmRelease.
+# A suppressed finding is dropped from the stored manifest and summary, so it also leaves the
+# kubescape_vulnerabilities_* metrics, the dashboard and KubescapeOwnImageCriticalVulnerabilities.
+# Each suppression shows up as a VulnerabilitySuppressed event on this object
+# (kubectl describe clustersecurityexception <name>).
+#
+# Add only CVEs that are disputed or cannot be fixed, with the reason. Keep expiredOnFix: true so a
+# real fix brings the finding back.
+apiVersion: kubescape.io/v1beta1
+kind: ClusterSecurityException
+metadata:
+  name: disputed-cves
+spec:
+  author: "proxmox repo (GitOps)"
+  reason: "Disputed CVEs with no upstream fix; they fired the own-image critical alert after every rebuild."
+  vulnerabilities:
+  # glibc stack-protector bypass. glibc upstream disputes it as a vulnerability: exploiting it
+  # needs a separate memory-corruption bug first, and there is no fix in any glibc release.
+  # Hits every glibc-based image (Chainguard python: esp-poller, adsb-mqtt, dump1090-exporter).
+  - vulnerability:
+      id: "CVE-2019-1010022"
+    status: "affected"
+    actionStatement: "No fix exists upstream (disputed by glibc). Risk accepted; rebuilds pick up a fix if one ships."
+    response:
+    - can_not_fix
+    expiredOnFix: true
