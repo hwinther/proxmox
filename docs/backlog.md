@@ -118,7 +118,13 @@ When you finish or re-check an item, update it here in the same PR.
 - **Do:** first write down how the pin is produced and kept current: the release workflow that renders the manifests artifact writes `tag@sha256`, and Renovate or Dependabot must move tag and digest together. Then convert one app end to end, check that the policy still admits it with `verifyDigest: true` for that image, and roll out. List the third-party images that stay unpinned or unverified, each with its reason.
 - **Done when:** every first-party image reference in git has a digest, and the exceptions list exists.
 
-### 13b. Switch the mosquitto exporter sidecar to our own image
+### 13b. Leftovers after removing mqttui (owner)
+
+- **State:** the mqttui web inspector was removed from `mosquitto-production` on 2026-11-20 (unmaintained since 2026-03; its image carried 155 critical CVEs). Flux prunes the Deployment, route and policies. Two things Flux does not own stay behind.
+- **Do (owner):** delete the `mqttui-mqtt` Secret in `mosquitto-production`, and remove the `mqttui` user from the broker password file by regenerating the `mosquitto-auth` Secret without it (see `mosquitto-secrets.md`). Drop the `mqtt.mgmt.wsh.no` entry from the mgmt front-end if it has one.
+- **Done when:** no `mqttui` user or Secret is left.
+
+### 13c. Switch the mosquitto exporter sidecar to our own image
 
 - **State:** the `exporter` sidecar in `clusters/production/apps/mosquitto-production/mosquitto-statefulset.yaml` runs `docker.io/sapcc/mosquitto-exporter:0.8.0` (last release 2021, Go 1.17; Kubescape reports 14 critical and 105 high, all in the Go standard library, `golang.org/x/net` and `prometheus/client_golang`). `images/mosquitto-exporter/` is a vendored, rebuilt copy with the same flags and metric names; no release tag exists yet.
 - **Do:** push the first release tag (`git tag mosquitto-exporter-v0.9.0 origin/main && git push origin mosquitto-exporter-v0.9.0`) and wait for `build-mosquitto-exporter.yml`. Then change the sidecar image to `ghcr.io/hwinther/proxmox/mosquitto-exporter:0.9.0` (with digest, see 13a); args, env, port and probe stay as they are. The pod already runs as 1883 with a read-only root filesystem, which the distroless image supports.

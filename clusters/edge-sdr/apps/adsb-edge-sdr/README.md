@@ -145,5 +145,5 @@ kubectl create secret generic adsb-mqtt-secret -n adsb-edge-sdr \
   --from-literal=MQTT_PASSWORD='YourAlphanumericPassword'
 ```
 
-Inspect with the `mqttui` web UI in `mosquitto-production`, or
+Inspect with
 `mosquitto_sub -h 10.20.13.100 -u adsb -P '…' -t 'adsb/#' -v`.
