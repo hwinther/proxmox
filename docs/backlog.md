@@ -17,11 +17,11 @@ When you finish or re-check an item, update it here in the same PR.
 - **Related, not verified here:** upstream issue kyverno/kyverno#18671 (reported for 1.19.2 and 1.20.0) says a GeneratingPolicy clone can inherit the source Secret's `ownerReferences` and get garbage-collected when the source is updated. Check which clone sources carry owner references: `kubectl get secret -A -o json` filtered to the source Secrets named in `bases/kyverno-platform/` and `clusters/*/apps/kyverno-policies/`. CNPG-owned credential Secrets are the likely case.
 - **Done when:** #1045 is merged or closed with a reason, and the owner-reference question has an answer written here.
 
-### 2. Dependency review workflow has no API credit
+### 2. Dependency review: verify workload identity and measure cost
 
-- **State:** the `review` check on every Renovate PR fails with "Credit balance is too low" (`.github/workflows/dependency-review.yml`). It is not a finding about the PR.
-- **Do (owner):** top up the API key, or remove the workflow if it is no longer wanted. Re-run a PR by re-adding the `claude-review` label.
-- **Done when:** the check is green on one Renovate PR, or the workflow is gone.
+- **State:** `.github/workflows/dependency-review.yml` now authenticates with workload identity federation (GitHub OIDC → `proxmox-dependency-review` service account, Default workspace) instead of `ANTHROPIC_API_KEY`. Earlier runs all failed with "Credit balance is too low" before the first model call, so there is no real cost figure yet; the job now writes cost, turns and duration to the step summary. Estimate: about $0.30–1 per PR, $1–3 for large chart bumps. Not verified: whether Dependabot-triggered runs (treated like fork runs) get an OIDC token.
+- **Do (owner):** keep API credit and a spend limit on the Default workspace. Re-run 3–4 Renovate PRs of different sizes by adding the `claude-review` label and read the step summaries. Once a run is green, delete the `ANTHROPIC_API_KEY` Actions secret and Dependabot secret.
+- **Done when:** one Renovate PR has a green `review` check with a cost figure, the first Dependabot PR has shown whether OIDC works there, and the old secret is gone.
 
 ## Node and host placement
 
