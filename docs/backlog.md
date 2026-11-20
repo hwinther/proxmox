@@ -17,11 +17,11 @@ When you finish or re-check an item, update it here in the same PR.
 - **Related, not verified here:** upstream issue kyverno/kyverno#18671 (reported for 1.19.2 and 1.20.0) says a GeneratingPolicy clone can inherit the source Secret's `ownerReferences` and get garbage-collected when the source is updated. Check which clone sources carry owner references: `kubectl get secret -A -o json` filtered to the source Secrets named in `bases/kyverno-platform/` and `clusters/*/apps/kyverno-policies/`. CNPG-owned credential Secrets are the likely case.
 - **Done when:** #1045 is merged or closed with a reason, and the owner-reference question has an answer written here.
 
-### 2. Dependency review: verify workload identity and measure cost
+### 2. Dependency review: does workload identity work on Dependabot PRs?
 
-- **State:** `.github/workflows/dependency-review.yml` now authenticates with workload identity federation (GitHub OIDC → `proxmox-dependency-review` service account, Default workspace) instead of `ANTHROPIC_API_KEY`. Earlier runs all failed with "Credit balance is too low" before the first model call, so there is no real cost figure yet; the job now writes cost, turns and duration to the step summary. Estimate: about $0.30–1 per PR, $1–3 for large chart bumps. Not verified: whether Dependabot-triggered runs (treated like fork runs) get an OIDC token.
-- **Do (owner):** keep API credit and a spend limit on the Default workspace. Re-run 3–4 Renovate PRs of different sizes by adding the `claude-review` label and read the step summaries. Once a run is green, delete the `ANTHROPIC_API_KEY` Actions secret and Dependabot secret.
-- **Done when:** one Renovate PR has a green `review` check with a cost figure, the first Dependabot PR has shown whether OIDC works there, and the old secret is gone.
+- **State:** `.github/workflows/dependency-review.yml` authenticates with workload identity federation; the `ANTHROPIC_API_KEY` secrets are deleted. Verified 2026-11-20 on three Renovate PRs, all green with a review comment: #1048 loki patch $0.10 (11 turns), #1045 kyverno minor $0.15 (16 turns), #970 kube-prometheus-stack major $0.15 (12 turns). Still open: GitHub treats Dependabot-triggered runs like fork runs, and the docs don't say whether they get an OIDC token.
+- **Do:** when the next Dependabot PR under `clusters/` or `bases/` opens, check its `review` run. If the token request fails, either skip the job for `dependabot[bot]` or accept that those PRs get no review.
+- **Done when:** one Dependabot run has shown whether OIDC works, and the workflow handles the answer.
 
 ## Node and host placement
 
