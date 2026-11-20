@@ -41,7 +41,8 @@ apt-get update && apt-get install -y prometheus-node-exporter lm-sensors prometh
 # hwmon CPU temps: make sure the right driver is loaded so node_hwmon_temp_celsius is populated
 sensors-detect --auto        # loads coretemp (Intel) or k10temp (AMD); persists to /etc/modules
 systemctl enable --now prometheus-node-exporter
-systemctl enable --now prometheus-smartctl-exporter   # listens on :9633
+# prometheus-smartctl-exporter starts itself on install (:9633); its unit is not named after the
+# package, so find it with: systemctl list-units '*smartctl*'
 # verify locally
 curl -s localhost:9100/metrics | grep -E '^node_hwmon_temp_celsius' | head
 curl -s localhost:9633/metrics | grep -c '^smartctl_device'
