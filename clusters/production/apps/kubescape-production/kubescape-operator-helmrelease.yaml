@@ -42,6 +42,13 @@ spec:
         effect: NoSchedule
     clusterName: production
     ksNamespace: kubescape-production
+    # Chart 1.42.0 creates ingress NetworkPolicies for its components by default, one of them named
+    # `kubescape`, which collides with ours in networkpolicies.yaml. Ours are written for Cilium
+    # (apiserver traffic arrives as host/remote-node), so keep the chart's off. 1.41 has the same value
+    # with default false, so nothing changes before the upgrade.
+    global:
+      networkPolicy:
+        enabled: false
     excludeNamespaces: "kubescape,kubescape-production,kube-system,kube-public,kube-node-lease,kubeconfig,gmp-system,gmp-public"
     # networkPolicyService disabled 2026-08-28: node-agents continuously build network
     # neighborhoods and stream them into the single `storage` aggregated apiserver, which sat at a

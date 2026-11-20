@@ -60,6 +60,13 @@ spec:
     clusterName: edge-sdr
     ksNamespace: kubescape-edge-sdr
     excludeNamespaces: "kubescape,kubescape-edge-sdr,kube-system,kube-public,kube-node-lease,kubeconfig,gmp-system,gmp-public"
+    # Chart 1.42.0 creates ingress NetworkPolicies for its components by default. Plain NetworkPolicies
+    # drop the apiserver -> storage/operator traffic under Cilium (it arrives as host/remote-node), so
+    # keep them off, as in production. 1.41 has the same value with default false, so nothing changes
+    # before the upgrade.
+    global:
+      networkPolicy:
+        enabled: false
     capabilities:
       continuousScan: enable
       networkPolicyService: enable

@@ -10,12 +10,11 @@ When you finish or re-check an item, update it here in the same PR.
 
 ## Decide soon
 
-### 1. Kyverno 1.20 (PR #1045)
+### 1. Kyverno 1.20: cloned Secrets and owner references (watch)
 
-- **State:** Renovate PR #1045 bumps the chart 3.9.2 → 3.10.0 (Kyverno 1.19.2 → 1.20.0, released 2026-11-12) on both clusters at once. No legacy `kyverno.io/v1` or `v2` objects remain in either cluster or in git, so the migration that blocked this is finished. The chart's new pre-upgrade hook `check-legacy-policies` should pass.
-- **Do:** the owner decides when to merge. Merge when someone can watch: the hook Job, the four controllers, then `flux reconcile kustomization kyverno-policies`. Check afterwards that PolicyReports still show the PolicyExceptions as `skip`.
-- **Related, not verified here:** upstream issue kyverno/kyverno#18671 (reported for 1.19.2 and 1.20.0) says a GeneratingPolicy clone can inherit the source Secret's `ownerReferences` and get garbage-collected when the source is updated. Check which clone sources carry owner references: `kubectl get secret -A -o json` filtered to the source Secrets named in `bases/kyverno-platform/` and `clusters/*/apps/kyverno-policies/`. CNPG-owned credential Secrets are the likely case.
-- **Done when:** #1045 is merged or closed with a reason, and the owner-reference question has an answer written here.
+- **State (2026-11-20):** Kyverno 1.20.0 (chart 3.10.0, #1045) runs on both clusters. The `check-legacy-policies` hook passed, `migrate-resources` completed, and PolicyReports still show the PolicyExceptions as `skip`. Upstream issue kyverno/kyverno#18671 says a GeneratingPolicy clone can inherit the source Secret's `ownerReferences` and get garbage-collected when the source is updated. Two clone sources are owned by CNPG: `postgres-test/cluttertestdb-app` and `postgres-test/testdb-app`. Their clones in `clutterstock-test` and `test-test` had no `ownerReferences` after the upgrade. Not tested: what happens when CNPG updates a source Secret, because that means changing a credential on purpose.
+- **Do:** the next time CNPG rewrites one of those Secrets (a password rotation or a cluster rebuild in `postgres-test`), check that the clone still exists and has no `ownerReferences`. If it was deleted, the bug applies here; pin a fix version or drop the source's owner reference in the GeneratingPolicy.
+- **Done when:** one source update has been observed, or upstream closes the issue with a fixed version that runs here.
 
 ### 2. Dependency review: does workload identity work on Dependabot PRs?
 
@@ -95,7 +94,7 @@ When you finish or re-check an item, update it here in the same PR.
 
 ### 12. Re-survey policy report noise
 
-- **State:** the 2026-10-03 survey listed noisy results, but all policies have since moved to the CEL policy types, and the trusted-sources policy already accepts the SSH-over-443 URL. The old list is not valid any more.
+- **State:** the 2026-10-03 survey listed noisy results, but all policies have since moved to the CEL policy types, and the trusted-sources policy already accepts the SSH-over-443 URL. The old list is not valid any more. Known since before 2026-11-20: the only `error` results in production (6) come from the MutatingPolicy `suspend-pbs-backup-when-hibernated`. Background reporting evaluates its `.spec.suspend` patch against the StatefulSet trigger instead of the target CronJob ("field not declared in schema"). The mutation itself works: the CronJobs of scaled-to-0 game servers are suspended.
 - **Do:** list failing PolicyReport results per policy (`kubectl get policyreport -A -o json`), group them, and fix or except the top three sources. System DaemonSets (Cilium, ceph-csi, node-exporter) are expected to fail the pod-security style checks.
 - **Done when:** a short current list is written here.
 
