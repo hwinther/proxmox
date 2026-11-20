@@ -63,6 +63,29 @@ updates:
   cooldown:
     default-days: 7
 
+# mosquitto-exporter image (vendored sapcc/mosquitto-exporter): the Go modules, and the golang
+# builder and distroless runtime digests. The PR is built and scanned by build-mosquitto-exporter.yml;
+# the next mosquitto-exporter-v* tag publishes it.
+- package-ecosystem: "gomod"
+  directory: "/images/mosquitto-exporter"
+  open-pull-requests-limit: 20
+  schedule:
+    interval: "weekly"
+  cooldown:
+    default-days: 7
+  groups:
+    go-modules:
+      patterns:
+      - "*"
+
+- package-ecosystem: "docker"
+  directory: "/images/mosquitto-exporter"
+  open-pull-requests-limit: 20
+  schedule:
+    interval: "weekly"
+  cooldown:
+    default-days: 7
+
 # edge-sdr cluster (k0s / SDR edge).
 - package-ecosystem: "docker"
   directories:
@@ -181,7 +204,7 @@ updates:
     fluxcd:
       patterns:
       - "fluxcd/*"
-    # Our own infrastructure images (pbs backup-client, esp-poller) and the pgdump postgres image
+    # Our own infrastructure images (pbs backup-client, esp-poller, mosquitto-exporter) and the pgdump postgres image
     # appear in many app directories; one release is one PR across all of them, not one per app.
     proxmox-images:
       patterns:
@@ -206,7 +229,7 @@ updates:
     test:
       patterns:
       - "hwinther/test/*"
-    # Our own infrastructure images (pbs backup-client, esp-poller) and the pgdump postgres image
+    # Our own infrastructure images (pbs backup-client, esp-poller, mosquitto-exporter) and the pgdump postgres image
     # appear in many app directories; one release is one PR across all of them, not one per app.
     proxmox-images:
       patterns:

@@ -17,8 +17,9 @@ on:
                 type: boolean
 
 # Repo-wide v* tags only. The container images release on their own tags (esp-poller-v*,
-# pbs-backup-client-v*; see build-esp-poller.yml and build-proxmox-pbs-backup-client.yml), so a v* release
-# no longer builds them.
+# pbs-backup-client-v*, mosquitto-exporter-v*; see build-esp-poller.yml,
+# build-proxmox-pbs-backup-client.yml and build-mosquitto-exporter.yml), so a v* release no longer
+# builds them.
 permissions:
     contents: write
 
