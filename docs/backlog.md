@@ -31,12 +31,6 @@ When you finish or re-check an item, update it here in the same PR.
 - **Do (host):** move `k0s-prod04` to shuttle03 as planned on 2026-11-07. The VM disk is a local ZFS zvol, so it is an offline migration: follow "Node VM changes" in the `k0s-node-maintenance` skill. Reduce it to 4 vCPU, because the target has 4 threads. Before that, drain the node and rebalance afterwards.
 - **Done when:** `proxmox_vm_*` shows prod03 and prod04 on different hosts.
 
-### 4. shuttle03 is not monitored as a host
-
-- **State:** the scrape targets (`10.20.4.36:9100` in `node-exporter-pve`, `10.20.4.36:9633` in `smartctl`) and the row in `clusters/production/apps/observability/host-exporters.md` are in git. The exporters are not installed on the host yet, so both targets are down until they are. Proxmox's own OTLP metrics (`proxmox_node_*`, `proxmox_vm_*` with `node="shuttle03"`) already arrive.
-- **Do (owner, on the host):** install node-exporter, lm-sensors and smartctl_exporter as `host-exporters.md` describes, and allow 10.20.13.0/24 to tcp/9100 and tcp/9633 if the host firewall is on.
-- **Done when:** `up{job="node-exporter", instance="shuttle03"}` is 1 (the host scrape is relabelled to that job name) and `NodeCpuOverheating` covers it.
-
 ### 5. Controller freezes behind `KubeAggregatedAPIDown`
 
 - **State:** four times between 2026-11-10 and 2026-11-16 the host office-pve-amd had an IO stall of 3–4 minutes, the `k0s-prod01` VM froze, and the aggregated APIs were unavailable for a few minutes. Evidence is in Prometheus only (host PSI io, `proxmox_vm_pressureiofull_ratio`, apiserver scrape gaps). The cause on the host is unknown.

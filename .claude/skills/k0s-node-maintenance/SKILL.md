@@ -51,7 +51,10 @@ Then plan for all of it:
 - **A controller on the host:** etcd runs on 2 of 3 while it is down. Don't touch the other controller hosts in the same window.
 - **Ceph OSD or mon on the host:** the user checks `ceph -s` and the pool `min_size` first, sets `ceph osd set noout` before the reboot, and unsets it when all PGs are active+clean again.
 - **Other guests** (CI runner, network controller, test VMs) go down too; tell the user which.
+- **Check the hosts that will receive the pods, not only the k0s requests.** On 2026-11-20 draining office-pve-i9 (prod03 + prod04) fit on paper, but most pods landed on prod01, whose host office-pve-amd also runs a 31 GB desktop VM and had about 2 GB free. prod01 went NotReady for minutes (load 35, API timeouts) and CNPG failed postgres-prod over by itself. Before draining two nodes at once: check host free memory (`node_memory_MemAvailable_bytes{instance="<host>"}`), cordon a node whose host is tight so nothing lands there, and park game servers first. Pods that end up Pending for lack of CPU are better than a frozen controller.
+- **Watch the 2-core nodes after a drain.** prod02 took Prometheus, Grafana and all three CNPG primaries and its traefik failed liveness. Rebalance as soon as the drained nodes are back (cordon the full nodes, `rollout restart` their Deployments, uncordon).
 - **If capacity is short,** the game servers are the cheapest thing to park. Their replica counts live in git (private-apps), so ask the user how they want it done; a live `kubectl scale` is reverted by Flux.
+- After a shuttle02 reboot, guests that keep data on the TrueNAS VM can start before it is ready (apt-cacher-ng then answers 503 "Cannot allocate memory"); `pct reboot` them once TrueNAS is up.
 - After boot the user checks: VMs started, `systemctl --failed` (the `zfs-volume-wait` race), NIC offloads still off on a host with an r8169 NIC, Ceph healthy.
 - Then uncordon and rebalance (below).
 
