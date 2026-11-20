@@ -13,6 +13,10 @@ name: Dependency review
 # tokens from this repository whose job_workflow_ref is this file, and maps them to the
 # proxmox-dependency-review service account in the Default workspace (scope workspace:developer).
 # The IDs below are identifiers, not credentials. Billing is that workspace's API credit.
+#
+# Changing this file: pull_request runs use the PR's merge ref, which GitHub only recomputes when the
+# PR branch changes. Open PRs keep running the old version until they are rebased (tick Renovate's
+# rebase box), then re-add the label.
 
 on:
     pull_request:
