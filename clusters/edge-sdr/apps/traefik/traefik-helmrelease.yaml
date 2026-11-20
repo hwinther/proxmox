@@ -23,6 +23,11 @@ spec:
   # Detect manual changes to Helm-managed resources (warn-only; flip to enabled per-release once proven quiet).
   driftDetection:
     mode: warn
+    ignore:
+    # Set by the Kyverno MutatingPolicy wsh-deployment-revision-history-limit (bases/kyverno-platform).
+    - paths: ["/spec/revisionHistoryLimit"]
+      target:
+        kind: Deployment
   interval: 30m
   ## CRDs applied from traefik-crds.yaml (same chart version); avoid Helm/Flux ordering issues.
   install:

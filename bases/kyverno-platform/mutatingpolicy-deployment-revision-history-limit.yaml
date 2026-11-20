@@ -1,0 +1,58 @@
+# Cap Deployment revision history at 2 old ReplicaSets (Kubernetes default is 10).
+#
+# Why: Kubescape scans every ReplicaSet that still exists, and each scan rewrites the Deployment's
+# vulnerability summary, so an old revision's image can overwrite the current one in the
+# kubescape_vulnerabilities_* metrics, the dashboard and KubescapeOwnImageCriticalVulnerabilities
+# (upstream kubescape/operator#545, open). Storage keeps a revision's profile as long as its
+# ReplicaSet exists, so fewer old ReplicaSets means fewer stale scans. Rollback goes through git.
+#
+# Admission only: an existing Deployment picks up the limit at its next update (a rollout, a chart
+# upgrade, a Flux apply that changes it), and the Deployment controller then prunes the extra
+# ReplicaSets. Manifests that already set 2 or less are left alone.
+#
+# Flux kustomize-controller is fine with this (its server-side dry-run goes through the same webhook).
+# HelmReleases with drift detection ignore /spec/revisionHistoryLimit on Deployments, so helm-controller
+# does not warn about it.
+apiVersion: policies.kyverno.io/v1
+kind: MutatingPolicy
+metadata:
+  name: wsh-deployment-revision-history-limit
+  annotations:
+    policies.kyverno.io/title: Cap Deployment revisionHistoryLimit at 2
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: low
+spec:
+  evaluation:
+    admission:
+      enabled: true
+    background:
+      enabled: false
+  autogen:
+    podControllers:
+      controllers: []
+  matchConstraints:
+    namespaceSelector:
+      matchExpressions:
+      - key: kubernetes.io/metadata.name
+        operator: NotIn
+        values:
+        - kube-system
+        - kyverno
+    resourceRules:
+    - apiGroups: [apps]
+      apiVersions: [v1]
+      operations: [CREATE, UPDATE]
+      resources: [deployments]
+  matchConditions:
+  - name: limit-unset-or-above-2
+    expression: >-
+      !has(object.spec.revisionHistoryLimit) || object.spec.revisionHistoryLimit > 2
+  mutations:
+  - patchType: ApplyConfiguration
+    applyConfiguration:
+      expression: >-
+        Object{
+          spec: Object.spec{
+            revisionHistoryLimit: 2
+          }
+        }

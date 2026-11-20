@@ -7,6 +7,11 @@ spec:
   # Detect manual changes to Helm-managed resources (warn-only; flip to enabled per-release once proven quiet).
   driftDetection:
     mode: warn
+    ignore:
+    # Set by the Kyverno MutatingPolicy wsh-deployment-revision-history-limit (bases/kyverno-platform).
+    - paths: ["/spec/revisionHistoryLimit"]
+      target:
+        kind: Deployment
   interval: 30m
   # node-agent pulls eBPF-heavy image and waits for /readyz on every node; allow slow clusters.
   timeout: 30m
@@ -87,6 +92,11 @@ spec:
           cpu: 1500m
           memory: 1500Mi
     kubevuln:
+      # Raised from the chart's 20 MiB: larger images (e.g. ML stacks) produced SBOMs over the limit and
+      # kubevuln logged "incomplete or too large SBOM, skipping scan", leaving their summary on an old
+      # image. One value, used by both kubevuln and node-agent.
+      config:
+        maxSBOMSize: 52428800
       resources:
         requests:
           cpu: 50m

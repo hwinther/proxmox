@@ -29,6 +29,11 @@ spec:
   timeout: 15m
   driftDetection:
     mode: warn
+    ignore:
+    # Set by the Kyverno MutatingPolicy wsh-deployment-revision-history-limit (bases/kyverno-platform).
+    - paths: ["/spec/revisionHistoryLimit"]
+      target:
+        kind: Deployment
   install:
     # Cilium is already installed. An install attempt means the adoption went wrong: fail, don't retry.
     remediation:
