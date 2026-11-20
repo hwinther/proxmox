@@ -50,7 +50,8 @@ spec:
   matchImageReferences:
   - expression: >-
       (ref.startsWith('ghcr.io/hwinther/') || ref.startsWith('ghcr.io/wshno/')) &&
-      !ref.startsWith('ghcr.io/hwinther/ddnsadmin/')
+      !ref.startsWith('ghcr.io/hwinther/ddnsadmin/') &&
+      !ref.startsWith('ghcr.io/hwinther/private-apps/')
   # Audit only: digest pinning is done by the enforcing SLSA / ddnsadmin-signature policies.
   validationConfigurations:
     mutateDigest: false

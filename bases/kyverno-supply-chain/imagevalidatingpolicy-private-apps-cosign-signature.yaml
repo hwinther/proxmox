@@ -1,0 +1,82 @@
+# Cosign keyless signature for images built in the private hwinther/private-apps repo. ENFORCED (Deny,
+# with mutateDigest), modelled on imagevalidatingpolicy-ddnsadmin-cosign-signature.yaml.
+#
+# A private repo gets no SLSA provenance, so ghcr.io/hwinther/private-apps/* is excluded from the SLSA
+# and generic attestation policies and checked here instead: the reusable build workflow's signature,
+# bound to the caller repo through the Fulcio certificate's GitHub workflow-repository extension (the
+# SAN is the reusable workflow, not the caller).
+#
+# No registry credentials: the packages are public (they only hold rebuilt upstream images). If one is
+# made private, add `credentials.secrets: [ghcr-pull]` as in the ddnsadmin policy.
+#
+# Pods only, image-changed-only on UPDATE, verifyDigest false: same reasons as
+# imagevalidatingpolicy-github-slsa-provenance.yaml.
+apiVersion: policies.kyverno.io/v1
+kind: ImageValidatingPolicy
+metadata:
+  name: wsh-require-private-apps-cosign-signature
+  annotations:
+    policies.kyverno.io/title: Require cosign signature (ghcr.io/hwinther/private-apps)
+    policies.kyverno.io/category: Supply Chain
+    policies.kyverno.io/severity: high
+spec:
+  validationActions:
+  - Deny
+  evaluation:
+    background:
+      enabled: false
+  # Kubernetes caps webhook timeout at 30s.
+  webhookConfiguration:
+    timeoutSeconds: 30
+  autogen:
+    podControllers:
+      controllers: []
+  matchConstraints:
+    namespaceSelector:
+      matchExpressions:
+      - key: kubernetes.io/metadata.name
+        operator: NotIn
+        values:
+        - kube-system
+        - kyverno
+        - flux-system
+    resourceRules:
+    - apiGroups: [""]
+      apiVersions: [v1]
+      operations: [CREATE, UPDATE]
+      resources: [pods]
+  matchConditions:
+  - name: create-or-image-changed
+    expression: >-
+      request.operation != 'UPDATE' ||
+      object.spec.containers.map(c, c.image) != oldObject.spec.containers.map(c, c.image) ||
+      object.spec.?initContainers.orValue([]).map(c, c.image) != oldObject.spec.?initContainers.orValue([]).map(c, c.image)
+  matchImageReferences:
+  - glob: ghcr.io/hwinther/private-apps/*
+  validationConfigurations:
+    mutateDigest: true
+    verifyDigest: false
+    required: true
+  attestors:
+  - name: privateAppsBuild
+    cosign:
+      keyless:
+        identities:
+        - issuer: https://token.actions.githubusercontent.com
+          subjectRegExp: ^https://github.com/hwinther/reusable-workflows/\.github/workflows/(docker-container|image-push)\.yml@(refs/tags/v[0-9]+(\.[0-9]+){0,2}|[a-f0-9]{40})$
+        # The caller repo (the reusable workflow is the SAN, so the SAN alone doesn't say who called it).
+        additionalExtensions:
+          githubWorkflowRepository: hwinther/private-apps
+      ctlog:
+        url: https://rekor.sigstore.dev
+  variables:
+  - name: allImages
+    expression: >-
+      images.?containers.orValue([]) + images.?initContainers.orValue([]) +
+      images.?ephemeralContainers.orValue([])
+  validations:
+  - expression: >-
+      variables.allImages.all(img, verifyImageSignatures(img, [attestors.privateAppsBuild]) > 0)
+    message: >-
+      private-apps image has no cosign signature from the reusable-workflows build/push workflow called by
+      hwinther/private-apps.
