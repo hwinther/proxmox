@@ -8,8 +8,11 @@ name: Dependency review
 # Runs once when the PR opens (not on every rebase; Renovate rebases often). Add the
 # `claude-review` label to run it again.
 #
-# Secrets: ANTHROPIC_API_KEY as an Actions secret (Renovate PRs) and as a Dependabot secret
-# (Dependabot-triggered runs only see Dependabot secrets).
+# Auth: no API key. The action exchanges the job's GitHub OIDC token for a short-lived Claude API
+# token (workload identity federation). The federation rule in the Claude Console only matches
+# tokens from this repository whose job_workflow_ref is this file, and maps them to the
+# proxmox-dependency-review service account in the Default workspace (scope workspace:developer).
+# The IDs below are identifiers, not credentials. Billing is that workspace's API credit.
 
 on:
     pull_request:
@@ -34,6 +37,7 @@ jobs:
         permissions:
             contents: read
             pull-requests: write
+            id-token: write # GitHub OIDC token for the Claude API token exchange
         steps:
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -72,7 +76,10 @@ jobs:
               id: review
               uses: anthropics/claude-code-action@f3b070c88125d33dbae5653df5f143101d4ea9dc # v1.0.276
               with:
-                  anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+                  anthropic_federation_rule_id: fdrl_01GNep6xwQDF4QS4zLqRYcUq
+                  anthropic_organization_id: 20b38977-bcc8-4582-96a7-71c1d36e6074
+                  anthropic_service_account_id: svac_014GFGBm9Y3mXdVHSAT3TFz6
+                  anthropic_workspace_id: wrkspc_014Dwo748bKKb5ng4EhZDQLk
                   github_token: ${{ github.token }}
                   allowed_bots: "renovate[bot],dependabot[bot]"
                   prompt: |
@@ -130,3 +137,13 @@ jobs:
               run: |
                   jq -r '(if type == "array" then . else [.] end) | map(select(.type == "result")) | last | .result // "no result recorded"' \
                       "$RUNNER_TEMP/claude-execution-output.json" || true
+
+            # Numbers only (cost, turns, duration), never Claude's text: the repo is public.
+            - name: Record the review cost
+              if: always() && steps.review.outcome != 'skipped'
+              run: |
+                  f="$RUNNER_TEMP/claude-execution-output.json"
+                  [ -f "$f" ] || exit 0
+                  jq -r '(if type == "array" then . else [.] end) | map(select(.type == "result")) | last
+                      | "| Cost (USD) | Turns | Duration (s) |\n|---|---|---|\n| \(.total_cost_usd // "?") | \(.num_turns // "?") | \((.duration_ms // 0) / 1000 | floor) |"' \
+                      "$f" >> "$GITHUB_STEP_SUMMARY" || true
