@@ -74,5 +74,5 @@ Do **not** commit files that contain real credentials.
 
 `/metrics` has `ais_output_connected` per connection-oriented output (Hub, MQTT; image 0.8.0 and later), behind the `AisCatcherFeedDown` alert (production observability).
 
-Inspect the live MQTT stream with the `mqttui` web UI in `mosquitto-production`, or
+Inspect the live MQTT stream with
 `mosquitto_sub -h 10.20.13.100 -u ais-catcher -P '…' -t 'ais/#' -v`.

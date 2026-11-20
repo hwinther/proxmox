@@ -118,6 +118,12 @@ When you finish or re-check an item, update it here in the same PR.
 - **Do:** first write down how the pin is produced and kept current: the release workflow that renders the manifests artifact writes `tag@sha256`, and Renovate or Dependabot must move tag and digest together. Then convert one app end to end, check that the policy still admits it with `verifyDigest: true` for that image, and roll out. List the third-party images that stay unpinned or unverified, each with its reason.
 - **Done when:** every first-party image reference in git has a digest, and the exceptions list exists.
 
+### 13b. Leftovers after removing mqttui (owner)
+
+- **State:** the mqttui web inspector was removed from `mosquitto-production` on 2026-11-20 (unmaintained since 2026-03; its image carried 155 critical CVEs). Flux prunes the Deployment, route and policies. Two things Flux does not own stay behind.
+- **Do (owner):** delete the `mqttui-mqtt` Secret in `mosquitto-production`, and remove the `mqttui` user from the broker password file by regenerating the `mosquitto-auth` Secret without it (see `mosquitto-secrets.md`). Drop the `mqtt.mgmt.wsh.no` entry from the mgmt front-end if it has one.
+- **Done when:** no `mqttui` user or Secret is left.
+
 ### 14. Promotion and rollback of the pinned production app, untested paths
 
 - **State (as of 2026-10-29, not re-checked):** the approval-gated `promote.yml` flow had only been run in sign-only mode. A real forward promotion PR and a rollback had not been exercised.
