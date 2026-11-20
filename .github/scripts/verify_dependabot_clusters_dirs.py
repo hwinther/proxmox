@@ -18,6 +18,9 @@ YAML_SUFFIXES = (".yaml", ".yml")
 # Per-PR preview overlays (previews/<app>/pr-<N>) are written and removed by the gitops-preview
 # workflows while a preview runs. They hold only a namespace and patches, nothing for Dependabot.
 PREVIEW_OVERLAY = re.compile(r"^/clusters/[^/]+/apps/previews/[^/]+/pr-[0-9]+$")
+# Flux's own manifests (gotk-components.yaml) are updated by Renovate's flux manager only, which re-runs
+# `flux install` so CRDs and RBAC change with the images. Dependabot would only bump the image tags.
+FLUX_SYSTEM = re.compile(r"^/clusters/[^/]+/flux-system$")
 MISSING_LIST_FILE = Path(os.environ.get("RUNNER_TEMP", "/tmp")) / "dependabot-cluster-missing.txt"
 ORPHANED_LIST_FILE = Path(os.environ.get("RUNNER_TEMP", "/tmp")) / "dependabot-cluster-orphaned.txt"
 
@@ -33,7 +36,7 @@ def clusters_dirs_with_yaml() -> set[str]:
         if path.suffix.lower() not in YAML_SUFFIXES:
             continue
         rel = f"/{path.parent.relative_to(REPO_ROOT).as_posix()}"
-        if PREVIEW_OVERLAY.match(rel):
+        if PREVIEW_OVERLAY.match(rel) or FLUX_SYSTEM.match(rel):
             continue
         found.add(rel)
     return found
