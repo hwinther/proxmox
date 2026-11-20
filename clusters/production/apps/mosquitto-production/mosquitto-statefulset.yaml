@@ -108,7 +108,8 @@ spec:
       # the Secret is optional so the pod still starts before it exists (metrics just stay empty until
       # the broker accepts the login).
       - name: exporter
-        image: docker.io/sapcc/mosquitto-exporter:0.8.0
+        # Our own build of the dead sapcc exporter (images/mosquitto-exporter): same flags and metrics.
+        image: ghcr.io/hwinther/proxmox/mosquitto-exporter:0.9.0@sha256:174aace9360936ada2a942c23fe478853c3b261553192d7dccf4fc1e2d428f40
         imagePullPolicy: IfNotPresent
         args:
         - --endpoint
