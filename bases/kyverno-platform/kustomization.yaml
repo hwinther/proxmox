@@ -8,3 +8,4 @@ resources:
 - validatingpolicy-flux-trusted-sources.yaml
 - validatingpolicy-flux-tenant-service-account.yaml
 - validatingpolicy-traefik-disallow-default-tlsoption.yaml
+- mutatingpolicy-deployment-revision-history-limit.yaml
