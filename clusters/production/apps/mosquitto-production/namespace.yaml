@@ -2,12 +2,6 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: mosquitto-production
-  annotations:
-    # Hostnames HTTPRoutes here may claim (bases/traefik-gateway/httproute-hostnames-policy.yaml).
-    gateway.wsh.no/hostnames: mqtt.mgmt.wsh.no
   labels:
-    # May attach HTTPRoutes to the platform Gateway (bases/traefik-gateway/gateway.yaml); Kyverno also puts the
-    # authelia-forwardauth Middleware here for ExtensionRef filters.
-    gateway.wsh.no/traefik: "true"
     app.kubernetes.io/part-of: production
     pbs.wsh.no/encryption-keyfile: "true"
