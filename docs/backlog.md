@@ -33,8 +33,8 @@ When you finish or re-check an item, update it here in the same PR.
 
 ### 4. shuttle03 is not monitored as a host
 
-- **State:** shuttle03 runs `k0s-prod02` and the edge controller VM, but has no node-exporter and is missing from `clusters/production/apps/observability/host-exporters.md`.
-- **Do:** install the exporter as that document describes (**host**), then add shuttle03 to the scrape targets and to the document in a PR.
+- **State:** the scrape targets (`10.20.4.36:9100` in `node-exporter-pve`, `10.20.4.36:9633` in `smartctl`) and the row in `clusters/production/apps/observability/host-exporters.md` are in git. The exporters are not installed on the host yet, so both targets are down until they are. Proxmox's own OTLP metrics (`proxmox_node_*`, `proxmox_vm_*` with `node="shuttle03"`) already arrive.
+- **Do (owner, on the host):** install node-exporter, lm-sensors and smartctl_exporter as `host-exporters.md` describes, and allow 10.20.13.0/24 to tcp/9100 and tcp/9633 if the host firewall is on.
 - **Done when:** `up{job="node-exporter", instance="shuttle03"}` is 1 (the host scrape is relabelled to that job name) and `NodeCpuOverheating` covers it.
 
 ### 5. Controller freezes behind `KubeAggregatedAPIDown`

@@ -18,6 +18,7 @@ Hosts and their `node` label (the scrape job sets `instance` = this name):
 | `office-pve-i9`  | 10.20.4.20  | PVE + Ceph OSD (Intel, `coretemp`)    |
 | `shuttle01`      | 10.20.4.34  | PVE + Ceph OSD                        |
 | `shuttle02`      | 10.20.4.35  | PVE (not a Ceph node)                 |
+| `shuttle03`      | 10.20.4.36  | PVE (not a Ceph node), joined 2026-11 |
 | `pbs-ks`         | 10.30.0.6   | Standalone PBS, KS site (over link)   |
 
 ## Why node-exporter on the hosts
@@ -36,12 +37,14 @@ x86 CPU/package temperature, which the default set doesn't cover — added in
 Debian-based (Proxmox VE and Proxmox Backup Server both qualify):
 
 ```bash
-apt-get update && apt-get install -y prometheus-node-exporter lm-sensors
+apt-get update && apt-get install -y prometheus-node-exporter lm-sensors prometheus-smartctl-exporter
 # hwmon CPU temps: make sure the right driver is loaded so node_hwmon_temp_celsius is populated
 sensors-detect --auto        # loads coretemp (Intel) or k10temp (AMD); persists to /etc/modules
 systemctl enable --now prometheus-node-exporter
+systemctl enable --now prometheus-smartctl-exporter   # listens on :9633
 # verify locally
 curl -s localhost:9100/metrics | grep -E '^node_hwmon_temp_celsius' | head
+curl -s localhost:9633/metrics | grep -c '^smartctl_device'
 ```
 
 The Debian package enables a sensible default collector set (incl. `hwmon`, `systemd`, `filesystem`,
