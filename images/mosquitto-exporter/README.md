@@ -26,6 +26,10 @@ and its findings were all in the Go standard library, `golang.org/x/net` and
   `--cert/-c`, `--key/-k`, `--client-id/-i`; `BROKER_ENDPOINT`, `BIND_ADDRESS`, `MQTT_USER`,
   `MQTT_PASS`, `MQTT_CERT`, `MQTT_KEY`, `MQTT_CLIENT_ID`). The bind-failure log message now
   includes the error.
+- TLS: upstream disabled certificate checks (`InsecureSkipVerify: true`). The broker certificate is
+  now verified against the system roots, or against a private CA given with the new `--ca-cert`
+  flag (`MQTT_CA_CERT`). Minimum TLS 1.2. The production sidecar uses plain MQTT on 1883, so this
+  only matters if TLS is turned on later.
 - `main_test.go` (new): pins the metric names and types that dashboards and alerts use.
 - `Dockerfile`: static build (`CGO_ENABLED=0`) on a digest-pinned `golang` image, distroless
   `static-debian13:nonroot` runtime. The version comes from the `mosquitto-exporter-v*` release tag.

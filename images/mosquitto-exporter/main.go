@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"log"
 	"net/http"
 	"os"
@@ -102,6 +103,11 @@ func main() {
 				Sources: cli.EnvVars("MQTT_KEY"),
 			},
 			&cli.StringFlag{
+				Name:    "ca-cert",
+				Usage:   "Location of a CA certificate .pem file to verify the Mosquitto broker's TLS certificate (default: system roots)",
+				Sources: cli.EnvVars("MQTT_CA_CERT"),
+			},
+			&cli.StringFlag{
 				Name:    "client-id",
 				Aliases: []string{"i"},
 				Usage:   "Client id to be used to connect to the Mosquitto message broker",
@@ -139,10 +145,22 @@ func runServer(_ context.Context, c *cli.Command) error {
 		if err != nil {
 			log.Printf("Failed to load certificate/keypair: %s", err)
 		}
+		// Upstream set InsecureSkipVerify: true here. The broker's certificate is now verified
+		// against the system roots, or against --ca-cert for a private CA.
 		tlsConfig := &tls.Config{
-			Certificates:       []tls.Certificate{keyPair},
-			InsecureSkipVerify: true,
-			ClientAuth:         tls.NoClientCert,
+			Certificates: []tls.Certificate{keyPair},
+			MinVersion:   tls.VersionTLS12,
+		}
+		if caFile := c.String("ca-cert"); caFile != "" {
+			caPEM, err := os.ReadFile(caFile)
+			if err != nil {
+				log.Fatalf("Failed to read CA certificate %s: %s", caFile, err)
+			}
+			pool := x509.NewCertPool()
+			if !pool.AppendCertsFromPEM(caPEM) {
+				log.Fatalf("No PEM certificates found in %s", caFile)
+			}
+			tlsConfig.RootCAs = pool
 		}
 		opts.SetTLSConfig(tlsConfig)
 		if !strings.HasPrefix(c.String("endpoint"), "ssl://") &&
