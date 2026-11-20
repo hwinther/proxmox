@@ -118,6 +118,12 @@ When you finish or re-check an item, update it here in the same PR.
 - **Do:** first write down how the pin is produced and kept current: the release workflow that renders the manifests artifact writes `tag@sha256`, and Renovate or Dependabot must move tag and digest together. Then convert one app end to end, check that the policy still admits it with `verifyDigest: true` for that image, and roll out. List the third-party images that stay unpinned or unverified, each with its reason.
 - **Done when:** every first-party image reference in git has a digest, and the exceptions list exists.
 
+### 13b. Switch the mosquitto exporter sidecar to our own image
+
+- **State:** the `exporter` sidecar in `clusters/production/apps/mosquitto-production/mosquitto-statefulset.yaml` runs `docker.io/sapcc/mosquitto-exporter:0.8.0` (last release 2021, Go 1.17; Kubescape reports 14 critical and 105 high, all in the Go standard library, `golang.org/x/net` and `prometheus/client_golang`). `images/mosquitto-exporter/` is a vendored, rebuilt copy with the same flags and metric names; no release tag exists yet.
+- **Do:** push the first release tag (`git tag mosquitto-exporter-v0.9.0 origin/main && git push origin mosquitto-exporter-v0.9.0`) and wait for `build-mosquitto-exporter.yml`. Then change the sidecar image to `ghcr.io/hwinther/proxmox/mosquitto-exporter:0.9.0` (with digest, see 13a); args, env, port and probe stay as they are. The pod already runs as 1883 with a read-only root filesystem, which the distroless image supports.
+- **Done when:** the sidecar runs the new image, the `mosquitto` PodMonitor target is up, `broker_clients_connected` and `broker_uptime` still have series, and Kubescape no longer lists the old image.
+
 ### 14. Promotion and rollback of the pinned production app, untested paths
 
 - **State (as of 2026-10-29, not re-checked):** the approval-gated `promote.yml` flow had only been run in sign-only mode. A real forward promotion PR and a rollback had not been exercised.

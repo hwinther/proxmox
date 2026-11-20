@@ -47,7 +47,7 @@ jobs:
             package_namespace_prefix: proxmox/
             # Named explicitly: auto-discovery lists user packages, which GITHUB_TOKEN
             # cannot do, so it always found nothing.
-            images: proxmox/proxmox/pbs/backup-client,proxmox/esp-poller
+            images: proxmox/proxmox/pbs/backup-client,proxmox/esp-poller,proxmox/mosquitto-exporter
             # When set on a manual run, bypasses the smart prune and deletes the
             # entire named package via the GHCR package DELETE API. Cron runs leave
             # inputs.nuke_package null so this resolves to '' and the smart prune

@@ -1,0 +1,95 @@
+name: mosquitto-exporter container
+
+# Releases per image, like wshno/frontend-packages: the image has its own tags,
+# `mosquitto-exporter-v<version>`, separate from the repo's v* tags and from the other images here.
+# Source: images/mosquitto-exporter/ (vendored sapcc/mosquitto-exporter, see its README.md).
+#
+#   - Pull request touching the image: build and Grype-scan, no push (the report lands on the PR).
+#   - Tag `mosquitto-exporter-v0.9.0`: build, scan, push and sign
+#     ghcr.io/hwinther/proxmox/mosquitto-exporter:0.9.0. GitVersion reads only mosquitto-exporter-v*
+#     tags (tag-prefix), so the tag's version is the image's.
+#   - Manual dispatch: only at a mosquitto-exporter-v* tag ref (a tag pushed with GITHUB_TOKEN
+#     doesn't fire on.push.tags). Dispatched at a branch it fails, so nothing but release tags ends
+#     up in GHCR, which is all Dependabot sees.
+#
+# Merges to main publish nothing. Dependabot's base-image and Go module bumps reach the cluster at
+# the next release tag:
+#   git tag mosquitto-exporter-v0.9.1 origin/main && git push origin mosquitto-exporter-v0.9.1
+on:
+    pull_request:
+        branches: [main]
+        paths:
+            - "images/mosquitto-exporter/**"
+            - ".github/workflows/build-mosquitto-exporter.yml"
+    push:
+        tags:
+            - "mosquitto-exporter-v[0-9]*"
+    workflow_dispatch:
+        inputs:
+            grype_fail_build:
+                description: "Fail the build if Grype finds vulnerabilities"
+                type: boolean
+                default: true
+
+permissions: {}
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+    # No `secrets:` blocks below: the called workflows only take an optional npm_auth_token (unused
+    # here); GITHUB_TOKEN is auto-available to called workflows. Avoids the zizmor "secrets
+    # unconditionally inherited" finding.
+    pr:
+        if: github.event_name == 'pull_request'
+        permissions:
+            contents: read
+            packages: read
+            security-events: write
+            pull-requests: write
+        uses: hwinther/reusable-workflows/.github/workflows/build-and-scan-docker.yml@3a42f0c604e95cd46a9b9e01519aea3f425c5589 # v2.33.0
+        with:
+            container_registry: ghcr.io
+            container_image_name_postfix: mosquitto-exporter
+            build_context: images/mosquitto-exporter
+            dockerfile: images/mosquitto-exporter/Dockerfile
+            override_config: tag-prefix=mosquitto-exporter-v
+            # Nothing downstream consumes the loaded image or supply-chain files on a PR.
+            generate_supply_chain_artifacts: false
+            release_asset_upload_enabled: false
+
+    release:
+        if: github.event_name != 'pull_request' && startsWith(github.ref, 'refs/tags/mosquitto-exporter-v')
+        permissions:
+            contents: read
+            packages: write
+            id-token: write
+            attestations: write
+            actions: write
+            security-events: write
+            pull-requests: write
+        uses: hwinther/reusable-workflows/.github/workflows/docker-container.yml@3a42f0c604e95cd46a9b9e01519aea3f425c5589 # v2.33.0
+        with:
+            container_registry: ghcr.io
+            # ghcr.io/<repo-owner>/<repo>/<postfix> → ghcr.io/hwinther/proxmox/mosquitto-exporter
+            container_image_name_postfix: mosquitto-exporter
+            build_context: images/mosquitto-exporter
+            dockerfile: images/mosquitto-exporter/Dockerfile
+            override_config: tag-prefix=mosquitto-exporter-v
+            # Releases stay immutable: the SBOM is the signed CycloneDX attestation in GHCR.
+            release_asset_upload_enabled: false
+            grype_fail_build: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.grype_fail_build == 'false' && 'never' || 'auto' }}
+
+    # A dispatch at a branch would otherwise skip both jobs and report success.
+    wrong-ref:
+        if: github.event_name == 'workflow_dispatch' && !startsWith(github.ref, 'refs/tags/mosquitto-exporter-v')
+        runs-on: ubuntu-latest
+        permissions: {}
+        steps:
+        - name: Refuse
+          env:
+              REF: ${{ github.ref }}
+          run: |
+              echo "::error::Dispatch at a mosquitto-exporter-v* tag, not $REF (only release tags are published)."
+              exit 1
