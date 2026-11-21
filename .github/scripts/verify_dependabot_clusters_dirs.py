@@ -15,9 +15,10 @@ CLUSTERS = REPO_ROOT / "clusters"
 DEPENDABOT = REPO_ROOT / ".github" / "dependabot.yml"
 DEPENDABOT_REL = ".github/dependabot.yml"
 YAML_SUFFIXES = (".yaml", ".yml")
-# Per-PR preview overlays (previews/<app>/pr-<N>) are written and removed by the gitops-preview
-# workflows while a preview runs. They hold only a namespace and patches, nothing for Dependabot.
-PREVIEW_OVERLAY = re.compile(r"^/clusters/[^/]+/apps/previews/[^/]+/pr-[0-9]+$")
+# Preview overlays (previews/<app>/pr-<id>) are written and removed by the gitops-preview workflows
+# while a preview runs: pr-<N> per pull request, pr-nightly (or another name) for scheduled envs.
+# They hold only a namespace and patches, nothing for Dependabot.
+PREVIEW_OVERLAY = re.compile(r"^/clusters/[^/]+/apps/previews/[^/]+/pr-[A-Za-z0-9-]+$")
 # Flux's own manifests (gotk-components.yaml) are updated by Renovate's flux manager only, which re-runs
 # `flux install` so CRDs and RBAC change with the images. Dependabot would only bump the image tags.
 FLUX_SYSTEM = re.compile(r"^/clusters/[^/]+/flux-system$")
