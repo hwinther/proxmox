@@ -69,6 +69,8 @@ resources:
 # CSP blocks in our own apps (enforce only) off csp_violations_total, from the same `count` connector;
 # report-only violations are on the csp-violations dashboard below.
 - prometheusrule-csp.yaml
+# BIND (job `bind`): named down and zone serial drift between primary and secondaries.
+- prometheusrule-dns.yaml
 - minio-deployment.yaml
 - minio-buckets-job.yaml
 
@@ -175,6 +177,14 @@ configMapGenerator:
     labels:
       grafana_dashboard: "1"
 # Edge attack history: CrowdSec (Prometheus + Loki) and OPNsense NAXSI (Loki via syslog).
+# BIND DNS servers (prometheus-bind-exporter, job=bind) + named logs from Loki.
+- name: grafana-dashboard-dns-servers
+  files:
+  - dashboards/dns-servers.json
+  options:
+    disableNameSuffixHash: true
+    labels:
+      grafana_dashboard: "1"
 - name: grafana-dashboard-edge-security
   files:
   - dashboards/edge-security.json
