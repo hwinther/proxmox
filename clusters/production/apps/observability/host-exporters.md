@@ -105,3 +105,27 @@ Firewall: tcp/9100 and tcp/9119 from the cluster must be allowed on each VPS's w
 the OPNsense rule towards the tunnel (the same path the CrowdSec :6060/:60601 scrapes use).
 
 Verify: `up{job=~"node-exporter|bind", instance=~"abyss|dns-master"}` and `bind_up`.
+
+## Local BIND LXCs (dns-prod, dhcp-prod)
+
+Two Alpine LXCs run BIND 9.20 for the LAN (reverse zones and local names). Only the bind exporter
+runs there; the container's CPU, memory and disk already come from `proxmox_vm_*`. Prometheus scrapes
+them by name (`dns-prod.oh.wsh.no:9119`, `dhcp-prod.oh.wsh.no:9119`) in the `bind` job, so their LAN
+IPs stay out of this repo.
+
+```sh
+apk search -v '*bind*exporter*'          # find the exporter package in the enabled repos
+apk add <package>
+# named statistics channel: a TOP-LEVEL statement in /etc/bind/named.conf (not inside options { }):
+#   statistics-channels { inet 127.0.0.1 port 8053 allow { 127.0.0.1; }; };
+named-checkconf && rc-service named reload
+# exporter flags, in the package's /etc/conf.d/<service> file:
+#   --bind.stats-url=http://127.0.0.1:8053/ --web.listen-address=:9119
+rc-update add <service> default && rc-service <service> start
+wget -qO- http://127.0.0.1:9119/metrics | grep '^bind_up'
+```
+
+Firewall: allow tcp/9119 from the `kubernetes_control_plane` net to both LXCs in OPNsense.
+
+Verify: `bind_up{instance=~"dns-prod|dhcp-prod"}`; both then show in the DNS servers dashboard's
+server picker, and `BindZoneSerialMismatch` compares any zone they share.

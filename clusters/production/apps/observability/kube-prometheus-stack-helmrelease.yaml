@@ -398,6 +398,11 @@ spec:
             labels: { host: abyss }
           - targets: [ '10.31.0.3:9119' ]
             labels: { host: dns-master }
+          # Local BIND LXCs (Alpine), scraped by name like auth.oh.wsh.no elsewhere in the cluster.
+          - targets: [ 'dns-prod.oh.wsh.no:9119' ]
+            labels: { host: dns-prod }
+          - targets: [ 'dhcp-prod.oh.wsh.no:9119' ]
+            labels: { host: dhcp-prod }
           relabel_configs:
           - { source_labels: [ host ], target_label: instance }
         resources:
