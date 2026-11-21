@@ -1,0 +1,39 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: skylens-preview-pr-nightly
+
+resources:
+- ../base
+- namespace.yaml
+
+# `labels` (vs deprecated `commonLabels`) with includeSelectors: false — identification only; keeps
+# the PR label out of selectors so it can't break the netpol-baseline same-namespace matching.
+labels:
+- pairs:
+    skylens.wsh.no/pr: "nightly"
+  includeSelectors: false
+  includeTemplates: true
+
+# main / sha256:afb8faa4ad2ea159c34eecd2ee948a33bcac9117990453a5b1b357fc28740562 carry the MANIFEST ARTIFACT's tag (pr-<N>) and digest, not the
+# image's: the artifact pins the image itself. The digest pins the deploy to exactly what this PR
+# run pushed; the tag is kept alongside for readability (`flux get sources oci`).
+patches:
+- target:
+    kind: OCIRepository
+    name: skylens
+  patch: |-
+    - op: replace
+      path: /spec/ref
+      value:
+        tag: "main"
+        digest: "sha256:afb8faa4ad2ea159c34eecd2ee948a33bcac9117990453a5b1b357fc28740562"
+- target:
+    kind: Kustomization
+    name: skylens
+  patch: |-
+    - op: replace
+      path: /spec/targetNamespace
+      value: skylens-preview-pr-nightly
+    - op: replace
+      path: /spec/postBuild/substitute/APP_HOST
+      value: skylens-nightly.preview.wsh.no
