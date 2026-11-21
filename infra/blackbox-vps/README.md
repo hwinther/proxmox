@@ -37,6 +37,13 @@ After changing `blackbox.yml`, copy it to the VPS and run `docker compose restar
 (the file is mounted read-only; the exporter reads it at start). Check a new module with
 `curl -s 'http://127.0.0.1:9115/probe?target=<host:port>&module=<module>&debug=true'`.
 
+### Second instance on abyss
+
+abyss runs the same compose stack with `TUNNEL_IP=10.31.0.2`, so the two edge VPSes can probe each
+other (used by the `external-irc-from-*` Probes). Keep `blackbox.yml` identical on both. The cluster
+reaches it through the OPNsense rule on the `kubernetes_control_plane` interface, which must include
+tcp/9115 to abyss.
+
 ## Wire up the cluster side
 
 Put the **same** `TUNNEL_IP` into both Probes' `prober.url` (replace the `10.0.0.0-PLACEHOLDER:9115`
