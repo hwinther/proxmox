@@ -378,6 +378,28 @@ spec:
           relabel_configs:
           - { target_label: job, replacement: node-exporter }
           - { source_labels: [ node ], target_label: instance }
+        # node-exporter on the two edge VPSes (abyss, dns-master), scraped over the WireGuard tunnel
+        # (exporters bind to the tunnel IP only). Same job relabel as the PVE hosts, so the stock
+        # Node* rules + dashboards cover them. Setup: host-exporters.md, "Edge VPSes".
+        - job_name: node-exporter-vps
+          static_configs:
+          - targets: [ '10.31.0.2:9100' ]
+            labels: { node: abyss }
+          - targets: [ '10.31.0.3:9100' ]
+            labels: { node: dns-master }
+          relabel_configs:
+          - { target_label: job, replacement: node-exporter }
+          - { source_labels: [ node ], target_label: instance }
+        # BIND statistics (prometheus-bind-exporter :9119, reads named's statistics-channels on
+        # 127.0.0.1:8053) on the same two VPSes.
+        - job_name: bind
+          static_configs:
+          - targets: [ '10.31.0.2:9119' ]
+            labels: { host: abyss }
+          - targets: [ '10.31.0.3:9119' ]
+            labels: { host: dns-master }
+          relabel_configs:
+          - { source_labels: [ host ], target_label: instance }
         resources:
           requests:
             cpu: 200m
