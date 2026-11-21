@@ -33,6 +33,10 @@ instance sits outside, on the far side of the front-end.
    curl -s 'http://127.0.0.1:9115/probe?target=https://clutterstock.wsh.no&module=http_2xx' | grep probe_success
    ```
 
+After changing `blackbox.yml`, copy it to the VPS and run `docker compose restart blackbox`
+(the file is mounted read-only; the exporter reads it at start). Check a new module with
+`curl -s 'http://127.0.0.1:9115/probe?target=<host:port>&module=<module>&debug=true'`.
+
 ## Wire up the cluster side
 
 Put the **same** `TUNNEL_IP` into both Probes' `prober.url` (replace the `10.0.0.0-PLACEHOLDER:9115`
@@ -56,8 +60,10 @@ probe_ssl_earliest_cert_expiry{probe_origin="vps-external"}
 |---|---|---|
 | `http_2xx` | `www.wsh.no` | HTTP 2xx + valid TLS |
 | `http_public` | redirecting / auth-gated services (`clutterstock` [302s], `auth`, `ddns`, `node-red`, `home-assistant`) | HTTP 200/3xx/401/403 + valid TLS (fails on 5xx/TLS/timeout) |
+| `tcp_connect` | game-server ports without an A2S query (private-apps) | TCP connect |
+| `irc_tls` | charybdis on the edge VPSes (`abyss.nl.eu.darkmyst.org:6697`, `odyssey.de.eu.darkmyst.org:6697`) | valid TLS + the ircd's first `NOTICE * :***` line within 10s, then `QUIT` |
 
-Only publicly-routable **HTTP** ingresses belong here. Internal-only services and non-HTTP endpoints
+Apart from the IRC servers and the game ports, only publicly-routable **HTTP** ingresses belong here. Internal-only services and non-HTTP endpoints
 are intentionally excluded — e.g. `rabbitmq.wsh.no` (AMQPS broker on :5671, not a web app) and
 `pbs.wsh.no` (Proxmox Backup Server backup target / a k8s label key, not a public site).
 

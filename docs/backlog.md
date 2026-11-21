@@ -144,6 +144,12 @@ When you finish or re-check an item, update it here in the same PR.
 - **Do:** find out whether the OPNsense version in use can expose Unbound statistics to Prometheus (plugin or built-in exporter), then scrape it and add an Unbound row to the DNS dashboard.
 - **Done when:** guest-network query rate and SERVFAIL share are on the dashboard, or this item records why it is not possible.
 
+### 18. IRC server metrics beyond up/down
+
+- **State (2026-11-21):** the `external-irc` Probe checks that charybdis on abyss and dns-master (odyssey) answers on 6697 with a valid cert. charybdis is not a systemd unit there, so `node_systemd_unit_state` does not see it, and there are no user or channel counts.
+- **Do:** if user/channel counts are wanted, pick a small exporter that connects as a client and parses `LUSERS` (251/254/265/266), or a node-exporter textfile script on each host. The owner installs it on the hosts; scrape over the tunnel like the bind exporter (new port in the OPNsense `PrometheusNodeExporterPorts` alias).
+- **Done when:** local/global users and channels per server are in Prometheus, or the owner decides up/down is enough.
+
 ## Parked by the owner
 
 Don't start these without being asked.
