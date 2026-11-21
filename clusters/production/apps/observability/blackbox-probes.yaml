@@ -65,12 +65,16 @@ spec:
 # charybdis IRC servers on the two edge VPSes (abyss = abyss.nl.eu, dns-master = odyssey.de.eu), probed
 # over TLS on 6697 with the irc_tls module (TLS handshake + the ircd's first NOTICE, then QUIT).
 # Same probe_origin as the HTTP probes, so ExternalEndpointDown and ExternalEndpointCertExpiringSoon
-# in prometheusrule-blackbox.yaml cover them. The blackbox runs on dns-master, so odyssey is probed
-# from its own host: that confirms the ircd answers, not that the internet can reach it.
+# in prometheusrule-blackbox.yaml cover them.
+#
+# Cross-probed: each server is checked by the blackbox on the OTHER VPS (abyss runs a second instance
+# on its tunnel IP 10.31.0.2), so a pass means the ircd is reachable over the internet, not only on
+# its own host. The prober label says which VPS ran the check. If one blackbox is down its Probe
+# scrape fails (up=0, TargetDown) instead of reporting the ircd as down.
 apiVersion: monitoring.coreos.com/v1
 kind: Probe
 metadata:
-  name: external-irc
+  name: external-irc-from-dns-master
   namespace: observability-production
   labels:
     release: obs-kps
@@ -85,7 +89,30 @@ spec:
     staticConfig:
       static:
       - abyss.nl.eu.darkmyst.org:6697
+      labels:
+        probe_origin: vps-external
+        service: irc
+        prober: dns-master
+---
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  name: external-irc-from-abyss
+  namespace: observability-production
+  labels:
+    release: obs-kps
+spec:
+  interval: 60s
+  scrapeTimeout: 15s
+  module: irc_tls
+  prober:
+    url: 10.31.0.2:9115
+    scheme: http
+  targets:
+    staticConfig:
+      static:
       - odyssey.de.eu.darkmyst.org:6697
       labels:
         probe_origin: vps-external
         service: irc
+        prober: abyss
