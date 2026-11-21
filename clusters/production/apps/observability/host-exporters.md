@@ -83,3 +83,25 @@ but AMD k10temp shows up under a PCI-address chip (`pci0000:00_0000:00:18_3`), s
 silently misses the AMD host. The join also keeps NVMe sensors out (they read 80°C+ and are covered
 by `SmartNvmeOverheating`). Verified live on office-pve-amd + office-pve-i9. Dry-run rule changes
 server-side before pushing: `kubectl apply --dry-run=server -f prometheusrule-node-temp.yaml`.
+
+## Edge VPSes (abyss, dns-master)
+
+The two VPSes are reached over the WireGuard tunnel (10.31.0.2 = abyss, 10.31.0.3 = dns-master).
+Their logs already reach Loki (`{host="abyss"}`, `{host="dns-master"}`); these exporters add
+metrics. Scrape jobs: `node-exporter-vps` (relabeled to `job="node-exporter"`) and `bind`.
+
+```bash
+apt install prometheus-node-exporter prometheus-bind-exporter
+# bind both exporters to the tunnel IP only (10.31.0.3 on dns-master):
+#   /etc/default/prometheus-node-exporter:  ARGS="--web.listen-address=10.31.0.2:9100"
+#   /etc/default/prometheus-bind-exporter:  ARGS="--bind.stats-url=http://127.0.0.1:8053/ --web.listen-address=10.31.0.2:9119"
+# named statistics channel: a TOP-LEVEL statement (not inside options { }), e.g. in named.conf.local:
+#   statistics-channels { inet 127.0.0.1 port 8053 allow { 127.0.0.1; }; };
+named-checkconf && systemctl reload named
+systemctl restart prometheus-node-exporter prometheus-bind-exporter
+```
+
+Firewall: tcp/9100 and tcp/9119 from the cluster must be allowed on each VPS's wg interface and in
+the OPNsense rule towards the tunnel (the same path the CrowdSec :6060/:60601 scrapes use).
+
+Verify: `up{job=~"node-exporter|bind", instance=~"abyss|dns-master"}` and `bind_up`.
