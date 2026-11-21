@@ -39,3 +39,18 @@ modules:
     tcp:
       preferred_ip_protocol: ip4
       ip_protocol_fallback: false
+
+  # IRC over TLS (charybdis on the edge VPSes, port 6697). Completes the TLS handshake (so
+  # probe_ssl_earliest_cert_expiry covers the IRC cert), waits for the ircd's first
+  # "NOTICE * :*** Looking up your hostname" line, then QUITs before registering. An unregistered
+  # client does not trigger the +c client-connect notices opers see. Used by the external-irc Probe.
+  irc_tls:
+    prober: tcp
+    timeout: 10s
+    tcp:
+      preferred_ip_protocol: ip4
+      ip_protocol_fallback: false
+      tls: true
+      query_response:
+      - expect: "^:[^ ]+ NOTICE \\* :\\*\\*\\*"
+      - send: "QUIT :blackbox probe\r\n"

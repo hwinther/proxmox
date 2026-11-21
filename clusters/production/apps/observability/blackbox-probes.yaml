@@ -61,3 +61,31 @@ spec:
       - https://home-assistant.wsh.no
       labels:
         probe_origin: vps-external
+---
+# charybdis IRC servers on the two edge VPSes (abyss = abyss.nl.eu, dns-master = odyssey.de.eu), probed
+# over TLS on 6697 with the irc_tls module (TLS handshake + the ircd's first NOTICE, then QUIT).
+# Same probe_origin as the HTTP probes, so ExternalEndpointDown and ExternalEndpointCertExpiringSoon
+# in prometheusrule-blackbox.yaml cover them. The blackbox runs on dns-master, so odyssey is probed
+# from its own host: that confirms the ircd answers, not that the internet can reach it.
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  name: external-irc
+  namespace: observability-production
+  labels:
+    release: obs-kps
+spec:
+  interval: 60s
+  scrapeTimeout: 15s
+  module: irc_tls
+  prober:
+    url: 10.31.0.3:9115
+    scheme: http
+  targets:
+    staticConfig:
+      static:
+      - abyss.nl.eu.darkmyst.org:6697
+      - odyssey.de.eu.darkmyst.org:6697
+      labels:
+        probe_origin: vps-external
+        service: irc
