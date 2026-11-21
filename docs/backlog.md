@@ -130,6 +130,20 @@ When you finish or re-check an item, update it here in the same PR.
 - **Do:** nothing unless the owner asks. It needs object storage first (Ceph RGW was deferred).
 - **Note:** a CNPG chart bump restarts every instance, the primary in place, so expect a few minutes without the database.
 
+## Monitoring
+
+### 16. Local DNS LXCs on the DNS dashboard
+
+- **State (2026-11-21):** the DNS servers dashboard (`dns-servers.json`) and the `dns-bind` alerts cover the two edge VPSes. The two local BIND 9.20 LXCs (`dns-prod`, `dhcp-prod`, Alpine) are only visible through `proxmox_vm_*`.
+- **Do (host, owner):** `apk add` the bind exporter, add the top-level `statistics-channels` block, bind the exporter to the LXC's LAN IP on :9119, and allow tcp/9119 from the `kubernetes_control_plane` net in OPNsense. Then add both targets to the `bind` job with `host: dns-prod` / `host: dhcp-prod` (their LAN IPs are not in this repo yet; the owner decides whether to add them or scrape by name).
+- **Done when:** `bind_up{instance=~"dns-prod|dhcp-prod"} == 1` and both show in the dashboard's server picker.
+
+### 17. Unbound on OPNsense (guest-network resolver)
+
+- **State (2026-11-21):** guest and other non-LAN networks resolve through Unbound on OPNsense. No Unbound metrics reach Prometheus; OPNsense logs arrive in Loki as one `service_name="opnsense"` stream.
+- **Do:** find out whether the OPNsense version in use can expose Unbound statistics to Prometheus (plugin or built-in exporter), then scrape it and add an Unbound row to the DNS dashboard.
+- **Done when:** guest-network query rate and SERVFAIL share are on the dashboard, or this item records why it is not possible.
+
 ## Parked by the owner
 
 Don't start these without being asked.
