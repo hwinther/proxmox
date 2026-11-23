@@ -111,6 +111,12 @@ When you finish or re-check an item, update it here in the same PR.
 - **Do:** first write down how the pin is produced and kept current: the release workflow that renders the manifests artifact writes `tag@sha256`, and Renovate or Dependabot must move tag and digest together. Then convert one app end to end, check that the policy still admits it with `verifyDigest: true` for that image, and roll out. List the third-party images that stay unpinned or unverified, each with its reason.
 - **Done when:** every first-party image reference in git has a digest, and the exceptions list exists.
 
+### 13c. wsh-rtl-sdr embedded SBOM misleads Grype
+
+- **State:** the readsb and ais-catcher images ship a build-stage CycloneDX SBOM (`/usr/share/sbom/*.cdx.json`) that lists Alpine packages (zlib 1.4-r0), while the runtime base is Debian 13. Grype matches those apk packages against Debian data and reports every old zlib CVE as critical. The four zlib CVEs are suppressed for these two images in `bases/kubescape-exceptions/cluster-security-exceptions.yaml` (`wsh-rtl-sdr-sbom-zlib-false-positive`). The next mismatched package will show up again.
+- **Do:** in the wsh-rtl-sdr repo, make the embedded SBOM match what scanners should see. For example, store it outside the paths Syft catalogs, or give its components a purl without the `distro=alpine` qualifier as generic/static components. Rebuild, then confirm Kubescape no longer reports zlib for those images, and remove the exception.
+- **Done when:** the exception is gone and no Alpine packages show up in the Debian-based images' vulnerability manifests.
+
 ### 13b. Leftovers after removing mqttui (owner)
 
 - **State:** the mqttui web inspector was removed from `mosquitto-production` on 2026-11-20 (unmaintained since 2026-03; its image carried 155 critical CVEs). Flux prunes the Deployment, route and policies. Two things Flux does not own stay behind.
