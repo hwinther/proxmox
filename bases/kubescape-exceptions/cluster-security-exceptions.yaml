@@ -25,3 +25,66 @@ spec:
     response:
     - can_not_fix
     expiredOnFix: true
+---
+# Scanner false positive in the wsh-rtl-sdr images that embed a build-stage CycloneDX SBOM
+# (/usr/share/sbom/*.cdx.json). That SBOM lists Alpine's zlib 1.4-r0 (statically linked), but Grype
+# matches the apk package against the image's Debian 13 vulnerability data, whose fixed versions
+# carry the epoch "1:" (e.g. "< 1:1.2.11.dfsg-4"). 1.4-r0 then sorts below every Debian zlib
+# version and every old zlib CVE matches. zlib 1.4 contains all of these fixes.
+# Grype reports these matches as "fixed", so expiredOnFix must stay false here or the exception
+# would never apply.
+apiVersion: kubescape.io/v1beta1
+kind: ClusterSecurityException
+metadata:
+  name: wsh-rtl-sdr-sbom-zlib-false-positive
+spec:
+  author: "proxmox repo (GitOps)"
+  reason: "Alpine zlib 1.4-r0 from the embedded build SBOM compared against Debian epoch versions."
+  match:
+    images:
+    - "ghcr.io/hwinther/wsh-rtl-sdr/readsb"
+    - "ghcr.io/hwinther/wsh-rtl-sdr/ais-catcher"
+  vulnerabilities:
+  - vulnerability:
+      id: "CVE-2016-9841"
+    status: "not_affected"
+    justification: "vulnerable_code_not_present"
+    impactStatement: "Linked zlib is 1.4; the Debian epoch in the fix version makes Grype misorder it."
+  - vulnerability:
+      id: "CVE-2016-9843"
+    status: "not_affected"
+    justification: "vulnerable_code_not_present"
+    impactStatement: "Linked zlib is 1.4; the Debian epoch in the fix version makes Grype misorder it."
+  - vulnerability:
+      id: "CVE-2022-37434"
+    status: "not_affected"
+    justification: "vulnerable_code_not_present"
+    impactStatement: "Linked zlib is 1.4; the Debian epoch in the fix version makes Grype misorder it."
+  - vulnerability:
+      id: "CVE-2023-45853"
+    status: "not_affected"
+    justification: "vulnerable_code_not_present"
+    impactStatement: "Linked zlib is 1.4; the Debian epoch in the fix version makes Grype misorder it."
+---
+# CPython ssl use-after-free, reachable only in a TLS *server* whose sni_callback swaps
+# SSLSocket.context. In piaware the only Python program is fa-mlat-client, which is a plain TCP/UDP
+# client (checked 2026-11-23: piaware, faup1090 and fa-mlat-client are the only processes).
+# Debian marks it <no-dsa> (minor) for trixie; fixed upstream in 3.13.16. expiredOnFix brings the
+# finding back once Debian ships a fixed python3.13, so a rebuild picks it up.
+apiVersion: kubescape.io/v1beta1
+kind: ClusterSecurityException
+metadata:
+  name: piaware-python-ssl-sni
+spec:
+  author: "proxmox repo (GitOps)"
+  reason: "CVE-2026-19445 needs a Python TLS server with an sni_callback; piaware has none."
+  match:
+    images:
+    - "ghcr.io/hwinther/wsh-rtl-sdr/piaware"
+  vulnerabilities:
+  - vulnerability:
+      id: "CVE-2026-19445"
+    status: "not_affected"
+    justification: "vulnerable_code_not_in_execute_path"
+    impactStatement: "No Python TLS server in the image; fa-mlat-client only opens client connections."
+    expiredOnFix: true
