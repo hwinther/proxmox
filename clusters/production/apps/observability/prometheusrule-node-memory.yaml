@@ -1,8 +1,11 @@
 # Two-tier replacement for the upstream kube-prometheus-stack NodeMemoryHighUtilization rule
 # (disabled in kube-prometheus-stack-helmrelease.yaml defaultRules.disabled):
-#  - 95% for the bare-metal PVE/PBS hosts (node-exporter-pve scrape job): office-pve-amd sits at a
-#    deliberate steady ~91% (VM allocation, not ZFS ARC — ARC is only ~4Gi there), so the upstream
-#    90% default fired permanently without signal.
+#  - Bare-metal PVE/PBS hosts: real memory pressure (PSI) or > 98.5% used. The hypervisors are
+#    deliberately packed with VMs (ZFS ARC is only ~3Gi), so a plain percentage threshold only
+#    measures the VM allocation. A 95% threshold fired 53 times in the week to 2026-11-23 on
+#    office-pve-amd/office-pve-i9/shuttle03 (peaks ~97%) with memory PSI never above 0.7% and no
+#    OOM kills. 98.5% stays as a last-resort guard, since hosts without swap can hit the OOM killer
+#    with little PSI warning.
 #  - 90% (upstream default) for k8s nodes, where climbing past 90% IS interesting (eviction risk).
 # Tier selector: bare-metal series carry a static `node` label and no `cluster` label; the
 # production-k8s DaemonSet targets have no `node` label, and the edge-sdr Pis have cluster=edge-sdr
@@ -19,14 +22,23 @@ spec:
   - name: node-memory
     rules:
     - alert: NodeMemoryHighUtilization
-      expr: 100 - (node_memory_MemAvailable_bytes{job="node-exporter", node!="", cluster=""} / node_memory_MemTotal_bytes{job="node-exporter", node!="", cluster=""} * 100) > 95
+      expr: 100 - (node_memory_MemAvailable_bytes{job="node-exporter", node!="", cluster=""} / node_memory_MemTotal_bytes{job="node-exporter", node!="", cluster=""} * 100) > 98.5
       for: 15m
       labels:
         severity: warning
       annotations:
         summary: "Bare-metal host {{ $labels.node }} is running out of memory"
-        description: "Memory on {{ $labels.node }} has been above 95% for the last 15 minutes, is currently at {{ printf \"%.1f\" $value }}%. Bare-metal tier alerts at 95% — the hypervisors are deliberately packed."
+        description: "Memory on {{ $labels.node }} has been above 98.5% for the last 15 minutes, is currently at {{ printf \"%.1f\" $value }}%. The hypervisors are deliberately packed, so this tier only fires near the OOM edge."
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/node/nodememoryhighutilization
+    # PSI "some": share of wall time at least one task waited on memory (reclaim, swap-in).
+    - alert: NodeMemoryPressure
+      expr: rate(node_pressure_memory_waiting_seconds_total{job="node-exporter", node!="", cluster=""}[5m]) > 0.1
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Bare-metal host {{ $labels.node }} is stalling on memory"
+        description: "Tasks on {{ $labels.node }} have spent {{ $value | humanizePercentage }} of the last 5 minutes waiting on memory (PSI some), for 10 minutes. VMs on this host are being slowed by reclaim or swap."
     # `unless on (instance)` subtracts the bare-metal hosts matched by the 95% tier above.
     - alert: NodeMemoryHighUtilization
       expr: |-
