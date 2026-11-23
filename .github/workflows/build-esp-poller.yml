@@ -46,7 +46,7 @@ jobs:
             packages: read
             security-events: write
             pull-requests: write
-        uses: hwinther/reusable-workflows/.github/workflows/build-and-scan-docker.yml@9c35353ba10990931ef9a24642ff1d0ecf0b82f8 # v2.42.0
+        uses: hwinther/reusable-workflows/.github/workflows/build-and-scan-docker.yml@3fe5e0dc856a0b181004893b2bd380dac3e858fe # v2.42.1
         with:
             container_registry: ghcr.io
             container_image_name_postfix: esp-poller
@@ -67,7 +67,7 @@ jobs:
             actions: write
             security-events: write
             pull-requests: write
-        uses: hwinther/reusable-workflows/.github/workflows/docker-container.yml@9c35353ba10990931ef9a24642ff1d0ecf0b82f8 # v2.42.0
+        uses: hwinther/reusable-workflows/.github/workflows/docker-container.yml@3fe5e0dc856a0b181004893b2bd380dac3e858fe # v2.42.1
         with:
             container_registry: ghcr.io
             # ghcr.io/<repo-owner>/<repo>/<postfix> → ghcr.io/hwinther/proxmox/esp-poller

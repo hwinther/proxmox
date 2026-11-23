@@ -38,7 +38,7 @@ jobs:
             pull-requests: write
             checks: write
             packages: read
-        uses: hwinther/reusable-workflows/.github/workflows/pr-build.yml@9c35353ba10990931ef9a24642ff1d0ecf0b82f8 # v2.42.0
+        uses: hwinther/reusable-workflows/.github/workflows/pr-build.yml@3fe5e0dc856a0b181004893b2bd380dac3e858fe # v2.42.1
         with:
             python_enabled: true
             python_version: "3.13"
@@ -54,7 +54,7 @@ jobs:
             contents: read
             packages: write
             id-token: write
-        uses: hwinther/reusable-workflows/.github/workflows/quality-artifact.yml@9c35353ba10990931ef9a24642ff1d0ecf0b82f8 # v2.42.0
+        uses: hwinther/reusable-workflows/.github/workflows/quality-artifact.yml@3fe5e0dc856a0b181004893b2bd380dac3e858fe # v2.42.1
         with:
             tags: |
                 main
