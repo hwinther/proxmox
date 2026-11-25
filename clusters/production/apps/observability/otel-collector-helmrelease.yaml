@@ -142,6 +142,63 @@ spec:
           - key: service.name
             value: opnsense
             action: upsert
+        # OPNsense firewall log (pf filterlog) arrives on the same syslog port as nginx/NAXSI, but
+        # goes to its own pipeline and Loki stream (service_name="opnsense-filterlog"): it is far
+        # bulkier (every logged block on WAN), keeps the default 14d retention instead of the 90d
+        # security override, and stays out of the NAXSI queries on {service_name="opnsense"}.
+        # syslog-ng sends it as RFC5424 with APP-NAME "filterlog", which the receiver puts in
+        # attributes["appname"]. Lines that failed the rfc5424 parser have no appname and stay
+        # on the nginx side.
+        filter/drop-filterlog:
+          error_mode: ignore
+          logs:
+            log_record:
+            - 'attributes["appname"] == "filterlog"'
+        filter/only-filterlog:
+          error_mode: ignore
+          logs:
+            log_record:
+            - 'attributes["appname"] != "filterlog"'
+        # filterlog is one CSV line per packet. Common head (0-8): rule number, sub-rule, anchor,
+        # rule label (the rule's hash, matches the "label" column of the rule), interface (device
+        # name, e.g. a vlan or wg device, not the GUI description), reason, action
+        # (pass|block|reject), direction (in|out), IP version. Then per IP version:
+        #   IPv4: 9 tos, 10 ecn, 11 ttl, 12 id, 13 offset, 14 flags, 15 proto number,
+        #         16 proto name, 17 length, 18 src, 19 dst, then for tcp/udp 20 src port, 21 dst port
+        #   IPv6: 9 class, 10 flow label, 11 hop limit, 12 proto name, 13 proto number,
+        #         14 length, 15 src, 16 dst, then for tcp/udp 17 src port, 18 dst port
+        # Fields become Loki structured metadata (fw_action, source_address, ...), queryable
+        # without being index labels. Length guards keep short or unexpected lines from
+        # erroring; such a line is stored as-is with whatever fields parsed.
+        transform/filterlog:
+          error_mode: ignore
+          log_statements:
+          - context: log
+            conditions:
+            - 'attributes["message"] != nil'
+            statements:
+            - 'set(cache["f"], Split(attributes["message"], ","))'
+            - 'set(attributes["fw.rule_label"], cache["f"][3]) where Len(cache["f"]) > 8'
+            - 'set(attributes["fw.interface"], cache["f"][4]) where Len(cache["f"]) > 8'
+            - 'set(attributes["fw.reason"], cache["f"][5]) where Len(cache["f"]) > 8'
+            - 'set(attributes["fw.action"], cache["f"][6]) where Len(cache["f"]) > 8'
+            - 'set(attributes["fw.direction"], cache["f"][7]) where Len(cache["f"]) > 8'
+            - 'set(attributes["network.type"], Concat(["ipv", cache["f"][8]], "")) where Len(cache["f"]) > 8'
+            - 'set(attributes["network.transport"], cache["f"][16]) where Len(cache["f"]) > 19 and cache["f"][8] == "4"'
+            - 'set(attributes["source.address"], cache["f"][18]) where Len(cache["f"]) > 19 and cache["f"][8] == "4"'
+            - 'set(attributes["destination.address"], cache["f"][19]) where Len(cache["f"]) > 19 and cache["f"][8] == "4"'
+            - 'set(attributes["source.port"], cache["f"][20]) where Len(cache["f"]) > 21 and cache["f"][8] == "4" and (cache["f"][16] == "tcp" or cache["f"][16] == "udp")'
+            - 'set(attributes["destination.port"], cache["f"][21]) where Len(cache["f"]) > 21 and cache["f"][8] == "4" and (cache["f"][16] == "tcp" or cache["f"][16] == "udp")'
+            - 'set(attributes["network.transport"], cache["f"][12]) where Len(cache["f"]) > 16 and cache["f"][8] == "6"'
+            - 'set(attributes["source.address"], cache["f"][15]) where Len(cache["f"]) > 16 and cache["f"][8] == "6"'
+            - 'set(attributes["destination.address"], cache["f"][16]) where Len(cache["f"]) > 16 and cache["f"][8] == "6"'
+            - 'set(attributes["source.port"], cache["f"][17]) where Len(cache["f"]) > 18 and cache["f"][8] == "6" and (cache["f"][12] == "tcp" or cache["f"][12] == "udp")'
+            - 'set(attributes["destination.port"], cache["f"][18]) where Len(cache["f"]) > 18 and cache["f"][8] == "6" and (cache["f"][12] == "tcp" or cache["f"][12] == "udp")'
+        resource/filterlog:
+          attributes:
+          - key: service.name
+            value: opnsense-filterlog
+            action: upsert
         # Pull the attacker IP into source.address so the geoip processor can enrich it. Two
         # shapes arrive on different paths: NAXSI/error lines come via syslog-ng as RFC5424
         # and PARSE cleanly — their text lands in attributes["message"] (body becomes a
@@ -251,6 +308,17 @@ spec:
               attributes:
               - key: csp.disposition_class
               - key: csp.directive_class
+            # OPNsense firewall log records, for rate panels and alerting without a Loki query.
+            # Bounded labels only: interface (one per OPNsense device), action (pass/block/reject)
+            # and direction (in/out). Addresses and ports stay on the Loki record.
+            opnsense_filterlog_records:
+              description: OPNsense pf filterlog records, by interface, action and direction
+              conditions:
+              - 'attributes["fw.action"] != nil'
+              attributes:
+              - key: fw.interface
+              - key: fw.action
+              - key: fw.direction
       exporters:
         otlp:
           endpoint: obs-tempo.observability-production.svc.cluster.local:4317
@@ -298,5 +366,10 @@ spec:
             exporters: [ otlphttp/loki, count ]
           logs/syslog:
             receivers: [ syslog ]
-            processors: [ memory_limiter, transform/source-ip, transform/naxsi-classify, geoip, resource/syslog, batch ]
+            processors: [ memory_limiter, filter/drop-filterlog, transform/source-ip, transform/naxsi-classify, geoip, resource/syslog, batch ]
+            exporters: [ otlphttp/loki, count ]
+          # Same syslog receiver, fanned out: each pipeline keeps only its own records.
+          logs/filterlog:
+            receivers: [ syslog ]
+            processors: [ memory_limiter, filter/only-filterlog, transform/filterlog, resource/filterlog, batch ]
             exporters: [ otlphttp/loki, count ]

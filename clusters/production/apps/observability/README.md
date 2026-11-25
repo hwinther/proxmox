@@ -66,6 +66,10 @@ Dashboard `dashboards/edge-security.json` (uid `edge-security`): CrowdSec metric
 
 Host-side setup and topology are documented in the **private-apps repo** (`infra/crowdsec-vps/`).
 
+OPNsense firewall log (pf `filterlog`) uses the same syslog port but its own pipeline (`logs/filterlog`) and stream, `service_name="opnsense-filterlog"`, on the 14d default retention. Each record carries the parsed CSV fields as structured metadata (`fw_action`, `fw_interface`, `fw_direction`, `fw_rule_label`, `source_address`, `destination_address`, `destination_port`, ...), and the `count` connector exports `opnsense_filterlog_records_total{fw_interface,fw_action,fw_direction}` to Prometheus. Only rules with logging enabled produce records, so OPNsense decides the volume. To turn it on, add `filterlog` to the program list of the remote syslog destination in OPNsense (System > Settings > Logging > Remote), or create a second destination for it.
+
+Example: `{service_name="opnsense-filterlog"} | fw_action="block" | fw_interface="vtnet1"`.
+
 ## OTel collector metrics
 
 Prometheus scrapes the collector self-metrics via **additionalServiceMonitors** in `obs-kps` (Service port name `metrics`, `:8888`).
