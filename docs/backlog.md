@@ -150,6 +150,12 @@ When you finish or re-check an item, update it here in the same PR.
 - **Do:** if user/channel counts are wanted, pick a small exporter that connects as a client and parses `LUSERS` (251/254/265/266), or a node-exporter textfile script on each host. The owner installs it on the hosts; scrape over the tunnel like the bind exporter (new port in the OPNsense `PrometheusNodeExporterPorts` alias).
 - **Done when:** local/global users and channels per server are in Prometheus, or the owner decides up/down is enough.
 
+### 18a. OPNsense syslog: single node, UDP, no dashboard for filterlog
+
+- **State (2026-11-25):** OPNsense sends remote syslog (nginx/NAXSI, and `filterlog` once enabled on the OPNsense side) over UDP to the `obs-otel-syslog-nodeport` NodePort on one fixed node address. When that node is down or rebooting, the records are lost without a trace. `filterlog` is parsed into its own stream (`service_name="opnsense-filterlog"`) with a `opnsense_filterlog_records_total` counter, but no dashboard or alert uses it yet, and blocked WAN sources are not geo-enriched.
+- **Do:** give the syslog entry point a stable address (a Cilium LoadBalancer IP, like the MQTT VIP) or one OPNsense destination per node; add a firewall row to a dashboard (blocks per interface, top blocked sources and ports, hits per rule label); consider the `geoip` processor on `logs/filterlog` for WAN blocks once the volume is known.
+- **Done when:** a node reboot does not drop OPNsense logs, and the firewall log has a dashboard row.
+
 ## Parked by the owner
 
 Don't start these without being asked.
