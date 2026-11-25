@@ -262,7 +262,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "count((max by (zone_name) (bind_zone_serial > 1) - min by (zone_name) (bind_zone_serial > 1)) > 0) or vector(0)",
+          "expr": "count((max by (zone_name, dns_group) (bind_zone_serial > 1) - min by (zone_name, dns_group) (bind_zone_serial > 1)) > 0) or vector(0)",
           "legendFormat": "",
           "refId": "A"
         }
@@ -285,7 +285,7 @@
         },
         "overrides": []
       },
-      "description": "Zones served by more than one server whose SOA serials differ right now (all servers, not only the selection). A short difference right after a change is normal until NOTIFY + IXFR completes.",
+      "description": "Zones served by more than one server whose SOA serials differ right now (all servers, not only the selection), compared within each group (edge VPSes, LAN LXCs) because split-horizon zones like oh.wsh.no have unrelated serials in the two. A short difference right after a change is normal until NOTIFY + IXFR completes.",
       "options": {
         "reduceOptions": {
           "calcs": [
@@ -927,7 +927,7 @@
         },
         "overrides": []
       },
-      "description": "SOA serial per zone and server (built-in empty zones, serial 0/1, are hidden). On a signed primary this is the signed serial. A row with different values is a secondary that has not caught up.",
+      "description": "SOA serial per zone and server (built-in empty zones, serial 0/1, are hidden). On a signed primary this is the signed serial. Split-horizon zones (oh.wsh.no) show unrelated public and LAN serials in one row; otherwise a row with different values is a secondary that has not caught up.",
       "options": {
         "showHeader": true,
         "cellHeight": "sm"

@@ -1,5 +1,5 @@
 # Alerts for BIND (scrape job `bind` in kube-prometheus-stack-helmrelease.yaml: the edge VPSes over
-# the tunnel). Dashboard: dashboards/dns-servers.json. A dead exporter is already TargetDown;
+# the tunnel, the local LXCs by name). Dashboard: dashboards/dns-servers.json. A dead exporter is already TargetDown;
 # these cover named itself and replication. release=obs-kps so the operator ruleSelector picks it up.
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
@@ -23,12 +23,13 @@ spec:
         description: "prometheus-bind-exporter on {{ $labels.instance }} cannot reach named's statistics channel (127.0.0.1:8053) for >5m. Check `systemctl status named` / `rc-service named status` and `named-checkconf`."
     # A zone served by several servers has had different SOA serials for an hour: a secondary is not
     # transferring (NOTIFY/IXFR blocked, TSIG or allow-transfer change, primary unreachable).
-    # Built-in empty zones report serial 0/1 and are excluded.
+    # Built-in empty zones report serial 0/1 and are excluded. Compared per dns_group (edge / lan),
+    # because split-horizon zones such as oh.wsh.no share a name but not a serial across groups.
     - alert: BindZoneSerialMismatch
-      expr: (max by (zone_name) (bind_zone_serial > 1) - min by (zone_name) (bind_zone_serial > 1)) > 0
+      expr: (max by (zone_name, dns_group) (bind_zone_serial > 1) - min by (zone_name, dns_group) (bind_zone_serial > 1)) > 0
       for: 1h
       labels:
         severity: warning
       annotations:
-        summary: "Zone {{ $labels.zone_name }} differs between DNS servers"
+        summary: "Zone {{ $labels.zone_name }} differs between {{ $labels.dns_group }} DNS servers"
         description: "Servers serving {{ $labels.zone_name }} have reported different SOA serials for over an hour. Compare in the DNS servers dashboard (Zone serials table), then on the secondary: `rndc zonestatus {{ $labels.zone_name }}` and the xfer logs."

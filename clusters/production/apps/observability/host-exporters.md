@@ -114,14 +114,13 @@ them by name (`dns-prod.oh.wsh.no:9119`, `dhcp-prod.oh.wsh.no:9119`) in the `bin
 IPs stay out of this repo.
 
 ```sh
-apk search -v '*bind*exporter*'          # find the exporter package in the enabled repos
-apk add <package>
+apk add prometheus-bind-exporter        # OpenRC service: bind-exporter
 # named statistics channel: a TOP-LEVEL statement in /etc/bind/named.conf (not inside options { }):
 #   statistics-channels { inet 127.0.0.1 port 8053 allow { 127.0.0.1; }; };
-named-checkconf && rc-service named reload
-# exporter flags, in the package's /etc/conf.d/<service> file:
+named-checkconf && rc-service named reload   # needs an rndc key; if rndc is refused: rndc-confgen -a, then restart named once
+# exporter flags, in /etc/conf.d/bind-exporter:
 #   --bind.stats-url=http://127.0.0.1:8053/ --web.listen-address=:9119
-rc-update add <service> default && rc-service <service> start
+rc-update add bind-exporter default && rc-service bind-exporter start
 wget -qO- http://127.0.0.1:9119/metrics | grep '^bind_up'
 ```
 

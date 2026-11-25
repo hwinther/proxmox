@@ -138,13 +138,6 @@ When you finish or re-check an item, update it here in the same PR.
 
 ## Monitoring
 
-### 16. Local DNS LXCs on the DNS dashboard
-
-- **State (2026-11-21):** the DNS servers dashboard (`dns-servers.json`) and the `dns-bind` alerts cover the two edge VPSes. The two local BIND 9.20 LXCs (`dns-prod`, `dhcp-prod`, Alpine) are only visible through `proxmox_vm_*`.
-- **Scrape targets:** added to the `bind` job by name (`dns-prod.oh.wsh.no:9119`, `dhcp-prod.oh.wsh.no:9119`), so no LAN IPs in the repo. Install steps in `clusters/production/apps/observability/host-exporters.md`.
-- **Do (host, owner):** `apk add` the bind exporter, add the top-level `statistics-channels` block, run the exporter on :9119, and allow tcp/9119 from the `kubernetes_control_plane` net in OPNsense.
-- **Done when:** `bind_up{instance=~"dns-prod|dhcp-prod"} == 1` and both show in the dashboard's server picker.
-
 ### 17. Unbound on OPNsense (guest-network resolver)
 
 - **State (2026-11-21):** guest and other non-LAN networks resolve through Unbound on OPNsense. No Unbound metrics reach Prometheus; OPNsense logs arrive in Loki as one `service_name="opnsense"` stream.
