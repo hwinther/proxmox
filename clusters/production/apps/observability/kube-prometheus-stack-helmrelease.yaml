@@ -395,14 +395,16 @@ spec:
         - job_name: bind
           static_configs:
           - targets: [ '10.31.0.2:9119' ]
-            labels: { host: abyss }
+            labels: { host: abyss, dns_group: edge }
           - targets: [ '10.31.0.3:9119' ]
-            labels: { host: dns-master }
+            labels: { host: dns-master, dns_group: edge }
           # Local BIND LXCs (Alpine), scraped by name like auth.oh.wsh.no elsewhere in the cluster.
+          # dns_group keeps split-horizon zones apart: oh.wsh.no exists both publicly (edge) and
+          # on the LAN with unrelated serials. BindZoneSerialMismatch compares within a group.
           - targets: [ 'dns-prod.oh.wsh.no:9119' ]
-            labels: { host: dns-prod }
+            labels: { host: dns-prod, dns_group: lan }
           - targets: [ 'dhcp-prod.oh.wsh.no:9119' ]
-            labels: { host: dhcp-prod }
+            labels: { host: dhcp-prod, dns_group: lan }
           relabel_configs:
           - { source_labels: [ host ], target_label: instance }
         resources:
