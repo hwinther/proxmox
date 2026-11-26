@@ -15,6 +15,8 @@
 # - HTTPRoutes attach to the platform Gateway once a namespace carries gateway.wsh.no/traefik=true. The
 #   tenant sets that label and the gateway.wsh.no/hostnames grant on its own namespaces, so its hostname
 #   grants are trusted (the same trust as its Namespaces).
+# - Kubescape SecurityExceptions (namespaced): the tenant documents risk it accepts in its own images
+#   next to the workload. They only affect findings in that namespace.
 # - Nothing for Flux, Kyverno policies, CRDs, webhooks or cluster RBAC: those stay platform-owned.
 apiVersion: v1
 kind: ServiceAccount
@@ -54,6 +56,11 @@ rules:
   verbs: [get, list, watch, create, update, patch, delete]
 - apiGroups: [policies.kyverno.io]
   resources: [policyexceptions]
+  verbs: [get, list, watch, create, update, patch, delete]
+# Namespaced Kubescape vulnerability exceptions for the tenant's own images. Cluster-wide ones
+# (ClusterSecurityException) stay platform-owned in bases/kubescape-exceptions.
+- apiGroups: [kubescape.io]
+  resources: [securityexceptions]
   verbs: [get, list, watch, create, update, patch, delete]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
