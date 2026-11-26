@@ -29,6 +29,11 @@ spec:
       target:
         kind: Deployment
   interval: 30m
+  # Helm waits for the DaemonSet rollout (one node at a time, maxUnavailable 1). The default 5m was
+  # too short on 2026-11-25: k0s-prod03 was in DiskPressure for ~4 minutes, kubelet rejected the new
+  # pod five times, and Helm marked 42.4.3 failed although the rollout finished minutes later. A
+  # failed upgrade leaves the release Stalled (no retries), so give the rollout room instead.
+  timeout: 15m
   ## CRDs applied from traefik-crds.yaml (same chart version); avoid Helm/Flux ordering issues.
   install:
     crds: Skip
