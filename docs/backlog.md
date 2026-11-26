@@ -56,6 +56,12 @@ When you finish or re-check an item, update it here in the same PR.
 
 ## Scheduling
 
+### 7b. k0s node root disks hit DiskPressure before image GC runs
+
+- **State (2026-11-26):** the k0s VMs have ~63 GB root disks (images and pod data on `/`). In the last week k0s-prod01, prod03 and prod04 each dropped to ~16-17 % free and sat in `DiskPressure` for ~4 minutes (prod04 17:50, prod03 17:58, prod01 21:36 UTC on 2026-11-25) until image GC freed space (prod03 went from 16 % to 67 % free). Kubelet's defaults collide: image GC starts at 85 % used, the `imagefs.available` eviction threshold is 15 % free, so a node reaches pressure exactly when GC starts. During prod03's window kubelet rejected the new traefik pod five times and the traefik HelmRelease upgrade timed out (fixed separately with `timeout: 15m`).
+- **Do (owner, host-side):** either lower the GC thresholds below the eviction line, for example `imageGCHighThresholdPercent: 75` / `imageGCLowThresholdPercent: 65` in a k0s worker profile applied to the VM workers (see `infra/k0s/k0s.yaml.example` workerProfiles; the profile must reach the nodes and the workers restart), or grow the VM disks, or both. Check what fills the disk first (images vs pod logs vs emptyDir).
+- **Done when:** no `kube_node_status_condition{condition="DiskPressure",status="true"}` for a month.
+
 ### 8. The 2-core NAS-adjacent node is nearly full
 
 - **State:** CPU requests on 2026-11-16: prod05 75 %, prod03 56 %, prod04 46 %, prod02 43 %, prod01 40 %. Memory requests: prod04 76 %, prod05 70 %. One extra pod with a large request on prod05 blocks the nightly backup pods, which are pinned to their app's node.
